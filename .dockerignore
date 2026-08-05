@@ -1,0 +1,7 @@
+node_modules
+.next
+legacy-invite
+.git
+.env
+.env.local
+*.log

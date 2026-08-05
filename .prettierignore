@@ -1,0 +1,6 @@
+node_modules
+.next
+dist
+legacy-invite
+pnpm-lock.yaml
+package-lock.json

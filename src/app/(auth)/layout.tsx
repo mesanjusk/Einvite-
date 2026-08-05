@@ -1,0 +1,15 @@
+import Link from "next/link";
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-svh flex-col items-center justify-center gap-8 bg-gradient-to-b from-[oklch(0.97_0.02_80)] to-background px-4 py-12">
+      <Link href="/" className="flex flex-col items-center gap-1 text-center">
+        <span className="font-display text-2xl text-primary">AI Wedding Invitation Studio</span>
+        <span className="text-muted-foreground text-xs tracking-[0.3em] uppercase">
+          Premium invites, generated in minutes
+        </span>
+      </Link>
+      {children}
+    </div>
+  );
+}
