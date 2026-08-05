@@ -1,121 +1,136 @@
 import { motion } from 'framer-motion'
-import { fadeUp, fadeLeft } from '../animations'
+import { fadeUp, stagger } from '../animations'
+import PetalField from './PetalField'
 
 export default function EventSlide({
   label,
   heading,
   headingColor,
-  description,
+  quote,
   date,
   time,
   venue,
   dressCode,
+  dressColors = [],
   mapsUrl,
+  seed = 1,
 }) {
   return (
     <section
       style={{
+        position: 'relative',
         minHeight: '100svh',
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 28px',
+        padding: '48px 22px',
         background: 'var(--cream)',
+        overflow: 'hidden',
       }}
     >
-      <motion.p
-        variants={fadeLeft}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
-        style={{
-          letterSpacing: '0.3em',
-          fontSize: '11px',
-          color: 'var(--text-medium)',
-          margin: '0 0 8px',
-        }}
-      >
-        {label}
-      </motion.p>
-
-      <motion.h2
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
-        style={{
-          fontFamily: "'Great Vibes', cursive",
-          fontSize: '52px',
-          color: headingColor,
-          margin: '0 0 12px',
-        }}
-      >
-        {heading}
-      </motion.h2>
-
-      <motion.p
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
-        style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontStyle: 'italic',
-          fontSize: '16px',
-          color: 'var(--text-medium)',
-          margin: '0 0 24px',
-        }}
-      >
-        {description}
-      </motion.p>
+      <PetalField count={10} seed={seed} />
 
       <motion.div
-        variants={fadeUp}
+        variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-80px' }}
         style={{
-          border: `1px solid ${headingColor}33`,
-          borderRadius: '14px',
-          padding: '20px',
-          display: 'grid',
-          gap: '10px',
+          position: 'relative',
+          zIndex: 2,
+          background: '#fffdf9',
+          borderRadius: '20px',
+          border: '1px solid rgba(201,148,42,0.3)',
+          boxShadow: '0 20px 45px rgba(90,40,20,0.1)',
+          padding: '36px 26px',
+          textAlign: 'center',
+          width: '100%',
         }}
       >
-        <Row label="Date" value={date} />
-        <Row label="Time" value={time} />
-        <Row label="Venue" value={venue} />
-        <Row label="Dress Code" value={dressCode} />
+        <motion.p
+          variants={fadeUp}
+          className="eyebrow"
+          style={{ color: 'var(--gold)', marginBottom: '10px' }}
+        >
+          {label}
+        </motion.p>
+
+        <motion.h2
+          variants={fadeUp}
+          style={{ fontSize: '46px', color: headingColor, marginBottom: '16px' }}
+        >
+          {heading}
+        </motion.h2>
+
+        <motion.p
+          variants={fadeUp}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontStyle: 'italic',
+            color: 'var(--text-medium)',
+            fontSize: '15px',
+            margin: '0 0 26px',
+          }}
+        >
+          &ldquo;{quote}&rdquo;
+        </motion.p>
+
+        {dressColors.length > 0 && (
+          <motion.div variants={fadeUp} style={{ marginBottom: '24px' }}>
+            <p className="eyebrow" style={{ color: 'var(--gold)', marginBottom: '10px' }}>
+              DRESS CODE
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+              {dressColors.map((c) => (
+                <span
+                  key={c}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    background: c,
+                    border: '1px solid rgba(0,0,0,0.1)',
+                  }}
+                />
+              ))}
+            </div>
+            <p style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: '14px', color: 'var(--text-medium)', margin: 0 }}>
+              {dressCode}
+            </p>
+          </motion.div>
+        )}
+
+        <motion.div
+          variants={fadeUp}
+          style={{
+            borderTop: '1px dashed rgba(122,46,46,0.25)',
+            paddingTop: '18px',
+            marginBottom: '20px',
+          }}
+        >
+          <p style={{ margin: '0 0 4px', fontSize: '15px', color: 'var(--text-dark)' }}>
+            {date} &middot; {time}
+          </p>
+          <p style={{ margin: 0, fontSize: '15px', color: 'var(--text-dark)' }}>{venue}</p>
+        </motion.div>
+
         {mapsUrl && (
-          <a
+          <motion.a
+            variants={fadeUp}
             href={mapsUrl}
             target="_blank"
             rel="noreferrer"
+            className="pill-button"
             style={{
-              marginTop: '6px',
-              textAlign: 'center',
-              color: headingColor,
-              border: `1px solid ${headingColor}`,
-              borderRadius: '999px',
-              padding: '10px 16px',
-              textDecoration: 'none',
-              fontSize: '13px',
-              letterSpacing: '0.1em',
+              background: 'var(--maroon)',
+              color: '#fdf0e2',
+              width: '100%',
             }}
           >
-            VIEW ON MAP
-          </a>
+            📍 GET DIRECTIONS
+          </motion.a>
         )}
       </motion.div>
     </section>
-  )
-}
-
-function Row({ label, value }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-      <span style={{ color: 'var(--text-medium)' }}>{label}</span>
-      <span style={{ color: 'var(--text-dark)', fontWeight: 600 }}>{value}</span>
-    </div>
   )
 }

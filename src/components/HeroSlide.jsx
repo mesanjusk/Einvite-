@@ -1,140 +1,179 @@
 import { motion } from 'framer-motion'
-import { fadeUp, scaleIn } from '../animations'
+import { fadeUp, stagger } from '../animations'
+import PetalField from './PetalField'
 
-const shimmerStyle = {
-  background:
-    'linear-gradient(90deg, #8B6210, #c9942a, #ffe8a0, #c9942a, #8B6210)',
-  backgroundSize: '200% auto',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
+function CornerBracket({ style }) {
+  return (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      style={{ position: 'absolute', ...style }}
+    >
+      <path
+        d="M1 27 V5 Q1 1 5 1 H27"
+        fill="none"
+        stroke="var(--gold)"
+        strokeWidth="1.5"
+      />
+    </svg>
+  )
 }
 
 export default function HeroSlide() {
   return (
-    <section style={{ position: 'relative', height: '100svh' }}>
-      {/* Background photo */}
-      <img
-        src="/couple.jpg"
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          objectPosition: 'center 10%', // keeps faces visible on mobile!
-        }}
-      />
-      <div
+    <section
+      style={{
+        position: 'relative',
+        minHeight: '100svh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '32px 20px',
+        background:
+          'radial-gradient(120% 80% at 50% 0%, var(--blush) 0%, var(--cream) 55%)',
+        overflow: 'hidden',
+      }}
+    >
+      <PetalField count={10} seed={7} />
+
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        animate="visible"
         style={{
           position: 'relative',
           zIndex: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
+          background: 'rgba(255,252,246,0.9)',
+          borderRadius: '20px',
+          border: '1px solid rgba(201,148,42,0.35)',
+          boxShadow: '0 20px 45px rgba(90,40,20,0.12)',
+          padding: '40px 26px',
+          textAlign: 'center',
         }}
       >
-        {/* TOP — logo + subtitle */}
+        <CornerBracket style={{ top: -12, left: -12 }} />
+        <CornerBracket
+          style={{ top: -12, right: -12, transform: 'scaleX(-1)' }}
+        />
+        <CornerBracket
+          style={{ bottom: -12, left: -12, transform: 'scaleY(-1)' }}
+        />
+        <CornerBracket
+          style={{ bottom: -12, right: -12, transform: 'scale(-1,-1)' }}
+        />
+
         <motion.div
           variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          style={{ padding: '36px 24px 0', textAlign: 'center' }}
+          style={{
+            width: '54px',
+            height: '54px',
+            margin: '0 auto 18px',
+            borderRadius: '50%',
+            border: '1px solid var(--gold)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'var(--font-script)',
+            fontSize: '22px',
+            color: 'var(--gold)',
+          }}
         >
-          <div
+          B&amp;G
+        </motion.div>
+
+        <motion.p
+          variants={fadeUp}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontStyle: 'italic',
+            color: 'var(--text-medium)',
+            fontSize: '15px',
+            lineHeight: 1.6,
+            margin: '0 0 22px',
+          }}
+        >
+          Together with our families, we joyfully invite you to celebrate
+          the union of
+        </motion.p>
+
+        <motion.h1
+          variants={fadeUp}
+          style={{
+            fontSize: '42px',
+            color: 'var(--maroon)',
+            lineHeight: 1.15,
+          }}
+        >
+          Bride&rsquo;s Name
+        </motion.h1>
+
+        <motion.div
+          variants={fadeUp}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '14px',
+            margin: '10px 0',
+          }}
+        >
+          <span style={{ width: '36px', height: '1px', background: 'rgba(201,148,42,0.5)' }} />
+          <span
             style={{
-              width: '64px',
-              height: '64px',
-              margin: '0 auto 12px',
-              borderRadius: '50%',
-              border: '2px solid var(--gold)',
-              background: 'rgba(253,248,240,0.85)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: "'Great Vibes', cursive",
-              fontSize: '28px',
+              fontFamily: 'var(--font-script)',
+              fontSize: '26px',
               color: 'var(--gold)',
             }}
           >
-            B&G
-          </div>
-          <p
-            style={{
-              letterSpacing: '0.3em',
-              fontSize: '12px',
-              color: '#fff',
-              textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-              margin: 0,
-            }}
-          >
-            WE ARE GETTING MARRIED
-          </p>
+            &amp;
+          </span>
+          <span style={{ width: '36px', height: '1px', background: 'rgba(201,148,42,0.5)' }} />
         </motion.div>
 
-        {/* SPACER — couple faces visible here */}
-        <div style={{ flex: 1, minHeight: '180px' }} />
-
-        {/* BOTTOM — frosted glass block */}
-        <motion.div
-          variants={scaleIn}
-          initial="hidden"
-          animate="visible"
+        <motion.h1
+          variants={fadeUp}
           style={{
-            background: 'rgba(15,8,2,0.22)',
-            backdropFilter: 'blur(12px)',
-            borderRadius: '16px',
-            padding: '16px 24px 36px',
-            margin: '0 12px',
-            textAlign: 'center',
+            fontSize: '42px',
+            color: 'var(--maroon)',
+            lineHeight: 1.15,
+            marginBottom: '22px',
           }}
         >
-          <h1
-            style={{
-              ...shimmerStyle,
-              fontFamily: "'Great Vibes', cursive",
-              fontSize: '48px',
-              margin: 0,
-            }}
-          >
-            Bride's Name
-          </h1>
-          <p
-            style={{
-              color: '#fff',
-              letterSpacing: '0.2em',
-              margin: '4px 0',
-              fontSize: '14px',
-            }}
-          >
-            &amp;
-          </p>
-          <h1
-            style={{
-              ...shimmerStyle,
-              fontFamily: "'Great Vibes', cursive",
-              fontSize: '48px',
-              margin: 0,
-            }}
-          >
-            Groom's Name
-          </h1>
-          <p
-            style={{
-              color: '#f0e3c8',
-              fontFamily: "'Cormorant Garamond', serif",
-              fontStyle: 'italic',
-              marginTop: '10px',
-              fontSize: '15px',
-            }}
-          >
-            Together with our families, we invite you to celebrate our
-            wedding
-          </p>
-        </motion.div>
-      </div>
+          Groom&rsquo;s Name
+        </motion.h1>
+
+        <motion.p
+          variants={fadeUp}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '14px',
+            color: 'var(--text-medium)',
+          }}
+        >
+          Daughter of Mr. &amp; Mrs. Bride-Parents
+          <br />
+          Son of Mr. &amp; Mrs. Groom-Parents
+        </motion.p>
+      </motion.div>
+
+      <motion.div
+        animate={{ y: [0, 8, 0] }}
+        transition={{ repeat: Infinity, duration: 2 }}
+        style={{
+          position: 'absolute',
+          bottom: '18px',
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          fontSize: '11px',
+          letterSpacing: '0.3em',
+          color: 'var(--maroon)',
+          zIndex: 2,
+        }}
+      >
+        SCROLL TO SEE MORE
+      </motion.div>
     </section>
   )
 }
