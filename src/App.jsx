@@ -5,6 +5,8 @@ import HeroSlide from './components/HeroSlide'
 import CountdownSlide from './components/CountdownSlide'
 import EventSlide from './components/EventSlide'
 import FinalSlide from './components/FinalSlide'
+import SaveTheDateSlide from './components/SaveTheDateSlide'
+import { WEDDING_DATE_DISPLAY } from './weddingConfig'
 
 const EVENTS = [
   {
@@ -51,7 +53,7 @@ const EVENTS = [
     heading: 'The Wedding',
     headingColor: 'var(--maroon)',
     quote: 'The sacred vows to begin our forever.',
-    date: '12 December 2026',
+    date: WEDDING_DATE_DISPLAY,
     time: '--:-- PM onwards',
     venue: 'Venue Name, City',
     dressCode: 'Maroon · Gold · Ivory — traditional Indian',
@@ -144,6 +146,7 @@ function App() {
       {inviteOpen && (
         <main>
           <HeroSlide />
+          <SaveTheDateSlide />
           <CountdownSlide />
           {EVENTS.map((event) => (
             <EventSlide key={event.heading} {...event} />

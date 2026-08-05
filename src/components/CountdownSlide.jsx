@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { fadeUp, stagger } from '../animations'
 import { useCountdown } from '../hooks/useCountdown'
 import PetalField from './PetalField'
+import { WEDDING_DATE_ISO } from '../weddingConfig'
 
 const UNITS = [
   { key: 'days', label: 'Days' },
@@ -11,7 +12,7 @@ const UNITS = [
 ]
 
 export default function CountdownSlide() {
-  const { days, hours, minutes, seconds } = useCountdown('2026-12-12')
+  const { days, hours, minutes, seconds } = useCountdown(WEDDING_DATE_ISO)
   const values = { days, hours, minutes, seconds }
 
   return (

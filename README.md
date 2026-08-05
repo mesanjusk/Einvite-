@@ -1,9 +1,10 @@
 # Einvite — Digital Wedding Invite
 
 A React + Vite + Framer Motion wedding invite site in a maroon/gold/ivory
-palette: wax-seal envelope reveal, invitation card, live countdown, four
-event cards (Mehendi, Haldi, Haldi Dinner, Wedding), a photo keepsake
-section, background music, and a Vercel-ready deploy setup.
+palette: wax-seal envelope reveal, invitation card, scratch-to-reveal
+save-the-date cards with a confetti burst, live countdown, four event
+cards (Mehendi, Haldi, Haldi Dinner, Wedding), a photo keepsake section,
+background music, and a Vercel-ready deploy setup.
 
 ## Personalize it
 
@@ -13,8 +14,7 @@ are stand-ins — swap them for your own before sharing the link.
 | Find | Where | Replace with |
 |---|---|---|
 | `B&G`, `Bride's Name` / `Groom's Name`, parents' names | `src/components/EnvelopeIntro.jsx`, `src/components/HeroSlide.jsx` | Your initials, names, and parents' names |
-| `2026-12-12` | `src/components/CountdownSlide.jsx` | Your wedding date (`YYYY-MM-DD`) |
-| `12 · 12 · 2026` / `The Wedding` | `src/components/CountdownSlide.jsx` | Date written out |
+| `WEDDING_DATE_ISO`, `WEDDING_DATE_DISPLAY` | `src/weddingConfig.js` | Your wedding date — the scratch cards, countdown, and event date all derive from this |
 | `EVENTS` array (dates, times, venues, dress codes, `mapsUrl`) | `src/App.jsx` | Your actual event details |
 | `Bride & Groom` closing line | `src/components/FinalSlide.jsx` | Your names |
 | `public/couple.jpg` | — | Your photo (shown in the "Forever Us" keepsake card) |
