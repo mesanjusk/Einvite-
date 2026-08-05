@@ -139,10 +139,29 @@ Built and verified in this pass, in the order the original spec asked for:
 13. **Admin panel** — platform stats, user list.
 14. **Billing** — Stripe Checkout, billing portal, webhook-driven
     subscription sync.
+15. **Testing** — Vitest: schema validation, the AI provider fallback
+    chain (mocked fetch), theme CSS-var mapping, a component test, a
+    countdown-hook test with fake timers, and integration tests that run
+    the real server actions (`createInvitationAction`,
+    `publishInvitationAction`, `submitRsvpAction`, `deleteInvitationAction`)
+    against a real Postgres and assert on the resulting rows — including
+    slug-collision handling and the cross-user delete-authorization check.
 
-Testing (module 15 in the original spec) wasn't attempted — there's no
-test suite. Given the size of what's here, that's the most consequential
-gap if you're taking this toward production.
+## Testing
+
+```bash
+npm test          # runs once
+npm run test:watch
+```
+
+The integration suite (`src/lib/actions/*.integration.test.ts`) needs a
+reachable `DATABASE_URL` — same one your dev server uses — since it writes
+real rows and asserts on them, then cleans up in `afterAll`. Everything
+else runs in isolation with mocked fetch/auth.
+
+Admin theme/template CRUD (see below) and the drag-drop section builder
+don't have component tests yet — they're the newest code and the biggest
+remaining coverage gap.
 
 ## Security notes
 

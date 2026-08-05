@@ -14,6 +14,8 @@ import {
   Settings,
   CreditCard,
   ShieldCheck,
+  Paintbrush,
+  UserCog,
 } from "lucide-react";
 
 export type NavItem = {
@@ -41,4 +43,7 @@ export const dashboardNav: NavItem[] = [
 
 export const adminNav: NavItem[] = [
   { title: "Admin Panel", href: "/admin", icon: ShieldCheck },
+  { title: "Manage Themes", href: "/admin/themes", icon: Paintbrush },
+  { title: "Manage Music", href: "/admin/music", icon: Music },
+  { title: "Manage Users", href: "/admin/users", icon: UserCog },
 ];

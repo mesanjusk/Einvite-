@@ -1,0 +1,120 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { Pencil, Plus } from "lucide-react";
+
+import {
+  musicTrackFormSchema,
+  type MusicTrackFormInput,
+  type MusicTrackFormValues,
+} from "@/lib/validations/admin";
+import { upsertMusicTrackAction } from "@/lib/actions/admin";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+type MusicTrackRecord = {
+  id: string;
+  title: string;
+  artist: string | null;
+  url: string;
+  mood: string | null;
+  isPremium: boolean;
+};
+
+export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const form = useForm<MusicTrackFormValues, unknown, MusicTrackFormInput>({
+    resolver: zodResolver(musicTrackFormSchema),
+    defaultValues: {
+      id: track?.id,
+      title: track?.title ?? "",
+      artist: track?.artist ?? "",
+      url: track?.url ?? "",
+      mood: track?.mood ?? "",
+      isPremium: track?.isPremium ?? false,
+    },
+  });
+
+  async function onSubmit(values: MusicTrackFormInput) {
+    setLoading(true);
+    const result = await upsertMusicTrackAction(values);
+    setLoading(false);
+
+    if (!result.success) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(track ? "Track updated." : "Track added.");
+    setOpen(false);
+    router.refresh();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {track ? (
+          <Button variant="ghost" size="icon">
+            <Pencil className="size-4" />
+          </Button>
+        ) : (
+          <Button>
+            <Plus />
+            New track
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{track ? "Edit track" : "New track"}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+          <div className="grid gap-1.5">
+            <Label>Title</Label>
+            <Input {...form.register("title")} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Artist (optional)</Label>
+            <Input {...form.register("artist")} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>File URL or path</Label>
+            <Input placeholder="/music/romantic-instrumental.mp3" {...form.register("url")} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Mood (optional)</Label>
+            <Input placeholder="romantic, traditional, upbeat…" {...form.register("mood")} />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <Label>Premium track</Label>
+            <Switch
+              checked={form.watch("isPremium")}
+              onCheckedChange={(v) => form.setValue("isPremium", v)}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving…" : track ? "Save changes" : "Add track"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
