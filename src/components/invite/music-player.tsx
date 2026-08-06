@@ -10,13 +10,19 @@ export function MusicPlayer({ musicUrl, active }: { musicUrl: string | null; act
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [started, setStarted] = useState(false);
+  const [broken, setBroken] = useState(false);
 
   useEffect(() => {
     if (active && musicUrl && !started) {
-      audioRef.current = new Audio(musicUrl);
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
-      audioRef.current.play().catch(() => {});
+      const audio = new Audio(musicUrl);
+      audio.loop = true;
+      audio.volume = 0.3;
+      audio.addEventListener("error", () => setBroken(true));
+      // Autoplay can be blocked by the browser even though this fires from a
+      // tap (envelope open); that's not a broken file, so leave the button
+      // up — the click handler below retries play() from a direct gesture.
+      audio.play().catch(() => {});
+      audioRef.current = audio;
       setStarted(true);
     }
   }, [active, musicUrl, started]);
@@ -27,15 +33,21 @@ export function MusicPlayer({ musicUrl, active }: { musicUrl: string | null; act
     };
   }, []);
 
-  if (!musicUrl || !active) return null;
+  if (!musicUrl || !active || broken) return null;
 
   return (
     <button
       onClick={() => {
-        if (audioRef.current) {
-          audioRef.current.muted = !isMuted;
-          setIsMuted(!isMuted);
+        const audio = audioRef.current;
+        if (!audio) return;
+        if (audio.paused) {
+          audio.muted = false;
+          audio.play().catch(() => setBroken(true));
+          setIsMuted(false);
+          return;
         }
+        audio.muted = !isMuted;
+        setIsMuted(!isMuted);
       }}
       aria-label={isMuted ? t.unmuteMusic : t.muteMusic}
       className="fixed top-4 right-4 z-[99999] flex size-10 items-center justify-center rounded-full border backdrop-blur"

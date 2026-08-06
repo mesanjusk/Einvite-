@@ -191,9 +191,15 @@ export const THEMES = [
   },
 ];
 
-export const MUSIC_TRACKS = [
-  { title: "Romantic Instrumental", artist: "Studio Library", url: "/music/romantic-instrumental.mp3", mood: "romantic", isPremium: false },
-  { title: "Soft Piano Prelude", artist: "Studio Library", url: "/music/soft-piano-prelude.mp3", mood: "romantic", isPremium: false },
-  { title: "Traditional Shehnai", artist: "Studio Library", url: "/music/traditional-shehnai.mp3", mood: "traditional", isPremium: true },
-  { title: "Upbeat Celebration", artist: "Studio Library", url: "/music/upbeat-celebration.mp3", mood: "upbeat", isPremium: true },
-];
+// No bundled "Studio Library" tracks: shipping placeholder mp3 URLs with no
+// actual audio file behind them (the original state of this list) silently
+// breaks music for anyone who picks one — the button shows up but nothing
+// plays. Real tracks need real licensed audio files hosted somewhere; add
+// them via /admin/music with a working URL once you have one.
+export const MUSIC_TRACKS: {
+  title: string;
+  artist: string;
+  url: string;
+  mood: string;
+  isPremium: boolean;
+}[] = [];
