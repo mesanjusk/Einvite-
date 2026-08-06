@@ -38,6 +38,7 @@ type MusicTrackRecord = {
 export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
   const form = useForm<MusicTrackFormValues, unknown, MusicTrackFormInput>({
@@ -66,6 +67,30 @@ export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
     router.refresh();
   }
 
+  async function onFileSelected(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.set("file", file);
+      const res = await fetch("/api/admin/music/upload", { method: "POST", body });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Upload failed.");
+        return;
+      }
+      form.setValue("url", json.url);
+      if (!form.getValues("title")) {
+        form.setValue("title", file.name.replace(/\.[^.]+$/, ""));
+      }
+      toast.success("File uploaded — review the details below and save.");
+    } catch {
+      toast.error("Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -92,6 +117,16 @@ export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
           <div className="grid gap-1.5">
             <Label>Artist (optional)</Label>
             <Input {...form.register("artist")} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Upload an audio file (optional)</Label>
+            <Input
+              type="file"
+              accept="audio/*"
+              disabled={uploading}
+              onChange={(e) => onFileSelected(e.target.files?.[0])}
+            />
+            {uploading && <p className="text-muted-foreground text-xs">Uploading…</p>}
           </div>
           <div className="grid gap-1.5">
             <Label>File URL or path</Label>

@@ -65,6 +65,29 @@ export async function uploadImageBuffer(
   });
 }
 
+export async function uploadAudioBuffer(
+  buffer: Buffer,
+  options: { folder: string },
+) {
+  ensureConfigured();
+
+  return new Promise<{ url: string; publicId: string }>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      // Cloudinary has no dedicated "audio" resource type — audio files go
+      // through "video", which is also what lets it accept/serve mp3s.
+      { folder: options.folder, resource_type: "video" },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error("Cloudinary upload failed"));
+          return;
+        }
+        resolve({ url: result.secure_url, publicId: result.public_id });
+      },
+    );
+    uploadStream.end(buffer);
+  });
+}
+
 export async function deleteImage(publicId: string) {
   ensureConfigured();
   await cloudinary.uploader.destroy(publicId);
