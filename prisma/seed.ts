@@ -1,13 +1,11 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
+if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not set — cannot seed the database.");
 }
 
-const db = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+const db = new PrismaClient();
 
 const SECTION_ORDER = [
   "ENVELOPE",
@@ -249,9 +247,9 @@ async function main() {
   console.log("Seeding music library...");
   for (const track of MUSIC_TRACKS) {
     await db.musicTrack.upsert({
-      where: { id: track.title.toLowerCase().replace(/\s+/g, "-") },
+      where: { title: track.title },
       update: track,
-      create: { id: track.title.toLowerCase().replace(/\s+/g, "-"), ...track },
+      create: track,
     });
   }
 

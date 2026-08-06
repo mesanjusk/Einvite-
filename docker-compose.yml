@@ -1,17 +1,19 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: mongo:7
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: studio
-      POSTGRES_PASSWORD: studio
-      POSTGRES_DB: wedding_studio
+    command: ["--replSet", "rs0", "--bind_ip_all"]
     ports:
-      - "5432:5432"
+      - "27017:27017"
     volumes:
-      - studio_pgdata:/var/lib/postgresql/data
+      - studio_mongodata:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U studio -d wedding_studio"]
+      # Prisma's MongoDB connector requires the server to report itself as
+      # a replica set (even a single-node one) — this auto-initiates rs0
+      # on first boot and reports healthy once it's either already
+      # initiated or successfully just was.
+      test: >
+        mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }"
       interval: 5s
       timeout: 5s
       retries: 10
@@ -27,9 +29,9 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: "postgresql://studio:studio@db:5432/wedding_studio?schema=public"
+      DATABASE_URL: "mongodb://db:27017/wedding_studio?replicaSet=rs0"
     ports:
       - "3000:3000"
 
 volumes:
-  studio_pgdata:
+  studio_mongodata:

@@ -1,13 +1,14 @@
-// AI Wedding Invitation Studio — database schema
-// Run `npx prisma migrate dev` after setting DATABASE_URL to apply this.
+// AI Wedding Invitation Studio — database schema (MongoDB)
+// Run `npx prisma db push` after setting DATABASE_URL to apply this.
+// MongoDB is schema-less — there is no `prisma migrate`, only `db push`.
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 // ---------------------------------------------------------------------------
@@ -20,7 +21,7 @@ enum UserRole {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String    @unique
   emailVerified DateTime?
@@ -41,17 +42,17 @@ model User {
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -61,9 +62,9 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   sessionToken String   @unique
-  userId       String
+  userId       String   @db.ObjectId
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -72,6 +73,7 @@ model Session {
 }
 
 model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   identifier String
   token      String   @unique
   expires    DateTime
@@ -99,8 +101,8 @@ enum SubscriptionStatus {
 }
 
 model Subscription {
-  id                   String             @id @default(cuid())
-  userId               String             @unique
+  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String             @unique @db.ObjectId
   plan                 SubscriptionPlan   @default(FREE)
   status               SubscriptionStatus @default(ACTIVE)
   stripeCustomerId     String?            @unique
@@ -122,7 +124,7 @@ model Subscription {
 // ---------------------------------------------------------------------------
 
 model Theme {
-  id           String  @id @default(cuid())
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   slug         String  @unique
   description  String?
@@ -143,12 +145,12 @@ model Theme {
 }
 
 model Template {
-  id           String  @id @default(cuid())
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   slug         String  @unique
   description  String?
   previewImage String?
-  themeId      String
+  themeId      String  @db.ObjectId
   sectionOrder Json // default ordered list of SectionType strings
   isPremium    Boolean @default(false)
 
@@ -162,8 +164,8 @@ model Template {
 }
 
 model MusicTrack {
-  id         String  @id @default(cuid())
-  title      String
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  title      String  @unique
   artist     String?
   url        String
   durationMs Int?
@@ -199,8 +201,8 @@ enum InvitationLanguage {
 }
 
 model Invitation {
-  id     String           @id @default(cuid())
-  userId String
+  id     String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId String           @db.ObjectId
   slug   String           @unique
   status InvitationStatus @default(DRAFT)
 
@@ -215,15 +217,15 @@ model Invitation {
   venueName     String?
   venueAddress  String?
   googleMapsUrl String?
-  customMessage String?            @db.Text
+  customMessage String?
   language      InvitationLanguage @default(EN)
 
   // Design
-  themeId       String?
-  templateId    String?
+  themeId       String? @db.ObjectId
+  templateId    String? @db.ObjectId
   fontPairing   Json? // override of theme default, { display, body, script }
   colorPalette  Json? // override of theme default
-  musicTrackId  String?
+  musicTrackId  String? @db.ObjectId
   sectionConfig Json // [{ id, type, visible, locked, order }] — drives the drag-drop builder
 
   // AI + content
@@ -257,8 +259,8 @@ model Invitation {
 }
 
 model Event {
-  id            String   @id @default(cuid())
-  invitationId  String
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId  String   @db.ObjectId
   name          String // e.g. "Mehendi", "Haldi", "Wedding"
   date          DateTime
   time          String?
@@ -281,8 +283,8 @@ enum FamilySide {
 }
 
 model FamilyMember {
-  id           String     @id @default(cuid())
-  invitationId String
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId String     @db.ObjectId
   side         FamilySide
   relation     String // "Father", "Mother", "Sister", ...
   name         String
@@ -296,8 +298,8 @@ model FamilyMember {
 }
 
 model Guest {
-  id           String  @id @default(cuid())
-  invitationId String
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId String  @db.ObjectId
   name         String
   email        String?
   phone        String?
@@ -320,16 +322,16 @@ enum RsvpStatus {
 }
 
 model Rsvp {
-  id             String     @id @default(cuid())
-  invitationId   String
-  guestId        String?    @unique
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId   String     @db.ObjectId
+  guestId        String?    @unique @db.ObjectId
   guestName      String
   email          String?
   phone          String?
   status         RsvpStatus
   guestCount     Int        @default(1)
   foodPreference String?
-  comment        String?    @db.Text
+  comment        String?
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   guest      Guest?     @relation(fields: [guestId], references: [id], onDelete: SetNull)
@@ -347,8 +349,8 @@ enum MediaType {
 }
 
 model Media {
-  id           String    @id @default(cuid())
-  invitationId String
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId String    @db.ObjectId
   url          String
   cloudinaryId String?
   type         MediaType @default(IMAGE)
@@ -380,9 +382,9 @@ enum AnalyticsEventType {
 }
 
 model AnalyticsEvent {
-  id           String             @id @default(cuid())
-  invitationId String
-  userId       String?
+  id           String             @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId String             @db.ObjectId
+  userId       String?            @db.ObjectId
   type         AnalyticsEventType
   country      String?
   device       String? // "mobile" | "tablet" | "desktop"
@@ -411,14 +413,14 @@ enum DeploymentStatus {
 }
 
 model Deployment {
-  id              String           @id @default(cuid())
-  invitationId    String           @unique
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId    String           @unique @db.ObjectId
   status          DeploymentStatus @default(PENDING)
   url             String?
   customDomain    String?
   vercelProjectId String?
   vercelDeployId  String?
-  error           String?          @db.Text
+  error           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
