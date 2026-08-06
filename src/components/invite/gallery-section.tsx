@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
 import { fadeUp } from "@/lib/animation-variants";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { InviteMedia } from "./types";
 
 export function GallerySection({
@@ -16,6 +17,7 @@ export function GallerySection({
   storyHeadline: string;
   coverPhoto: string | null;
 }) {
+  const { t } = useLocale();
   const photo = coverPhoto ?? media[0]?.url;
   if (!photo) return null;
 
@@ -29,7 +31,7 @@ export function GallerySection({
       <RevealGroup className="relative z-[2] w-full">
         <Reveal variants={fadeUp}>
           <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
-            Our Story
+            {t.ourStory}
           </p>
         </Reveal>
         <Reveal variants={fadeUp}>

@@ -3,6 +3,7 @@
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { fadeUp } from "@/lib/animation-variants";
 import { trackInviteEvent } from "@/lib/analytics-client";
+import { useLocale } from "@/lib/i18n/locale-context";
 
 export function VenueSection({
   invitationId,
@@ -15,6 +16,7 @@ export function VenueSection({
   venueAddress: string | null;
   googleMapsUrl: string | null;
 }) {
+  const { t } = useLocale();
   return (
     <section
       className="relative flex min-h-[70svh] items-center justify-center px-6 py-12 text-center"
@@ -23,7 +25,7 @@ export function VenueSection({
       <RevealGroup className="w-full max-w-md">
         <Reveal variants={fadeUp}>
           <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
-            Venue
+            {t.venueLabel}
           </p>
         </Reveal>
         <Reveal variants={fadeUp}>
@@ -51,7 +53,7 @@ export function VenueSection({
               className="pill-button"
               style={{ background: "var(--inv-primary)", color: "var(--inv-background)" }}
             >
-              📍 OPEN IN GOOGLE MAPS
+              📍 {t.openInGoogleMaps}
             </a>
           </Reveal>
         )}

@@ -3,6 +3,7 @@
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { Sparkles } from "@/components/animation/sparkles";
 import { fadeUp } from "@/lib/animation-variants";
+import { useLocale } from "@/lib/i18n/locale-context";
 
 export function ThankYouSection({
   brideName,
@@ -13,6 +14,7 @@ export function ThankYouSection({
   groomName: string;
   hashtags?: string[];
 }) {
+  const { t } = useLocale();
   return (
     <section
       className="relative flex min-h-[60svh] flex-col items-center justify-center overflow-hidden px-7 py-12 text-center"
@@ -28,7 +30,7 @@ export function ThankYouSection({
             className="mb-4 text-[38px]"
             style={{ fontFamily: "var(--inv-font-script)", fontWeight: 400, color: "var(--inv-secondary)" }}
           >
-            With love, we can&apos;t wait to celebrate with you
+            {t.thankYouSectionHeading}
           </h2>
         </Reveal>
         <Reveal variants={fadeUp}>

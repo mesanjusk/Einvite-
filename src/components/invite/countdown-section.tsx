@@ -4,27 +4,28 @@ import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
 import { useCountdown } from "@/hooks/use-countdown";
 import { fadeUp } from "@/lib/animation-variants";
-
-const UNITS = [
-  { key: "days", label: "Days" },
-  { key: "hours", label: "Hours" },
-  { key: "minutes", label: "Mins" },
-  { key: "seconds", label: "Secs" },
-] as const;
+import { useLocale } from "@/lib/i18n/locale-context";
 
 export function CountdownSection({
   weddingDate,
-  quote = "A lifetime of togetherness begins with one sacred step",
+  quote,
 }: {
   weddingDate: Date;
   quote?: string;
 }) {
+  const { t, locale } = useLocale();
   const values = useCountdown(weddingDate);
-  const dateDisplay = weddingDate.toLocaleDateString("en-US", {
+  const dateDisplay = weddingDate.toLocaleDateString(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+  const UNITS = [
+    { key: "days", label: t.days },
+    { key: "hours", label: t.hours },
+    { key: "minutes", label: t.mins },
+    { key: "seconds", label: t.secs },
+  ] as const;
 
   return (
     <section
@@ -47,7 +48,7 @@ export function CountdownSection({
               className="mb-4 text-[15px]"
               style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", opacity: 0.75 }}
             >
-              {quote}
+              {quote ?? t.countdownQuoteDefault}
             </p>
           </Reveal>
 
@@ -56,7 +57,7 @@ export function CountdownSection({
               className="mb-3.5 text-[38px]"
               style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
             >
-              The Wedding
+              {t.theWedding}
             </h2>
           </Reveal>
 

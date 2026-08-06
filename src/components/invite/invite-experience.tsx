@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 
 import { ScrollProgress } from "@/components/animation/scroll-progress";
+import { LocaleProvider } from "@/lib/i18n/locale-context";
 import { EnvelopeSection } from "./envelope-section";
 import { HeroSection } from "./hero-section";
 import { CountdownSection } from "./countdown-section";
@@ -13,6 +14,7 @@ import { VenueSection } from "./venue-section";
 import { RsvpSection } from "./rsvp-section";
 import { ThankYouSection } from "./thank-you-section";
 import { MusicPlayer } from "./music-player";
+import { LanguageToggle } from "./language-toggle";
 import type { InviteData } from "./types";
 
 type SectionConfigEntry = {
@@ -43,8 +45,9 @@ export function InviteExperience({
   const initials = `${invite.brideName[0] ?? ""}${invite.groomName[0] ?? ""}`;
 
   return (
-    <>
+    <LocaleProvider>
       <ScrollProgress />
+      <LanguageToggle />
       <MusicPlayer musicUrl={invite.musicUrl} active={inviteOpen} />
 
       <AnimatePresence>
@@ -113,6 +116,6 @@ export function InviteExperience({
           })}
         </main>
       )}
-    </>
+    </LocaleProvider>
   );
 }

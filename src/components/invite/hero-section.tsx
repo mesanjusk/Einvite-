@@ -4,6 +4,8 @@ import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
 import { ShimmerText } from "@/components/animation/shimmer-text";
 import { fadeUp } from "@/lib/animation-variants";
+import { useLocale } from "@/lib/i18n/locale-context";
+import type { Translations } from "@/lib/i18n/dictionary";
 import type { InviteData, InviteFamilyMember } from "./types";
 
 function CornerBracket({ style }: { style: React.CSSProperties }) {
@@ -14,22 +16,20 @@ function CornerBracket({ style }: { style: React.CSSProperties }) {
   );
 }
 
-function parentsLine(members: InviteFamilyMember[], side: "BRIDE" | "GROOM") {
+function parentsLine(members: InviteFamilyMember[], side: "BRIDE" | "GROOM", t: Translations) {
   const parents = members.filter(
     (m) => m.side === side && /father|mother/i.test(m.relation),
   );
   if (parents.length === 0) return null;
-  return `${parents[0].relation.startsWith("F") ? "Son" : "Daughter"} of ${parents
-    .map((p) => p.name)
-    .join(" & ")}`;
+  const prefix = parents[0].relation.startsWith("F") ? t.sonOf : t.daughterOf;
+  return `${prefix} ${parents.map((p) => p.name).join(" & ")}`;
 }
 
 export function HeroSection({ invite }: { invite: InviteData }) {
-  const heroSubline =
-    invite.copy?.invitationLetter ??
-    "Together with our families, we joyfully invite you to celebrate our wedding.";
-  const brideLine = parentsLine(invite.familyMembers, "BRIDE");
-  const groomLine = parentsLine(invite.familyMembers, "GROOM");
+  const { t } = useLocale();
+  const heroSubline = invite.copy?.invitationLetter ?? t.invitationLetterDefault;
+  const brideLine = parentsLine(invite.familyMembers, "BRIDE", t);
+  const groomLine = parentsLine(invite.familyMembers, "GROOM", t);
 
   return (
     <section

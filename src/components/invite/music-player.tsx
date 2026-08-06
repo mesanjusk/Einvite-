@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
+import { useLocale } from "@/lib/i18n/locale-context";
+
 export function MusicPlayer({ musicUrl, active }: { musicUrl: string | null; active: boolean }) {
+  const { t } = useLocale();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [started, setStarted] = useState(false);
@@ -34,7 +37,7 @@ export function MusicPlayer({ musicUrl, active }: { musicUrl: string | null; act
           setIsMuted(!isMuted);
         }
       }}
-      aria-label={isMuted ? "Unmute music" : "Mute music"}
+      aria-label={isMuted ? t.unmuteMusic : t.muteMusic}
       className="fixed top-4 right-4 z-[99999] flex size-10 items-center justify-center rounded-full border backdrop-blur"
       style={{
         background: "color-mix(in srgb, var(--inv-primary) 85%, transparent)",

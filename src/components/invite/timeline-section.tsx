@@ -4,6 +4,7 @@ import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
 import { fadeUp, fadeLeft } from "@/lib/animation-variants";
 import { trackInviteEvent } from "@/lib/analytics-client";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { InviteEvent } from "./types";
 
 export function TimelineSection({
@@ -15,7 +16,8 @@ export function TimelineSection({
   seed: number;
   invitationId: string;
 }) {
-  const dateDisplay = event.date.toLocaleDateString("en-US", {
+  const { t, locale } = useLocale();
+  const dateDisplay = event.date.toLocaleDateString(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -62,10 +64,10 @@ export function TimelineSection({
               style={{ borderColor: "color-mix(in srgb, var(--inv-primary) 25%, transparent)" }}
             >
               {event.time && (
-                <Row label="Time" value={event.time} />
+                <Row label={t.timeLabel} value={event.time} />
               )}
-              {event.venueName && <Row label="Venue" value={event.venueName} />}
-              {event.dressCode && <Row label="Dress Code" value={event.dressCode} />}
+              {event.venueName && <Row label={t.venueLabel} value={event.venueName} />}
+              {event.dressCode && <Row label={t.dressCode} value={event.dressCode} />}
             </div>
           </Reveal>
 
@@ -79,7 +81,7 @@ export function TimelineSection({
                 className="pill-button mt-5 block"
                 style={{ background: accent, color: "var(--inv-background)" }}
               >
-                📍 GET DIRECTIONS
+                📍 {t.getDirections}
               </a>
             </Reveal>
           )}

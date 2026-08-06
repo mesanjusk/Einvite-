@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+import { useLocale } from "@/lib/i18n/locale-context";
+
 function Flourish({ style }: { style: React.CSSProperties }) {
   return (
     <svg width="120" height="90" viewBox="0 0 120 90" style={{ position: "absolute", opacity: 0.35, ...style }}>
@@ -27,6 +29,7 @@ export function EnvelopeSection({
   onComplete: () => void;
 }) {
   const [opened, setOpened] = useState(false);
+  const { t } = useLocale();
 
   useEffect(() => {
     if (typeof window !== "undefined" && sessionStorage.getItem(storageKey)) {
@@ -66,7 +69,7 @@ export function EnvelopeSection({
         style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-secondary)" }}
         className="mb-7 text-3xl"
       >
-        Tap to Reveal
+        {t.tapToReveal}
       </motion.p>
 
       <motion.div

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { fadeUp } from "@/lib/animation-variants";
 import { submitRsvpAction } from "@/lib/actions/rsvp";
+import { useLocale } from "@/lib/i18n/locale-context";
 import {
   rsvpSubmissionSchema,
   type RsvpSubmissionInput,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/select";
 
 export function RsvpSection({ invitationId }: { invitationId: string }) {
+  const { t } = useLocale();
   const [submitted, setSubmitted] = useState(false);
 
   const form = useForm<RsvpSubmissionFormValues, unknown, RsvpSubmissionInput>({
@@ -59,13 +61,13 @@ export function RsvpSection({ invitationId }: { invitationId: string }) {
       <RevealGroup className="w-full max-w-md">
         <Reveal variants={fadeUp} className="mb-8 text-center">
           <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
-            RSVP
+            {t.rsvpEyebrow}
           </p>
           <h2
             className="mt-1.5 text-4xl"
             style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
           >
-            Will you join us?
+            {t.willYouJoin}
           </h2>
         </Reveal>
 
@@ -76,9 +78,9 @@ export function RsvpSection({ invitationId }: { invitationId: string }) {
               style={{ borderColor: "color-mix(in srgb, var(--inv-accent) 30%, transparent)" }}
             >
               <p style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }} className="text-2xl">
-                Thank you!
+                {t.rsvpThankYou}
               </p>
-              <p className="mt-2 text-sm opacity-70">Your response has been recorded.</p>
+              <p className="mt-2 text-sm opacity-70">{t.yourResponseRecorded}</p>
             </div>
           ) : (
             <form
@@ -87,22 +89,22 @@ export function RsvpSection({ invitationId }: { invitationId: string }) {
               style={{ borderColor: "color-mix(in srgb, var(--inv-accent) 30%, transparent)" }}
             >
               <div className="grid gap-1.5">
-                <Label>Full name</Label>
+                <Label>{t.fullName}</Label>
                 <Input {...form.register("guestName")} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
-                  <Label>Email (optional)</Label>
+                  <Label>{t.emailOptional}</Label>
                   <Input type="email" {...form.register("email")} />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>Phone (optional)</Label>
+                  <Label>{t.phoneOptional}</Label>
                   <Input {...form.register("phone")} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
-                  <Label>Will you attend?</Label>
+                  <Label>{t.willYouAttend}</Label>
                   <Select
                     value={form.watch("status")}
                     onValueChange={(v) =>
@@ -113,23 +115,23 @@ export function RsvpSection({ invitationId }: { invitationId: string }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ACCEPTED">Joyfully accept</SelectItem>
-                      <SelectItem value="MAYBE">Maybe</SelectItem>
-                      <SelectItem value="DECLINED">Regretfully decline</SelectItem>
+                      <SelectItem value="ACCEPTED">{t.joyfullyAccept}</SelectItem>
+                      <SelectItem value="MAYBE">{t.maybeOption}</SelectItem>
+                      <SelectItem value="DECLINED">{t.regretfullyDecline}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>Guests</Label>
+                  <Label>{t.guestsLabel}</Label>
                   <Input type="number" min={1} max={20} {...form.register("guestCount")} />
                 </div>
               </div>
               <div className="grid gap-1.5">
-                <Label>Food preference (optional)</Label>
-                <Input placeholder="Veg, non-veg, vegan…" {...form.register("foodPreference")} />
+                <Label>{t.foodPreference}</Label>
+                <Input placeholder={t.foodPlaceholder} {...form.register("foodPreference")} />
               </div>
               <div className="grid gap-1.5">
-                <Label>Message (optional)</Label>
+                <Label>{t.messageOptional}</Label>
                 <Textarea rows={3} {...form.register("comment")} />
               </div>
               <button
@@ -138,7 +140,7 @@ export function RsvpSection({ invitationId }: { invitationId: string }) {
                 className="pill-button mt-2"
                 style={{ background: "var(--inv-primary)", color: "var(--inv-background)" }}
               >
-                {form.formState.isSubmitting ? "Sending…" : "Send RSVP"}
+                {form.formState.isSubmitting ? t.sending : t.sendRsvp}
               </button>
             </form>
           )}
