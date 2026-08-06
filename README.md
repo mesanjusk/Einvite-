@@ -29,12 +29,11 @@ missing; each feature says plainly in the UI when it isn't configured yet.
 | Billing (Stripe Checkout + portal + webhook) | Needs `STRIPE_*` env vars. Webhook handler is real (subscription upsert on `checkout.session.completed`, status sync on `customer.subscription.updated/deleted`). |
 | Custom domains | Needs `VERCEL_API_TOKEN` + `VERCEL_PROJECT_ID` (calls the real Vercel Domains API). |
 | Analytics | Views, shares, RSVP submits, device type, and map-link clicks are real, recorded server-side. Country geolocation and click-heatmaps are **not built** — they need a geo-IP service and a client-side event pipeline beyond this pass. |
+| Section builder (`/dashboard/builder`) | **Works today.** Drag-reorder (`@dnd-kit`), hide, lock, duplicate, delete, undo/redo (Zustand), live device preview, save to `Invitation.sectionConfig` — verified end-to-end against a real Postgres, including the locked-section guard. |
+| Admin CRUD (`/admin/themes`, `/admin/music`, `/admin/users`) | **Works today.** Create/edit/delete themes (colors, fonts, default section order) and music tracks, promote/demote user roles — no longer seed-script-only. |
 
-**Not attempted in this pass** (flagged rather than stubbed): a visual
-drag-and-drop section builder (the section order/visibility model exists in
-the schema — `Invitation.sectionConfig` — but there's no drag-drop UI over
-it yet), admin-side theme/template CRUD (themes are seeded via
-`prisma/seed.ts`, not editable in `/admin` yet), and automated tests.
+**Not attempted in this pass**: real-time collaborative editing, and a
+visual regression / e2e (Playwright) test layer on top of the Vitest suite.
 
 ## Tech stack
 
@@ -136,16 +135,25 @@ Built and verified in this pass, in the order the original spec asked for:
     metadata.
 12. **Deployment** — publish flow, QR code, share links, Vercel custom
     domain API integration.
-13. **Admin panel** — platform stats, user list.
+13. **Admin panel** — platform stats, user list, plus full theme/music/user
+    CRUD at `/admin/themes`, `/admin/music`, `/admin/users`.
 14. **Billing** — Stripe Checkout, billing portal, webhook-driven
     subscription sync.
 15. **Testing** — Vitest: schema validation, the AI provider fallback
-    chain (mocked fetch), theme CSS-var mapping, a component test, a
-    countdown-hook test with fake timers, and integration tests that run
-    the real server actions (`createInvitationAction`,
-    `publishInvitationAction`, `submitRsvpAction`, `deleteInvitationAction`)
-    against a real Postgres and assert on the resulting rows — including
-    slug-collision handling and the cross-user delete-authorization check.
+    chain (mocked fetch), theme CSS-var mapping, component tests, a
+    countdown-hook test with fake timers, the builder store's undo/redo/
+    lock logic, a `db.ts` resilience test (see the security note on the
+    build-time fix below), and integration tests that run the real server
+    actions (`createInvitationAction`, `publishInvitationAction`,
+    `submitRsvpAction`, `deleteInvitationAction`) against a real Postgres
+    and assert on the resulting rows — including slug-collision handling
+    and the cross-user delete-authorization check.
+16. **Section builder** — `/dashboard/builder`: drag-reorder (`@dnd-kit`),
+    hide/lock/duplicate/delete, undo/redo (Zustand), live device preview
+    reusing the same `InviteExperience` the public page renders, saved to
+    `Invitation.sectionConfig`. Verified in-browser end to end, including
+    that a locked section's hide/delete/drag are actually disabled and
+    that the saved layout round-trips through Postgres correctly.
 
 ## Testing
 
@@ -157,11 +165,7 @@ npm run test:watch
 The integration suite (`src/lib/actions/*.integration.test.ts`) needs a
 reachable `DATABASE_URL` — same one your dev server uses — since it writes
 real rows and asserts on them, then cleans up in `afterAll`. Everything
-else runs in isolation with mocked fetch/auth.
-
-Admin theme/template CRUD (see below) and the drag-drop section builder
-don't have component tests yet — they're the newest code and the biggest
-remaining coverage gap.
+else runs in isolation with mocked fetch/auth/env.
 
 ## Security notes
 
@@ -173,3 +177,27 @@ remaining coverage gap.
 - RSVP submission is intentionally open (no auth) since guests don't have
   accounts — it's rate-limited by nothing right now; add rate limiting
   before exposing a high-traffic invitation publicly.
+- `src/lib/db.ts` used to construct the Prisma client eagerly at module
+  scope, which crashed the *entire* build the moment `DATABASE_URL` was
+  missing — Next's build-time route introspection imports every route
+  module, including ones that never touch the database. `db` is now a
+  Proxy that defers construction to the first real query and rejects
+  (rather than throws synchronously) when unconfigured, so both
+  try/catch and `.catch()` chains work as callers expect. Covered by
+  `src/lib/db.test.ts`.
+
+## Deploying to Vercel
+
+1. Provision Postgres (this project only supports Postgres — Prisma 7 has
+   no MongoDB connector, and there's no upgrade path from Mongo to bring
+   one in). Vercel Postgres, Neon, and Supabase all work and give you a
+   connection string in about a minute.
+2. Set `DATABASE_URL` (and `AUTH_SECRET` — `openssl rand -base64 32`) in
+   your Vercel project's environment variables. Everything else in
+   `.env.example` is optional; features degrade gracefully without it.
+3. From your machine, point `DATABASE_URL` at that same database and run
+   `npm run db:push && npm run db:seed` once, so the dashboard has themes
+   and music to show.
+4. Deploy. The build no longer requires a database connection to succeed
+   (see the `db.ts` note above), but the app won't be useful until step 3
+   is done against the database it's actually running against.

@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Paintbrush,
   UserCog,
+  LayoutGrid,
 } from "lucide-react";
 
 export type NavItem = {
@@ -36,6 +37,7 @@ export const dashboardNav: NavItem[] = [
   { title: "RSVP", href: "/dashboard/rsvp", icon: ClipboardCheck },
   { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { title: "Theme Editor", href: "/dashboard/theme-editor", icon: Palette },
+  { title: "Section Builder", href: "/dashboard/builder", icon: LayoutGrid },
   { title: "Deploy", href: "/dashboard/deploy", icon: Rocket },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
   { title: "Billing", href: "/dashboard/billing", icon: CreditCard },

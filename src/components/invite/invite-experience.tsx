@@ -27,11 +27,14 @@ const EVENT_SEEDS = [3, 11, 17, 23, 29, 37];
 export function InviteExperience({
   invite,
   sectionConfig,
+  skipEnvelope = false,
 }: {
   invite: InviteData;
   sectionConfig: SectionConfigEntry[];
+  /** Preview contexts (the builder) don't want to re-tap the envelope on every edit. */
+  skipEnvelope?: boolean;
 }) {
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(skipEnvelope);
 
   const visibleSections = [...sectionConfig]
     .filter((s) => s.visible)
