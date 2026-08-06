@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getAppUrl } from "@/lib/app-url";
 import { isVercelConfigured } from "@/lib/vercel";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { PublishButton } from "@/components/dashboard/publish-button";
@@ -49,7 +50,7 @@ export default async function DeployPage({
   });
   if (!invitation) return null;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = getAppUrl();
   const liveUrl = invitation.deployment?.customDomain
     ? `https://${invitation.deployment.customDomain}`
     : `${appUrl}/invite/${invitation.slug}`;

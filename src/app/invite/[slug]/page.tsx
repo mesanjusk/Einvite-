@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { getAppUrl } from "@/lib/app-url";
 import { getInvitationBySlug, toInviteRenderData } from "@/lib/get-invite-data";
 import { InviteExperience } from "@/components/invite/invite-experience";
 
@@ -25,7 +26,7 @@ export async function generateMetadata({
     `Join us as we celebrate our wedding.${
       invitation.venueName ? ` ${invitation.venueName}.` : ""
     }`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = getAppUrl();
   const ogImage = invitation.ogImageUrl ?? `${appUrl}/invite/${slug}/opengraph-image`;
 
   return {

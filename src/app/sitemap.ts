@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
 
 import { db } from "@/lib/db";
+import { getAppUrl } from "@/lib/app-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   const invitations = await db.invitation
     .findMany({

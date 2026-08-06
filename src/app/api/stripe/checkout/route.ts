@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getAppUrl } from "@/lib/app-url";
 import { getStripeClient, isStripeConfigured, PLAN_PRICE_IDS } from "@/lib/stripe";
 
 const bodySchema = z.object({ plan: z.enum(["PRO", "PREMIUM"]) });
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
   }
 
   const stripe = getStripeClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   const subscription = await db.subscription.findUnique({
     where: { userId: session.user.id },
