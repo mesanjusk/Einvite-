@@ -12,18 +12,26 @@ function secretMatches(provided: string, expected: string) {
   return timingSafeEqual(a, b);
 }
 
+// No auth is required for the normal path: this only ever writes when the
+// theme collection is empty, so the first visitor seeds the database and
+// every visitor after that gets a no-op. SEED_SECRET is an optional escape
+// hatch for deliberately re-running the seed later (e.g. after editing
+// src/lib/seed-data.ts) once the database is no longer empty.
 export async function GET(request: NextRequest) {
-  const expected = process.env.SEED_SECRET;
-  if (!expected) {
-    return NextResponse.json(
-      { error: "SEED_SECRET is not configured on this deployment." },
-      { status: 503 },
-    );
-  }
+  const existingThemes = await db.theme.count();
 
-  const provided = request.nextUrl.searchParams.get("secret") ?? "";
-  if (!secretMatches(provided, expected)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (existingThemes > 0) {
+    const secret = process.env.SEED_SECRET;
+    const provided = request.nextUrl.searchParams.get("secret") ?? "";
+    const forced = Boolean(secret) && secretMatches(provided, secret!);
+
+    if (!forced) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        message: "Database already has themes — nothing to do.",
+      });
+    }
   }
 
   const result = await runSeed(db);
