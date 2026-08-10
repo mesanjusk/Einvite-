@@ -107,7 +107,7 @@ export default async function DashboardOverviewPage() {
                     {invitation._count.rsvps} RSVPs
                   </span>
                   <Link
-                    href={`/dashboard/invitations/${invitation.id}`}
+                    href={`/dashboard/builder?invitationId=${invitation.id}`}
                     className="text-primary text-sm underline underline-offset-4"
                   >
                     Edit
