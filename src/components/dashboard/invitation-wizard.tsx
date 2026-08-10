@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ import {
 type Theme = {
   slug: string;
   name: string;
+  category: string;
   isPremium: boolean;
   colorPalette: { primary: string; accent: string };
 };
@@ -38,6 +40,14 @@ type Theme = {
 type MusicTrack = { id: string; title: string; mood: string | null };
 
 const STEPS = ["Couple", "Venue", "Events", "Design", "Review"] as const;
+
+const CATEGORY_TABS = [
+  { value: "all", label: "All" },
+  { value: "traditional", label: "Traditional" },
+  { value: "modern", label: "Modern" },
+  { value: "fusion", label: "Fusion" },
+  { value: "minimal", label: "Minimal" },
+] as const;
 
 const STEP_FIELDS: Record<number, (keyof InvitationWizardFormValues)[]> = {
   0: ["brideName", "groomName", "weddingDate", "language"],
@@ -56,7 +66,15 @@ export function InvitationWizard({
 }) {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [themeCategory, setThemeCategory] = useState<(typeof CATEGORY_TABS)[number]["value"]>(
+    "all",
+  );
   const router = useRouter();
+
+  const visibleThemes = useMemo(
+    () => (themeCategory === "all" ? themes : themes.filter((t) => t.category === themeCategory)),
+    [themes, themeCategory],
+  );
 
   const form = useForm<InvitationWizardFormValues, unknown, InvitationWizardInput>({
     resolver: zodResolver(invitationWizardSchema),
@@ -246,8 +264,21 @@ export function InvitationWizard({
             {step === 3 && (
               <>
                 <Field label="Theme">
+                  <Tabs
+                    value={themeCategory}
+                    onValueChange={(v) => setThemeCategory(v as typeof themeCategory)}
+                    className="mb-3"
+                  >
+                    <TabsList>
+                      {CATEGORY_TABS.map((tab) => (
+                        <TabsTrigger key={tab.value} value={tab.value}>
+                          {tab.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {themes.map((theme) => {
+                    {visibleThemes.map((theme) => {
                       const selected = form.watch("themeSlug") === theme.slug;
                       return (
                         <button

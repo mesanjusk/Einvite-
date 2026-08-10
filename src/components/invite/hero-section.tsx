@@ -25,7 +25,13 @@ function parentsLine(members: InviteFamilyMember[], side: "BRIDE" | "GROOM", t: 
   return `${prefix} ${parents.map((p) => p.name).join(" & ")}`;
 }
 
-export function HeroSection({ invite }: { invite: InviteData }) {
+export function HeroSection({
+  invite,
+  guestName,
+}: {
+  invite: InviteData;
+  guestName?: string | null;
+}) {
   const { t } = useLocale();
   const heroSubline = invite.copy?.invitationLetter ?? t.invitationLetterDefault;
   const brideLine = parentsLine(invite.familyMembers, "BRIDE", t);
@@ -68,6 +74,17 @@ export function HeroSection({ invite }: { invite: InviteData }) {
               {invite.groomName[0]}
             </div>
           </Reveal>
+
+          {guestName && (
+            <Reveal variants={fadeUp}>
+              <p
+                className="mb-3 text-xs tracking-[0.25em] uppercase"
+                style={{ color: "var(--inv-accent)" }}
+              >
+                {t.dearGuestPrefix} {guestName}
+              </p>
+            </Reveal>
+          )}
 
           <Reveal variants={fadeUp}>
             <p

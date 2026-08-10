@@ -37,6 +37,16 @@ export interface Translations {
   thankYouSectionHeading: string;
   unmuteMusic: string;
   muteMusic: string;
+  guestNamePromptEyebrow: string;
+  guestNamePromptTitle: string;
+  guestNamePromptPlaceholder: string;
+  guestNamePromptCta: string;
+  guestNamePromptSkip: string;
+  dearGuestPrefix: string;
+  shareInvite: string;
+  copyLink: string;
+  linkCopied: string;
+  shareOnWhatsApp: string;
 }
 
 const en: Translations = {
@@ -76,6 +86,16 @@ const en: Translations = {
   thankYouSectionHeading: "With love, we can't wait to celebrate with you",
   unmuteMusic: "Unmute music",
   muteMusic: "Mute music",
+  guestNamePromptEyebrow: "You're Invited",
+  guestNamePromptTitle: "Who's celebrating with us?",
+  guestNamePromptPlaceholder: "Enter your name",
+  guestNamePromptCta: "Open Invitation",
+  guestNamePromptSkip: "Continue without a name",
+  dearGuestPrefix: "Dear",
+  shareInvite: "Share Invitation",
+  copyLink: "Copy link",
+  linkCopied: "Link copied!",
+  shareOnWhatsApp: "Share on WhatsApp",
 };
 
 const hi: Translations = {
@@ -115,6 +135,16 @@ const hi: Translations = {
   thankYouSectionHeading: "स्नेह सहित, हम आपके साथ उत्सव मनाने के लिए उत्सुक हैं",
   unmuteMusic: "संगीत चालू करें",
   muteMusic: "संगीत बंद करें",
+  guestNamePromptEyebrow: "आप आमंत्रित हैं",
+  guestNamePromptTitle: "हमारे साथ कौन जश्न मना रहा है?",
+  guestNamePromptPlaceholder: "अपना नाम दर्ज करें",
+  guestNamePromptCta: "आमंत्रण खोलें",
+  guestNamePromptSkip: "बिना नाम के जारी रखें",
+  dearGuestPrefix: "प्रिय",
+  shareInvite: "आमंत्रण साझा करें",
+  copyLink: "लिंक कॉपी करें",
+  linkCopied: "लिंक कॉपी हो गया!",
+  shareOnWhatsApp: "व्हाट्सएप पर साझा करें",
 };
 
 const mr: Translations = {
@@ -154,6 +184,16 @@ const mr: Translations = {
   thankYouSectionHeading: "प्रेमासह, तुमच्यासोबत सोहळा साजरा करण्यास आम्ही उत्सुक आहोत",
   unmuteMusic: "संगीत सुरू करा",
   muteMusic: "संगीत बंद करा",
+  guestNamePromptEyebrow: "तुम्हाला आमंत्रण आहे",
+  guestNamePromptTitle: "आमच्यासोबत कोण सोहळा साजरा करत आहे?",
+  guestNamePromptPlaceholder: "तुमचे नाव टाका",
+  guestNamePromptCta: "आमंत्रण उघडा",
+  guestNamePromptSkip: "नावाशिवाय पुढे जा",
+  dearGuestPrefix: "प्रिय",
+  shareInvite: "आमंत्रण शेअर करा",
+  copyLink: "लिंक कॉपी करा",
+  linkCopied: "लिंक कॉपी झाली!",
+  shareOnWhatsApp: "व्हॉट्सअॅपवर शेअर करा",
 };
 
 const gu: Translations = {
@@ -193,6 +233,16 @@ const gu: Translations = {
   thankYouSectionHeading: "પ્રેમ સાથે, અમે તમારી સાથે ઉજવણી કરવા આતુર છીએ",
   unmuteMusic: "સંગીત ચાલુ કરો",
   muteMusic: "સંગીત બંધ કરો",
+  guestNamePromptEyebrow: "તમને આમંત્રણ છે",
+  guestNamePromptTitle: "અમારી સાથે કોણ ઉજવણી કરી રહ્યું છે?",
+  guestNamePromptPlaceholder: "તમારું નામ દાખલ કરો",
+  guestNamePromptCta: "આમંત્રણ ખોલો",
+  guestNamePromptSkip: "નામ વગર આગળ વધો",
+  dearGuestPrefix: "પ્રિય",
+  shareInvite: "આમંત્રણ શેર કરો",
+  copyLink: "લિંક કૉપિ કરો",
+  linkCopied: "લિંક કૉપિ થઈ!",
+  shareOnWhatsApp: "વોટ્સએપ પર શેર કરો",
 };
 
 const pa: Translations = {
@@ -232,6 +282,16 @@ const pa: Translations = {
   thankYouSectionHeading: "ਪਿਆਰ ਨਾਲ, ਅਸੀਂ ਤੁਹਾਡੇ ਨਾਲ ਜਸ਼ਨ ਮਨਾਉਣ ਲਈ ਉਤਸੁਕ ਹਾਂ",
   unmuteMusic: "ਸੰਗੀਤ ਚਾਲੂ ਕਰੋ",
   muteMusic: "ਸੰਗੀਤ ਬੰਦ ਕਰੋ",
+  guestNamePromptEyebrow: "ਤੁਹਾਨੂੰ ਸੱਦਾ ਹੈ",
+  guestNamePromptTitle: "ਸਾਡੇ ਨਾਲ ਕੌਣ ਜਸ਼ਨ ਮਨਾ ਰਿਹਾ ਹੈ?",
+  guestNamePromptPlaceholder: "ਆਪਣਾ ਨਾਮ ਦਰਜ ਕਰੋ",
+  guestNamePromptCta: "ਸੱਦਾ ਖੋਲ੍ਹੋ",
+  guestNamePromptSkip: "ਨਾਮ ਤੋਂ ਬਿਨਾਂ ਜਾਰੀ ਰੱਖੋ",
+  dearGuestPrefix: "ਪਿਆਰੇ",
+  shareInvite: "ਸੱਦਾ ਸਾਂਝਾ ਕਰੋ",
+  copyLink: "ਲਿੰਕ ਕਾਪੀ ਕਰੋ",
+  linkCopied: "ਲਿੰਕ ਕਾਪੀ ਹੋ ਗਿਆ!",
+  shareOnWhatsApp: "ਵਟਸਐਪ 'ਤੇ ਸਾਂਝਾ ਕਰੋ",
 };
 
 const bn: Translations = {
@@ -271,6 +331,16 @@ const bn: Translations = {
   thankYouSectionHeading: "ভালোবাসা সহ, আমরা আপনার সাথে উদযাপন করতে মুখিয়ে আছি",
   unmuteMusic: "গান চালু করুন",
   muteMusic: "গান বন্ধ করুন",
+  guestNamePromptEyebrow: "আপনি আমন্ত্রিত",
+  guestNamePromptTitle: "আমাদের সাথে কে উদযাপন করছেন?",
+  guestNamePromptPlaceholder: "আপনার নাম লিখুন",
+  guestNamePromptCta: "আমন্ত্রণ খুলুন",
+  guestNamePromptSkip: "নাম ছাড়াই এগিয়ে যান",
+  dearGuestPrefix: "প্রিয়",
+  shareInvite: "আমন্ত্রণ শেয়ার করুন",
+  copyLink: "লিংক কপি করুন",
+  linkCopied: "লিংক কপি হয়েছে!",
+  shareOnWhatsApp: "হোয়াটসঅ্যাপে শেয়ার করুন",
 };
 
 const ta: Translations = {
@@ -310,6 +380,16 @@ const ta: Translations = {
   thankYouSectionHeading: "அன்புடன், உங்களுடன் கொண்டாட காத்திருக்கிறோம்",
   unmuteMusic: "இசையை இயக்கு",
   muteMusic: "இசையை நிறுத்து",
+  guestNamePromptEyebrow: "நீங்கள் அழைக்கப்பட்டுள்ளீர்கள்",
+  guestNamePromptTitle: "எங்களுடன் யார் கொண்டாடுகிறார்கள்?",
+  guestNamePromptPlaceholder: "உங்கள் பெயரை உள்ளிடவும்",
+  guestNamePromptCta: "அழைப்பிதழைத் திற",
+  guestNamePromptSkip: "பெயர் இல்லாமல் தொடரவும்",
+  dearGuestPrefix: "அன்பான",
+  shareInvite: "அழைப்பிதழைப் பகிரவும்",
+  copyLink: "இணைப்பை நகலெடு",
+  linkCopied: "இணைப்பு நகலெடுக்கப்பட்டது!",
+  shareOnWhatsApp: "வாட்ஸ்அப்பில் பகிரவும்",
 };
 
 const te: Translations = {
@@ -349,6 +429,16 @@ const te: Translations = {
   thankYouSectionHeading: "ప్రేమతో, మీతో కలిసి వేడుక చేసుకోవడానికి ఎదురుచూస్తున్నాము",
   unmuteMusic: "సంగీతం ఆన్ చేయండి",
   muteMusic: "సంగీతం ఆఫ్ చేయండి",
+  guestNamePromptEyebrow: "మీరు ఆహ్వానించబడ్డారు",
+  guestNamePromptTitle: "మాతో ఎవరు జరుపుకుంటున్నారు?",
+  guestNamePromptPlaceholder: "మీ పేరు నమోదు చేయండి",
+  guestNamePromptCta: "ఆహ్వానం తెరవండి",
+  guestNamePromptSkip: "పేరు లేకుండా కొనసాగించండి",
+  dearGuestPrefix: "ప్రియమైన",
+  shareInvite: "ఆహ్వానం షేర్ చేయండి",
+  copyLink: "లింక్ కాపీ చేయండి",
+  linkCopied: "లింక్ కాపీ అయ్యింది!",
+  shareOnWhatsApp: "వాట్సాప్‌లో షేర్ చేయండి",
 };
 
 const kn: Translations = {
@@ -388,6 +478,16 @@ const kn: Translations = {
   thankYouSectionHeading: "ಪ್ರೀತಿಯಿಂದ, ನಿಮ್ಮೊಂದಿಗೆ ಆಚರಿಸಲು ನಾವು ಎದುರುನೋಡುತ್ತಿದ್ದೇವೆ",
   unmuteMusic: "ಸಂಗೀತ ಆನ್ ಮಾಡಿ",
   muteMusic: "ಸಂಗೀತ ಆಫ್ ಮಾಡಿ",
+  guestNamePromptEyebrow: "ನಿಮಗೆ ಆಹ್ವಾನವಿದೆ",
+  guestNamePromptTitle: "ನಮ್ಮೊಂದಿಗೆ ಯಾರು ಆಚರಿಸುತ್ತಿದ್ದಾರೆ?",
+  guestNamePromptPlaceholder: "ನಿಮ್ಮ ಹೆಸರನ್ನು ನಮೂದಿಸಿ",
+  guestNamePromptCta: "ಆಹ್ವಾನ ತೆರೆಯಿರಿ",
+  guestNamePromptSkip: "ಹೆಸರಿಲ್ಲದೆ ಮುಂದುವರಿಸಿ",
+  dearGuestPrefix: "ಪ್ರಿಯ",
+  shareInvite: "ಆಹ್ವಾನ ಹಂಚಿಕೊಳ್ಳಿ",
+  copyLink: "ಲಿಂಕ್ ನಕಲಿಸಿ",
+  linkCopied: "ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ!",
+  shareOnWhatsApp: "ವಾಟ್ಸಾಪ್‌ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ",
 };
 
 const ml: Translations = {
@@ -427,6 +527,16 @@ const ml: Translations = {
   thankYouSectionHeading: "സ്നേഹത്തോടെ, നിങ്ങളോടൊപ്പം ആഘോഷിക്കാൻ ഞങ്ങൾ കാത്തിരിക്കുന്നു",
   unmuteMusic: "സംഗീതം ഓണാക്കുക",
   muteMusic: "സംഗീതം ഓഫാക്കുക",
+  guestNamePromptEyebrow: "നിങ്ങൾ ക്ഷണിക്കപ്പെട്ടിരിക്കുന്നു",
+  guestNamePromptTitle: "ഞങ്ങളോടൊപ്പം ആരാണ് ആഘോഷിക്കുന്നത്?",
+  guestNamePromptPlaceholder: "നിങ്ങളുടെ പേര് നൽകുക",
+  guestNamePromptCta: "ക്ഷണക്കത്ത് തുറക്കുക",
+  guestNamePromptSkip: "പേരില്ലാതെ തുടരുക",
+  dearGuestPrefix: "പ്രിയപ്പെട്ട",
+  shareInvite: "ക്ഷണക്കത്ത് പങ്കിടുക",
+  copyLink: "ലിങ്ക് പകർത്തുക",
+  linkCopied: "ലിങ്ക് പകർത്തി!",
+  shareOnWhatsApp: "വാട്സ്ആപ്പിൽ പങ്കിടുക",
 };
 
 export const TRANSLATIONS: Record<LanguageCode, Translations> = { en, hi, mr, gu, pa, bn, ta, te, kn, ml };

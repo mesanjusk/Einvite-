@@ -129,6 +129,7 @@ model Theme {
   slug         String  @unique
   description  String?
   previewImage String?
+  category     String  @default("classic") // "traditional" | "modern" | "fusion" | "minimal" | "classic"
   colorPalette Json // { primary, secondary, accent, background, foreground }
   fontPairing  Json // { display, body, script }
   decorAssets  Json? // preset decoration config (petals, sparkles, motifs...)
@@ -221,12 +222,13 @@ model Invitation {
   language      InvitationLanguage @default(EN)
 
   // Design
-  themeId       String? @db.ObjectId
-  templateId    String? @db.ObjectId
-  fontPairing   Json? // override of theme default, { display, body, script }
-  colorPalette  Json? // override of theme default
-  musicTrackId  String? @db.ObjectId
-  sectionConfig Json // [{ id, type, visible, locked, order }] — drives the drag-drop builder
+  themeId          String? @db.ObjectId
+  templateId       String? @db.ObjectId
+  fontPairing      Json? // override of theme default, { display, body, script }
+  colorPalette     Json? // override of theme default
+  musicTrackId     String? @db.ObjectId
+  galleryAnimation String  @default("fade") // "fade" | "slide" | "zoom" | "flip" | "blur" — gallery photo reveal style
+  sectionConfig    Json // [{ id, type, visible, locked, order }] — drives the drag-drop builder
 
   // AI + content
   aiGenerated     Boolean @default(false)
@@ -298,13 +300,14 @@ model FamilyMember {
 }
 
 model Guest {
-  id           String  @id @default(auto()) @map("_id") @db.ObjectId
-  invitationId String  @db.ObjectId
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId String    @db.ObjectId
   name         String
   email        String?
   phone        String?
   group        String? // e.g. "Bride's side", "Groom's college friends"
-  inviteToken  String  @unique @default(cuid())
+  inviteToken  String    @unique @default(cuid())
+  viewedAt     DateTime? // set the first time this guest opens their personalized link
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   rsvp       Rsvp?

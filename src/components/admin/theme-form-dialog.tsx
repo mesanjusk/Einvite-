@@ -10,6 +10,7 @@ import { ArrowUp, ArrowDown, Pencil, Plus } from "lucide-react";
 import {
   themeFormSchema,
   SECTION_TYPES,
+  THEME_CATEGORIES,
   type ThemeFormInput,
   type ThemeFormValues,
 } from "@/lib/validations/admin";
@@ -33,6 +34,7 @@ type ThemeRecord = {
   name: string;
   slug: string;
   description: string | null;
+  category: string;
   isPremium: boolean;
   sortOrder: number;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
@@ -54,6 +56,7 @@ function defaultValues(theme?: ThemeRecord): ThemeFormValues {
     name: theme?.name ?? "",
     slug: theme?.slug ?? "",
     description: theme?.description ?? "",
+    category: (theme?.category as ThemeFormValues["category"]) ?? "classic",
     isPremium: theme?.isPremium ?? false,
     sortOrder: theme?.sortOrder ?? 0,
     colorPalette: theme?.colorPalette ?? {
@@ -163,12 +166,30 @@ export function ThemeFormDialog({ theme }: { theme?: ThemeRecord }) {
             <Textarea rows={2} {...form.register("description")} />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <Label>Premium theme</Label>
-            <Switch
-              checked={form.watch("isPremium")}
-              onCheckedChange={(v) => form.setValue("isPremium", v)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Category</Label>
+              <select
+                className="border-input h-9 rounded-md border bg-transparent px-2 text-sm capitalize"
+                value={form.watch("category")}
+                onChange={(e) =>
+                  form.setValue("category", e.target.value as ThemeFormValues["category"])
+                }
+              >
+                {THEME_CATEGORIES.map((category) => (
+                  <option key={category} value={category} className="capitalize">
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <Label>Premium theme</Label>
+              <Switch
+                checked={form.watch("isPremium")}
+                onCheckedChange={(v) => form.setValue("isPremium", v)}
+              />
+            </div>
           </div>
 
           <div>

@@ -41,6 +41,7 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     slug: data.slug,
     description: data.description,
     previewImage: data.previewImage,
+    category: data.category,
     isPremium: data.isPremium,
     sortOrder: data.sortOrder,
     colorPalette: data.colorPalette,

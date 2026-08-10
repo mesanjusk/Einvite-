@@ -45,6 +45,7 @@ export type InviteData = {
   googleMapsUrl: string | null;
   customMessage: string | null;
   musicUrl: string | null;
+  galleryAnimation: string;
   copy: InviteCopy | null;
   events: InviteEvent[];
   familyMembers: InviteFamilyMember[];
