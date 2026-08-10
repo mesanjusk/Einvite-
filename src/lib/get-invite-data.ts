@@ -40,6 +40,22 @@ export function getInvitationById(id: string) {
   return db.invitation.findUnique({ where: { id }, include: INVITATION_INCLUDE });
 }
 
+/**
+ * Resolves a guest from their personalized invite link token, scoped to the
+ * given invitation so a token minted for one wedding can't be replayed
+ * against another. Marks the guest's first-view timestamp best-effort.
+ */
+export async function getGuestByToken(invitationId: string, token: string) {
+  const guest = await db.guest.findUnique({ where: { inviteToken: token } });
+  if (!guest || guest.invitationId !== invitationId) return null;
+
+  if (!guest.viewedAt) {
+    db.guest.update({ where: { id: guest.id }, data: { viewedAt: new Date() } }).catch(() => {});
+  }
+
+  return guest;
+}
+
 type InvitationWithRelations = NonNullable<
   Awaited<ReturnType<typeof getInvitationBySlug>>
 >;
@@ -67,6 +83,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     googleMapsUrl: invitation.googleMapsUrl,
     customMessage: invitation.customMessage,
     musicUrl: invitation.music?.url ?? null,
+    galleryAnimation: invitation.galleryAnimation,
     copy: invitation.aiGeneratedCopy as InviteData["copy"],
     events: invitation.events,
     familyMembers: invitation.familyMembers,

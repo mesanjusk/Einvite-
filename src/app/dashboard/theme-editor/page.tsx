@@ -17,12 +17,24 @@ type Palette = {
   foreground: string;
 };
 
+type FontPairing = {
+  display: string;
+  body: string;
+  script: string;
+};
+
 const FALLBACK_PALETTE: Palette = {
   primary: "#7a2e2e",
   secondary: "#f3d9d9",
   accent: "#c9942a",
   background: "#faf3ea",
   foreground: "#3a1414",
+};
+
+const FALLBACK_FONTS: FontPairing = {
+  display: "Playfair Display",
+  body: "Cormorant Garamond",
+  script: "Great Vibes",
 };
 
 export default async function ThemeEditorPage({
@@ -34,13 +46,14 @@ export default async function ThemeEditorPage({
   const userId = session!.user.id;
   const { invitationId } = await searchParams;
 
-  const [invitations, themes] = await Promise.all([
+  const [invitations, themes, musicTracks] = await Promise.all([
     db.invitation.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
       select: { id: true, brideName: true, groomName: true },
     }),
     db.theme.findMany({ orderBy: { sortOrder: "asc" } }),
+    db.musicTrack.findMany({ orderBy: { title: "asc" } }),
   ]);
 
   if (invitations.length === 0) {
@@ -64,9 +77,15 @@ export default async function ThemeEditorPage({
   });
   if (!invitation) return null;
 
-  const currentPalette = (invitation.colorPalette as Palette | null) ??
+  const currentPalette =
+    (invitation.colorPalette as Palette | null) ??
     (invitation.theme?.colorPalette as Palette | null) ??
     FALLBACK_PALETTE;
+
+  const currentFonts =
+    (invitation.fontPairing as FontPairing | null) ??
+    (invitation.theme?.fontPairing as FontPairing | null) ??
+    FALLBACK_FONTS;
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,7 +93,8 @@ export default async function ThemeEditorPage({
         <div>
           <h1 className="font-display text-2xl">Theme Editor</h1>
           <p className="text-muted-foreground text-sm">
-            Pick a base theme, then fine-tune colors — changes save to this invitation only.
+            Pick a base theme, fine-tune colors and fonts, choose gallery animation and
+            background music — changes save to this invitation only.
           </p>
         </div>
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
@@ -82,14 +102,27 @@ export default async function ThemeEditorPage({
 
       <ThemeEditorForm
         invitationId={invitation.id}
+        brideName={invitation.brideName}
+        groomName={invitation.groomName}
         themes={themes.map((t) => ({
           id: t.id,
           slug: t.slug,
           name: t.name,
+          category: t.category,
           colorPalette: t.colorPalette as { primary: string; accent: string; background: string },
+          fontPairing: t.fontPairing as FontPairing,
+        }))}
+        musicTracks={musicTracks.map((track) => ({
+          id: track.id,
+          title: track.title,
+          mood: track.mood,
+          url: track.url,
         }))}
         currentThemeSlug={invitation.theme?.slug ?? themes[0]?.slug ?? "royal"}
         currentPalette={currentPalette}
+        currentFonts={currentFonts}
+        currentMusicTrackId={invitation.musicTrackId ?? null}
+        currentGalleryAnimation={invitation.galleryAnimation}
       />
     </div>
   );

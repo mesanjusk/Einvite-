@@ -15,10 +15,21 @@ const colorPaletteSchema = z.object({
   foreground: z.string(),
 });
 
+const fontPairingSchema = z.object({
+  display: z.string(),
+  body: z.string(),
+  script: z.string(),
+});
+
+const GALLERY_ANIMATIONS = ["fade", "slide", "zoom", "flip", "blur"] as const;
+
 const updateThemeSchema = z.object({
   invitationId: z.string(),
   themeSlug: z.string().optional(),
   colorPalette: colorPaletteSchema.optional(),
+  fontPairing: fontPairingSchema.optional(),
+  musicTrackId: z.string().nullable().optional(),
+  galleryAnimation: z.enum(GALLERY_ANIMATIONS).optional(),
 });
 
 export async function updateInvitationThemeAction(
@@ -46,11 +57,21 @@ export async function updateInvitationThemeAction(
     themeId = theme.id;
   }
 
+  if (parsed.data.musicTrackId) {
+    const track = await db.musicTrack.findUnique({ where: { id: parsed.data.musicTrackId } });
+    if (!track) return { success: false, error: "Unknown music track." };
+  }
+
   await db.invitation.update({
     where: { id: parsed.data.invitationId },
     data: {
       ...(themeId ? { themeId } : {}),
       ...(parsed.data.colorPalette ? { colorPalette: parsed.data.colorPalette } : {}),
+      ...(parsed.data.fontPairing ? { fontPairing: parsed.data.fontPairing } : {}),
+      ...(parsed.data.musicTrackId !== undefined
+        ? { musicTrackId: parsed.data.musicTrackId || null }
+        : {}),
+      ...(parsed.data.galleryAnimation ? { galleryAnimation: parsed.data.galleryAnimation } : {}),
     },
   });
 

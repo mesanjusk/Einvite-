@@ -25,7 +25,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function RsvpSection({ invitationId }: { invitationId: string }) {
+export function RsvpSection({
+  invitationId,
+  guestId,
+  guestName,
+}: {
+  invitationId: string;
+  guestId?: string | null;
+  guestName?: string | null;
+}) {
   const { t } = useLocale();
   const [submitted, setSubmitted] = useState(false);
 
@@ -33,7 +41,8 @@ export function RsvpSection({ invitationId }: { invitationId: string }) {
     resolver: zodResolver(rsvpSubmissionSchema),
     defaultValues: {
       invitationId,
-      guestName: "",
+      guestId: guestId ?? undefined,
+      guestName: guestName ?? "",
       email: "",
       phone: "",
       status: "ACCEPTED",

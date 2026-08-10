@@ -28,6 +28,8 @@ export const SECTION_TYPES = [
   "THANK_YOU",
 ] as const;
 
+export const THEME_CATEGORIES = ["traditional", "modern", "fusion", "minimal", "classic"] as const;
+
 export const themeFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
@@ -37,6 +39,7 @@ export const themeFormSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
   description: z.string().optional(),
   previewImage: z.string().optional(),
+  category: z.enum(THEME_CATEGORIES).default("classic"),
   isPremium: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,

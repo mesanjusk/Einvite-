@@ -43,7 +43,9 @@ export default async function AdminThemesPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">{theme.name}</p>
-                    <p className="text-muted-foreground text-xs">{theme.slug}</p>
+                    <p className="text-muted-foreground text-xs capitalize">
+                      {theme.slug} · {theme.category}
+                    </p>
                   </div>
                   <div className="flex items-center gap-1">
                     {theme.isPremium && <Badge variant="gold">Premium</Badge>}
@@ -53,6 +55,7 @@ export default async function AdminThemesPage() {
                         name: theme.name,
                         slug: theme.slug,
                         description: theme.description,
+                        category: theme.category,
                         isPremium: theme.isPremium,
                         sortOrder: theme.sortOrder,
                         colorPalette: theme.colorPalette as never,

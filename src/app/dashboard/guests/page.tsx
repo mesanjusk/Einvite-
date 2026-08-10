@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getAppUrl } from "@/lib/app-url";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { AddGuestDialog } from "@/components/dashboard/add-guest-dialog";
 import { GuestRow } from "@/components/dashboard/guest-row";
@@ -40,11 +41,15 @@ export default async function GuestsPage({
   }
 
   const selectedId = invitationId ?? invitations[0].id;
-  const guests = await db.guest.findMany({
-    where: { invitationId: selectedId },
-    include: { rsvp: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [guests, selectedInvitation] = await Promise.all([
+    db.guest.findMany({
+      where: { invitationId: selectedId },
+      include: { rsvp: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.invitation.findUnique({ where: { id: selectedId }, select: { slug: true } }),
+  ]);
+  const inviteBaseUrl = `${getAppUrl()}/invite/${selectedInvitation?.slug ?? ""}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,6 +75,7 @@ export default async function GuestsPage({
                 <th className="px-4 py-3 font-medium">Group</th>
                 <th className="px-4 py-3 font-medium">Contact</th>
                 <th className="px-4 py-3 font-medium">RSVP</th>
+                <th className="px-4 py-3 font-medium">Opened</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -84,7 +90,9 @@ export default async function GuestsPage({
                     phone: guest.phone,
                     group: guest.group,
                     rsvpStatus: guest.rsvp?.status ?? null,
+                    viewedAt: guest.viewedAt,
                   }}
+                  inviteLink={`${inviteBaseUrl}?to=${guest.inviteToken}`}
                 />
               ))}
             </tbody>

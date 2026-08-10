@@ -4,15 +4,18 @@ import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { Sparkles } from "@/components/animation/sparkles";
 import { fadeUp } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { ShareButton } from "./share-button";
 
 export function ThankYouSection({
   brideName,
   groomName,
   hashtags,
+  shareUrl,
 }: {
   brideName: string;
   groomName: string;
   hashtags?: string[];
+  shareUrl?: string;
 }) {
   const { t } = useLocale();
   return (
@@ -46,6 +49,11 @@ export function ThankYouSection({
             <p className="mt-4 text-xs tracking-wide opacity-70" style={{ color: "var(--inv-secondary)" }}>
               {hashtags.map((h) => `#${h}`).join("  ")}
             </p>
+          </Reveal>
+        )}
+        {shareUrl && (
+          <Reveal variants={fadeUp} className="mt-8 flex justify-center">
+            <ShareButton url={shareUrl} title={`${brideName} & ${groomName}'s Wedding`} />
           </Reveal>
         )}
       </RevealGroup>

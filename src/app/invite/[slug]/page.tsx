@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
-import { getInvitationBySlug, toInviteRenderData } from "@/lib/get-invite-data";
+import { getInvitationBySlug, getGuestByToken, toInviteRenderData } from "@/lib/get-invite-data";
 import { InviteExperience } from "@/components/invite/invite-experience";
 
 export const dynamic = "force-dynamic";
@@ -50,16 +50,21 @@ export async function generateMetadata({
 
 export default async function InvitePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ to?: string }>;
 }) {
   const { slug } = await params;
+  const { to } = await searchParams;
   const invitation = await getInvitationBySlug(slug);
   if (!invitation) notFound();
 
   const session = await auth();
   const isOwner = session?.user?.id === invitation.userId;
   if (invitation.status !== "PUBLISHED" && !isOwner) notFound();
+
+  const guest = to ? await getGuestByToken(invitation.id, to) : null;
 
   const headerList = await headers();
   const userAgent = headerList.get("user-agent") ?? "";
@@ -86,7 +91,12 @@ export default async function InvitePage({
       className="relative mx-auto max-w-[430px] overflow-x-hidden"
       style={{ ...themeStyle, fontFamily: "var(--inv-font-body)" }}
     >
-      <InviteExperience invite={inviteData} sectionConfig={sectionConfig} />
+      <InviteExperience
+        invite={inviteData}
+        sectionConfig={sectionConfig}
+        initialGuestName={guest?.name ?? null}
+        guestId={guest?.id ?? null}
+      />
     </div>
   );
 }

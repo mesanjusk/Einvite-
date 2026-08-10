@@ -25,6 +25,7 @@ export default async function NewInvitationPage() {
         themes={themes.map((t) => ({
           slug: t.slug,
           name: t.name,
+          category: t.category,
           isPremium: t.isPremium,
           colorPalette: t.colorPalette as { primary: string; accent: string },
         }))}
