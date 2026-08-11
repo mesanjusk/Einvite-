@@ -6,11 +6,12 @@ import { toast } from "sonner";
 import { Sparkles, Trash2, Upload } from "lucide-react";
 
 import { autoFillPhotosAction } from "@/lib/actions/guest-invitation";
+import { REQUIRED_PHOTO_COUNT as REQUIRED_PHOTOS } from "@/lib/media/constants";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export const REQUIRED_PHOTOS = 5;
+export { REQUIRED_PHOTOS };
 
 export type GuestMediaItem = { id: string; url: string; isAuto: boolean };
 

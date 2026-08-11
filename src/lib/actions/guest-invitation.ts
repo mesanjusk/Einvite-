@@ -18,9 +18,10 @@ import { normalizePhone } from "@/lib/phone";
 import { generateOtp, hashOtp, verifyOtp, generateToken, hashToken } from "@/lib/otp";
 import { isWhatsAppConfigured, sendWhatsAppText, otpMessage, editLinkMessage } from "@/lib/whatsapp";
 import { issueDraftSecret, issueOwnerCookie, hasGuestAccess } from "@/lib/guest-session";
+import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
+import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
 
-const REQUIRED_PHOTO_COUNT = 5;
 const OTP_TTL_MS = 10 * 60 * 1000;
 const OTP_RESEND_COOLDOWN_MS = 45 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -162,7 +163,7 @@ export async function updateGuestInvitationAction(
 export async function autoFillPhotosAction(
   invitationId: string,
 ): Promise<ActionResult<{ added: number; media: { id: string; url: string; isAuto: boolean }[] }>> {
-  const invitation = await loadGuestInvitation(invitationId);
+  const invitation = await authorizeInvitationAccess(invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
 
   const existing = await db.media.findMany({

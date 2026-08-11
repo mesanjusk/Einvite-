@@ -155,6 +155,17 @@ describe("publishInvitationAction + submitRsvpAction", () => {
     expect(created.success).toBe(true);
     if (!created.success) return;
 
+    const blocked = await publishInvitationAction(created.data.invitationId);
+    expect(blocked.success).toBe(false);
+
+    await db.media.createMany({
+      data: Array.from({ length: 5 }, (_, i) => ({
+        invitationId: created.data.invitationId,
+        url: `https://example.com/photo-${i}.jpg`,
+        type: "IMAGE" as const,
+      })),
+    });
+
     const published = await publishInvitationAction(created.data.invitationId);
     expect(published.success).toBe(true);
 

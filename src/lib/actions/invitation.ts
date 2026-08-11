@@ -11,6 +11,7 @@ import {
 } from "@/lib/validations/invitation";
 import type { ActionResult } from "@/lib/actions/auth";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
+import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
 
 export async function createInvitationAction(
   input: InvitationWizardInput,
@@ -119,6 +120,14 @@ export async function publishInvitationAction(
   const invitation = await db.invitation.findUnique({ where: { id: invitationId } });
   if (!invitation || invitation.userId !== session.user.id) {
     return { success: false, error: "Invitation not found." };
+  }
+
+  const mediaCount = await db.media.count({ where: { invitationId } });
+  if (mediaCount < REQUIRED_PHOTO_COUNT) {
+    return {
+      success: false,
+      error: `Add at least ${REQUIRED_PHOTO_COUNT} photos in the Media Library before publishing.`,
+    };
   }
 
   await db.invitation.update({
