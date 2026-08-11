@@ -384,3 +384,40 @@ export const MUSIC_TRACKS: {
   mood: string;
   isPremium: boolean;
 }[] = [];
+
+// Homepage "see it in action" showcase — published, isDemo invitations so
+// visitors can preview real invitations (in a phone mockup) before signing
+// up. Re-running the seed only ever updates these by slug, never creates
+// duplicates.
+export const DEMO_INVITATIONS = [
+  {
+    slug: "demo-royal-wedding",
+    themeSlug: "royal",
+    brideName: "Aisha",
+    groomName: "Rohan",
+    weddingDate: "2026-12-12",
+    venueName: "The Grand Palace",
+    venueAddress: "Lake Pichola Road, Udaipur, Rajasthan",
+    customMessage: "Join us as we begin our forever, with love, laughter, and a little royal drama.",
+  },
+  {
+    slug: "demo-beach-wedding",
+    themeSlug: "beach",
+    brideName: "Meera",
+    groomName: "Karthik",
+    weddingDate: "2026-11-08",
+    venueName: "Sunset Cove Resort",
+    venueAddress: "Candolim Beach, Goa",
+    customMessage: "Sand, sun, and forever — come celebrate with us by the sea.",
+  },
+  {
+    slug: "demo-pastel-wedding",
+    themeSlug: "pastel",
+    brideName: "Priya",
+    groomName: "Dev",
+    weddingDate: "2027-02-14",
+    venueName: "The Garden Terrace",
+    venueAddress: "Whitefield, Bengaluru, Karnataka",
+    customMessage: "Two hearts, one promise — join us for a wedding to remember.",
+  },
+] as const;

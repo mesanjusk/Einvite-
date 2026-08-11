@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import { useLocale } from "@/lib/i18n/locale-context";
 
+const OPEN_DURATION_MS = 2100;
+
 function Flourish({ style }: { style: React.CSSProperties }) {
   return (
     <svg width="120" height="90" viewBox="0 0 120 90" style={{ position: "absolute", opacity: 0.35, ...style }}>
@@ -39,11 +41,12 @@ export function EnvelopeSection({
   }, []);
 
   function handleTap() {
+    if (opened) return;
     setOpened(true);
     setTimeout(() => {
       sessionStorage.setItem(storageKey, "true");
       onComplete();
-    }, 1600);
+    }, OPEN_DURATION_MS);
   }
 
   return (
@@ -55,6 +58,7 @@ export function EnvelopeSection({
       style={{
         background:
           "radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--inv-primary) 80%, white 8%) 0%, var(--inv-primary) 45%, color-mix(in srgb, var(--inv-primary) 70%, black 30%) 100%)",
+        perspective: 1000,
       }}
     >
       <Flourish style={{ top: 24, left: 12 }} />
@@ -62,21 +66,51 @@ export function EnvelopeSection({
       <Flourish style={{ bottom: 24, left: 12, transform: "scaleY(-1)" }} />
       <Flourish style={{ bottom: 24, right: 12, transform: "scale(-1,-1)" }} />
 
+      {/* Warm light spilling out once the flap lifts, like peering inside the envelope. */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        initial={{ opacity: 0 }}
+        animate={opened ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ duration: 0.9, delay: opened ? 0.15 : 0 }}
+        style={{
+          background:
+            "radial-gradient(60% 45% at 50% 38%, color-mix(in srgb, var(--inv-secondary) 90%, white 10%) 0%, transparent 70%)",
+        }}
+      />
+
       <motion.p
         initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
+        animate={opened ? { opacity: 0, y: -10 } : { opacity: 1, y: 0 }}
+        transition={{ delay: opened ? 0 : 0.4, duration: 0.5 }}
         style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-secondary)" }}
         className="mb-7 text-3xl"
       >
         {t.tapToReveal}
       </motion.p>
 
+      {/* The envelope flap: hinges open from the top, like a real envelope. */}
       <motion.div
-        animate={opened ? { y: -60, scale: 1.15, opacity: 0 } : { y: [0, -6, 0] }}
+        className="absolute top-[calc(50%-150px)] h-[150px] w-[210px] origin-top"
+        style={{
+          clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+          background:
+            "linear-gradient(160deg, color-mix(in srgb, var(--inv-primary) 88%, white 12%), var(--inv-primary))",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+          transformStyle: "preserve-3d",
+        }}
+        animate={opened ? { rotateX: -170 } : { rotateX: 0 }}
+        transition={{ duration: 0.8, ease: [0.45, 0, 0.2, 1] }}
+      />
+
+      <motion.div
+        animate={
+          opened
+            ? { y: -70, scale: 1.2, opacity: 0 }
+            : { y: [0, -6, 0] }
+        }
         transition={
           opened
-            ? { duration: 0.9, ease: "easeIn" }
+            ? { duration: 1, delay: 0.5, ease: "easeIn" }
             : { y: { repeat: Infinity, duration: 3.2, ease: "easeInOut" } }
         }
         className="relative flex size-[150px] items-center justify-center rounded-full"

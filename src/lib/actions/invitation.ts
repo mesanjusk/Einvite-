@@ -12,7 +12,7 @@ import {
 import { slugify, randomSuffix } from "@/lib/utils/slug";
 import type { ActionResult } from "@/lib/actions/auth";
 
-const DEFAULT_SECTION_ORDER = [
+export const DEFAULT_SECTION_ORDER = [
   "ENVELOPE",
   "HERO",
   "COUNTDOWN",
@@ -26,7 +26,7 @@ const DEFAULT_SECTION_ORDER = [
   "THANK_YOU",
 ];
 
-async function uniqueSlug(base: string) {
+export async function uniqueSlug(base: string) {
   let candidate = slugify(base);
   if (!candidate) candidate = "our-wedding";
 

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
-import { MUSIC_TRACKS, SECTION_ORDER, THEMES } from "./seed-data";
+import { DEMO_INVITATIONS, MUSIC_TRACKS, SECTION_ORDER, THEMES } from "./seed-data";
+import { pickStockPhotos } from "./media/stock-photos";
 
 export async function runSeed(db: PrismaClient) {
   const themeBySlug = new Map<string, string>();
@@ -45,9 +46,71 @@ export async function runSeed(db: PrismaClient) {
     });
   }
 
+  let demoInvitations = 0;
+  for (const demo of DEMO_INVITATIONS) {
+    const themeId = themeBySlug.get(demo.themeSlug);
+    if (!themeId) continue;
+    const template = await db.template.findFirst({ where: { themeId } });
+
+    const invitation = await db.invitation.upsert({
+      where: { slug: demo.slug },
+      update: {
+        brideName: demo.brideName,
+        groomName: demo.groomName,
+        weddingDate: new Date(demo.weddingDate),
+        venueName: demo.venueName,
+        venueAddress: demo.venueAddress,
+        customMessage: demo.customMessage,
+        themeId,
+        templateId: template?.id,
+        status: "PUBLISHED",
+        isDemo: true,
+        publishedAt: new Date(),
+      },
+      create: {
+        slug: demo.slug,
+        brideName: demo.brideName,
+        groomName: demo.groomName,
+        weddingDate: new Date(demo.weddingDate),
+        venueName: demo.venueName,
+        venueAddress: demo.venueAddress,
+        customMessage: demo.customMessage,
+        themeId,
+        templateId: template?.id,
+        status: "PUBLISHED",
+        isDemo: true,
+        publishedAt: new Date(),
+        language: "EN",
+        sectionConfig: SECTION_ORDER.map((type, order) => ({
+          id: type,
+          type,
+          visible: true,
+          locked: false,
+          order,
+        })),
+      },
+    });
+    demoInvitations += 1;
+
+    const mediaCount = await db.media.count({ where: { invitationId: invitation.id } });
+    if (mediaCount < 5) {
+      const urls = pickStockPhotos(5 - mediaCount);
+      await db.media.createMany({
+        data: urls.map((url, i) => ({
+          invitationId: invitation.id,
+          url,
+          type: "IMAGE" as const,
+          isAuto: true,
+          order: mediaCount + i,
+        })),
+      });
+    }
+  }
+
   return {
     themes: THEMES.length,
     templates: THEMES.length,
     musicTracks: MUSIC_TRACKS.length,
+    demoInvitations,
   };
 }
