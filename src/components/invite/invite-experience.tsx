@@ -77,6 +77,19 @@ export function InviteExperience({
     .filter((s) => s.visible)
     .sort((a, b) => a.order - b.order);
 
+  // "STORY" and "GALLERY" both render the same photo stack — the section
+  // builder lists them as separately toggleable slots ("Our Story" /
+  // "Photo Gallery"), but only one should ever actually render, or every
+  // photo shows up twice on the page whenever both are visible (the
+  // default state).
+  let gallerySectionRendered = false;
+  const dedupedSections = visibleSections.filter((section) => {
+    if (section.type !== "GALLERY" && section.type !== "STORY") return true;
+    if (gallerySectionRendered) return false;
+    gallerySectionRendered = true;
+    return true;
+  });
+
   const initials = `${invite.brideName[0] ?? ""}${invite.groomName[0] ?? ""}`;
 
   return (
@@ -100,7 +113,7 @@ export function InviteExperience({
 
       {inviteOpen && (
         <main>
-          {visibleSections.map((section) => {
+          {dedupedSections.map((section) => {
             switch (section.type) {
               case "HERO":
                 return <HeroSection key={section.id} invite={invite} guestName={guestName} />;

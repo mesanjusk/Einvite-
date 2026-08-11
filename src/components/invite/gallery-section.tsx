@@ -91,10 +91,12 @@ export function GallerySection({
             <Reveal
               key={item.id}
               variants={variants}
-              delay={i * 0.08}
+              delay={i * 0.1}
               className="relative w-full"
-              // Each card overlaps the one before it, so the pile grows downward as you scroll.
-              style={i === 0 ? undefined : { marginTop: "-72%" }}
+              // Each card overlaps the one before it (but not by too much — enough gap keeps
+              // each card's scroll-into-view trigger point separate, so they reveal one at a
+              // time rather than all firing together).
+              style={i === 0 ? undefined : { marginTop: "-58%" }}
             >
               <motion.button
                 type="button"
@@ -120,9 +122,9 @@ export function GallerySection({
           {overflowCount > 0 && (
             <Reveal
               variants={fadeUp}
-              delay={visibleItems.length * 0.08}
+              delay={visibleItems.length * 0.1}
               className="relative w-full"
-              style={{ marginTop: "-72%" }}
+              style={{ marginTop: "-58%" }}
             >
               <button
                 type="button"
