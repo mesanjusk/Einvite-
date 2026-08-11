@@ -12,6 +12,7 @@ import {
 import type { ActionResult } from "@/lib/actions/auth";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
+import { pickStockPhotos } from "@/lib/media/stock-photos";
 
 export async function createInvitationAction(
   input: InvitationWizardInput,
@@ -113,7 +114,7 @@ export async function createInvitationAction(
 
 export async function publishInvitationAction(
   invitationId: string,
-): Promise<ActionResult> {
+): Promise<ActionResult<{ autoFilledPhotos: number }>> {
   const session = await auth();
   if (!session?.user) return { success: false, error: "Unauthorized" };
 
@@ -122,12 +123,29 @@ export async function publishInvitationAction(
     return { success: false, error: "Invitation not found." };
   }
 
-  const mediaCount = await db.media.count({ where: { invitationId } });
-  if (mediaCount < REQUIRED_PHOTO_COUNT) {
-    return {
-      success: false,
-      error: `Add at least ${REQUIRED_PHOTO_COUNT} photos in the Media Library before publishing.`,
-    };
+  // Never block publishing on missing photos — top up to the required
+  // count with wedding-mockup stock photos instead. The couple can swap
+  // any of these out for their own later from the Media Library; nothing
+  // here is a dead end.
+  const existingMedia = await db.media.findMany({
+    where: { invitationId },
+    orderBy: { order: "asc" },
+  });
+  const autoFilledPhotos = Math.max(0, REQUIRED_PHOTO_COUNT - existingMedia.length);
+  if (autoFilledPhotos > 0) {
+    const urls = pickStockPhotos(
+      autoFilledPhotos,
+      existingMedia.map((m) => m.url),
+    );
+    await db.media.createMany({
+      data: urls.map((url, i) => ({
+        invitationId,
+        url,
+        type: "IMAGE" as const,
+        isAuto: true,
+        order: existingMedia.length + i,
+      })),
+    });
   }
 
   await db.invitation.update({
@@ -136,9 +154,10 @@ export async function publishInvitationAction(
   });
 
   revalidatePath("/dashboard/invitations");
+  revalidatePath("/dashboard/media");
   revalidatePath(`/invite/${invitation.slug}`);
 
-  return { success: true, data: undefined };
+  return { success: true, data: { autoFilledPhotos } };
 }
 
 export async function deleteInvitationAction(invitationId: string): Promise<ActionResult> {

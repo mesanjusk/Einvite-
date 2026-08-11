@@ -25,7 +25,11 @@ export function PublishButton({
         toast.error(result.error);
         return;
       }
-      toast.success("Invitation is live!");
+      toast.success(
+        result.data.autoFilledPhotos > 0
+          ? `Invitation is live! Added ${result.data.autoFilledPhotos} placeholder photo${result.data.autoFilledPhotos === 1 ? "" : "s"} — swap them for your own from the Media Library any time.`
+          : "Invitation is live!",
+      );
       router.refresh();
     });
   }

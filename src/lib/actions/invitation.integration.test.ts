@@ -155,25 +155,36 @@ describe("publishInvitationAction + submitRsvpAction", () => {
     expect(created.success).toBe(true);
     if (!created.success) return;
 
-    const blocked = await publishInvitationAction(created.data.invitationId);
-    expect(blocked.success).toBe(false);
-
-    await db.media.createMany({
-      data: Array.from({ length: 5 }, (_, i) => ({
-        invitationId: created.data.invitationId,
-        url: `https://example.com/photo-${i}.jpg`,
-        type: "IMAGE" as const,
-      })),
-    });
-
+    // Publishing with no photos never blocks — it tops up to the required
+    // count with auto-filled wedding-mockup photos instead.
     const published = await publishInvitationAction(created.data.invitationId);
     expect(published.success).toBe(true);
+    if (!published.success) return;
+    expect(published.data.autoFilledPhotos).toBe(5);
 
     const invitation = await db.invitation.findUnique({
       where: { id: created.data.invitationId },
     });
     expect(invitation?.status).toBe("PUBLISHED");
     expect(invitation?.publishedAt).not.toBeNull();
+
+    const mediaCount = await db.media.count({
+      where: { invitationId: created.data.invitationId },
+    });
+    expect(mediaCount).toBe(5);
+
+    // Publishing again (e.g. after adding one real photo) tops up only the gap.
+    await db.media.create({
+      data: {
+        invitationId: created.data.invitationId,
+        url: "https://example.com/real-photo.jpg",
+        type: "IMAGE",
+      },
+    });
+    const republished = await publishInvitationAction(created.data.invitationId);
+    expect(republished.success).toBe(true);
+    if (!republished.success) return;
+    expect(republished.data.autoFilledPhotos).toBe(0);
 
     const rsvp = await submitRsvpAction({
       invitationId: created.data.invitationId,
