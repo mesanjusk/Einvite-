@@ -12,7 +12,7 @@ import {
   otpVerifySchema,
   type InvitationWizardInput,
 } from "@/lib/validations/invitation";
-import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/actions/invitation";
+import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import type { ActionResult } from "@/lib/actions/auth";
 import { normalizePhone } from "@/lib/phone";
 import { generateOtp, hashOtp, verifyOtp, generateToken, hashToken } from "@/lib/otp";

@@ -9,33 +9,8 @@ import {
   invitationWizardSchema,
   type InvitationWizardInput,
 } from "@/lib/validations/invitation";
-import { slugify, randomSuffix } from "@/lib/utils/slug";
 import type { ActionResult } from "@/lib/actions/auth";
-
-export const DEFAULT_SECTION_ORDER = [
-  "ENVELOPE",
-  "HERO",
-  "COUNTDOWN",
-  "STORY",
-  "TIMELINE",
-  "GALLERY",
-  "VENUE",
-  "RSVP",
-  "REGISTRY",
-  "INSTAGRAM",
-  "THANK_YOU",
-];
-
-export async function uniqueSlug(base: string) {
-  let candidate = slugify(base);
-  if (!candidate) candidate = "our-wedding";
-
-  for (;;) {
-    const existing = await db.invitation.findUnique({ where: { slug: candidate } });
-    if (!existing) return candidate;
-    candidate = `${slugify(base)}-${randomSuffix()}`;
-  }
-}
+import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 
 export async function createInvitationAction(
   input: InvitationWizardInput,
