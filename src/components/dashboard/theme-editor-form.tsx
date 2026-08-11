@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, Upload, X } from "lucide-react";
 
 import { updateInvitationThemeAction } from "@/lib/actions/theme";
 import { fontVarFor } from "@/lib/theme-css-vars";
@@ -79,6 +79,7 @@ export function ThemeEditorForm({
   currentPalette,
   currentFonts,
   currentMusicTrackId,
+  currentCustomMusicUrl,
   currentGalleryAnimation,
 }: {
   invitationId: string;
@@ -90,6 +91,7 @@ export function ThemeEditorForm({
   currentPalette: Palette;
   currentFonts: FontPairing;
   currentMusicTrackId: string | null;
+  currentCustomMusicUrl: string | null;
   currentGalleryAnimation: string;
 }) {
   const [category, setCategory] = useState<(typeof CATEGORY_TABS)[number]["value"]>("all");
@@ -97,6 +99,9 @@ export function ThemeEditorForm({
   const [palette, setPalette] = useState(currentPalette);
   const [fonts, setFonts] = useState(currentFonts);
   const [musicTrackId, setMusicTrackId] = useState<string | null>(currentMusicTrackId);
+  const [customMusicUrl, setCustomMusicUrl] = useState<string | null>(currentCustomMusicUrl);
+  const [uploadingMusic, setUploadingMusic] = useState(false);
+  const musicInputRef = useRef<HTMLInputElement>(null);
   const [galleryAnimation, setGalleryAnimation] = useState<GalleryAnimation>(
     GALLERY_ANIMATIONS.some((a) => a.value === currentGalleryAnimation)
       ? (currentGalleryAnimation as GalleryAnimation)
@@ -140,6 +145,26 @@ export function ThemeEditorForm({
     setPlayingPreviewId(track.id);
   }
 
+  async function handleMusicUpload(file: File | undefined) {
+    if (!file) return;
+    setUploadingMusic(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("invitationId", invitationId);
+
+    const response = await fetch("/api/media/upload-audio", { method: "POST", body: formData });
+    const data = await response.json();
+    setUploadingMusic(false);
+
+    if (!response.ok) {
+      toast.error(data.error ?? "Failed to upload audio");
+      return;
+    }
+    setCustomMusicUrl(data.url);
+    setMusicTrackId(null);
+    if (musicInputRef.current) musicInputRef.current.value = "";
+  }
+
   function handleSave() {
     startTransition(async () => {
       const result = await updateInvitationThemeAction({
@@ -148,6 +173,7 @@ export function ThemeEditorForm({
         colorPalette: palette,
         fontPairing: fonts,
         musicTrackId: musicTrackId ?? null,
+        customMusicUrl: customMusicUrl ?? null,
         galleryAnimation,
       });
       if (!result.success) {
@@ -290,10 +316,13 @@ export function ThemeEditorForm({
           <div className="grid gap-2">
             <button
               type="button"
-              onClick={() => setMusicTrackId(null)}
+              onClick={() => {
+                setMusicTrackId(null);
+                setCustomMusicUrl(null);
+              }}
               className={cn(
                 "flex items-center justify-between rounded-lg border px-4 py-2.5 text-left text-sm",
-                musicTrackId === null ? "border-primary ring-primary/30 ring-2" : "",
+                musicTrackId === null && !customMusicUrl ? "border-primary ring-primary/30 ring-2" : "",
               )}
             >
               No music
@@ -303,12 +332,17 @@ export function ThemeEditorForm({
                 key={track.id}
                 className={cn(
                   "flex items-center justify-between rounded-lg border px-4 py-2.5",
-                  musicTrackId === track.id ? "border-primary ring-primary/30 ring-2" : "",
+                  musicTrackId === track.id && !customMusicUrl
+                    ? "border-primary ring-primary/30 ring-2"
+                    : "",
                 )}
               >
                 <button
                   type="button"
-                  onClick={() => setMusicTrackId(track.id)}
+                  onClick={() => {
+                    setMusicTrackId(track.id);
+                    setCustomMusicUrl(null);
+                  }}
                   className="flex-1 text-left text-sm"
                 >
                   {track.title}
@@ -336,6 +370,38 @@ export function ThemeEditorForm({
                 No tracks in your library yet — add some from{" "}
                 <span className="underline">Music Library</span>.
               </p>
+            )}
+
+            <input
+              ref={musicInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={(e) => handleMusicUpload(e.target.files?.[0])}
+            />
+            {customMusicUrl ? (
+              <div className="flex items-center justify-between gap-2 rounded-lg border-primary ring-primary/30 border px-4 py-2.5 ring-2">
+                <span className="text-sm font-medium">Your uploaded song</span>
+                <button
+                  type="button"
+                  onClick={() => setCustomMusicUrl(null)}
+                  aria-label="Remove uploaded song"
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => musicInputRef.current?.click()}
+                disabled={uploadingMusic}
+                className="w-fit"
+              >
+                <Upload />
+                {uploadingMusic ? "Uploading…" : "Or upload your own song"}
+              </Button>
             )}
           </div>
         </div>

@@ -74,6 +74,7 @@ export async function createInvitationAction(
       themeId: theme.id,
       templateId: template?.id,
       musicTrackId: data.musicTrackId || null,
+      customMusicUrl: data.customMusicUrl || null,
       sectionConfig: (template?.sectionOrder as string[] | undefined ?? DEFAULT_SECTION_ORDER).map(
         (type, order) => ({ id: type, type, visible: true, locked: false, order }),
       ),

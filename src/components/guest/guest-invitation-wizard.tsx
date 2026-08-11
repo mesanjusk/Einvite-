@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Sparkles } from "lucide-react";
+import { Plus, Trash2, Sparkles, Upload, X } from "lucide-react";
 
 import {
   invitationWizardSchema,
@@ -83,6 +83,8 @@ export function GuestInvitationWizard({
   const [invitationId, setInvitationId] = useState<string | null>(existingInvitationId ?? null);
   const [media, setMedia] = useState<GuestMediaItem[]>(initialMedia ?? []);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [musicUploading, setMusicUploading] = useState(false);
+  const musicInputRef = useRef<HTMLInputElement>(null);
   const [themeCategory, setThemeCategory] = useState<(typeof CATEGORY_TABS)[number]["value"]>(
     "all",
   );
@@ -105,6 +107,7 @@ export function GuestInvitationWizard({
       language: "EN",
       themeSlug: themes[0]?.slug ?? "royal",
       musicTrackId: undefined,
+      customMusicUrl: undefined,
       events: [
         { name: "Wedding", date: "", time: "", venueName: "", address: "", dressCode: "" },
       ],
@@ -161,6 +164,26 @@ export function GuestInvitationWizard({
 
   function goBack() {
     setStep((s) => Math.max(s - 1, 0));
+  }
+
+  async function handleMusicUpload(file: File | undefined) {
+    if (!file || !invitationId) return;
+    setMusicUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("invitationId", invitationId);
+
+    const response = await fetch("/api/media/upload-audio", { method: "POST", body: formData });
+    const data = await response.json();
+    setMusicUploading(false);
+
+    if (!response.ok) {
+      toast.error(data.error ?? "Failed to upload audio");
+      return;
+    }
+    form.setValue("customMusicUrl", data.url);
+    form.setValue("musicTrackId", undefined);
+    if (musicInputRef.current) musicInputRef.current.value = "";
   }
 
   async function onSubmit(values: InvitationWizardInput) {
@@ -379,7 +402,10 @@ export function GuestInvitationWizard({
                 <Field label="Background music (optional)">
                   <Select
                     value={form.watch("musicTrackId")}
-                    onValueChange={(v) => form.setValue("musicTrackId", v)}
+                    onValueChange={(v) => {
+                      form.setValue("musicTrackId", v);
+                      form.setValue("customMusicUrl", undefined);
+                    }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="No music" />
@@ -392,6 +418,39 @@ export function GuestInvitationWizard({
                       ))}
                     </SelectContent>
                   </Select>
+
+                  <input
+                    ref={musicInputRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={(e) => handleMusicUpload(e.target.files?.[0])}
+                  />
+                  {form.watch("customMusicUrl") ? (
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-md border p-2 text-sm">
+                      <span>Your uploaded song is set.</span>
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("customMusicUrl", undefined)}
+                        aria-label="Remove uploaded song"
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => musicInputRef.current?.click()}
+                      disabled={musicUploading}
+                    >
+                      <Upload />
+                      {musicUploading ? "Uploading…" : "Or upload your own song"}
+                    </Button>
+                  )}
                 </Field>
               </>
             )}

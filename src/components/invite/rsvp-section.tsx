@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
+import { ConfettiBurst } from "@/components/animation/confetti-burst";
 import { fadeUp } from "@/lib/animation-variants";
 import { submitRsvpAction } from "@/lib/actions/rsvp";
 import { useLocale } from "@/lib/i18n/locale-context";
@@ -80,19 +82,28 @@ export function RsvpSection({
           </h2>
         </Reveal>
 
-        <Reveal variants={fadeUp}>
+        <Reveal variants={fadeUp} className="relative">
+          <AnimatePresence mode="wait">
           {submitted ? (
-            <div
-              className="rounded-2xl border p-8 text-center"
+            <motion.div
+              key="thanks"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="relative overflow-visible rounded-2xl border p-8 text-center"
               style={{ borderColor: "color-mix(in srgb, var(--inv-accent) 30%, transparent)" }}
             >
+              <ConfettiBurst />
               <p style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }} className="text-2xl">
                 {t.rsvpThankYou}
               </p>
               <p className="mt-2 text-sm opacity-70">{t.yourResponseRecorded}</p>
-            </div>
+            </motion.div>
           ) : (
-            <form
+            <motion.form
+              key="form"
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.3 }}
               onSubmit={form.handleSubmit(onSubmit)}
               className="grid gap-4 rounded-2xl border p-6"
               style={{ borderColor: "color-mix(in srgb, var(--inv-accent) 30%, transparent)" }}
@@ -151,8 +162,9 @@ export function RsvpSection({
               >
                 {form.formState.isSubmitting ? t.sending : t.sendRsvp}
               </button>
-            </form>
+            </motion.form>
           )}
+          </AnimatePresence>
         </Reveal>
       </RevealGroup>
     </section>
