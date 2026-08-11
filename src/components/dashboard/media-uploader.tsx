@@ -3,9 +3,11 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Trash2, Upload } from "lucide-react";
+import { Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import { autoFillPhotosAction } from "@/lib/actions/guest-invitation";
+import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -65,9 +67,32 @@ export function MediaUploader({
     });
   }
 
+  function handleAutoFill() {
+    startTransition(async () => {
+      const result = await autoFillPhotosAction(invitationId);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      setMedia(result.data.media.map((m) => ({ id: m.id, url: m.url, width: null, height: null })));
+      toast.success(
+        result.data.added > 0
+          ? `Added ${result.data.added} photo${result.data.added === 1 ? "" : "s"} automatically.`
+          : "You already have enough photos.",
+      );
+    });
+  }
+
+  const remaining = Math.max(0, REQUIRED_PHOTO_COUNT - media.length);
+
   return (
     <div className="flex flex-col gap-4">
-      <div>
+      {remaining > 0 && (
+        <p className="text-muted-foreground text-sm">
+          Publishing requires at least {REQUIRED_PHOTO_COUNT} photos — {remaining} more needed.
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-3">
         <input
           ref={inputRef}
           type="file"
@@ -80,6 +105,12 @@ export function MediaUploader({
           <Upload />
           {uploading ? "Uploading…" : "Upload photos"}
         </Button>
+        {remaining > 0 && (
+          <Button variant="outline" onClick={handleAutoFill} disabled={isPending}>
+            <Sparkles />
+            Use automatic photos ({remaining} needed)
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

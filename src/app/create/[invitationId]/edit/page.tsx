@@ -6,7 +6,10 @@ import { db } from "@/lib/db";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { GuestInvitationWizard } from "@/components/guest/guest-invitation-wizard";
 
-export const metadata: Metadata = { title: "Edit Your Invitation" };
+export const metadata: Metadata = {
+  title: "Edit Your Invitation",
+  robots: { index: false, follow: false },
+};
 
 function toDateInputValue(date: Date) {
   return date.toISOString().slice(0, 10);

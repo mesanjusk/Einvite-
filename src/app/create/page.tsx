@@ -4,7 +4,10 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { GuestInvitationWizard } from "@/components/guest/guest-invitation-wizard";
 
-export const metadata: Metadata = { title: "Create Your Invitation" };
+export const metadata: Metadata = {
+  title: "Create Your Invitation",
+  robots: { index: false, follow: false },
+};
 
 export default async function CreateInvitationPage() {
   const [themes, musicTracks] = await Promise.all([
