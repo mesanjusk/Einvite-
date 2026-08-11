@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { uploadImageBuffer, isCloudinaryConfigured } from "@/lib/media/cloudinary";
+import { authorizeInvitationAccess } from "@/lib/invitation-access";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_PHOTOS_PER_INVITATION = 30;
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   if (!isCloudinaryConfigured()) {
     return NextResponse.json(
       {
@@ -36,14 +32,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "File is larger than 10MB." }, { status: 400 });
   }
 
-  const invitation = await db.invitation.findUnique({ where: { id: invitationId } });
-  if (!invitation || invitation.userId !== session.user.id) {
+  const invitation = await authorizeInvitationAccess(invitationId);
+  if (!invitation) {
     return NextResponse.json({ error: "Invitation not found." }, { status: 404 });
+  }
+
+  const existingCount = await db.media.count({ where: { invitationId } });
+  if (existingCount >= MAX_PHOTOS_PER_INVITATION) {
+    return NextResponse.json({ error: "Photo limit reached for this invitation." }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const uploaded = await uploadImageBuffer(buffer, {
-    folder: `wedding-studio/${session.user.id}`,
+    folder: `wedding-studio/${invitation.userId ?? invitation.id}`,
   });
 
   const media = await db.media.create({
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
       type: "IMAGE",
       width: uploaded.width,
       height: uploaded.height,
+      order: existingCount,
     },
   });
 

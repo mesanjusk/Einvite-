@@ -203,9 +203,18 @@ enum InvitationLanguage {
 
 model Invitation {
   id     String           @id @default(auto()) @map("_id") @db.ObjectId
-  userId String           @db.ObjectId
+  // Optional: guest invitations (created from the public "Get started" flow,
+  // before any WhatsApp-verified phone is linked) have no user account.
+  userId String?          @db.ObjectId
   slug   String           @unique
   status InvitationStatus @default(DRAFT)
+
+  // Guest-flow ownership. `draftSecretHash` authorizes edits to an
+  // unpublished guest draft (its raw value lives only in an httpOnly
+  // cookie on the creator's browser). Once the owner verifies a WhatsApp
+  // OTP, a PhoneLink takes over as the durable, cross-device "login".
+  draftSecretHash String?
+  isDemo          Boolean  @default(false)
 
   // Couple
   brideName  String
@@ -243,7 +252,7 @@ model Invitation {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   theme    Theme?      @relation(fields: [themeId], references: [id])
   template Template?   @relation(fields: [templateId], references: [id])
   music    MusicTrack? @relation(fields: [musicTrackId], references: [id])
@@ -255,9 +264,48 @@ model Invitation {
   media           Media[]
   analyticsEvents AnalyticsEvent[]
   deployment      Deployment?
+  phoneLink       PhoneLink?
+  otpChallenges   OtpChallenge[]
 
   @@index([userId])
   @@map("invitations")
+}
+
+// ---------------------------------------------------------------------------
+// Guest publish flow — WhatsApp OTP verification
+// ---------------------------------------------------------------------------
+
+// Created once an OTP challenge succeeds. Both `phone` and `invitationId`
+// are unique, so this is the enforcement point for "one mobile number, one
+// invitation": a phone can appear in at most one row, an invitation can be
+// linked to at most one phone. `editTokenHash` backs the pre-logged
+// WhatsApp link sent to the owner for future edits.
+model PhoneLink {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  phone         String   @unique
+  invitationId  String   @unique @db.ObjectId
+  editTokenHash String   @unique
+  verifiedAt    DateTime @default(now())
+
+  invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@map("phone_links")
+}
+
+model OtpChallenge {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId String   @db.ObjectId
+  phone       String
+  codeHash    String
+  attempts    Int       @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@index([invitationId, phone])
+  @@map("otp_challenges")
 }
 
 model Event {
@@ -362,6 +410,7 @@ model Media {
   blurDataUrl  String?
   caption      String?
   order        Int       @default(0)
+  isAuto       Boolean   @default(false) // filled by the "use automatic photos" fallback, not uploaded by the couple
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
 

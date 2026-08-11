@@ -57,8 +57,12 @@ export async function submitRsvpAction(
   });
 
   // Best-effort notification email — never block the RSVP on email delivery.
+  // Guest invitations (created from the public "Get started" flow) have no
+  // linked account to notify, so there's nothing to email.
   try {
-    const owner = await db.user.findUnique({ where: { id: invitation.userId } });
+    const owner = invitation.userId
+      ? await db.user.findUnique({ where: { id: invitation.userId } })
+      : null;
     if (owner?.email) {
       const resend = getResendClient();
       await resend.emails.send({

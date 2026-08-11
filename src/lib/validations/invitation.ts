@@ -65,3 +65,18 @@ export const guestSchema = z.object({
 });
 
 export type GuestInput = z.infer<typeof guestSchema>;
+
+export const otpRequestSchema = z.object({
+  invitationId: z.string().min(1),
+  phone: z.string().min(6, "Enter a valid mobile number"),
+});
+
+export type OtpRequestInput = z.infer<typeof otpRequestSchema>;
+
+export const otpVerifySchema = z.object({
+  invitationId: z.string().min(1),
+  phone: z.string().min(6, "Enter a valid mobile number"),
+  code: z.string().length(6, "Enter the 6-digit code"),
+});
+
+export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;
