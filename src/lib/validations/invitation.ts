@@ -33,6 +33,7 @@ export const invitationWizardSchema = z.object({
     .default("EN"),
   themeSlug: z.string().min(1, "Choose a theme"),
   musicTrackId: z.string().optional(),
+  customMusicUrl: z.string().optional(),
   events: z.array(eventSchema).default([]),
   familyMembers: z.array(familyMemberSchema).default([]),
   useAiCopy: z.boolean().default(true),

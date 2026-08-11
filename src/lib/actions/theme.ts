@@ -29,6 +29,7 @@ const updateThemeSchema = z.object({
   colorPalette: colorPaletteSchema.optional(),
   fontPairing: fontPairingSchema.optional(),
   musicTrackId: z.string().nullable().optional(),
+  customMusicUrl: z.string().nullable().optional(),
   galleryAnimation: z.enum(GALLERY_ANIMATIONS).optional(),
 });
 
@@ -70,6 +71,9 @@ export async function updateInvitationThemeAction(
       ...(parsed.data.fontPairing ? { fontPairing: parsed.data.fontPairing } : {}),
       ...(parsed.data.musicTrackId !== undefined
         ? { musicTrackId: parsed.data.musicTrackId || null }
+        : {}),
+      ...(parsed.data.customMusicUrl !== undefined
+        ? { customMusicUrl: parsed.data.customMusicUrl || null }
         : {}),
       ...(parsed.data.galleryAnimation ? { galleryAnimation: parsed.data.galleryAnimation } : {}),
     },

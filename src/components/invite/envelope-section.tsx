@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 
 import { useLocale } from "@/lib/i18n/locale-context";
 
-const OPEN_DURATION_MS = 2100;
+const OPEN_DURATION_MS = 2500;
+const RAY_COUNT = 14;
+const RAY_ANGLES = Array.from({ length: RAY_COUNT }, (_, i) => (360 / RAY_COUNT) * i);
 
 function Flourish({ style }: { style: React.CSSProperties }) {
   return (
@@ -87,6 +89,55 @@ export function EnvelopeSection({
       >
         {t.tapToReveal}
       </motion.p>
+
+      {/* A burst of light and sparks pours out once the flap lifts, like a small magic-portal moment. */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <motion.div
+          className="absolute size-16 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, #fff 0%, var(--inv-secondary, #fbf3e2) 40%, transparent 72%)",
+          }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={opened ? { scale: [0, 3.4, 4.6], opacity: [0, 1, 0] } : { scale: 0, opacity: 0 }}
+          transition={{ duration: 1.3, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        />
+        <motion.div
+          className="absolute size-64 rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 0deg, transparent 0deg, var(--inv-secondary, #fbf3e2) 10deg, transparent 22deg, transparent 70deg, var(--inv-accent) 80deg, transparent 92deg, transparent 150deg, var(--inv-secondary, #fbf3e2) 160deg, transparent 172deg, transparent 230deg, var(--inv-accent) 240deg, transparent 252deg, transparent 310deg, var(--inv-secondary, #fbf3e2) 320deg, transparent 332deg)",
+            filter: "blur(3px)",
+            mixBlendMode: "screen",
+          }}
+          initial={{ scale: 0.2, opacity: 0, rotate: 0 }}
+          animate={
+            opened
+              ? { scale: [0.2, 1.15, 1.4], opacity: [0, 0.9, 0], rotate: 200 }
+              : { scale: 0.2, opacity: 0 }
+          }
+          transition={{ duration: 1.5, delay: 0.4, ease: "easeOut" }}
+        />
+        {RAY_ANGLES.map((angle) => (
+          <motion.span
+            key={angle}
+            className="absolute h-16 w-[3px] rounded-full"
+            style={{
+              background:
+                "linear-gradient(to top, transparent, var(--inv-secondary, #fbf3e2), transparent)",
+              rotate: angle,
+              transformOrigin: "center 80px",
+            }}
+            initial={{ opacity: 0, scaleY: 0.3 }}
+            animate={
+              opened
+                ? { opacity: [0, 1, 0], scaleY: [0.3, 1.4, 0.6] }
+                : { opacity: 0, scaleY: 0.3 }
+            }
+            transition={{ duration: 0.9, delay: 0.4 + (angle / 360) * 0.25, ease: "easeOut" }}
+          />
+        ))}
+      </div>
 
       {/* The envelope flap: hinges open from the top, like a real envelope. */}
       <motion.div

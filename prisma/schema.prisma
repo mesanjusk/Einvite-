@@ -236,6 +236,7 @@ model Invitation {
   fontPairing      Json? // override of theme default, { display, body, script }
   colorPalette     Json? // override of theme default
   musicTrackId     String? @db.ObjectId
+  customMusicUrl   String? // couple's own uploaded audio — takes priority over musicTrackId when set
   galleryAnimation String  @default("fade") // "fade" | "slide" | "zoom" | "flip" | "blur" — gallery photo reveal style
   sectionConfig    Json // [{ id, type, visible, locked, order }] — drives the drag-drop builder
 

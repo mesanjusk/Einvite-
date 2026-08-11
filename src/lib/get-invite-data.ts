@@ -82,7 +82,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     venueAddress: invitation.venueAddress,
     googleMapsUrl: invitation.googleMapsUrl,
     customMessage: invitation.customMessage,
-    musicUrl: invitation.music?.url ?? null,
+    musicUrl: invitation.customMusicUrl ?? invitation.music?.url ?? null,
     galleryAnimation: invitation.galleryAnimation,
     copy: invitation.aiGeneratedCopy as InviteData["copy"],
     events: invitation.events,

@@ -73,6 +73,7 @@ export default async function EditGuestInvitationPage({
           language: invitation.language,
           themeSlug: theme?.slug ?? "royal",
           musicTrackId: invitation.musicTrackId ?? undefined,
+          customMusicUrl: invitation.customMusicUrl ?? undefined,
           events: events.map((event) => ({
             name: event.name,
             date: toDateInputValue(event.date),

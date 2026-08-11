@@ -123,6 +123,7 @@ export async function updateGuestInvitationAction(
       themeId: theme.id,
       templateId: template?.id,
       musicTrackId: data.musicTrackId || null,
+      customMusicUrl: data.customMusicUrl || null,
       aiGenerated,
       aiGeneratedCopy: aiGeneratedCopy ?? undefined,
       seoTitle: aiGeneratedCopy?.seoTitle,

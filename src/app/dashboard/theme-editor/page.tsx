@@ -122,6 +122,7 @@ export default async function ThemeEditorPage({
         currentPalette={currentPalette}
         currentFonts={currentFonts}
         currentMusicTrackId={invitation.musicTrackId ?? null}
+        currentCustomMusicUrl={invitation.customMusicUrl ?? null}
         currentGalleryAnimation={invitation.galleryAnimation}
       />
     </div>
