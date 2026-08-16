@@ -45,7 +45,9 @@ export default async function AnalyticsPage({
     );
   }
 
-  const selectedId = invitationId ?? invitations[0].id;
+  const selectedId = invitations.some((inv) => inv.id === invitationId)
+    ? invitationId!
+    : invitations[0].id;
 
   const [byType, byDevice, recent] = await Promise.all([
     db.analyticsEvent.groupBy({

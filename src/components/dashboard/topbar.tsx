@@ -64,6 +64,10 @@ export function DashboardTopbar({
 
   return (
     <header className="bg-background/80 sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b px-4 backdrop-blur">
+      <span className="font-display text-primary text-sm font-medium lg:hidden">
+        AI Wedding Invitation Studio
+      </span>
+
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="lg:hidden" aria-label="More">

@@ -46,7 +46,9 @@ export default async function RsvpPage({
     );
   }
 
-  const selectedId = invitationId ?? invitations[0].id;
+  const selectedId = invitations.some((inv) => inv.id === invitationId)
+    ? invitationId!
+    : invitations[0].id;
   const rsvps = await db.rsvp.findMany({
     where: { invitationId: selectedId },
     orderBy: { createdAt: "desc" },
