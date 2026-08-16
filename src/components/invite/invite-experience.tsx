@@ -103,11 +103,7 @@ export function InviteExperience({
           <GuestNameGate initials={initials} onSubmit={handleNameSubmit} />
         )}
         {!skipEnvelope && nameCaptured && !inviteOpen && (
-          <EnvelopeSection
-            initials={initials}
-            storageKey={`invited-${invite.slug}`}
-            onComplete={() => setInviteOpen(true)}
-          />
+          <EnvelopeSection initials={initials} onComplete={() => setInviteOpen(true)} />
         )}
       </AnimatePresence>
 

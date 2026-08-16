@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Users, LayoutTemplate, ClipboardCheck, CreditCard } from "lucide-react";
 
@@ -25,8 +26,13 @@ export default async function AdminOverviewPage() {
     .reduce((sum, s) => sum + s._count._all, 0);
 
   const stats = [
-    { label: "Total Users", value: userCount, icon: Users },
-    { label: "Invitations Created", value: invitationCount, icon: LayoutTemplate },
+    { label: "Total Users", value: userCount, icon: Users, href: "/admin/users" },
+    {
+      label: "Invitations Created",
+      value: invitationCount,
+      icon: LayoutTemplate,
+      href: "/admin/invitations",
+    },
     { label: "Total RSVPs", value: rsvpCount, icon: ClipboardCheck },
     { label: "Paid Subscriptions", value: paidCount, icon: CreditCard },
   ];
@@ -40,14 +46,23 @@ export default async function AdminOverviewPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
+          <Card key={stat.label} className={stat.href ? "hover:border-primary transition-colors" : undefined}>
             <CardContent className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-xs tracking-wide uppercase">
-                  {stat.label}
-                </p>
-                <p className="font-display text-2xl">{stat.value}</p>
-              </div>
+              {stat.href ? (
+                <Link href={stat.href}>
+                  <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                    {stat.label}
+                  </p>
+                  <p className="font-display text-2xl">{stat.value}</p>
+                </Link>
+              ) : (
+                <div>
+                  <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                    {stat.label}
+                  </p>
+                  <p className="font-display text-2xl">{stat.value}</p>
+                </div>
+              )}
               <stat.icon className="text-accent size-7" strokeWidth={1.5} />
             </CardContent>
           </Card>

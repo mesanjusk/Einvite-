@@ -7,6 +7,7 @@ import { Sparkles, Trash2, Upload } from "lucide-react";
 
 import { autoFillPhotosAction } from "@/lib/actions/guest-invitation";
 import { REQUIRED_PHOTO_COUNT as REQUIRED_PHOTOS } from "@/lib/media/constants";
+import { compressImageFile } from "@/lib/media/compress-image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -35,8 +36,9 @@ export function GuestPhotosStep({
     setUploading(true);
 
     for (const file of Array.from(files)) {
+      const compressed = await compressImageFile(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressed);
       formData.append("invitationId", invitationId);
 
       const response = await fetch("/api/media/upload", { method: "POST", body: formData });

@@ -45,6 +45,7 @@ export const dashboardNav: NavItem[] = [
 
 export const adminNav: NavItem[] = [
   { title: "Admin Panel", href: "/admin", icon: ShieldCheck },
+  { title: "All Invitations", href: "/admin/invitations", icon: LayoutTemplate },
   { title: "Manage Themes", href: "/admin/themes", icon: Paintbrush },
   { title: "Manage Music", href: "/admin/music", icon: Music },
   { title: "Manage Users", href: "/admin/users", icon: UserCog },
