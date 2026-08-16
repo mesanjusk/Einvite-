@@ -33,6 +33,7 @@ type MusicTrackRecord = {
   url: string;
   mood: string | null;
   isPremium: boolean;
+  isDefault?: boolean | null;
 };
 
 export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
@@ -50,6 +51,7 @@ export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
       url: track?.url ?? "",
       mood: track?.mood ?? "",
       isPremium: track?.isPremium ?? false,
+      isDefault: track?.isDefault ?? false,
     },
   });
 
@@ -141,6 +143,18 @@ export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
             <Switch
               checked={form.watch("isPremium")}
               onCheckedChange={(v) => form.setValue("isPremium", v)}
+            />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label>Default track</Label>
+              <p className="text-muted-foreground text-xs">
+                Auto-added when a couple doesn&apos;t pick any music.
+              </p>
+            </div>
+            <Switch
+              checked={form.watch("isDefault")}
+              onCheckedChange={(v) => form.setValue("isDefault", v)}
             />
           </div>
           <DialogFooter>

@@ -89,6 +89,14 @@ export async function updateGuestInvitationAction(
   if (!theme) return { success: false, error: "Unknown theme selected." };
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
+  // No music picked or uploaded — fall back to the admin-flagged default
+  // track (if one exists) so the invitation never plays silent.
+  let musicTrackId = data.musicTrackId || null;
+  if (!musicTrackId && !data.customMusicUrl) {
+    const defaultTrack = await db.musicTrack.findFirst({ where: { isDefault: true } });
+    musicTrackId = defaultTrack?.id ?? null;
+  }
+
   const slug = invitation.slug.startsWith("draft-")
     ? await uniqueSlug(`${data.brideName}-${data.groomName}`)
     : invitation.slug;
@@ -131,7 +139,7 @@ export async function updateGuestInvitationAction(
       language: data.language,
       themeId: theme.id,
       templateId: template?.id,
-      musicTrackId: data.musicTrackId || null,
+      musicTrackId,
       customMusicUrl: data.customMusicUrl || null,
       aiGenerated,
       aiGeneratedCopy: aiGeneratedCopy ?? undefined,

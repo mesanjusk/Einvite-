@@ -44,6 +44,7 @@ export default async function AdminMusicPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {track.isDefault && <Badge variant="secondary">Default</Badge>}
                 {track.isPremium && <Badge variant="gold">Premium</Badge>}
                 <MusicFormDialog track={track} />
                 <DeleteEntityButton

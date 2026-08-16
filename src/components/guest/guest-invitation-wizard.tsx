@@ -42,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { GuestPhotosStep, REQUIRED_PHOTOS, type GuestMediaItem } from "./guest-photos-step";
 import { PublishOtpDialog } from "./publish-otp-dialog";
 
@@ -74,6 +75,9 @@ const STEP_FIELDS: Record<number, (keyof InvitationWizardFormValues)[]> = {
 };
 
 const DRAFT_ID_STORAGE_KEY = "einvite-guest-draft-id";
+const CREATOR_GENDER_STORAGE_KEY = "einvite-creator-gender";
+
+type CreatorGender = "bride" | "groom";
 
 export function GuestInvitationWizard({
   themes,
@@ -104,6 +108,25 @@ export function GuestInvitationWizard({
   const [themeCategory, setThemeCategory] = useState<(typeof CATEGORY_TABS)[number]["value"]>(
     "all",
   );
+  const [creatorGender, setCreatorGender] = useState<CreatorGender | null>(null);
+  const [genderPromptOpen, setGenderPromptOpen] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode || typeof window === "undefined") return;
+    const stored = sessionStorage.getItem(CREATOR_GENDER_STORAGE_KEY);
+    if (stored === "bride" || stored === "groom") {
+      setCreatorGender(stored);
+    } else {
+      setGenderPromptOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function chooseCreatorGender(gender: CreatorGender) {
+    setCreatorGender(gender);
+    sessionStorage.setItem(CREATOR_GENDER_STORAGE_KEY, gender);
+    setGenderPromptOpen(false);
+  }
 
   const visibleThemes = useMemo(
     () => (themeCategory === "all" ? themes : themes.filter((t) => t.category === themeCategory)),
@@ -310,12 +333,41 @@ export function GuestInvitationWizard({
             {step === 0 && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Bride's name" error={form.formState.errors.brideName?.message}>
-                    <Input {...form.register("brideName")} />
-                  </Field>
-                  <Field label="Groom's name" error={form.formState.errors.groomName?.message}>
-                    <Input {...form.register("groomName")} />
-                  </Field>
+                  {(() => {
+                    const brideField = (
+                      <Field
+                        key="bride"
+                        label={
+                          creatorGender === "bride"
+                            ? "Your name"
+                            : creatorGender === "groom"
+                              ? "Partner's name"
+                              : "Bride's name"
+                        }
+                        error={form.formState.errors.brideName?.message}
+                      >
+                        <Input {...form.register("brideName")} />
+                      </Field>
+                    );
+                    const groomField = (
+                      <Field
+                        key="groom"
+                        label={
+                          creatorGender === "groom"
+                            ? "Your name"
+                            : creatorGender === "bride"
+                              ? "Partner's name"
+                              : "Groom's name"
+                        }
+                        error={form.formState.errors.groomName?.message}
+                      >
+                        <Input {...form.register("groomName")} />
+                      </Field>
+                    );
+                    return creatorGender === "groom"
+                      ? [groomField, brideField]
+                      : [brideField, groomField];
+                  })()}
                 </div>
                 <Field label="Wedding date" error={form.formState.errors.weddingDate?.message}>
                   <Input type="date" {...form.register("weddingDate")} />
@@ -585,6 +637,30 @@ export function GuestInvitationWizard({
         invitationId={invitationId}
         onPublished={() => sessionStorage.removeItem(DRAFT_ID_STORAGE_KEY)}
       />
+
+      <Dialog open={genderPromptOpen} onOpenChange={setGenderPromptOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className="text-center sm:max-w-sm"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Who&apos;s creating this invitation?</DialogTitle>
+            <DialogDescription>
+              We&apos;ll use this to fill in your name first — you can still edit both names.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <Button type="button" variant="outline" size="lg" onClick={() => chooseCreatorGender("groom")}>
+              I&apos;m the Groom
+            </Button>
+            <Button type="button" variant="outline" size="lg" onClick={() => chooseCreatorGender("bride")}>
+              I&apos;m the Bride
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
