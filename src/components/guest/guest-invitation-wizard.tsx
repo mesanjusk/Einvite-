@@ -148,7 +148,7 @@ export function GuestInvitationWizard({
       musicTrackId: undefined,
       customMusicUrl: undefined,
       events: [
-        { name: "Wedding", date: "", time: "", venueName: "", address: "", dressCode: "" },
+        { name: "Wedding", date: "", time: "", venueName: "", address: "", dressCode: "", tagline: "" },
       ],
       familyMembers: [],
       useAiCopy: true,
@@ -449,10 +449,19 @@ export function GuestInvitationWizard({
                         />
                       </Field>
                       <Field label="Dress code">
-                        <Input {...form.register(`events.${index}.dressCode` as const)} />
+                        <Input
+                          placeholder="Bridal Gold, Traditional Indian"
+                          {...form.register(`events.${index}.dressCode` as const)}
+                        />
                       </Field>
                       <Field label="Venue" className="sm:col-span-2">
                         <Input {...form.register(`events.${index}.venueName` as const)} />
+                      </Field>
+                      <Field label="Tagline (optional)" className="sm:col-span-2">
+                        <Input
+                          placeholder="The groom's royal procession begins!"
+                          {...form.register(`events.${index}.tagline` as const)}
+                        />
                       </Field>
                     </div>
                   </div>
@@ -468,6 +477,7 @@ export function GuestInvitationWizard({
                       venueName: "",
                       address: "",
                       dressCode: "",
+                      tagline: "",
                     })
                   }
                 >

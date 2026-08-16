@@ -8,6 +8,7 @@ export type InviteEvent = {
   googleMapsUrl: string | null;
   dressCode: string | null;
   accentColor: string | null;
+  tagline: string | null;
 };
 
 export type InviteFamilyMember = {

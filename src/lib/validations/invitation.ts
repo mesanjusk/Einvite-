@@ -9,6 +9,7 @@ export const eventSchema = z.object({
   googleMapsUrl: z.url().optional().or(z.literal("")),
   dressCode: z.string().optional(),
   accentColor: z.string().optional(),
+  tagline: z.string().optional(),
 });
 
 export const familyMemberSchema = z.object({

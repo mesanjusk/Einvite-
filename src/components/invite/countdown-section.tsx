@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
+import { ConfettiBurst } from "@/components/animation/confetti-burst";
 import { useCountdown } from "@/hooks/use-countdown";
 import { fadeUp } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
@@ -56,30 +57,14 @@ export function CountdownSection({
 
       <RevealGroup className="relative z-[2] w-full max-w-md">
         <div
-          className="rounded-[20px] border px-6 py-10 text-center"
+          className="relative rounded-[20px] border px-6 py-10 text-center"
           style={{
             background: "color-mix(in srgb, var(--inv-background) 96%, white 4%)",
             borderColor: "color-mix(in srgb, var(--inv-accent) 30%, transparent)",
             boxShadow: "0 20px 45px rgba(0,0,0,0.1)",
           }}
         >
-          <Reveal variants={fadeUp}>
-            <p
-              className="mb-4 text-[15px]"
-              style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", opacity: 0.75 }}
-            >
-              {quote ?? t.countdownQuoteDefault}
-            </p>
-          </Reveal>
-
-          <Reveal variants={fadeUp}>
-            <h2
-              className="mb-3.5 text-[38px]"
-              style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
-            >
-              {t.theWedding}
-            </h2>
-          </Reveal>
+          {allScratched && <ConfettiBurst />}
 
           <AnimatePresence mode="wait">
             {!allScratched ? (
@@ -89,8 +74,16 @@ export function CountdownSection({
                 transition={{ duration: 0.4 }}
                 className="flex flex-col gap-4"
               >
-                <p className="text-xs tracking-[0.15em] italic opacity-70" style={{ color: "var(--inv-accent)" }}>
-                  Scratch below to reveal our wedding date
+                <Reveal variants={fadeUp}>
+                  <h2
+                    className="mb-1 text-[38px]"
+                    style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
+                  >
+                    {t.saveTheDate}
+                  </h2>
+                </Reveal>
+                <p className="mb-2 text-xs tracking-[0.15em] opacity-70">
+                  {t.scratchToRevealDate}
                 </p>
                 <div className="flex justify-center gap-3">
                   {(["month", "day"] as ScratchPart[]).map((part) => (
@@ -136,6 +129,18 @@ export function CountdownSection({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
+                <p
+                  className="mb-4 text-[15px]"
+                  style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", opacity: 0.75 }}
+                >
+                  {quote ?? t.countdownQuoteDefault}
+                </p>
+                <h2
+                  className="mb-3.5 text-[38px]"
+                  style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
+                >
+                  {t.theWedding}
+                </h2>
                 <p className="mb-7 text-sm tracking-[0.2em]" style={{ color: "var(--inv-accent)" }}>
                   {dateDisplay}
                 </p>
