@@ -13,36 +13,12 @@ export const metadata: Metadata = {
 };
 
 const FEATURES = [
-  {
-    icon: Wand2,
-    title: "AI Wizard",
-    description: "Answer questions about your day — AI writes the copy and lays out every section.",
-  },
-  {
-    icon: Palette,
-    title: "One-Click Themes",
-    description: "Royal, Traditional, Minimal, Beach, and more — colors, fonts, and motifs change together.",
-  },
-  {
-    icon: Music,
-    title: "Music & Motion",
-    description: "Background music, scroll-triggered reveals, shimmer text, and falling petals.",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "RSVP & Guests",
-    description: "Collect responses with meal preferences, export to CSV, manage your guest list.",
-  },
-  {
-    icon: Sparkles,
-    title: "Live Analytics",
-    description: "See views, shares, and RSVPs roll in as guests open your invitation.",
-  },
-  {
-    icon: Rocket,
-    title: "One-Click Publish",
-    description: "Verify your WhatsApp number and go live instantly with a shareable link and QR code.",
-  },
+  { icon: Wand2, title: "AI Wizard" },
+  { icon: Palette, title: "One-Click Themes" },
+  { icon: Music, title: "Music & Motion" },
+  { icon: ClipboardCheck, title: "RSVP & Guests" },
+  { icon: Sparkles, title: "Live Analytics" },
+  { icon: Rocket, title: "One-Click Publish" },
 ];
 
 export default async function Home() {
@@ -80,19 +56,10 @@ export default async function Home() {
               "radial-gradient(120% 60% at 50% 0%, oklch(0.94 0.03 40) 0%, var(--background) 60%)",
           }}
         >
-          <span className="text-accent text-xs tracking-[0.3em] uppercase">
-            Premium invites, generated in minutes
-          </span>
           <h1 className="font-display max-w-3xl text-4xl leading-tight text-balance sm:text-6xl">
             Your wedding invite, designed by AI in{" "}
             <span className="text-primary">minutes, not months</span>
           </h1>
-          <p className="text-muted-foreground max-w-xl text-lg">
-            Answer a few questions about your day. We generate the copy, the theme, the
-            countdown, the RSVP — a full animated wedding website, live at your own link. No
-            account needed to start — we only ask for your WhatsApp number when you&apos;re ready
-            to publish.
-          </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" asChild>
               <Link href="/create">Create your invitation — free</Link>
@@ -103,12 +70,11 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-6 py-16 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="mx-auto grid max-w-5xl grid-cols-2 gap-4 px-6 py-16 sm:grid-cols-3 lg:grid-cols-6">
           {FEATURES.map((feature) => (
-            <div key={feature.title} className="rounded-xl border p-6">
-              <feature.icon className="text-accent mb-3 size-6" strokeWidth={1.5} />
-              <h3 className="mb-1 font-semibold">{feature.title}</h3>
-              <p className="text-muted-foreground text-sm">{feature.description}</p>
+            <div key={feature.title} className="flex flex-col items-center gap-2 rounded-xl border p-5 text-center">
+              <feature.icon className="text-accent size-6" strokeWidth={1.5} />
+              <span className="text-sm font-medium">{feature.title}</span>
             </div>
           ))}
         </section>
@@ -116,11 +82,7 @@ export default async function Home() {
         {demos.length > 0 && (
           <section className="px-6 py-16" style={{ background: "color-mix(in srgb, var(--muted) 40%, transparent)" }}>
             <div className="mx-auto max-w-5xl">
-              <h2 className="font-display mb-2 text-center text-3xl">See it in action</h2>
-              <p className="text-muted-foreground mx-auto mb-10 max-w-lg text-center text-sm">
-                Real invitations built on the platform — tap through one to see the envelope
-                reveal, countdown, and gallery for yourself.
-              </p>
+              <h2 className="font-display mb-10 text-center text-3xl">See it in action</h2>
               <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
                 {demos.map((demo) => {
                   const palette = demo.theme?.colorPalette as

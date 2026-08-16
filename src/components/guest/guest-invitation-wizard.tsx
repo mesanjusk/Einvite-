@@ -529,15 +529,10 @@ export function GuestInvitationWizard({
             {step === 5 && (
               <>
                 <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div>
-                    <p className="flex items-center gap-2 text-sm font-medium">
-                      <Sparkles className="text-accent size-4" />
-                      Generate copy with AI
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      Writes your headline, invitation letter, and hashtags automatically.
-                    </p>
-                  </div>
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <Sparkles className="text-accent size-4" />
+                    Generate copy with AI
+                  </p>
                   <Switch
                     checked={form.watch("useAiCopy")}
                     onCheckedChange={(v) => form.setValue("useAiCopy", v)}
