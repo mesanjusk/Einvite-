@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -13,6 +14,9 @@ import type { ActionResult } from "@/lib/actions/auth";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
+import { generateToken, hashToken } from "@/lib/otp";
+import { getAppUrl } from "@/lib/app-url";
+import { normalizePhone } from "@/lib/phone";
 
 export async function createInvitationAction(
   input: InvitationWizardInput,
@@ -174,4 +178,57 @@ export async function deleteInvitationAction(invitationId: string): Promise<Acti
   revalidatePath("/dashboard/invitations");
 
   return { success: true, data: undefined };
+}
+
+/**
+ * Lets the dashboard owner (already authenticated with their own account —
+ * no OTP needed, that's only for the anonymous guest-publish flow) mint a
+ * private edit link for the couple, so they can view/manage the invitation
+ * without a full dashboard account. Creates the PhoneLink on first use,
+ * regenerates the token (invalidating any previous link) on repeat use.
+ */
+export async function ownerCreateEditLinkAction(
+  invitationId: string,
+  phone?: string,
+): Promise<ActionResult<{ editUrl: string }>> {
+  const session = await auth();
+  if (!session?.user) return { success: false, error: "Unauthorized" };
+
+  const invitation = await db.invitation.findUnique({
+    where: { id: invitationId },
+    include: { phoneLink: true },
+  });
+  if (!invitation || invitation.userId !== session.user.id) {
+    return { success: false, error: "Invitation not found." };
+  }
+
+  const rawEditToken = generateToken();
+  const editTokenHash = hashToken(rawEditToken);
+
+  if (invitation.phoneLink) {
+    await db.phoneLink.update({
+      where: { id: invitation.phoneLink.id },
+      data: { editTokenHash },
+    });
+  } else {
+    const normalized = normalizePhone(phone ?? "");
+    if (!normalized) {
+      return { success: false, error: "Enter the couple's WhatsApp number first." };
+    }
+    try {
+      await db.phoneLink.create({
+        data: { phone: normalized, invitationId, editTokenHash },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        return {
+          success: false,
+          error: "That mobile number is already linked to another invitation.",
+        };
+      }
+      throw error;
+    }
+  }
+
+  return { success: true, data: { editUrl: `${getAppUrl()}/e/${rawEditToken}` } };
 }

@@ -42,7 +42,9 @@ export default async function GuestsPage({
     );
   }
 
-  const selectedId = invitationId ?? invitations[0].id;
+  const selectedId = invitations.some((inv) => inv.id === invitationId)
+    ? invitationId!
+    : invitations[0].id;
   const [guests, selectedInvitation] = await Promise.all([
     db.guest.findMany({
       where: { invitationId: selectedId },

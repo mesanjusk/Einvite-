@@ -9,6 +9,7 @@ import { isVercelConfigured } from "@/lib/vercel";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { PublishButton } from "@/components/dashboard/publish-button";
 import { DomainForm } from "@/components/dashboard/domain-form";
+import { ClientLinkCard } from "@/components/dashboard/client-link-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -43,10 +44,12 @@ export default async function DeployPage({
     );
   }
 
-  const selectedId = invitationId ?? invitations[0].id;
+  const selectedId = invitations.some((inv) => inv.id === invitationId)
+    ? invitationId!
+    : invitations[0].id;
   const invitation = await db.invitation.findUnique({
     where: { id: selectedId },
-    include: { deployment: true },
+    include: { deployment: true, phoneLink: { select: { phone: true } } },
   });
   if (!invitation) return null;
 
@@ -125,6 +128,11 @@ export default async function DeployPage({
           </CardContent>
         </Card>
       )}
+
+      <ClientLinkCard
+        invitationId={invitation.id}
+        existingPhone={invitation.phoneLink?.phone ?? null}
+      />
 
       <Card>
         <CardHeader>

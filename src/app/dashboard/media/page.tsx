@@ -43,7 +43,9 @@ export default async function MediaPage({
     );
   }
 
-  const selectedId = invitationId ?? invitations[0].id;
+  const selectedId = invitations.some((inv) => inv.id === invitationId)
+    ? invitationId!
+    : invitations[0].id;
   const [media, invitation, musicTracks] = await Promise.all([
     db.media.findMany({ where: { invitationId: selectedId }, orderBy: { createdAt: "desc" } }),
     db.invitation.findUnique({ where: { id: selectedId }, select: { customMusicUrl: true } }),

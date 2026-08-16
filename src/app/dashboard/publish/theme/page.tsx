@@ -70,7 +70,9 @@ export default async function ThemeEditorPage({
     );
   }
 
-  const selectedId = invitationId ?? invitations[0].id;
+  const selectedId = invitations.some((inv) => inv.id === invitationId)
+    ? invitationId!
+    : invitations[0].id;
   const invitation = await db.invitation.findUnique({
     where: { id: selectedId },
     include: { theme: true },
