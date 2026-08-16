@@ -10,6 +10,8 @@ export interface Translations {
   mins: string;
   secs: string;
   theWedding: string;
+  saveTheDate: string;
+  scratchToRevealDate: string;
   countdownQuoteDefault: string;
   timeLabel: string;
   venueLabel: string;
@@ -60,6 +62,8 @@ const en: Translations = {
   mins: "Mins",
   secs: "Secs",
   theWedding: "The Wedding",
+  saveTheDate: "Save the Date",
+  scratchToRevealDate: "Scratch below to reveal our wedding date",
   countdownQuoteDefault: "A lifetime of togetherness begins with one sacred step",
   timeLabel: "Time",
   venueLabel: "Venue",
@@ -110,6 +114,8 @@ const hi: Translations = {
   mins: "मिनट",
   secs: "सेकंड",
   theWedding: "शादी",
+  saveTheDate: "यह तारीख़ सहेजें",
+  scratchToRevealDate: "हमारी शादी की तारीख़ देखने के लिए नीचे स्क्रैच करें",
   countdownQuoteDefault: "साथ जीवन भर की शुरुआत एक पवित्र कदम से होती है",
   timeLabel: "समय",
   venueLabel: "स्थान",
@@ -160,6 +166,8 @@ const mr: Translations = {
   mins: "मिनिटे",
   secs: "सेकंद",
   theWedding: "विवाह",
+  saveTheDate: "ही तारीख जपून ठेवा",
+  scratchToRevealDate: "आमची लग्नाची तारीख पाहण्यासाठी खाली स्क्रॅच करा",
   countdownQuoteDefault: "एकत्र आयुष्याची सुरुवात एका पवित्र पावलाने होते",
   timeLabel: "वेळ",
   venueLabel: "ठिकाण",
@@ -210,6 +218,8 @@ const gu: Translations = {
   mins: "મિનિટ",
   secs: "સેકન્ડ",
   theWedding: "લગ્ન",
+  saveTheDate: "આ તારીખ સાચવો",
+  scratchToRevealDate: "અમારી લગ્નની તારીખ જોવા માટે નીચે સ્ક્રેચ કરો",
   countdownQuoteDefault: "સાથે જીવનની શરૂઆત એક પવિત્ર પગલાથી થાય છે",
   timeLabel: "સમય",
   venueLabel: "સ્થળ",
@@ -260,6 +270,8 @@ const pa: Translations = {
   mins: "ਮਿੰਟ",
   secs: "ਸਕਿੰਟ",
   theWedding: "ਵਿਆਹ",
+  saveTheDate: "ਇਹ ਤਾਰੀਖ ਸਾਂਭੋ",
+  scratchToRevealDate: "ਸਾਡੇ ਵਿਆਹ ਦੀ ਤਾਰੀਖ ਵੇਖਣ ਲਈ ਹੇਠਾਂ ਸਕ੍ਰੈਚ ਕਰੋ",
   countdownQuoteDefault: "ਇਕੱਠੇ ਜੀਵਨ ਦੀ ਸ਼ੁਰੂਆਤ ਇੱਕ ਪਵਿੱਤਰ ਕਦਮ ਨਾਲ ਹੁੰਦੀ ਹੈ",
   timeLabel: "ਸਮਾਂ",
   venueLabel: "ਸਥਾਨ",
@@ -310,6 +322,8 @@ const bn: Translations = {
   mins: "মিনিট",
   secs: "সেকেন্ড",
   theWedding: "বিবাহ",
+  saveTheDate: "এই তারিখটি সংরক্ষণ করুন",
+  scratchToRevealDate: "আমাদের বিয়ের তারিখ দেখতে নিচে স্ক্র্যাচ করুন",
   countdownQuoteDefault: "একসাথে জীবনের শুরু হয় একটি পবিত্র পদক্ষেপ দিয়ে",
   timeLabel: "সময়",
   venueLabel: "স্থান",
@@ -360,6 +374,8 @@ const ta: Translations = {
   mins: "நிமிடங்கள்",
   secs: "வினாடிகள்",
   theWedding: "திருமணம்",
+  saveTheDate: "இந்த தேதியை சேமிக்கவும்",
+  scratchToRevealDate: "எங்கள் திருமண தேதியைக் காண கீழே ஸ்க்ராட்ச் செய்யவும்",
   countdownQuoteDefault: "இணைந்த வாழ்க்கை ஒரு புனிதமான காலடியில் தொடங்குகிறது",
   timeLabel: "நேரம்",
   venueLabel: "இடம்",
@@ -410,6 +426,8 @@ const te: Translations = {
   mins: "నిమిషాలు",
   secs: "సెకన్లు",
   theWedding: "వివాహం",
+  saveTheDate: "ఈ తేదీని సేవ్ చేయండి",
+  scratchToRevealDate: "మా వివాహ తేదీని చూడటానికి కింద స్క్రాచ్ చేయండి",
   countdownQuoteDefault: "కలిసి జీవితం ఒక పవిత్రమైన అడుగుతో మొదలవుతుంది",
   timeLabel: "సమయం",
   venueLabel: "వేదిక",
@@ -460,6 +478,8 @@ const kn: Translations = {
   mins: "ನಿಮಿಷಗಳು",
   secs: "ಸೆಕೆಂಡುಗಳು",
   theWedding: "ವಿವಾಹ",
+  saveTheDate: "ಈ ದಿನಾಂಕವನ್ನು ಉಳಿಸಿ",
+  scratchToRevealDate: "ನಮ್ಮ ಮದುವೆಯ ದಿನಾಂಕವನ್ನು ನೋಡಲು ಕೆಳಗೆ ಸ್ಕ್ರಾಚ್ ಮಾಡಿ",
   countdownQuoteDefault: "ಒಟ್ಟಿಗೆ ಜೀವನವು ಒಂದು ಪವಿತ್ರ ಹೆಜ್ಜೆಯಿಂದ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ",
   timeLabel: "ಸಮಯ",
   venueLabel: "ಸ್ಥಳ",
@@ -510,6 +530,8 @@ const ml: Translations = {
   mins: "മിനിറ്റ്",
   secs: "സെക്കൻഡ്",
   theWedding: "വിവാഹം",
+  saveTheDate: "ഈ തീയതി സൂക്ഷിക്കുക",
+  scratchToRevealDate: "ഞങ്ങളുടെ വിവാഹ തീയതി കാണാൻ താഴെ സ്ക്രാച്ച് ചെയ്യുക",
   countdownQuoteDefault: "ഒരുമിച്ചുള്ള ജീവിതം ഒരു പുണ്യ ചുവടിൽ ആരംഭിക്കുന്നു",
   timeLabel: "സമയം",
   venueLabel: "സ്ഥലം",

@@ -22,6 +22,36 @@ const SPARKS = Array.from({ length: SPARK_COUNT }, (_, i) => ({
   delay: 0.45 + ((i * 13) % 40) / 100,
 }));
 
+// A faint repeating floral motif across the whole envelope face — the
+// reference shows an all-over embossed damask texture, not just corner
+// flourishes. Encoded as an inline SVG tile so it needs no extra asset.
+const EMBOSS_TILE =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+      <g fill="none" stroke="white" stroke-width="1.4" opacity="0.5">
+        <path d="M60 26c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14z" />
+        <path d="M60 4v22M60 94v22M4 60h22M94 60h22" />
+        <path d="M22 22c6 6 6 16 0 22M98 22c-6 6-6 16 0 22M22 98c6-6 6-16 0-22M98 98c-6-6-6-16 0-22" />
+      </g>
+    </svg>`,
+  );
+
+function EmbossPattern() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0"
+      style={{
+        backgroundImage: `url("${EMBOSS_TILE}")`,
+        backgroundSize: "120px 120px",
+        backgroundRepeat: "repeat",
+        opacity: 0.05,
+        mixBlendMode: "overlay",
+      }}
+    />
+  );
+}
+
 function Flourish({ style }: { style: React.CSSProperties }) {
   return (
     <svg width="120" height="90" viewBox="0 0 120 90" style={{ position: "absolute", opacity: 0.35, ...style }}>
@@ -105,6 +135,7 @@ export function EnvelopeSection({
         perspective: 1000,
       }}
     >
+      <EmbossPattern />
       <Flourish style={{ top: 24, left: 12 }} />
       <Flourish style={{ top: 24, right: 12, transform: "scaleX(-1)" }} />
       <Flourish style={{ bottom: 24, left: 12, transform: "scaleY(-1)" }} />
@@ -225,15 +256,18 @@ export function EnvelopeSection({
         transition={{ duration: OPEN_DURATION_MS / 1000, times: [0, 0.72, 1], ease: "easeIn" }}
       />
 
-      {/* The envelope flap: hinges open from the top, like a real envelope. */}
+      {/* The envelope flap: hinges open from the top, like a real envelope.
+          Built as a CSS border-triangle rather than clip-path — Chromium has
+          a long-standing bug where clip-path silently freezes 3D transforms
+          on the clipped element, which made the flap visually static here. */}
       <motion.div
-        className="absolute top-[calc(50%-150px)] h-[150px] w-[210px] origin-top"
+        className="absolute top-[calc(50%-150px)] size-0 origin-top"
         style={{
-          clipPath: "polygon(0 0, 100% 0, 50% 100%)",
-          background:
-            "linear-gradient(160deg, color-mix(in srgb, var(--inv-primary) 88%, white 12%), var(--inv-primary))",
-          boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-          transformStyle: "preserve-3d",
+          borderLeft: "105px solid transparent",
+          borderRight: "105px solid transparent",
+          borderTop: "150px solid var(--inv-primary)",
+          filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.25))",
+          backfaceVisibility: "hidden",
         }}
         animate={opened ? { rotateX: -170 } : { rotateX: 0 }}
         transition={{ duration: 0.8, ease: [0.45, 0, 0.2, 1] }}

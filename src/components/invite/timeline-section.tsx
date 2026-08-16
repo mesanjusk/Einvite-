@@ -51,12 +51,23 @@ export function TimelineSection({
 
           <Reveal variants={fadeUp}>
             <h2
-              className="mb-4 text-[46px]"
+              className="mb-2 text-[46px]"
               style={{ fontFamily: "var(--inv-font-display)", color: accent }}
             >
               {event.name}
             </h2>
           </Reveal>
+
+          {event.tagline && (
+            <Reveal variants={fadeUp}>
+              <p
+                className="mb-4 text-sm"
+                style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", opacity: 0.75 }}
+              >
+                {event.tagline}
+              </p>
+            </Reveal>
+          )}
 
           <Reveal variants={fadeUp}>
             <div
@@ -67,9 +78,32 @@ export function TimelineSection({
                 <Row label={t.timeLabel} value={event.time} />
               )}
               {event.venueName && <Row label={t.venueLabel} value={event.venueName} />}
-              {event.dressCode && <Row label={t.dressCode} value={event.dressCode} />}
             </div>
           </Reveal>
+
+          {event.dressCode && (
+            <Reveal variants={fadeUp}>
+              <div className="mt-4 border-t pt-4" style={{ borderColor: "color-mix(in srgb, var(--inv-primary) 25%, transparent)" }}>
+                <p
+                  className="mb-2 text-[10px] tracking-[0.25em] uppercase"
+                  style={{ color: "var(--inv-accent)" }}
+                >
+                  {t.dressCode}
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {event.dressCode.split(",").map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border px-3 py-1 text-xs"
+                      style={{ borderColor: "color-mix(in srgb, var(--inv-accent) 40%, transparent)" }}
+                    >
+                      {item.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          )}
 
           {event.googleMapsUrl && (
             <Reveal variants={fadeUp}>

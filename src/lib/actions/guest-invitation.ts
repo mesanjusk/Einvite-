@@ -156,6 +156,7 @@ export async function updateGuestInvitationAction(
           googleMapsUrl: event.googleMapsUrl || null,
           dressCode: event.dressCode,
           accentColor: event.accentColor,
+          tagline: event.tagline,
           order,
         })),
       },

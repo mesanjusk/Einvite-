@@ -333,6 +333,7 @@ model Event {
   googleMapsUrl String?
   dressCode     String?
   accentColor   String?
+  tagline       String? // short italic line under the event name, e.g. "The groom's royal procession begins!"
   order         Int      @default(0)
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
