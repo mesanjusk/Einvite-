@@ -138,6 +138,10 @@ model Theme {
   decorAssets  Json? // preset decoration config (petals, sparkles, motifs...)
   isPremium    Boolean @default(false)
   sortOrder    Int     @default(0)
+  // Optional short muted video (envelope-open moment) — preloaded and
+  // layered over the coded burst animation when ready; the coded burst
+  // always plays first so there's never a blank/loading moment.
+  revealVideoUrl String?
 
   templates   Template[]
   invitations Invitation[]

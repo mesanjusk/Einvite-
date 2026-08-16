@@ -55,6 +55,7 @@ export default async function AdminThemesPage() {
                         name: theme.name,
                         slug: theme.slug,
                         description: theme.description,
+                        revealVideoUrl: theme.revealVideoUrl,
                         category: theme.category,
                         isPremium: theme.isPremium,
                         sortOrder: theme.sortOrder,

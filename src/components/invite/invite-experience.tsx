@@ -79,7 +79,11 @@ export function InviteExperience({
 
       <AnimatePresence>
         {!skipEnvelope && !inviteOpen && (
-          <EnvelopeSection initials={initials} onComplete={() => setInviteOpen(true)} />
+          <EnvelopeSection
+            initials={initials}
+            videoUrl={invite.revealVideoUrl}
+            onComplete={() => setInviteOpen(true)}
+          />
         )}
       </AnimatePresence>
 
