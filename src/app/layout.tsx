@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Great_Vibes, Cormorant_Garamond, EB_Garamond } from "next/font/google";
+import { SITE_NAME } from "@/config/site";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -37,8 +38,8 @@ const ebGaramond = EB_Garamond({
 
 export const metadata: Metadata = {
   title: {
-    default: "AI Wedding Invitation Studio",
-    template: "%s · AI Wedding Invitation Studio",
+    default: SITE_NAME,
+    template: `%s · ${SITE_NAME}`,
   },
   description:
     "Generate premium, animated digital wedding invitation websites with AI — no code, no designer required.",

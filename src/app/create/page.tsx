@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
+import { SiteLogo } from "@/components/brand/site-logo";
 import { GuestInvitationWizard } from "@/components/guest/guest-invitation-wizard";
 
 export const metadata: Metadata = {
@@ -25,8 +26,8 @@ export default async function CreateInvitationPage({
 
   return (
     <div className="flex min-h-svh flex-col items-center gap-6 bg-gradient-to-b from-[oklch(0.97_0.015_340)] to-background px-4 py-12">
-      <Link href="/" className="font-display text-primary text-2xl">
-        AI Wedding Invitation Studio
+      <Link href="/" className="inline-block">
+        <SiteLogo size="lg" />
       </Link>
 
       <div className="mx-auto w-full max-w-2xl">

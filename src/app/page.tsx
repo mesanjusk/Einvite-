@@ -3,12 +3,14 @@ import type { Metadata } from "next";
 import { Sparkles, Palette, Music, ClipboardCheck, Rocket, Wand2 } from "lucide-react";
 
 import { db } from "@/lib/db";
+import { SITE_NAME } from "@/config/site";
+import { SiteLogo } from "@/components/brand/site-logo";
 import { Button } from "@/components/ui/button";
 import { PhoneMockup } from "@/components/marketing/phone-mockup";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 
 export const metadata: Metadata = {
-  title: "AI-Generated Wedding Invitations",
+  title: `${SITE_NAME} — AI-Generated Wedding Invitations`,
   description:
     "Answer a few questions and get a premium, animated wedding invitation website — envelope reveal, countdown, RSVP, and more — live in minutes.",
 };
@@ -38,7 +40,7 @@ export default async function Home() {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="flex items-center justify-between px-6 py-5 lg:px-12">
-        <span className="font-display text-lg text-primary">AI Wedding Invitation Studio</span>
+        <SiteLogo size="lg" />
         <nav className="flex items-center gap-3">
           <Button variant="ghost" asChild>
             <Link href="/sign-in">Sign in</Link>
@@ -166,7 +168,7 @@ export default async function Home() {
       </main>
 
       <footer className="text-muted-foreground border-t px-6 py-8 text-center text-sm">
-        AI Wedding Invitation Studio
+        {SITE_NAME}
       </footer>
     </div>
   );
