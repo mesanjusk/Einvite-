@@ -50,7 +50,7 @@ export function MusicPlayer({ musicUrl, active }: { musicUrl: string | null; act
         setIsMuted(!isMuted);
       }}
       aria-label={isMuted ? t.unmuteMusic : t.muteMusic}
-      className="fixed top-4 right-4 z-[99999] flex size-10 items-center justify-center rounded-full border backdrop-blur"
+      className="no-print fixed top-4 right-4 z-[99999] flex size-10 items-center justify-center rounded-full border backdrop-blur"
       style={{
         background: "color-mix(in srgb, var(--inv-primary) 85%, transparent)",
         borderColor: "color-mix(in srgb, var(--inv-accent) 50%, transparent)",

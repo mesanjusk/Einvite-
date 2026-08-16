@@ -50,4 +50,6 @@ export type InviteData = {
   events: InviteEvent[];
   familyMembers: InviteFamilyMember[];
   media: InviteMedia[];
+  isDemo: boolean;
+  themeSlug: string | null;
 };

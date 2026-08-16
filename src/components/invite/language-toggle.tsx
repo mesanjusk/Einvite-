@@ -11,7 +11,7 @@ export function LanguageToggle() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="fixed top-4 left-4 z-[99999]">
+    <div className="no-print fixed top-4 left-4 z-[99999]">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Change language"

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
@@ -64,15 +65,23 @@ export default async function AdminInvitationsPage() {
                     {invitation.createdAt.toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {invitation.status === "PUBLISHED" && (
-                      <a
-                        href={`/invite/${invitation.slug}`}
-                        target="_blank"
+                    <div className="flex items-center justify-end gap-3">
+                      {invitation.status === "PUBLISHED" && (
+                        <a
+                          href={`/invite/${invitation.slug}`}
+                          target="_blank"
+                          className="text-primary text-sm underline underline-offset-4"
+                        >
+                          View
+                        </a>
+                      )}
+                      <Link
+                        href={`/admin/invitations/${invitation.id}`}
                         className="text-primary text-sm underline underline-offset-4"
                       >
-                        View
-                      </a>
-                    )}
+                        Manage
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

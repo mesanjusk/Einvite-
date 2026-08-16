@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
 import { getInvitationBySlug, getGuestByToken, toInviteRenderData } from "@/lib/get-invite-data";
 import { InviteExperience } from "@/components/invite/invite-experience";
+import { PrintTrigger } from "@/components/invite/print-trigger";
 
 export const dynamic = "force-dynamic";
 
@@ -53,10 +54,10 @@ export default async function InvitePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ to?: string }>;
+  searchParams: Promise<{ to?: string; print?: string }>;
 }) {
   const { slug } = await params;
-  const { to } = await searchParams;
+  const { to, print } = await searchParams;
   const invitation = await getInvitationBySlug(slug);
   if (!invitation) notFound();
 
@@ -94,9 +95,11 @@ export default async function InvitePage({
       <InviteExperience
         invite={inviteData}
         sectionConfig={sectionConfig}
+        skipEnvelope={print === "1"}
         initialGuestName={guest?.name ?? null}
         guestId={guest?.id ?? null}
       />
+      {print === "1" && <PrintTrigger />}
     </div>
   );
 }

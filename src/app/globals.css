@@ -179,3 +179,19 @@
     transform: scale(1);
   }
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  /* Let the full invitation flow across pages instead of clipping mid-section. */
+  main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}

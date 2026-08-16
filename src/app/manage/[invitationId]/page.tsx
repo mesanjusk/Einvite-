@@ -95,6 +95,9 @@ export default async function ManageGuestInvitationPage({
             >
               Share on WhatsApp
             </a>
+            <a href={`${liveUrl}?print=1`} target="_blank" className="text-primary text-sm underline">
+              Download PDF
+            </a>
           </CardContent>
         </Card>
       ) : (

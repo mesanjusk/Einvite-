@@ -28,6 +28,9 @@ model User {
   image         String?
   password      String? // set for credentials sign-up; null for OAuth-only users
   role          UserRole  @default(USER)
+  // Optional (not defaulted) so existing Mongo documents without this field
+  // still read fine — treat missing/null as active everywhere it's read.
+  isActive      Boolean?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

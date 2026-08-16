@@ -9,11 +9,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function CreateInvitationPage() {
-  const [themes, musicTracks] = await Promise.all([
+export default async function CreateInvitationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ theme?: string }>;
+}) {
+  const [{ theme: themeSlugParam }, themes, musicTracks] = await Promise.all([
+    searchParams,
     db.theme.findMany({ orderBy: { sortOrder: "asc" } }).catch(() => []),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }).catch(() => []),
   ]);
+  const initialThemeSlug = themes.some((t) => t.slug === themeSlugParam)
+    ? themeSlugParam
+    : undefined;
 
   return (
     <div className="flex min-h-svh flex-col items-center gap-6 bg-gradient-to-b from-[oklch(0.97_0.02_80)] to-background px-4 py-12">
@@ -31,6 +39,7 @@ export default async function CreateInvitationPage() {
             colorPalette: t.colorPalette as { primary: string; accent: string },
           }))}
           musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, mood: m.mood }))}
+          initialValues={initialThemeSlug ? { themeSlug: initialThemeSlug } : undefined}
         />
       </div>
     </div>
