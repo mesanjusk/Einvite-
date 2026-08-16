@@ -5,6 +5,7 @@ import { Sparkles, Palette, Music, ClipboardCheck, Rocket, Wand2 } from "lucide-
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { PhoneMockup } from "@/components/marketing/phone-mockup";
+import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 
 export const metadata: Metadata = {
   title: "AI-Generated Wedding Invitations",
@@ -65,9 +66,10 @@ export default async function Home() {
               <Link href="/create">Create your invitation — free</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/dashboard/templates">Browse themes</Link>
+              <Link href="/themes">Browse themes</Link>
             </Button>
           </div>
+          <EventCategoryChips />
         </section>
 
         <section className="mx-auto grid max-w-5xl grid-cols-2 gap-4 px-6 py-16 sm:grid-cols-3 lg:grid-cols-6">

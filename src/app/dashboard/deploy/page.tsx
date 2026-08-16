@@ -117,6 +117,13 @@ export default async function DeployPage({
               >
                 Share to Instagram
               </a>
+              <a
+                href={`${liveUrl}?print=1`}
+                target="_blank"
+                className="text-primary text-sm underline"
+              >
+                Download PDF
+              </a>
             </div>
           </CardContent>
         </Card>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { deleteImage, isCloudinaryConfigured } from "@/lib/media/cloudinary";
 import type { ActionResult } from "@/lib/actions/auth";
 import {
   themeFormSchema,
@@ -170,5 +171,58 @@ export async function updateUserRoleAction(input: {
   });
 
   revalidatePath("/admin/users");
+  return { success: true, data: undefined };
+}
+
+export async function setUserActiveAction(input: {
+  userId: string;
+  isActive: boolean;
+}): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  if (input.userId === session.user.id && !input.isActive) {
+    return { success: false, error: "You can't deactivate yourself." };
+  }
+
+  await db.user.update({
+    where: { id: input.userId },
+    data: { isActive: input.isActive },
+  });
+
+  revalidatePath("/admin/users");
+  return { success: true, data: undefined };
+}
+
+export async function deleteUserAction(userId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  if (userId === session.user.id) {
+    return { success: false, error: "You can't delete your own account." };
+  }
+
+  await db.user.delete({ where: { id: userId } });
+
+  revalidatePath("/admin/users");
+  return { success: true, data: undefined };
+}
+
+export async function adminDeleteMediaAction(mediaId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const media = await db.media.findUnique({ where: { id: mediaId } });
+  if (!media) return { success: false, error: "Not found." };
+
+  if (media.cloudinaryId && isCloudinaryConfigured()) {
+    await deleteImage(media.cloudinaryId).catch((error) =>
+      console.error("Failed to delete Cloudinary asset", error),
+    );
+  }
+
+  await db.media.delete({ where: { id: mediaId } });
+
+  revalidatePath("/admin/invitations");
   return { success: true, data: undefined };
 }

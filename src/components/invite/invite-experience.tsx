@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { ScrollProgress } from "@/components/animation/scroll-progress";
 import { LocaleProvider } from "@/lib/i18n/locale-context";
 import { EnvelopeSection } from "./envelope-section";
-import { GuestNameGate } from "./guest-name-gate";
 import { HeroSection } from "./hero-section";
 import { CountdownSection } from "./countdown-section";
 import { TimelineSection } from "./timeline-section";
@@ -43,35 +43,14 @@ export function InviteExperience({
   guestId?: string | null;
 }) {
   const [inviteOpen, setInviteOpen] = useState(skipEnvelope);
-  const [guestName, setGuestName] = useState<string | null>(initialGuestName);
-  const [nameCaptured, setNameCaptured] = useState(skipEnvelope || !!initialGuestName);
+  const [guestName] = useState<string | null>(initialGuestName);
   const [shareUrl, setShareUrl] = useState(`/invite/${invite.slug}`);
-
-  const guestNameStorageKey = `guest-name-${invite.slug}`;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setShareUrl(`${window.location.origin}/invite/${invite.slug}`);
     }
   }, [invite.slug]);
-
-  useEffect(() => {
-    if (initialGuestName || typeof window === "undefined") return;
-    const stored = sessionStorage.getItem(guestNameStorageKey);
-    if (stored !== null) {
-      setGuestName(stored || null);
-      setNameCaptured(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function handleNameSubmit(name: string) {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(guestNameStorageKey, name);
-    }
-    setGuestName(name || null);
-    setNameCaptured(true);
-  }
 
   const visibleSections = [...sectionConfig]
     .filter((s) => s.visible)
@@ -99,10 +78,7 @@ export function InviteExperience({
       <MusicPlayer musicUrl={invite.musicUrl} active={inviteOpen} />
 
       <AnimatePresence>
-        {!skipEnvelope && !nameCaptured && (
-          <GuestNameGate initials={initials} onSubmit={handleNameSubmit} />
-        )}
-        {!skipEnvelope && nameCaptured && !inviteOpen && (
+        {!skipEnvelope && !inviteOpen && (
           <EnvelopeSection initials={initials} onComplete={() => setInviteOpen(true)} />
         )}
       </AnimatePresence>
@@ -171,6 +147,23 @@ export function InviteExperience({
             }
           })}
         </main>
+      )}
+
+      {inviteOpen && invite.isDemo && (
+        <motion.div
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+          className="no-print fixed inset-x-0 bottom-4 z-40 flex justify-center px-4"
+        >
+          <Link
+            href={invite.themeSlug ? `/create?theme=${invite.themeSlug}` : "/create"}
+            className="pill-button shadow-lg"
+            style={{ background: "var(--inv-accent)", color: "var(--inv-primary)" }}
+          >
+            Create your own like this
+          </Link>
+        </motion.div>
       )}
     </LocaleProvider>
   );

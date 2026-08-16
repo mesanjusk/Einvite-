@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 
@@ -12,6 +13,14 @@ export default async function DashboardLayout({
   const session = await auth();
   if (!session?.user) {
     redirect("/sign-in?callbackUrl=/dashboard");
+  }
+
+  const dbUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { isActive: true },
+  });
+  if (dbUser?.isActive === false) {
+    redirect("/sign-in?deactivated=1");
   }
 
   const isAdmin = session.user.role === "ADMIN";

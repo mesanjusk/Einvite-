@@ -8,6 +8,7 @@ export function ScrollProgress() {
 
   return (
     <motion.div
+      className="no-print"
       style={{
         position: "fixed",
         right: 0,

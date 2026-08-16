@@ -88,6 +88,8 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     events: invitation.events,
     familyMembers: invitation.familyMembers,
     media: invitation.media,
+    isDemo: invitation.isDemo,
+    themeSlug: invitation.theme?.slug ?? null,
   };
 
   const sectionConfig = (invitation.sectionConfig as SectionConfigEntry[] | null) ?? [];

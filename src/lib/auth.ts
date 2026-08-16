@@ -27,6 +27,7 @@ const providers: Provider[] = [
 
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) return null;
+      if (user.isActive === false) return null;
 
       return {
         id: user.id,
