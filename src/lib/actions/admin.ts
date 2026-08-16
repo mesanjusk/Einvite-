@@ -106,6 +106,14 @@ export async function upsertMusicTrackAction(
   }
   const data = parsed.data;
 
+  if (data.isDefault) {
+    // Only one track can be the auto-assigned default at a time.
+    await db.musicTrack.updateMany({
+      where: { isDefault: true, ...(data.id ? { id: { not: data.id } } : {}) },
+      data: { isDefault: false },
+    });
+  }
+
   if (data.id) {
     await db.musicTrack.update({
       where: { id: data.id },
@@ -115,6 +123,7 @@ export async function upsertMusicTrackAction(
         url: data.url,
         mood: data.mood,
         isPremium: data.isPremium,
+        isDefault: data.isDefault,
       },
     });
   } else {
@@ -125,6 +134,7 @@ export async function upsertMusicTrackAction(
         url: data.url,
         mood: data.mood,
         isPremium: data.isPremium,
+        isDefault: data.isDefault,
       },
     });
   }

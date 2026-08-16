@@ -59,6 +59,7 @@ export const musicTrackFormSchema = z.object({
   url: z.string().min(1, "URL or file path is required"),
   mood: z.string().optional(),
   isPremium: z.boolean().default(false),
+  isDefault: z.boolean().default(false),
 });
 
 export type MusicTrackFormInput = z.infer<typeof musicTrackFormSchema>;

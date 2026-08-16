@@ -47,6 +47,7 @@ export interface Translations {
   copyLink: string;
   linkCopied: string;
   shareOnWhatsApp: string;
+  loadingMore: string;
 }
 
 const en: Translations = {
@@ -96,6 +97,7 @@ const en: Translations = {
   copyLink: "Copy link",
   linkCopied: "Link copied!",
   shareOnWhatsApp: "Share on WhatsApp",
+  loadingMore: "Loading more…",
 };
 
 const hi: Translations = {
@@ -145,6 +147,7 @@ const hi: Translations = {
   copyLink: "लिंक कॉपी करें",
   linkCopied: "लिंक कॉपी हो गया!",
   shareOnWhatsApp: "व्हाट्सएप पर साझा करें",
+  loadingMore: "और लोड हो रहा है…",
 };
 
 const mr: Translations = {
@@ -194,6 +197,7 @@ const mr: Translations = {
   copyLink: "लिंक कॉपी करा",
   linkCopied: "लिंक कॉपी झाली!",
   shareOnWhatsApp: "व्हॉट्सअॅपवर शेअर करा",
+  loadingMore: "आणखी लोड होत आहे…",
 };
 
 const gu: Translations = {
@@ -243,6 +247,7 @@ const gu: Translations = {
   copyLink: "લિંક કૉપિ કરો",
   linkCopied: "લિંક કૉપિ થઈ!",
   shareOnWhatsApp: "વોટ્સએપ પર શેર કરો",
+  loadingMore: "વધુ લોડ થઈ રહ્યું છે…",
 };
 
 const pa: Translations = {
@@ -292,6 +297,7 @@ const pa: Translations = {
   copyLink: "ਲਿੰਕ ਕਾਪੀ ਕਰੋ",
   linkCopied: "ਲਿੰਕ ਕਾਪੀ ਹੋ ਗਿਆ!",
   shareOnWhatsApp: "ਵਟਸਐਪ 'ਤੇ ਸਾਂਝਾ ਕਰੋ",
+  loadingMore: "ਹੋਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…",
 };
 
 const bn: Translations = {
@@ -341,6 +347,7 @@ const bn: Translations = {
   copyLink: "লিংক কপি করুন",
   linkCopied: "লিংক কপি হয়েছে!",
   shareOnWhatsApp: "হোয়াটসঅ্যাপে শেয়ার করুন",
+  loadingMore: "আরও লোড হচ্ছে…",
 };
 
 const ta: Translations = {
@@ -390,6 +397,7 @@ const ta: Translations = {
   copyLink: "இணைப்பை நகலெடு",
   linkCopied: "இணைப்பு நகலெடுக்கப்பட்டது!",
   shareOnWhatsApp: "வாட்ஸ்அப்பில் பகிரவும்",
+  loadingMore: "மேலும் ஏற்றப்படுகிறது…",
 };
 
 const te: Translations = {
@@ -439,6 +447,7 @@ const te: Translations = {
   copyLink: "లింక్ కాపీ చేయండి",
   linkCopied: "లింక్ కాపీ అయ్యింది!",
   shareOnWhatsApp: "వాట్సాప్‌లో షేర్ చేయండి",
+  loadingMore: "మరిన్ని లోడ్ అవుతున్నాయి…",
 };
 
 const kn: Translations = {
@@ -488,6 +497,7 @@ const kn: Translations = {
   copyLink: "ಲಿಂಕ್ ನಕಲಿಸಿ",
   linkCopied: "ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ!",
   shareOnWhatsApp: "ವಾಟ್ಸಾಪ್‌ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ",
+  loadingMore: "ಇನ್ನಷ್ಟು ಲೋಡ್ ಆಗುತ್ತಿದೆ…",
 };
 
 const ml: Translations = {
@@ -537,6 +547,7 @@ const ml: Translations = {
   copyLink: "ലിങ്ക് പകർത്തുക",
   linkCopied: "ലിങ്ക് പകർത്തി!",
   shareOnWhatsApp: "വാട്സ്ആപ്പിൽ പങ്കിടുക",
+  loadingMore: "കൂടുതൽ ലോഡ് ചെയ്യുന്നു…",
 };
 
 export const TRANSLATIONS: Record<LanguageCode, Translations> = { en, hi, mr, gu, pa, bn, ta, te, kn, ml };

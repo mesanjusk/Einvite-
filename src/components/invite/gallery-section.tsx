@@ -19,6 +19,17 @@ const ANIMATION_MAP: Record<string, Variants> = {
   blur: blurReveal,
 };
 
+// A brief pulse once the last photo has scrolled into view — mirrors the
+// "loading…" beat between sections that reads as content catching up, then
+// settles before the next section reveals.
+const LOADING_PULSE: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: [0, 1, 1, 0],
+    transition: { duration: 1.2, times: [0, 0.2, 0.75, 1], ease: "easeInOut" },
+  },
+};
+
 const STACK_LIMIT = 8;
 // Alternating tilt for each card in the pile, so it reads as a tossed stack of prints rather than a rigid grid.
 const ROTATIONS = [-4, 3, -3, 5, -2, 4, -5, 2];
@@ -159,6 +170,30 @@ export function GallerySection({
             </Reveal>
           )}
         </div>
+
+        <Reveal
+          variants={LOADING_PULSE}
+          delay={(overflowCount > 0 ? visibleItems.length + 1 : visibleItems.length) * 0.1 + 0.2}
+          className="mt-6 flex items-center justify-center gap-2"
+        >
+          <span className="flex gap-1">
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="size-1.5 rounded-full"
+                style={{ background: "var(--inv-accent)" }}
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
+              />
+            ))}
+          </span>
+          <span
+            className="text-[11px] tracking-[0.2em] uppercase"
+            style={{ color: "var(--inv-accent)" }}
+          >
+            {t.loadingMore}
+          </span>
+        </Reveal>
       </RevealGroup>
 
       <AnimatePresence>

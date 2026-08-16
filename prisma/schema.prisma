@@ -181,6 +181,10 @@ model MusicTrack {
   durationMs Int?
   mood       String? // e.g. "romantic", "upbeat", "traditional"
   isPremium  Boolean @default(false)
+  // Auto-assigned when a couple doesn't pick a track. Optional (not defaulted)
+  // so existing tracks without this field still read fine — only one track
+  // should be true at a time; enforced in upsertMusicTrackAction, not here.
+  isDefault  Boolean?
 
   invitations Invitation[]
 
