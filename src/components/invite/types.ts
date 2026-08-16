@@ -22,6 +22,7 @@ export type InviteMedia = {
   id: string;
   url: string;
   caption: string | null;
+  type?: "IMAGE" | "VIDEO";
 };
 
 export type InviteCopy = {

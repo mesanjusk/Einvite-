@@ -65,6 +65,43 @@ export async function uploadImageBuffer(
   });
 }
 
+export async function uploadVideoBuffer(
+  buffer: Buffer,
+  options: { folder: string },
+) {
+  ensureConfigured();
+
+  return new Promise<{
+    url: string;
+    publicId: string;
+    width: number;
+    height: number;
+  }>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: options.folder,
+        resource_type: "video",
+        // Cap resolution and let Cloudinary pick an efficient codec/bitrate —
+        // guests' phone videos can be huge; this keeps gallery playback light.
+        transformation: [{ width: 1280, height: 1280, crop: "limit", quality: "auto" }],
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error("Cloudinary upload failed"));
+          return;
+        }
+        resolve({
+          url: result.secure_url,
+          publicId: result.public_id,
+          width: result.width,
+          height: result.height,
+        });
+      },
+    );
+    uploadStream.end(buffer);
+  });
+}
+
 export async function uploadAudioBuffer(
   buffer: Buffer,
   options: { folder: string },
@@ -88,7 +125,10 @@ export async function uploadAudioBuffer(
   });
 }
 
-export async function deleteImage(publicId: string) {
+export async function deleteImage(
+  publicId: string,
+  resourceType: "image" | "video" = "image",
+) {
   ensureConfigured();
-  await cloudinary.uploader.destroy(publicId);
+  await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 }

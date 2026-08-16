@@ -69,7 +69,7 @@ export default async function InvitationsListPage() {
                     </a>
                   )}
                   <Link
-                    href={`/dashboard/deploy?invitationId=${invitation.id}`}
+                    href={`/dashboard/publish/deploy?invitationId=${invitation.id}`}
                     className="text-primary text-sm underline underline-offset-4"
                   >
                     Manage

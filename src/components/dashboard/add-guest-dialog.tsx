@@ -27,7 +27,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-export function AddGuestDialog({ invitationId }: { invitationId: string }) {
+export function AddGuestDialog({
+  invitationId,
+  trigger,
+}: {
+  invitationId: string;
+  /** Custom trigger element (e.g. a mobile floating action button) — defaults to the inline "Add guest" button. */
+  trigger?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -53,10 +60,12 @@ export function AddGuestDialog({ invitationId }: { invitationId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusCircle />
-          Add guest
-        </Button>
+        {trigger ?? (
+          <Button size="sm">
+            <PlusCircle />
+            Add guest
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

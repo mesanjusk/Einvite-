@@ -7,8 +7,13 @@ import { ArrowLeft, Music, Video } from "lucide-react";
 import { db } from "@/lib/db";
 import { adminDeleteMediaAction } from "@/lib/actions/admin";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
+import { RegenerateEditLinkButton } from "@/components/admin/regenerate-edit-link-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+function maskPhone(phone: string) {
+  return phone.length > 4 ? `${"•".repeat(phone.length - 4)}${phone.slice(-4)}` : phone;
+}
 
 export const metadata: Metadata = { title: "Manage Invitation" };
 
@@ -24,6 +29,7 @@ export default async function AdminInvitationDetailPage({
       theme: { select: { name: true } },
       user: { select: { name: true, email: true } },
       media: { orderBy: { order: "asc" } },
+      phoneLink: { select: { phone: true, verifiedAt: true } },
     },
   });
   if (!invitation) notFound();
@@ -52,6 +58,29 @@ export default async function AdminInvitationDetailPage({
           {invitation.customMusicUrl && " · custom music uploaded"}
         </p>
       </div>
+
+      {!invitation.user && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Owner access</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {invitation.phoneLink ? (
+              <p className="text-muted-foreground text-sm">
+                WhatsApp-verified: {maskPhone(invitation.phoneLink.phone)} on{" "}
+                {invitation.phoneLink.verifiedAt.toLocaleDateString()}. The couple&apos;s own
+                edit link isn&apos;t recoverable (it&apos;s only ever stored hashed) — generate
+                a new one below if they&apos;ve lost theirs.
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Not yet WhatsApp-verified — this guest draft has no saved owner access.
+              </p>
+            )}
+            {invitation.phoneLink && <RegenerateEditLinkButton invitationId={invitation.id} />}
+          </CardContent>
+        </Card>
+      )}
 
       {invitation.customMusicUrl && (
         <Card>

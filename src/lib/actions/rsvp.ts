@@ -84,7 +84,7 @@ export async function submitRsvpAction(
   }
 
   revalidatePath(`/invite/${invitation.slug}`);
-  revalidatePath("/dashboard/rsvp");
+  revalidatePath("/dashboard/manage/rsvp");
 
   return { success: true, data: undefined };
 }
@@ -115,7 +115,7 @@ export async function addGuestAction(input: GuestInput): Promise<ActionResult> {
     },
   });
 
-  revalidatePath("/dashboard/guests");
+  revalidatePath("/dashboard/manage/guests");
   return { success: true, data: undefined };
 }
 
@@ -132,6 +132,6 @@ export async function deleteGuestAction(guestId: string): Promise<ActionResult> 
   }
 
   await db.guest.delete({ where: { id: guestId } });
-  revalidatePath("/dashboard/guests");
+  revalidatePath("/dashboard/manage/guests");
   return { success: true, data: undefined };
 }

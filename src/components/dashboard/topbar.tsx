@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, Settings, Moon, Sun } from "lucide-react";
+import { MoreVertical, LogOut, Settings, Moon, Sun } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 
@@ -25,6 +25,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+// These four already live in the mobile bottom tab bar — no need to repeat
+// them in the "more" overflow sheet.
+const BOTTOM_NAV_HREFS = new Set([
+  "/dashboard",
+  "/dashboard/invitations",
+  "/dashboard/manage/guests",
+  "/dashboard/publish/deploy",
+]);
 
 type TopbarUser = {
   name?: string | null;
@@ -51,34 +60,70 @@ export function DashboardTopbar({
       .join("")
       .toUpperCase() ?? "U";
 
+  const moreNavItems = dashboardNav.filter((item) => !BOTTOM_NAV_HREFS.has(item.href));
+
   return (
     <header className="bg-background/80 sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b px-4 backdrop-blur">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
-            <Menu className="size-5" />
+          <Button variant="ghost" size="icon" className="lg:hidden" aria-label="More">
+            <MoreVertical className="size-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="right" className="w-72 p-0">
           <SheetHeader className="border-b">
             <SheetTitle className="font-display text-primary">
               AI Wedding Invitation Studio
             </SheetTitle>
           </SheetHeader>
-          <div className="p-4">
-            <SidebarNav items={dashboardNav} onNavigate={() => setOpen(false)} />
+          <div className="flex flex-col gap-4 p-4">
+            <div className="flex items-center gap-2 border-b pb-4">
+              <Avatar className="size-9">
+                <AvatarImage src={user.image ?? undefined} alt={user.name ?? "User"} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{user.name}</p>
+                <p className="text-muted-foreground truncate text-xs">{user.email}</p>
+              </div>
+            </div>
+
+            <SidebarNav items={moreNavItems} onNavigate={() => setOpen(false)} />
+
             {isAdmin && (
-              <div className="mt-4 border-t pt-4">
+              <div className="border-t pt-4">
+                <p className="text-muted-foreground mb-1 px-3 text-xs tracking-wide uppercase">
+                  Admin — templates &amp; accounts
+                </p>
                 <SidebarNav items={adminNav} onNavigate={() => setOpen(false)} />
               </div>
             )}
+
+            <div className="border-t pt-4">
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="hover:bg-accent hover:text-accent-foreground flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium"
+              >
+                {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </button>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="text-destructive hover:bg-accent flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium"
+              >
+                <LogOut className="size-4" />
+                Sign out
+              </button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
 
       <div className="hidden lg:block" />
 
-      <div className="flex items-center gap-2">
+      <div className="hidden items-center gap-2 lg:flex">
         <Button
           variant="ghost"
           size="icon"

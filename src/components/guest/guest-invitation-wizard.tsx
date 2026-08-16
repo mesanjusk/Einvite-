@@ -230,7 +230,7 @@ export function GuestInvitationWizard({
       // Signed-in team members already proved who they are — no WhatsApp
       // OTP needed. Review and publish from the Deploy page like today.
       toast.success("Invitation saved!");
-      router.push(`/dashboard/deploy?invitationId=${invitationId}`);
+      router.push(`/dashboard/publish/deploy?invitationId=${invitationId}`);
       return;
     }
 
