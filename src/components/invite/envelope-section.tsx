@@ -1,13 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useLocale } from "@/lib/i18n/locale-context";
 
-const OPEN_DURATION_MS = 2500;
+const OPEN_DURATION_MS = 2800;
 const RAY_COUNT = 14;
 const RAY_ANGLES = Array.from({ length: RAY_COUNT }, (_, i) => (360 / RAY_COUNT) * i);
+const SPARK_COUNT = 20;
+const SPARKS = Array.from({ length: SPARK_COUNT }, (_, i) => ({
+  angle: (360 / SPARK_COUNT) * i + (i % 2 === 0 ? 6 : -6),
+  distance: 90 + ((i * 37) % 60),
+  delay: 0.45 + ((i * 13) % 40) / 100,
+}));
 
 function Flourish({ style }: { style: React.CSSProperties }) {
   return (
@@ -25,28 +31,18 @@ function Flourish({ style }: { style: React.CSSProperties }) {
 
 export function EnvelopeSection({
   initials,
-  storageKey,
   onComplete,
 }: {
   initials: string;
-  storageKey: string;
   onComplete: () => void;
 }) {
   const [opened, setOpened] = useState(false);
   const { t } = useLocale();
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem(storageKey)) {
-      onComplete();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function handleTap() {
     if (opened) return;
     setOpened(true);
     setTimeout(() => {
-      sessionStorage.setItem(storageKey, "true");
       onComplete();
     }, OPEN_DURATION_MS);
   }
@@ -80,16 +76,6 @@ export function EnvelopeSection({
         }}
       />
 
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={opened ? { opacity: 0, y: -10 } : { opacity: 1, y: 0 }}
-        transition={{ delay: opened ? 0 : 0.4, duration: 0.5 }}
-        style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-secondary)" }}
-        className="mb-7 text-3xl"
-      >
-        {t.tapToReveal}
-      </motion.p>
-
       {/* A burst of light and sparks pours out once the flap lifts, like a small magic-portal moment. */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <motion.div
@@ -118,6 +104,25 @@ export function EnvelopeSection({
           }
           transition={{ duration: 1.5, delay: 0.4, ease: "easeOut" }}
         />
+        {/* A second, counter-rotating ring layered behind the first — the interference
+            between the two spinning conic gradients reads like a blooming flower,
+            echoing the reference animation's swirl-into-rose moment. */}
+        <motion.div
+          className="absolute size-72 rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 40deg, transparent 0deg, var(--inv-accent) 14deg, transparent 30deg, transparent 100deg, var(--inv-secondary, #fbf3e2) 112deg, transparent 128deg, transparent 190deg, var(--inv-accent) 202deg, transparent 218deg, transparent 280deg, var(--inv-secondary, #fbf3e2) 292deg, transparent 308deg)",
+            filter: "blur(4px)",
+            mixBlendMode: "screen",
+          }}
+          initial={{ scale: 0.15, opacity: 0, rotate: 0 }}
+          animate={
+            opened
+              ? { scale: [0.15, 1.3, 1.7], opacity: [0, 0.75, 0], rotate: -260 }
+              : { scale: 0.15, opacity: 0 }
+          }
+          transition={{ duration: 1.7, delay: 0.5, ease: "easeOut" }}
+        />
         {RAY_ANGLES.map((angle) => (
           <motion.span
             key={angle}
@@ -137,7 +142,42 @@ export function EnvelopeSection({
             transition={{ duration: 0.9, delay: 0.4 + (angle / 360) * 0.25, ease: "easeOut" }}
           />
         ))}
+        {/* A shower of sparks spiraling outward as the ring spins up — small
+            glints instead of one big flash, matching the granular sparkle
+            trail in the reference. */}
+        {SPARKS.map((spark, i) => {
+          const rad = (spark.angle * Math.PI) / 180;
+          return (
+            <motion.span
+              key={i}
+              className="absolute size-1.5 rounded-full"
+              style={{ background: "var(--inv-secondary, #fbf3e2)", boxShadow: "0 0 6px 1px var(--inv-secondary, #fbf3e2)" }}
+              initial={{ x: 0, y: 0, opacity: 0, scale: 0.4 }}
+              animate={
+                opened
+                  ? {
+                      x: [0, Math.cos(rad) * spark.distance],
+                      y: [0, Math.sin(rad) * spark.distance],
+                      opacity: [0, 1, 0],
+                      scale: [0.4, 1, 0.6],
+                    }
+                  : { x: 0, y: 0, opacity: 0 }
+              }
+              transition={{ duration: 1.1, delay: spark.delay, ease: "easeOut" }}
+            />
+          );
+        })}
       </div>
+
+      {/* A soft white-gold dissolve, right before the invitation content takes over —
+          mirrors the burst fading through white in the reference animation. */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(circle at 50% 42%, #fffaf0 0%, #fbf3e2 55%, transparent 100%)" }}
+        initial={{ opacity: 0 }}
+        animate={opened ? { opacity: [0, 0, 1] } : { opacity: 0 }}
+        transition={{ duration: OPEN_DURATION_MS / 1000, times: [0, 0.72, 1], ease: "easeIn" }}
+      />
 
       {/* The envelope flap: hinges open from the top, like a real envelope. */}
       <motion.div
@@ -182,6 +222,16 @@ export function EnvelopeSection({
           {initials}
         </span>
       </motion.div>
+
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={opened ? { opacity: 0, y: -10 } : { opacity: 1, y: 0 }}
+        transition={{ delay: opened ? 0 : 0.4, duration: 0.5 }}
+        style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-secondary)" }}
+        className="mt-7 text-3xl"
+      >
+        {t.tapToReveal}
+      </motion.p>
 
       <motion.p
         animate={opened ? { opacity: 0 } : { opacity: [0.5, 1, 0.5] }}
