@@ -20,7 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -61,8 +61,7 @@ export function SignUpForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Create your studio account</CardTitle>
-        <CardDescription>Start building your invitation for free.</CardDescription>
+        <CardTitle className="text-center text-xl">Create account</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -113,9 +112,8 @@ export function SignUpForm() {
         </Form>
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
           <Link href="/sign-in" className="text-primary underline underline-offset-4">
-            Sign in
+            Sign in instead
           </Link>
         </div>
       </CardContent>
