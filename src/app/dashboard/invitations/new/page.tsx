@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
-import { InvitationWizard } from "@/components/dashboard/invitation-wizard";
+import { GuestInvitationWizard } from "@/components/guest/guest-invitation-wizard";
 
 export const metadata: Metadata = { title: "Create Invitation" };
 
@@ -16,12 +16,12 @@ export default async function NewInvitationPage() {
       <div>
         <h1 className="font-display text-2xl">Create Invitation</h1>
         <p className="text-muted-foreground text-sm">
-          Answer a few questions — we&apos;ll generate the copy and lay out every
-          section for you.
+          Answer a few questions, add at least 5 photos, and we&apos;ll lay out every
+          section for you — the same builder your couples use.
         </p>
       </div>
 
-      <InvitationWizard
+      <GuestInvitationWizard
         themes={themes.map((t) => ({
           slug: t.slug,
           name: t.name,

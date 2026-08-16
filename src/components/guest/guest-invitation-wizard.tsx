@@ -5,7 +5,21 @@ import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Sparkles, Upload, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Plus,
+  Trash2,
+  Sparkles,
+  Upload,
+  X,
+  Heart,
+  MapPinned,
+  CalendarDays,
+  Palette,
+  Images,
+  PartyPopper,
+  Check,
+} from "lucide-react";
 
 import {
   invitationWizardSchema,
@@ -42,6 +56,7 @@ type Theme = {
 type MusicTrack = { id: string; title: string; mood: string | null };
 
 const STEPS = ["Couple", "Venue", "Events", "Design", "Photos", "Review"] as const;
+const STEP_ICONS = [Heart, MapPinned, CalendarDays, Palette, Images, PartyPopper] as const;
 
 const CATEGORY_TABS = [
   { value: "all", label: "All" },
@@ -83,6 +98,7 @@ export function GuestInvitationWizard({
   const [invitationId, setInvitationId] = useState<string | null>(existingInvitationId ?? null);
   const [media, setMedia] = useState<GuestMediaItem[]>(initialMedia ?? []);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [isOwnerSession, setIsOwnerSession] = useState(false);
   const [musicUploading, setMusicUploading] = useState(false);
   const musicInputRef = useRef<HTMLInputElement>(null);
   const [themeCategory, setThemeCategory] = useState<(typeof CATEGORY_TABS)[number]["value"]>(
@@ -137,6 +153,7 @@ export function GuestInvitationWizard({
         return;
       }
       sessionStorage.setItem(DRAFT_ID_STORAGE_KEY, result.data.invitationId);
+      setIsOwnerSession(result.data.isOwnerSession);
       setInvitationId(result.data.invitationId);
     }
 
@@ -208,6 +225,15 @@ export function GuestInvitationWizard({
       router.push(`/manage/${invitationId}`);
       return;
     }
+
+    if (isOwnerSession) {
+      // Signed-in team members already proved who they are — no WhatsApp
+      // OTP needed. Review and publish from the Deploy page like today.
+      toast.success("Invitation saved!");
+      router.push(`/dashboard/deploy?invitationId=${invitationId}`);
+      return;
+    }
+
     setPublishOpen(true);
   }
 
@@ -221,25 +247,66 @@ export function GuestInvitationWizard({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex flex-1 flex-col items-center gap-1">
-            <div
-              className={cn(
-                "flex size-7 items-center justify-center rounded-full text-xs font-medium",
-                i <= step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-              )}
-            >
-              {i + 1}
+      <div className="relative flex items-start">
+        <div className="bg-muted absolute top-5 right-5 left-5 -z-10 h-0.5 overflow-hidden rounded-full">
+          <motion.div
+            className="bg-primary h-full"
+            initial={false}
+            animate={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </div>
+        {STEPS.map((label, i) => {
+          const StepIcon = STEP_ICONS[i];
+          const isDone = i < step;
+          const isActive = i === step;
+          return (
+            <div key={label} className="flex flex-1 flex-col items-center gap-1.5">
+              <motion.div
+                animate={isActive ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-full border-2 transition-colors",
+                  isDone
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : isActive
+                      ? "border-primary text-primary bg-background"
+                      : "bg-muted border-muted text-muted-foreground",
+                )}
+              >
+                {isDone ? <Check className="size-4" /> : <StepIcon className="size-4" />}
+              </motion.div>
+              <span
+                className={cn(
+                  "hidden text-[11px] sm:block",
+                  isActive ? "text-foreground font-medium" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </span>
             </div>
-            <span className="text-muted-foreground hidden text-xs sm:block">{label}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Card>
-          <CardContent className="flex flex-col gap-5 pt-2">
+        <Card
+          className="overflow-hidden border-none shadow-lg"
+          style={{
+            background:
+              "linear-gradient(165deg, color-mix(in srgb, var(--primary) 6%, var(--card)) 0%, var(--card) 45%)",
+          }}
+        >
+          <CardContent className="overflow-hidden pt-2">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col gap-5"
+            >
             {step === 0 && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -490,6 +557,8 @@ export function GuestInvitationWizard({
                 </div>
               </>
             )}
+            </motion.div>
+          </AnimatePresence>
           </CardContent>
         </Card>
 
@@ -503,7 +572,13 @@ export function GuestInvitationWizard({
             </Button>
           ) : (
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : isPublished ? "Save changes" : "Continue to publish"}
+              {submitting
+                ? "Saving…"
+                : isPublished
+                  ? "Save changes"
+                  : isOwnerSession
+                    ? "Save & continue to Deploy"
+                    : "Continue to publish"}
             </Button>
           )}
         </div>
