@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
+import { SiteLogo } from "@/components/brand/site-logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,8 +28,8 @@ export default async function PublicThemesPage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-12">
       <div>
-        <Link href="/" className="font-display text-primary text-lg">
-          AI Wedding Invitation Studio
+        <Link href="/" className="inline-block">
+          <SiteLogo size="md" />
         </Link>
         <h1 className="font-display mt-4 text-2xl">Themes</h1>
         <p className="text-muted-foreground text-sm">

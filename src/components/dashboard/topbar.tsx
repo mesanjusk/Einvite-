@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 
 import { dashboardNav, adminNav } from "@/config/dashboard-nav";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
+import { SiteLogo } from "@/components/brand/site-logo";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -64,9 +65,7 @@ export function DashboardTopbar({
 
   return (
     <header className="bg-background/80 sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b px-4 backdrop-blur">
-      <span className="font-display text-primary text-sm font-medium lg:hidden">
-        AI Wedding Invitation Studio
-      </span>
+      <SiteLogo size="sm" className="lg:hidden" />
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
@@ -76,8 +75,8 @@ export function DashboardTopbar({
         </SheetTrigger>
         <SheetContent side="right" className="w-72 p-0">
           <SheetHeader className="border-b">
-            <SheetTitle className="font-display text-primary">
-              AI Wedding Invitation Studio
+            <SheetTitle asChild>
+              <SiteLogo size="sm" />
             </SheetTitle>
           </SheetHeader>
           <div className="flex flex-col gap-4 p-4">

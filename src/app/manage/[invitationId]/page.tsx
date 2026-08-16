@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
+import { SiteLogo } from "@/components/brand/site-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,8 +48,8 @@ export default async function ManageGuestInvitationPage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
-      <Link href="/" className="font-display text-primary text-lg">
-        AI Wedding Invitation Studio
+      <Link href="/" className="inline-block">
+        <SiteLogo size="md" />
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-4">

@@ -1,5 +1,7 @@
 import { Resend } from "resend";
 
+import { SITE_NAME } from "@/config/site";
+
 let resendClient: Resend | null = null;
 
 export function getResendClient() {
@@ -16,4 +18,4 @@ export function getResendClient() {
 }
 
 export const EMAIL_FROM =
-  process.env.EMAIL_FROM ?? "AI Wedding Invitation Studio <onboarding@resend.dev>";
+  process.env.EMAIL_FROM ?? `${SITE_NAME} <onboarding@resend.dev>`;
