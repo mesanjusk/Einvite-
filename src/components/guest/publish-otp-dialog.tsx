@@ -59,7 +59,7 @@ export function PublishOtpDialog({
       setDevCode(res.data.devCode ?? null);
       toast.success(
         res.data.devMode
-          ? "WhatsApp isn't configured yet — using the on-screen code for now."
+          ? "Couldn't confirm WhatsApp delivery — use the on-screen code below for now."
           : "Code sent on WhatsApp.",
       );
       setPhase("otp");
@@ -125,7 +125,7 @@ export function PublishOtpDialog({
             </DialogHeader>
             {devCode && (
               <p className="rounded-md border border-dashed p-2 text-center text-sm">
-                Dev mode (WhatsApp not configured) — your code is{" "}
+                Didn&apos;t get it on WhatsApp? Your code is{" "}
                 <span className="font-mono font-semibold">{devCode}</span>
               </p>
             )}

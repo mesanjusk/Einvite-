@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
 import { generateInvitationCopy } from "@/lib/ai/generate-copy";
 import {
@@ -16,8 +17,8 @@ import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import type { ActionResult } from "@/lib/actions/auth";
 import { normalizePhone } from "@/lib/phone";
 import { generateOtp, hashOtp, verifyOtp, generateToken, hashToken } from "@/lib/otp";
-import { isWhatsAppConfigured, sendWhatsAppText, otpMessage, editLinkMessage } from "@/lib/whatsapp";
-import { issueDraftSecret, issueOwnerCookie, hasGuestAccess } from "@/lib/guest-session";
+import { sendWhatsAppText, otpMessage, editLinkMessage } from "@/lib/whatsapp";
+import { issueDraftSecret, issueOwnerCookie } from "@/lib/guest-session";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
 import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
@@ -26,23 +27,26 @@ const OTP_TTL_MS = 10 * 60 * 1000;
 const OTP_RESEND_COOLDOWN_MS = 45 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
 
-async function loadGuestInvitation(invitationId: string) {
-  const invitation = await db.invitation.findUnique({
-    where: { id: invitationId },
-    include: { phoneLink: true },
-  });
-  if (!invitation) return null;
-  const authorized = await hasGuestAccess(invitation, invitation.phoneLink?.editTokenHash);
-  return authorized ? invitation : null;
+/**
+ * Shared by both the anonymous "Get started" flow and the signed-in
+ * dashboard flow — the same wizard, actions, and section layout serve
+ * both, so an invitation created here is authorized either by a
+ * session (dashboard) or a draft/owner cookie (guest). See
+ * authorizeInvitationAccess for the actual check.
+ */
+async function loadInvitation(invitationId: string) {
+  return authorizeInvitationAccess(invitationId);
 }
 
 export async function createDraftInvitationAction(): Promise<
-  ActionResult<{ invitationId: string }>
+  ActionResult<{ invitationId: string; isOwnerSession: boolean }>
 > {
+  const session = await auth();
   const slug = await uniqueSlug(`draft-${Date.now()}`);
 
   const invitation = await db.invitation.create({
     data: {
+      userId: session?.user?.id,
       slug,
       brideName: "",
       groomName: "",
@@ -57,17 +61,22 @@ export async function createDraftInvitationAction(): Promise<
     },
   });
 
-  const draftSecretHash = await issueDraftSecret(invitation.id);
-  await db.invitation.update({ where: { id: invitation.id }, data: { draftSecretHash } });
+  if (!session?.user) {
+    const draftSecretHash = await issueDraftSecret(invitation.id);
+    await db.invitation.update({ where: { id: invitation.id }, data: { draftSecretHash } });
+  }
 
-  return { success: true, data: { invitationId: invitation.id } };
+  return {
+    success: true,
+    data: { invitationId: invitation.id, isOwnerSession: Boolean(session?.user) },
+  };
 }
 
 export async function updateGuestInvitationAction(
   invitationId: string,
   input: InvitationWizardInput,
 ): Promise<ActionResult<{ invitationId: string; slug: string }>> {
-  const invitation = await loadGuestInvitation(invitationId);
+  const invitation = await loadInvitation(invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
 
   const parsed = invitationWizardSchema.safeParse(input);
@@ -204,8 +213,14 @@ export async function requestPublishOtpAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const invitation = await loadGuestInvitation(parsed.data.invitationId);
+  const invitation = await loadInvitation(parsed.data.invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
+  if (invitation.userId) {
+    return {
+      success: false,
+      error: "This invitation is managed from the dashboard — publish it from Deploy.",
+    };
+  }
 
   if (!invitation.brideName || !invitation.groomName) {
     return { success: false, error: "Finish the couple details step first." };
@@ -252,14 +267,18 @@ export async function requestPublishOtpAction(
     },
   });
 
-  const { devMode } = await sendWhatsAppText(
+  const { delivered } = await sendWhatsAppText(
     phone,
     otpMessage(code, invitation.brideName, invitation.groomName),
   );
 
+  // Show the code on-screen whenever we can't confirm it actually reached
+  // WhatsApp — not configured, or configured but the send itself failed
+  // (bad token, unverified number, Meta API error, etc.) — so a guest is
+  // never stuck with no way to get their code.
   return {
     success: true,
-    data: { devMode, devCode: devMode ? code : undefined },
+    data: { devMode: !delivered, devCode: !delivered ? code : undefined },
   };
 }
 
@@ -271,8 +290,14 @@ export async function verifyPublishOtpAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const invitation = await loadGuestInvitation(parsed.data.invitationId);
+  const invitation = await loadInvitation(parsed.data.invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
+  if (invitation.userId) {
+    return {
+      success: false,
+      error: "This invitation is managed from the dashboard — publish it from Deploy.",
+    };
+  }
 
   const phone = normalizePhone(parsed.data.phone);
   if (!phone) return { success: false, error: "Enter a valid mobile number." };
@@ -335,7 +360,7 @@ export async function verifyPublishOtpAction(
   const liveUrl = `${appUrl}/invite/${updated.slug}`;
   const editUrl = `${appUrl}/e/${rawEditToken}`;
 
-  const { devMode } = await sendWhatsAppText(
+  const { delivered } = await sendWhatsAppText(
     phone,
     editLinkMessage(invitation.brideName, invitation.groomName, liveUrl, editUrl),
   );
@@ -345,6 +370,6 @@ export async function verifyPublishOtpAction(
 
   return {
     success: true,
-    data: { slug: updated.slug, liveUrl, editUrl, devMode: devMode || !isWhatsAppConfigured() },
+    data: { slug: updated.slug, liveUrl, editUrl, devMode: !delivered },
   };
 }
