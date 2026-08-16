@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, type Variants, type PanInfo } from "framer-motion";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Video } from "lucide-react";
 
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
@@ -113,7 +113,22 @@ export function GallerySection({
                   style={{ background: "#fff", boxShadow: "0 14px 30px rgba(0,0,0,0.22)" }}
                 />
                 <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
-                  <Image src={item.url} alt="" fill className="object-cover" unoptimized />
+                  {item.type === "VIDEO" ? (
+                    <>
+                      <video
+                        src={item.url}
+                        muted
+                        loop
+                        autoPlay
+                        playsInline
+                        preload="metadata"
+                        className="size-full object-cover"
+                      />
+                      <Video className="absolute top-2 right-2 size-4 text-white drop-shadow" />
+                    </>
+                  ) : (
+                    <Image src={item.url} alt="" fill className="object-cover" unoptimized />
+                  )}
                 </div>
               </motion.button>
             </Reveal>
@@ -169,13 +184,25 @@ export function GallerySection({
                 className="relative aspect-[4/5] w-full max-w-sm"
                 onClick={(e) => e.stopPropagation()}
               >
-                <Image
-                  src={stackItems[activeIndex]?.url}
-                  alt=""
-                  fill
-                  className="pointer-events-none rounded-lg object-cover"
-                  unoptimized
-                />
+                {stackItems[activeIndex]?.type === "VIDEO" ? (
+                  <video
+                    src={stackItems[activeIndex]?.url}
+                    muted
+                    loop
+                    autoPlay
+                    playsInline
+                    controls
+                    className="pointer-events-auto size-full rounded-lg object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={stackItems[activeIndex]?.url}
+                    alt=""
+                    fill
+                    className="pointer-events-none rounded-lg object-cover"
+                    unoptimized
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
 

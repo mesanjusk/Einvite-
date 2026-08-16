@@ -43,7 +43,7 @@ export async function updateSectionConfigAction(
     data: { sectionConfig: parsed.data.sections },
   });
 
-  revalidatePath("/dashboard/builder");
+  revalidatePath("/dashboard/publish/sections");
   revalidatePath(`/invite/${invitation.slug}`);
 
   return { success: true, data: undefined };

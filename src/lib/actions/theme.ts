@@ -79,7 +79,7 @@ export async function updateInvitationThemeAction(
     },
   });
 
-  revalidatePath("/dashboard/theme-editor");
+  revalidatePath("/dashboard/publish/theme");
   revalidatePath(`/invite/${invitation.slug}`);
 
   return { success: true, data: undefined };

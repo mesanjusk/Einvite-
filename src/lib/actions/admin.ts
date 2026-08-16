@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { deleteImage, isCloudinaryConfigured } from "@/lib/media/cloudinary";
+import { generateToken, hashToken } from "@/lib/otp";
+import { getAppUrl } from "@/lib/app-url";
 import type { ActionResult } from "@/lib/actions/auth";
 import {
   themeFormSchema,
@@ -128,7 +130,7 @@ export async function upsertMusicTrackAction(
   }
 
   revalidatePath("/admin/music");
-  revalidatePath("/dashboard/music");
+  revalidatePath("/dashboard/media");
   revalidatePath("/dashboard/invitations/new");
 
   return { success: true, data: undefined };
@@ -218,8 +220,8 @@ export async function adminDeleteMediaAction(mediaId: string): Promise<ActionRes
   if (!media) return { success: false, error: "Not found." };
 
   if (media.cloudinaryId && isCloudinaryConfigured()) {
-    await deleteImage(media.cloudinaryId).catch((error) =>
-      console.error("Failed to delete Cloudinary asset", error),
+    await deleteImage(media.cloudinaryId, media.type === "VIDEO" ? "video" : "image").catch(
+      (error) => console.error("Failed to delete Cloudinary asset", error),
     );
   }
 
@@ -227,4 +229,29 @@ export async function adminDeleteMediaAction(mediaId: string): Promise<ActionRes
 
   revalidatePath("/admin/invitations");
   return { success: true, data: undefined };
+}
+
+export async function adminRegenerateEditLinkAction(
+  invitationId: string,
+): Promise<ActionResult<{ editUrl: string }>> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const invitation = await db.invitation.findUnique({
+    where: { id: invitationId },
+    include: { phoneLink: true },
+  });
+  if (!invitation) return { success: false, error: "Invitation not found." };
+  if (!invitation.phoneLink) {
+    return { success: false, error: "This invitation has no WhatsApp-verified owner yet." };
+  }
+
+  const rawEditToken = generateToken();
+  await db.phoneLink.update({
+    where: { id: invitation.phoneLink.id },
+    data: { editTokenHash: hashToken(rawEditToken) },
+  });
+
+  revalidatePath("/admin/invitations");
+  return { success: true, data: { editUrl: `${getAppUrl()}/e/${rawEditToken}` } };
 }

@@ -20,8 +20,8 @@ export async function DELETE(
   }
 
   if (media.cloudinaryId && isCloudinaryConfigured()) {
-    await deleteImage(media.cloudinaryId).catch((error) =>
-      console.error("Failed to delete Cloudinary asset", error),
+    await deleteImage(media.cloudinaryId, media.type === "VIDEO" ? "video" : "image").catch(
+      (error) => console.error("Failed to delete Cloudinary asset", error),
     );
   }
 
