@@ -54,7 +54,7 @@ export default async function Home() {
           className="flex flex-col items-center gap-6 px-6 py-20 text-center"
           style={{
             background:
-              "radial-gradient(120% 60% at 50% 0%, oklch(0.94 0.03 40) 0%, var(--background) 60%)",
+              "radial-gradient(120% 60% at 50% 0%, oklch(0.95 0.025 340) 0%, var(--background) 60%)",
           }}
         >
           <h1 className="font-display max-w-3xl text-4xl leading-tight text-balance sm:text-6xl">

@@ -138,9 +138,11 @@ model Theme {
   decorAssets  Json? // preset decoration config (petals, sparkles, motifs...)
   isPremium    Boolean @default(false)
   sortOrder    Int     @default(0)
-  // Optional short muted video (envelope-open moment) — preloaded and
-  // layered over the coded burst animation when ready; the coded burst
-  // always plays first so there's never a blank/loading moment.
+  // Envelope-open moment: admin picks "ANIMATION" (coded burst only) or
+  // "VIDEO" (a short muted clip, preloaded and layered over the coded
+  // burst once ready — falls back to the coded burst if it isn't ready
+  // in time, so the reveal never blocks on the network).
+  revealMode     String  @default("ANIMATION") // "ANIMATION" | "VIDEO"
   revealVideoUrl String?
 
   templates   Template[]

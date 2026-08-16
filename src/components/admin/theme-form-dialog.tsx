@@ -37,6 +37,7 @@ type ThemeRecord = {
   category: string;
   isPremium: boolean;
   sortOrder: number;
+  revealMode: string;
   revealVideoUrl: string | null;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
   fontPairing: { display: string; body: string; script: string };
@@ -57,6 +58,7 @@ function defaultValues(theme?: ThemeRecord): ThemeFormValues {
     name: theme?.name ?? "",
     slug: theme?.slug ?? "",
     description: theme?.description ?? "",
+    revealMode: (theme?.revealMode as ThemeFormValues["revealMode"]) ?? "ANIMATION",
     revealVideoUrl: theme?.revealVideoUrl ?? "",
     category: (theme?.category as ThemeFormValues["category"]) ?? "classic",
     isPremium: theme?.isPremium ?? false,
@@ -169,15 +171,37 @@ export function ThemeFormDialog({ theme }: { theme?: ThemeRecord }) {
           </div>
 
           <div className="grid gap-1.5">
-            <Label>Reveal video URL (optional)</Label>
-            <Input
-              placeholder="https://…/envelope-open.mp4"
-              {...form.register("revealVideoUrl")}
-            />
-            <p className="text-muted-foreground text-xs">
-              Short, muted, no-audio-needed clip layered over the envelope-open animation once
-              it&apos;s preloaded. Leave blank to use the coded animation only.
-            </p>
+            <Label>Envelope reveal</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => form.setValue("revealMode", "ANIMATION")}
+                className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("revealMode") === "ANIMATION" ? "border-primary bg-primary/5" : ""}`}
+              >
+                <span className="font-medium">Coded animation</span>
+                <p className="text-muted-foreground text-xs">Instant, no video file needed.</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => form.setValue("revealMode", "VIDEO")}
+                className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("revealMode") === "VIDEO" ? "border-primary bg-primary/5" : ""}`}
+              >
+                <span className="font-medium">Video clip</span>
+                <p className="text-muted-foreground text-xs">Cinematic — falls back to the animation if not preloaded in time.</p>
+              </button>
+            </div>
+            {form.watch("revealMode") === "VIDEO" && (
+              <div className="mt-2">
+                <Input
+                  placeholder="https://…/envelope-open.mp4"
+                  {...form.register("revealVideoUrl")}
+                />
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Short (3–5s), muted, ideally under a few MB — h264 mp4 for the widest browser
+                  support.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
