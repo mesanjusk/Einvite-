@@ -1,11 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useLocale } from "@/lib/i18n/locale-context";
 
 const OPEN_DURATION_MS = 2800;
+// How long after tap the coded burst gets to play on its own before we
+// consider swapping in the preloaded video, so the flap-open + first
+// flash always shows instantly regardless of network speed.
+const VIDEO_HANDOFF_DELAY_MS = 600;
+// Safety net: if the video's "ended" event never fires (stalled
+// connection, codec hiccup), don't leave the guest stuck on it.
+const VIDEO_MAX_MS = 8000;
 const RAY_COUNT = 14;
 const RAY_ANGLES = Array.from({ length: RAY_COUNT }, (_, i) => (360 / RAY_COUNT) * i);
 const SPARK_COUNT = 20;
@@ -31,20 +38,59 @@ function Flourish({ style }: { style: React.CSSProperties }) {
 
 export function EnvelopeSection({
   initials,
+  videoUrl,
   onComplete,
 }: {
   initials: string;
+  /** Optional short muted clip (theme-level) layered over the coded burst
+   * once it's preloaded — never blocks the reveal if it isn't ready in time. */
+  videoUrl?: string | null;
   onComplete: () => void;
 }) {
   const [opened, setOpened] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { t } = useLocale();
+
+  useEffect(() => {
+    if (!videoUrl) return;
+    videoRef.current?.load();
+  }, [videoUrl]);
 
   function handleTap() {
     if (opened) return;
     setOpened(true);
+
+    const video = videoRef.current;
+    const videoLikelyReady = Boolean(videoUrl && video && video.readyState >= 3);
+
+    if (!videoLikelyReady) {
+      setTimeout(onComplete, OPEN_DURATION_MS);
+      return;
+    }
+
     setTimeout(() => {
-      onComplete();
-    }, OPEN_DURATION_MS);
+      if (!video) {
+        onComplete();
+        return;
+      }
+      setShowVideo(true);
+      video.currentTime = 0;
+      video.play().catch(() => {
+        setShowVideo(false);
+        onComplete();
+      });
+
+      let finished = false;
+      function finish() {
+        if (finished) return;
+        finished = true;
+        clearTimeout(safety);
+        onComplete();
+      }
+      const safety = setTimeout(finish, VIDEO_MAX_MS);
+      video.addEventListener("ended", finish, { once: true });
+    }, VIDEO_HANDOFF_DELAY_MS);
   }
 
   return (
@@ -241,6 +287,21 @@ export function EnvelopeSection({
       >
         ✦
       </motion.p>
+
+      {videoUrl && (
+        <motion.video
+          ref={videoRef}
+          src={videoUrl}
+          muted
+          playsInline
+          preload="auto"
+          className="absolute inset-0 size-full object-cover"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: showVideo ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          style={{ pointerEvents: "none" }}
+        />
+      )}
     </motion.div>
   );
 }

@@ -39,6 +39,7 @@ export const themeFormSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
   description: z.string().optional(),
   previewImage: z.string().optional(),
+  revealVideoUrl: z.string().optional(),
   category: z.enum(THEME_CATEGORIES).default("classic"),
   isPremium: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),

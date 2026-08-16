@@ -90,6 +90,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     media: invitation.media,
     isDemo: invitation.isDemo,
     themeSlug: invitation.theme?.slug ?? null,
+    revealVideoUrl: invitation.theme?.revealVideoUrl ?? null,
   };
 
   const sectionConfig = (invitation.sectionConfig as SectionConfigEntry[] | null) ?? [];

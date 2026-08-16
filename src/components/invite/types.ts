@@ -52,4 +52,5 @@ export type InviteData = {
   media: InviteMedia[];
   isDemo: boolean;
   themeSlug: string | null;
+  revealVideoUrl: string | null;
 };

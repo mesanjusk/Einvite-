@@ -37,6 +37,7 @@ type ThemeRecord = {
   category: string;
   isPremium: boolean;
   sortOrder: number;
+  revealVideoUrl: string | null;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
   fontPairing: { display: string; body: string; script: string };
   sectionOrder: string[];
@@ -56,6 +57,7 @@ function defaultValues(theme?: ThemeRecord): ThemeFormValues {
     name: theme?.name ?? "",
     slug: theme?.slug ?? "",
     description: theme?.description ?? "",
+    revealVideoUrl: theme?.revealVideoUrl ?? "",
     category: (theme?.category as ThemeFormValues["category"]) ?? "classic",
     isPremium: theme?.isPremium ?? false,
     sortOrder: theme?.sortOrder ?? 0,
@@ -164,6 +166,18 @@ export function ThemeFormDialog({ theme }: { theme?: ThemeRecord }) {
           <div className="grid gap-1.5">
             <Label>Description</Label>
             <Textarea rows={2} {...form.register("description")} />
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>Reveal video URL (optional)</Label>
+            <Input
+              placeholder="https://…/envelope-open.mp4"
+              {...form.register("revealVideoUrl")}
+            />
+            <p className="text-muted-foreground text-xs">
+              Short, muted, no-audio-needed clip layered over the envelope-open animation once
+              it&apos;s preloaded. Leave blank to use the coded animation only.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
