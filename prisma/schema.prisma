@@ -337,6 +337,7 @@ model Invitation {
   analyticsEvents AnalyticsEvent[]
   deployment      Deployment?
   phoneLink       PhoneLink?
+  instagramLink   InstagramLink?
   videos          InvitationVideo[]
 
   @@index([userId])
@@ -614,6 +615,25 @@ model InstagramAutomation {
 // Tracks which Instagram accounts have already received their access link
 // for a given reel, enforcing one link per account per automation. Written
 // only after the send actually succeeds.
+// The Instagram equivalent of PhoneLink, and the identity spine of the
+// comment-to-DM flow: it binds one Instagram account to exactly one
+// invitation and backs the pre-logged /e/<token> link sent by DM. Both
+// `igUserId` and `invitationId` are unique, so an Instagram account owns at
+// most one invitation — which is what makes "one website, one PDF, one video
+// per Instagram user" enforceable at all.
+model InstagramLink {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  igUserId      String   @unique
+  username      String?
+  invitationId  String   @unique @db.ObjectId
+  editTokenHash String   @unique
+  createdAt     DateTime @default(now())
+
+  invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@map("instagram_links")
+}
+
 model InstagramLead {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   // Optional so rows created before per-reel automations still read; those

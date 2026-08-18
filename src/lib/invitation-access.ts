@@ -11,13 +11,18 @@ import { hasGuestAccess } from "@/lib/guest-session";
 export async function authorizeInvitationAccess(invitationId: string) {
   const invitation = await db.invitation.findUnique({
     where: { id: invitationId },
-    include: { phoneLink: true },
+    include: { phoneLink: true, instagramLink: true },
   });
   if (!invitation) return null;
 
   const session = await auth();
   if (session?.user && invitation.userId === session.user.id) return invitation;
 
-  const guestOk = await hasGuestAccess(invitation, invitation.phoneLink?.editTokenHash);
+  // Either ownership link can authorize: the phone one from the WhatsApp
+  // publish flow, or the Instagram one from the comment-to-DM flow.
+  const guestOk = await hasGuestAccess(invitation, [
+    invitation.phoneLink?.editTokenHash,
+    invitation.instagramLink?.editTokenHash,
+  ]);
   return guestOk ? invitation : null;
 }

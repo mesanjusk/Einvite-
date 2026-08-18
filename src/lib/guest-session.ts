@@ -45,11 +45,16 @@ export async function hasOwnerAccess(
   return Boolean(raw) && hashToken(raw!) === editTokenHash;
 }
 
-/** True if this browser is authorized to view/edit this guest invitation — either as the original drafter or via a verified phone link. */
+/** True if this browser is authorized to view/edit this guest invitation — either as the original drafter or via any of the invitation's ownership links (phone or Instagram). */
 export async function hasGuestAccess(
   invitation: { id: string; draftSecretHash: string | null },
-  editTokenHash?: string | null,
+  editTokenHashes?: (string | null | undefined)[] | string | null,
 ): Promise<boolean> {
   if (await hasDraftAccess(invitation.id, invitation.draftSecretHash)) return true;
-  return hasOwnerAccess(invitation.id, editTokenHash ?? null);
+
+  const hashes = Array.isArray(editTokenHashes) ? editTokenHashes : [editTokenHashes];
+  for (const hash of hashes) {
+    if (hash && (await hasOwnerAccess(invitation.id, hash))) return true;
+  }
+  return false;
 }

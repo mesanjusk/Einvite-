@@ -1,8 +1,10 @@
-import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { after } from "next/server";
 
 import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
+import { generateToken, hashToken } from "@/lib/otp";
+import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import { fetchInstagramFollowStatus, sendInstagramMessage } from "@/lib/instagram";
 
 const DM_HELP_MESSAGE = "Comment FREE on our latest post to get your invite link!";
@@ -37,14 +39,60 @@ function isValidSignature(rawBody: string, signature: string | null, appSecret: 
   return timingSafeEqual(expectedBuffer, signatureBuffer);
 }
 
-// TODO: wire this to the real invitation/editor access link generation once
-// it supports a URL-token flow openable from a DM on a different device.
-// createDraftInvitationAction (src/lib/actions/guest-invitation.ts) is the
-// closest existing analog, but it authorizes via a browser cookie set on
-// the creating request, which doesn't exist when the link is opened later
-// from Instagram — so it isn't reusable here as-is.
-function generatePlaceholderLink() {
-  return `${getAppUrl()}/create?ref=${randomUUID()}`;
+function editLinkFor(rawToken: string) {
+  return `${getAppUrl()}/e/${rawToken}`;
+}
+
+/**
+ * The Instagram account's invitation and its pre-logged link.
+ *
+ * One Instagram account owns exactly one invitation, so a commenter who
+ * already has one is handed that same invitation again rather than a second
+ * one — this is where "one website, one PDF, one video per Instagram user"
+ * is actually enforced. The edit token is rotated on every issue so an old
+ * DM stops working once a newer link has been sent.
+ *
+ * Returns the raw token (only ever known here and in the DM) plus whether
+ * this was an existing claim, so the caller can pick the right reply.
+ */
+async function issueInvitationLink(
+  igUserId: string,
+  username?: string,
+): Promise<{ link: string; alreadyClaimed: boolean }> {
+  const rawToken = generateToken();
+  const editTokenHash = hashToken(rawToken);
+
+  const existing = await db.instagramLink.findUnique({ where: { igUserId } });
+  if (existing) {
+    await db.instagramLink.update({
+      where: { id: existing.id },
+      data: { editTokenHash, username: username ?? existing.username },
+    });
+    return { link: editLinkFor(rawToken), alreadyClaimed: true };
+  }
+
+  const slug = await uniqueSlug(`invite-${Date.now()}`);
+  const invitation = await db.invitation.create({
+    data: {
+      slug,
+      brideName: "",
+      groomName: "",
+      weddingDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 180),
+      sectionConfig: DEFAULT_SECTION_ORDER.map((type, order) => ({
+        id: type,
+        type,
+        visible: true,
+        locked: false,
+        order,
+      })),
+    },
+  });
+
+  await db.instagramLink.create({
+    data: { igUserId, username, invitationId: invitation.id, editTokenHash },
+  });
+
+  return { link: editLinkFor(rawToken), alreadyClaimed: false };
 }
 
 /**
@@ -155,47 +203,32 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
       }
     }
 
-    // One link per account per reel — claiming on one reel leaves the others
-    // still claimable.
-    if (igUserId) {
-      const existingLead = await db.instagramLead.findUnique({
-        where: { igUserId_automationId: { igUserId, automationId: automation.id } },
+    // Without a commenter ID there's no identity to bind an invitation to, so
+    // there's nothing safe to send — recording it is all that's left.
+    if (!igUserId) {
+      await db.instagramCommentLog.create({
+        data: { ...logBase, automationId: automation.id, outcome: "SEND_FAILED", error: "Comment carried no sender ID" },
       });
-      if (existingLead) {
-        const duplicateText = renderTemplate(automation.duplicateMessage, {
-          link: existingLead.link,
-          username: username ?? "",
-        });
-        const { delivered } = await sendInstagramMessage(
-          { comment_id: commentId },
-          duplicateText,
-        );
-        await db.instagramCommentLog.create({
-          data: {
-            ...logBase,
-            automationId: automation.id,
-            outcome: delivered ? "DUPLICATE_SKIPPED" : "SEND_FAILED",
-            replyText: duplicateText,
-            error: delivered ? null : "Send API rejected the duplicate reply",
-          },
-        });
-        return;
-      }
+      return;
     }
 
-    const link = generatePlaceholderLink();
-    const replyText = renderTemplate(automation.replyMessage, {
-      link,
-      username: username ?? "",
-    });
+    // One invitation per Instagram account: a returning commenter is handed
+    // their existing invitation again, on any reel, rather than a second one.
+    const { link, alreadyClaimed } = await issueInvitationLink(igUserId, username);
+    const replyText = renderTemplate(
+      alreadyClaimed ? automation.duplicateMessage : automation.replyMessage,
+      { link, username: username ?? "" },
+    );
     const { delivered } = await sendInstagramMessage({ comment_id: commentId }, replyText);
 
-    // Only record the lead once the link actually reached them — otherwise a
-    // failed send would still burn their one free link, leaving them stuck on
-    // "you already have a link" for a link they never received.
-    if (igUserId && delivered) {
-      await db.instagramLead.create({
-        data: { igUserId, automationId: automation.id, commentId, link },
+    // The lead row records which reel drove this claim, so a returning user
+    // commenting on a new reel still attributes to that reel. Written only on
+    // a delivered send, so a failed one doesn't log a link nobody received.
+    if (delivered) {
+      await db.instagramLead.upsert({
+        where: { igUserId_automationId: { igUserId, automationId: automation.id } },
+        create: { igUserId, automationId: automation.id, commentId, link },
+        update: { commentId, link },
       });
     }
 
@@ -203,7 +236,7 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
       data: {
         ...logBase,
         automationId: automation.id,
-        outcome: delivered ? "REPLY_SENT" : "SEND_FAILED",
+        outcome: delivered ? (alreadyClaimed ? "DUPLICATE_SKIPPED" : "REPLY_SENT") : "SEND_FAILED",
         replyText,
         error: delivered ? null : "Send API rejected the reply",
       },
