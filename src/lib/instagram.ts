@@ -1,7 +1,12 @@
 /**
- * Instagram Send API (Meta Graph API) — private replies to comments and DM
- * replies. When IG_ACCESS_TOKEN isn't configured — e.g. local dev — messages
- * are logged to the console instead of failing outright.
+ * Instagram Send API — private replies to comments and DM replies. When
+ * IG_ACCESS_TOKEN isn't configured — e.g. local dev — messages are logged to
+ * the console instead of failing outright.
+ *
+ * Uses graph.instagram.com (not graph.facebook.com): this app is set up with
+ * the "Instagram API with Instagram Login" product, whose IGAA-prefixed
+ * Instagram-scoped tokens are only accepted by the Instagram host. Sending
+ * one to graph.facebook.com fails with "Cannot parse access token" (code 190).
  */
 
 type InstagramRecipient = { comment_id: string } | { id: string };
@@ -20,10 +25,13 @@ export async function sendInstagramMessage(
   }
 
   const response = await fetch(
-    `https://graph.facebook.com/v21.0/me/messages?access_token=${process.env.IG_ACCESS_TOKEN}`,
+    "https://graph.instagram.com/v21.0/me/messages",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${process.env.IG_ACCESS_TOKEN}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ recipient, message: { text } }),
     },
   );
