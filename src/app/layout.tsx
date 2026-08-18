@@ -36,13 +36,25 @@ const ebGaramond = EB_Garamond({
   weight: ["400", "500"],
 });
 
+const SITE_URL = "https://invite.sanjusk.in";
+const SITE_DESCRIPTION =
+  "Generate premium, animated digital wedding invitation websites with AI — no code, no designer required.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: SITE_NAME,
     template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Generate premium, animated digital wedding invitation websites with AI — no code, no designer required.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    images: ["/favicon.ico"],
+    type: "website",
+  },
 };
 
 export default function RootLayout({

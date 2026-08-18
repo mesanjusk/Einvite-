@@ -1,13 +1,12 @@
 import Link from "next/link";
 
 import { SITE_NAME } from "@/config/site";
-import { SUPPORT_EMAIL } from "@/config/legal";
 
 const LEGAL_LINKS = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
   { label: "Data Deletion", href: "/data-deletion" },
-  { label: "Contact", href: `mailto:${SUPPORT_EMAIL}` },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function SiteFooter() {

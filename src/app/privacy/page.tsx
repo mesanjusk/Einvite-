@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { LegalPage } from "@/components/marketing/legal-page";
-import { LEGAL_BRAND_NAME, SUPPORT_EMAIL } from "@/config/legal";
+import { LEGAL_ADDRESS, LEGAL_BRAND_NAME, SUPPORT_EMAIL } from "@/config/legal";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -42,7 +42,9 @@ export default function PrivacyPage() {
       </p>
 
       <h2>Contact</h2>
-      <p>{LEGAL_BRAND_NAME}, Chandrapur, Maharashtra, India</p>
+      <p>
+        {LEGAL_BRAND_NAME}, {LEGAL_ADDRESS}
+      </p>
     </LegalPage>
   );
 }
