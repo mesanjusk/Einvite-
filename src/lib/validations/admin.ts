@@ -110,6 +110,8 @@ export const instagramAutomationFormSchema = z.object({
     .min(1, "Reply message is required")
     .refine((v) => v.includes("{{link}}"), "Include {{link}} so the invite link is sent"),
   duplicateMessage: z.string().min(1, "Duplicate reply is required"),
+  requireFollow: z.boolean().default(false),
+  notFollowingMessage: z.string().optional(),
   isActive: z.boolean().default(true),
 });
 

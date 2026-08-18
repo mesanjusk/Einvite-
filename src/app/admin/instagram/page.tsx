@@ -17,6 +17,7 @@ const OUTCOME_LABELS: Record<string, { label: string; variant: "default" | "seco
   TRIGGER_NOT_MATCHED: { label: "No trigger word", variant: "outline" },
   NO_AUTOMATION: { label: "No automation", variant: "outline" },
   AUTOMATION_INACTIVE: { label: "Paused", variant: "outline" },
+  NOT_FOLLOWING: { label: "Asked to follow", variant: "secondary" },
   SEND_FAILED: { label: "Send failed", variant: "destructive" },
 };
 
@@ -94,6 +95,8 @@ export default async function AdminInstagramPage() {
                       triggerWord: automation.triggerWord,
                       replyMessage: automation.replyMessage,
                       duplicateMessage: automation.duplicateMessage,
+                      requireFollow: automation.requireFollow,
+                      notFollowingMessage: automation.notFollowingMessage,
                       isActive: automation.isActive,
                     }}
                   />
@@ -110,6 +113,7 @@ export default async function AdminInstagramPage() {
                   {automation.isActive ? "Active" : "Paused"}
                 </Badge>
                 <Badge variant="secondary">Trigger: {automation.triggerWord}</Badge>
+                {automation.requireFollow && <Badge variant="outline">Followers only</Badge>}
               </div>
 
               <p className="text-muted-foreground line-clamp-2 text-xs">

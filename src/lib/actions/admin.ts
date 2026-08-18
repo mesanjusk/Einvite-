@@ -397,6 +397,8 @@ export async function upsertInstagramAutomationAction(
     triggerWord: data.triggerWord,
     replyMessage: data.replyMessage,
     duplicateMessage: data.duplicateMessage,
+    requireFollow: data.requireFollow,
+    notFollowingMessage: data.notFollowingMessage || null,
     isActive: data.isActive,
   };
 
