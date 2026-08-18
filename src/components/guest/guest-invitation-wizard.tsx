@@ -26,7 +26,11 @@ import {
   type InvitationWizardInput,
   type InvitationWizardFormValues,
 } from "@/lib/validations/invitation";
-import { createDraftInvitationAction, updateGuestInvitationAction } from "@/lib/actions/guest-invitation";
+import {
+  createDraftInvitationAction,
+  updateGuestInvitationAction,
+  publishGuestInvitationAction,
+} from "@/lib/actions/guest-invitation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +48,7 @@ import {
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { GuestPhotosStep, REQUIRED_PHOTOS, type GuestMediaItem } from "./guest-photos-step";
-import { PublishOtpDialog } from "./publish-otp-dialog";
+import { PublishDialog } from "./publish-dialog";
 
 type Theme = {
   slug: string;
@@ -86,6 +90,7 @@ export function GuestInvitationWizard({
   initialValues,
   initialMedia,
   isPublished = false,
+  hasPhoneLink = false,
 }: {
   themes: Theme[];
   musicTracks: MusicTrack[];
@@ -94,6 +99,8 @@ export function GuestInvitationWizard({
   initialValues?: Partial<InvitationWizardFormValues>;
   initialMedia?: GuestMediaItem[];
   isPublished?: boolean;
+  /** Already has a durable WhatsApp edit link (e.g. reached via a pre-sent link) — publish directly, no phone prompt needed. */
+  hasPhoneLink?: boolean;
 }) {
   const isEditMode = Boolean(existingInvitationId);
   const router = useRouter();
@@ -250,10 +257,25 @@ export function GuestInvitationWizard({
     }
 
     if (isOwnerSession) {
-      // Signed-in team members already proved who they are — no WhatsApp
-      // OTP needed. Review and publish from the Deploy page like today.
+      // Signed-in team members already proved who they are — review and
+      // publish from the Deploy page like today.
       toast.success("Invitation saved!");
       router.push(`/dashboard/publish/deploy?invitationId=${invitationId}`);
+      return;
+    }
+
+    if (hasPhoneLink) {
+      // Reached via a pre-sent edit link — ownership is already
+      // established, so publish immediately with no extra prompt.
+      setSubmitting(true);
+      const publishResult = await publishGuestInvitationAction({ invitationId });
+      setSubmitting(false);
+      if (!publishResult.success) {
+        toast.error(publishResult.error);
+        return;
+      }
+      toast.success("Invitation is live!");
+      router.push(`/manage/${invitationId}`);
       return;
     }
 
@@ -635,13 +657,15 @@ export function GuestInvitationWizard({
                   ? "Save changes"
                   : isOwnerSession
                     ? "Save & continue to Deploy"
-                    : "Continue to publish"}
+                    : hasPhoneLink
+                      ? "Publish my invitation"
+                      : "Continue to publish"}
             </Button>
           )}
         </div>
       </form>
 
-      <PublishOtpDialog
+      <PublishDialog
         open={publishOpen}
         onOpenChange={setPublishOpen}
         invitationId={invitationId}

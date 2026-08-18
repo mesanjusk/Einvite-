@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 
-import { requestPublishOtpAction, verifyPublishOtpAction } from "@/lib/actions/guest-invitation";
+import { publishGuestInvitationAction } from "@/lib/actions/guest-invitation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,9 +16,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type Phase = "phone" | "otp" | "success";
+type Phase = "phone" | "success";
 
-export function PublishOtpDialog({
+export function PublishDialog({
   open,
   onOpenChange,
   invitationId,
@@ -31,16 +31,12 @@ export function PublishOtpDialog({
 }) {
   const [phase, setPhase] = useState<Phase>("phone");
   const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [devCode, setDevCode] = useState<string | null>(null);
   const [result, setResult] = useState<{ liveUrl: string; editUrl: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function reset() {
     setPhase("phone");
     setPhone("");
-    setCode("");
-    setDevCode(null);
     setResult(null);
   }
 
@@ -49,26 +45,9 @@ export function PublishOtpDialog({
     onOpenChange(next);
   }
 
-  function handleRequestOtp() {
+  function handlePublish() {
     startTransition(async () => {
-      const res = await requestPublishOtpAction({ invitationId, phone });
-      if (!res.success) {
-        toast.error(res.error);
-        return;
-      }
-      setDevCode(res.data.devCode ?? null);
-      toast.success(
-        res.data.devMode
-          ? "Couldn't confirm WhatsApp delivery — use the on-screen code below for now."
-          : "Code sent on WhatsApp.",
-      );
-      setPhase("otp");
-    });
-  }
-
-  function handleVerifyOtp() {
-    startTransition(async () => {
-      const res = await verifyPublishOtpAction({ invitationId, phone, code });
+      const res = await publishGuestInvitationAction({ invitationId, phone });
       if (!res.success) {
         toast.error(res.error);
         return;
@@ -87,12 +66,11 @@ export function PublishOtpDialog({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ShieldCheck className="text-primary size-5" />
-                Verify your WhatsApp number
+                Almost done
               </DialogTitle>
               <DialogDescription>
-                We&apos;ll text a one-time code to confirm it&apos;s you. Each mobile number can
-                publish one invitation, and we&apos;ll send you a private link on WhatsApp to edit
-                it later.
+                Add your WhatsApp number so we can send you a private link to edit this
+                invitation later — no code, no waiting, you&apos;ll be live right away.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-1.5">
@@ -106,49 +84,9 @@ export function PublishOtpDialog({
                 autoFocus
               />
             </div>
-            <Button onClick={handleRequestOtp} disabled={isPending || phone.trim().length < 6}>
-              {isPending ? "Sending…" : "Send code on WhatsApp"}
+            <Button onClick={handlePublish} disabled={isPending || phone.trim().length < 6}>
+              {isPending ? "Publishing…" : "Publish my invitation"}
             </Button>
-          </>
-        )}
-
-        {phase === "otp" && (
-          <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <MessageCircle className="text-primary size-5" />
-                Enter the code
-              </DialogTitle>
-              <DialogDescription>
-                We sent a 6-digit code to {phone} on WhatsApp. It expires in 10 minutes.
-              </DialogDescription>
-            </DialogHeader>
-            {devCode && (
-              <p className="rounded-md border border-dashed p-2 text-center text-sm">
-                Didn&apos;t get it on WhatsApp? Your code is{" "}
-                <span className="font-mono font-semibold">{devCode}</span>
-              </p>
-            )}
-            <div className="grid gap-1.5">
-              <Label htmlFor="publish-otp">6-digit code</Label>
-              <Input
-                id="publish-otp"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="123456"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                autoFocus
-              />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <Button variant="ghost" type="button" onClick={() => setPhase("phone")}>
-                Change number
-              </Button>
-              <Button onClick={handleVerifyOtp} disabled={isPending || code.length !== 6}>
-                {isPending ? "Verifying…" : "Verify & publish"}
-              </Button>
-            </div>
           </>
         )}
 
@@ -160,8 +98,8 @@ export function PublishOtpDialog({
                 Your invitation is live!
               </DialogTitle>
               <DialogDescription>
-                We sent your shareable link and a private edit link to your WhatsApp — keep that
-                message, it&apos;s how you&apos;ll come back to make changes.
+                We&apos;re also sending your shareable link and private edit link to your
+                WhatsApp — but keep this page open or bookmark the edit link below either way.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2 text-sm">

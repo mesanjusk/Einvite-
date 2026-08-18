@@ -68,17 +68,11 @@ export const guestSchema = z.object({
 
 export type GuestInput = z.infer<typeof guestSchema>;
 
-export const otpRequestSchema = z.object({
+export const publishGuestInvitationSchema = z.object({
   invitationId: z.string().min(1),
-  phone: z.string().min(6, "Enter a valid mobile number"),
+  // Omitted when the invitation already has a PhoneLink (re-publishing
+  // after an edit) — the existing linked number is reused server-side.
+  phone: z.string().min(6, "Enter a valid mobile number").optional(),
 });
 
-export type OtpRequestInput = z.infer<typeof otpRequestSchema>;
-
-export const otpVerifySchema = z.object({
-  invitationId: z.string().min(1),
-  phone: z.string().min(6, "Enter a valid mobile number"),
-  code: z.string().length(6, "Enter the 6-digit code"),
-});
-
-export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;
+export type PublishGuestInvitationInput = z.infer<typeof publishGuestInvitationSchema>;

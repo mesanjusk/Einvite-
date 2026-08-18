@@ -9,23 +9,18 @@ import { getAppUrl } from "@/lib/app-url";
 import { generateInvitationCopy } from "@/lib/ai/generate-copy";
 import {
   invitationWizardSchema,
-  otpRequestSchema,
-  otpVerifySchema,
+  publishGuestInvitationSchema,
   type InvitationWizardInput,
 } from "@/lib/validations/invitation";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import type { ActionResult } from "@/lib/actions/auth";
 import { normalizePhone } from "@/lib/phone";
-import { generateOtp, hashOtp, verifyOtp, generateToken, hashToken } from "@/lib/otp";
-import { sendWhatsAppText, otpMessage, editLinkMessage } from "@/lib/whatsapp";
+import { generateToken, hashToken } from "@/lib/otp";
+import { sendWhatsAppText, editLinkMessage } from "@/lib/whatsapp";
 import { issueDraftSecret, issueOwnerCookie } from "@/lib/guest-session";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
 import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
-
-const OTP_TTL_MS = 10 * 60 * 1000;
-const OTP_RESEND_COOLDOWN_MS = 45 * 1000;
-const OTP_MAX_ATTEMPTS = 5;
 
 /**
  * Shared by both the anonymous "Get started" flow and the signed-in
@@ -214,10 +209,18 @@ export async function autoFillPhotosAction(
   };
 }
 
-export async function requestPublishOtpAction(
-  input: { invitationId: string; phone: string },
-): Promise<ActionResult<{ devMode: boolean; devCode?: string }>> {
-  const parsed = otpRequestSchema.safeParse(input);
+/**
+ * Publishes a guest-flow invitation immediately — no WhatsApp OTP code to
+ * wait on or get stuck at. Still collects a phone number (one number per
+ * invitation, same as before) so the invitation gets a durable `PhoneLink`
+ * and a private edit link usable from any device, and still attempts to
+ * send that edit link over WhatsApp as a courtesy — but delivery is
+ * best-effort and never blocks publishing, since it's shown on-screen too.
+ */
+export async function publishGuestInvitationAction(
+  input: { invitationId: string; phone?: string },
+): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string }>> {
+  const parsed = publishGuestInvitationSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
@@ -239,7 +242,7 @@ export async function requestPublishOtpAction(
     return { success: false, error: `Add ${REQUIRED_PHOTO_COUNT} photos before publishing.` };
   }
 
-  const phone = normalizePhone(parsed.data.phone);
+  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : invitation.phoneLink?.phone;
   if (!phone) return { success: false, error: "Enter a valid mobile number." };
 
   const conflictingLink = await db.phoneLink.findUnique({ where: { phone } });
@@ -247,7 +250,7 @@ export async function requestPublishOtpAction(
     return {
       success: false,
       error:
-        "This mobile number is already linked to another invitation. One WhatsApp number can publish only one invitation — use the edit link sent to that number, or use a different number.",
+        "This mobile number is already linked to another invitation. One number can own only one invitation — use the edit link sent to that number, or use a different number.",
     };
   }
   if (invitation.phoneLink && invitation.phoneLink.phone !== phone) {
@@ -256,82 +259,6 @@ export async function requestPublishOtpAction(
       error: "This invitation is already linked to a different mobile number.",
     };
   }
-
-  const recent = await db.otpChallenge.findFirst({
-    where: { invitationId: invitation.id, phone, consumedAt: null },
-    orderBy: { createdAt: "desc" },
-  });
-  if (recent && Date.now() - recent.createdAt.getTime() < OTP_RESEND_COOLDOWN_MS) {
-    return { success: false, error: "Please wait a few seconds before requesting another code." };
-  }
-
-  const code = generateOtp();
-  const salt = `${invitation.id}:${phone}`;
-  await db.otpChallenge.create({
-    data: {
-      invitationId: invitation.id,
-      phone,
-      codeHash: hashOtp(code, salt),
-      expiresAt: new Date(Date.now() + OTP_TTL_MS),
-    },
-  });
-
-  const { delivered } = await sendWhatsAppText(
-    phone,
-    otpMessage(code, invitation.brideName, invitation.groomName),
-  );
-
-  // Show the code on-screen whenever we can't confirm it actually reached
-  // WhatsApp — not configured, or configured but the send itself failed
-  // (bad token, unverified number, Meta API error, etc.) — so a guest is
-  // never stuck with no way to get their code.
-  return {
-    success: true,
-    data: { devMode: !delivered, devCode: !delivered ? code : undefined },
-  };
-}
-
-export async function verifyPublishOtpAction(
-  input: { invitationId: string; phone: string; code: string },
-): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string; devMode: boolean }>> {
-  const parsed = otpVerifySchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-
-  const invitation = await loadInvitation(parsed.data.invitationId);
-  if (!invitation) return { success: false, error: "Invitation not found." };
-  if (invitation.userId) {
-    return {
-      success: false,
-      error: "This invitation is managed from the dashboard — publish it from Deploy.",
-    };
-  }
-
-  const phone = normalizePhone(parsed.data.phone);
-  if (!phone) return { success: false, error: "Enter a valid mobile number." };
-
-  const challenge = await db.otpChallenge.findFirst({
-    where: { invitationId: invitation.id, phone, consumedAt: null, expiresAt: { gt: new Date() } },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!challenge) {
-    return { success: false, error: "That code expired. Request a new one." };
-  }
-  if (challenge.attempts >= OTP_MAX_ATTEMPTS) {
-    return { success: false, error: "Too many incorrect attempts. Request a new code." };
-  }
-
-  const salt = `${invitation.id}:${phone}`;
-  if (!verifyOtp(parsed.data.code, salt, challenge.codeHash)) {
-    await db.otpChallenge.update({
-      where: { id: challenge.id },
-      data: { attempts: { increment: 1 } },
-    });
-    return { success: false, error: "Incorrect code. Please try again." };
-  }
-
-  await db.otpChallenge.update({ where: { id: challenge.id }, data: { consumedAt: new Date() } });
 
   const rawEditToken = generateToken();
   const editTokenHash = hashToken(rawEditToken);
@@ -356,6 +283,13 @@ export async function verifyPublishOtpAction(
         throw error;
       }
     }
+  } else {
+    // Already linked (e.g. re-publishing after an edit) — rotate the edit
+    // token so the freshly issued owner cookie/link stays in sync.
+    phoneLink = await db.phoneLink.update({
+      where: { id: phoneLink.id },
+      data: { editTokenHash },
+    });
   }
 
   const updated = await db.invitation.update({
@@ -369,16 +303,16 @@ export async function verifyPublishOtpAction(
   const liveUrl = `${appUrl}/invite/${updated.slug}`;
   const editUrl = `${appUrl}/e/${rawEditToken}`;
 
-  const { delivered } = await sendWhatsAppText(
+  sendWhatsAppText(
     phone,
     editLinkMessage(invitation.brideName, invitation.groomName, liveUrl, editUrl),
-  );
+  ).catch((error) => console.error("Failed to send edit-link WhatsApp message", error));
 
   revalidatePath(`/invite/${updated.slug}`);
   revalidatePath(`/manage/${invitation.id}`);
 
   return {
     success: true,
-    data: { slug: updated.slug, liveUrl, editUrl, devMode: !delivered },
+    data: { slug: updated.slug, liveUrl, editUrl },
   };
 }

@@ -1,8 +1,8 @@
 /**
  * WhatsApp delivery via the Meta (WhatsApp Business) Cloud API. When the
  * credentials aren't configured — e.g. local dev — messages are logged to
- * the console instead of failing outright, so the OTP flow stays testable
- * end to end without a live WhatsApp Business account.
+ * the console instead of failing outright, so the publish flow stays
+ * testable end to end without a live WhatsApp Business account.
  */
 
 export function isWhatsAppConfigured() {
@@ -44,10 +44,6 @@ export async function sendWhatsAppText(
   }
 
   return { delivered: true, devMode: false };
-}
-
-export function otpMessage(code: string, brideName: string, groomName: string) {
-  return `Your Einvite verification code for ${brideName} & ${groomName}'s invitation is ${code}. It expires in 10 minutes. Don't share this code with anyone.`;
 }
 
 export function editLinkMessage(brideName: string, groomName: string, liveUrl: string, editUrl: string) {
