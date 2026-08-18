@@ -172,7 +172,11 @@ model Template {
   description  String?
   previewImage String?
   themeId      String  @db.ObjectId
-  sectionOrder Json // default ordered list of SectionType strings
+  sectionOrder Json // default ordered list of SectionType strings (WEBSITE themes)
+  // Multi-page PDF layout (PDF themes only): PdfTemplatePage[] — each page a
+  // background image/color plus positioned, field-bound text placeholders.
+  // See src/lib/validations/pdf-template.ts for the shape.
+  pages        Json?
   isPremium    Boolean @default(false)
 
   theme       Theme        @relation(fields: [themeId], references: [id])
@@ -281,12 +285,15 @@ model Invitation {
   googleMapsUrl String?
   customMessage String?
   language      InvitationLanguage @default(EN)
+  // Extra text for the PDF only (e.g. a formal invitation letter) — not
+  // shown on the website, bindable to a placeholder on a PDF template page.
+  pdfExtraText  String?
 
   // Design
   themeId    String? @db.ObjectId // WEBSITE-type Theme
   templateId String? @db.ObjectId
-  // Optional PDF-type Theme override for the "Download PDF" stylesheet —
-  // falls back to `theme` (the website theme) when unset.
+  // Optional PDF-type Theme override for the downloadable PDF — falls back
+  // to `theme` (the website theme's palette) when unset.
   pdfThemeId String? @db.ObjectId
   // Last video template picked/used for Gemini video generation — surfaced
   // as the default selection next time the couple regenerates one.

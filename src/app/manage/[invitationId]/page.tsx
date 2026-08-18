@@ -8,6 +8,8 @@ import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { GeminiKeyForm } from "@/components/dashboard/gemini-key-form";
 import { VideoGeneratorPanel } from "@/components/dashboard/video-generator-panel";
+import { PdfThemePicker } from "@/components/dashboard/pdf-theme-picker";
+import { PdfExtraTextForm } from "@/components/dashboard/pdf-extra-text-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +42,7 @@ export default async function ManageGuestInvitationPage({
     );
   }
 
-  const [media, videoTemplates, videos] = await Promise.all([
+  const [media, videoTemplates, videos, pdfThemes, pdfTheme] = await Promise.all([
     db.media.count({ where: { invitationId } }),
     db.videoTemplate.findMany({ orderBy: { sortOrder: "asc" } }),
     db.invitationVideo.findMany({
@@ -48,6 +50,10 @@ export default async function ManageGuestInvitationPage({
       orderBy: { createdAt: "desc" },
       include: { videoTemplate: { select: { name: true } } },
     }),
+    db.theme.findMany({ where: { type: "PDF" }, orderBy: { sortOrder: "asc" } }),
+    invitation.pdfThemeId
+      ? db.theme.findUnique({ where: { id: invitation.pdfThemeId }, select: { slug: true } })
+      : null,
   ]);
   const appUrl = getAppUrl();
   const liveUrl = `${appUrl}/invite/${invitation.slug}`;
@@ -106,7 +112,7 @@ export default async function ManageGuestInvitationPage({
             >
               Share on WhatsApp
             </a>
-            <a href={`${liveUrl}?print=1`} target="_blank" className="text-primary text-sm underline">
+            <a href={`/api/pdf/${invitation.slug}`} className="text-primary text-sm underline">
               Download PDF
             </a>
           </CardContent>
@@ -119,6 +125,28 @@ export default async function ManageGuestInvitationPage({
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>PDF</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div>
+            <p className="mb-3 text-sm font-medium">PDF theme</p>
+            <PdfThemePicker
+              invitationId={invitation.id}
+              themes={pdfThemes.map((t) => ({
+                id: t.id,
+                slug: t.slug,
+                name: t.name,
+                colorPalette: t.colorPalette as { primary: string; accent: string; background: string },
+              }))}
+              currentSlug={pdfTheme?.slug ?? null}
+            />
+          </div>
+          <PdfExtraTextForm invitationId={invitation.id} initialText={invitation.pdfExtraText ?? ""} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

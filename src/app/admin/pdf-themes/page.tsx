@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { Metadata } from "next";
+import { LayoutTemplate } from "lucide-react";
 
 import { db } from "@/lib/db";
 import { ThemeFormDialog } from "@/components/admin/theme-form-dialog";
@@ -6,6 +8,8 @@ import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteThemeAction } from "@/lib/actions/admin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { PdfTemplatePage } from "@/lib/validations/pdf-template";
 
 export const metadata: Metadata = { title: "Manage PDF Themes" };
 
@@ -22,8 +26,8 @@ export default async function AdminPdfThemesPage() {
         <div>
           <h1 className="font-display text-2xl">Manage PDF Themes</h1>
           <p className="text-muted-foreground text-sm">
-            Colors, fonts, and layout for the &quot;Download PDF&quot; stylesheet — independent
-            from the website theme.
+            Design the multi-page layout couples download as a PDF — background images/colors
+            plus text boxes bound to their details, independent from the website theme.
           </p>
         </div>
         <ThemeFormDialog type="PDF" />
@@ -42,6 +46,7 @@ export default async function AdminPdfThemesPage() {
         {themes.map((theme) => {
           const palette = theme.colorPalette as { primary: string; accent: string };
           const sectionOrder = (theme.templates[0]?.sectionOrder as string[] | undefined) ?? [];
+          const pageCount = ((theme.templates[0]?.pages as PdfTemplatePage[] | null) ?? []).length;
           return (
             <Card key={theme.id} className="overflow-hidden py-0">
               <div
@@ -85,8 +90,15 @@ export default async function AdminPdfThemesPage() {
                   </div>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  {theme._count.pdfInvitations} invitation(s) using this PDF theme
+                  {theme._count.pdfInvitations} invitation(s) using this PDF theme ·{" "}
+                  {pageCount} page{pageCount === 1 ? "" : "s"} designed
                 </p>
+                <Button asChild variant="outline" size="sm" className="w-fit">
+                  <Link href={`/admin/pdf-themes/${theme.id}`}>
+                    <LayoutTemplate className="size-4" />
+                    Design pages
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           );
