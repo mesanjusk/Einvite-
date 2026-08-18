@@ -11,26 +11,43 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <LegalPage title={`Privacy Policy - ${LEGAL_BRAND_NAME}`} updated="Aug 18, 2026">
-      <p>{LEGAL_BRAND_NAME} provides free wedding invitation videos.</p>
+      <p>
+        {LEGAL_BRAND_NAME} provides free wedding invitations — a shareable invitation
+        website, a downloadable PDF, and a short video teaser.
+      </p>
 
       <h2>Data We Collect from Instagram</h2>
       <p>
-        When you comment &ldquo;FREE&rdquo; on our Instagram post, we collect your Instagram
-        username, IG User ID, and comment text to send you a DM with your access link.
+        When you comment the trigger word on one of our Instagram posts, we collect your
+        Instagram username, Instagram user ID, and the text of that comment so we can reply
+        with your access link.
+      </p>
+      <p>
+        On posts where the offer is limited to followers, we also ask Instagram whether your
+        account follows ours, and store that answer so we don&apos;t have to ask again on
+        every comment.
       </p>
 
       <h2>How We Use Data</h2>
       <ol>
-        <li>Generate your unique auto-login link for the video editor</li>
-        <li>Prevent abuse — limit 1 link per Instagram account</li>
+        <li>Create your invitation and send you a private link that signs you straight into it</li>
+        <li>Prevent abuse — one invitation per Instagram account, which covers your website, PDF, and video</li>
         <li>Customer support via DM</li>
       </ol>
 
       <h2>Data Retention</h2>
-      <p>Links expire in 48 hours. IG data is deleted from our database after 30 days.</p>
+      <p>
+        Your access link stays valid so you can return and edit your invitation. Each time we
+        send you the link, any previously sent link stops working. We keep your Instagram
+        username, user ID, comment text, and follower status for as long as your invitation
+        exists, and delete them when you ask us to.
+      </p>
 
       <p>
-        <strong>We do NOT access your password, followers, or post on your behalf.</strong>
+        <strong>
+          We never see your password, read your private messages beyond the ones you send us,
+          browse your follower list, or post anything on your behalf.
+        </strong>
       </p>
 
       <h2>Your Rights</h2>

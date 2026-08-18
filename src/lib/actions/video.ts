@@ -54,6 +54,19 @@ export async function generateInvitationVideoAction(
   const invitation = await authorizeOwner(parsed.data.invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
 
+  // One video per invitation — each generation is a paid Gemini call, and the
+  // service is offered as one video per user. Failed jobs don't count, so a
+  // generation that errored can be retried; deleting the video frees the slot.
+  const existingVideos = await db.invitationVideo.count({
+    where: { invitationId: invitation.id, status: { in: ["PENDING", "PROCESSING", "COMPLETED"] } },
+  });
+  if (existingVideos > 0) {
+    return {
+      success: false,
+      error: "You already have a video for this invitation. Delete it to generate a new one.",
+    };
+  }
+
   const template = await db.videoTemplate.findUnique({
     where: { id: parsed.data.videoTemplateId },
   });

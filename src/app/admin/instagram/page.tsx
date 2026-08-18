@@ -35,6 +35,25 @@ export default async function AdminInstagramPage() {
     }),
   ]);
 
+  // Who claimed an invitation, and what they've built with it — the
+  // lead-to-invitation view the comment log alone can't show.
+  const claims = await db.instagramLink.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 25,
+    include: {
+      invitation: {
+        select: {
+          id: true,
+          slug: true,
+          brideName: true,
+          groomName: true,
+          status: true,
+          _count: { select: { videos: true } },
+        },
+      },
+    },
+  });
+
   // Reels that have received comments but have no rule yet — the fast path
   // for turning a real comment into a new automation without hunting for IDs.
   const automatedMediaIds = new Set(automations.map((a) => a.mediaId));
@@ -148,6 +167,56 @@ export default async function AdminInstagramPage() {
                   <InstagramAutomationFormDialog presetMediaId={mediaId} />
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {claims.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-col gap-3 py-4">
+            <p className="font-medium">Claimed invitations</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-muted-foreground border-b text-left text-xs">
+                    <th className="py-2 pr-3 font-medium">Instagram</th>
+                    <th className="py-2 pr-3 font-medium">Couple</th>
+                    <th className="py-2 pr-3 font-medium">Status</th>
+                    <th className="py-2 pr-3 font-medium">Video</th>
+                    <th className="py-2 font-medium">Claimed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {claims.map((claim) => (
+                    <tr key={claim.id} className="border-b last:border-0">
+                      <td className="py-2 pr-3 whitespace-nowrap">
+                        {claim.username ? `@${claim.username}` : claim.igUserId}
+                      </td>
+                      <td className="max-w-[12rem] truncate py-2 pr-3">
+                        {claim.invitation.brideName || claim.invitation.groomName
+                          ? `${claim.invitation.brideName} & ${claim.invitation.groomName}`
+                          : "— not started —"}
+                      </td>
+                      <td className="py-2 pr-3">
+                        <Badge
+                          variant={
+                            claim.invitation.status === "PUBLISHED" ? "default" : "outline"
+                          }
+                        >
+                          {claim.invitation.status}
+                        </Badge>
+                      </td>
+                      <td className="text-muted-foreground py-2 pr-3 text-xs">
+                        {claim.invitation._count.videos > 0 ? "Yes" : "—"}
+                      </td>
+                      <td className="text-muted-foreground py-2 whitespace-nowrap text-xs">
+                        {claim.createdAt.toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>

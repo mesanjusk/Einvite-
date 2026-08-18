@@ -25,8 +25,9 @@ export default function DataDeletionPage() {
       </ol>
 
       <p>
-        We will delete your IG User ID, username, and generated links within 7 business days and
-        confirm via reply.
+        We will delete your Instagram user ID, username, stored follower status, comment
+        records, and your invitation with its access link within 7 business days, and confirm
+        via reply.
       </p>
     </LegalPage>
   );
