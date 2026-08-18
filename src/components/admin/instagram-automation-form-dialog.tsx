@@ -35,6 +35,8 @@ type AutomationRecord = {
   triggerWord: string;
   replyMessage: string;
   duplicateMessage: string;
+  requireFollow: boolean;
+  notFollowingMessage: string | null;
   isActive: boolean;
 };
 
@@ -51,6 +53,10 @@ function defaultValues(automation?: AutomationRecord): InstagramAutomationFormVa
     duplicateMessage:
       automation?.duplicateMessage ??
       "You already have a link! Check your DMs for your invite link.",
+    requireFollow: automation?.requireFollow ?? false,
+    notFollowingMessage:
+      automation?.notFollowingMessage ??
+      "Please follow us first, then comment again to get your free invite link!",
     isActive: automation?.isActive ?? true,
   };
 }
@@ -173,6 +179,33 @@ export function InstagramAutomationFormDialog({
               <p className="text-destructive text-xs">
                 {form.formState.errors.duplicateMessage.message}
               </p>
+            )}
+          </div>
+
+          <div className="grid gap-3 rounded-lg border p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Followers only</Label>
+                <p className="text-muted-foreground text-xs">
+                  Ask non-followers to follow before sending the link.
+                </p>
+              </div>
+              <Switch
+                checked={form.watch("requireFollow")}
+                onCheckedChange={(v) => form.setValue("requireFollow", v)}
+              />
+            </div>
+
+            {form.watch("requireFollow") && (
+              <div className="grid gap-1.5">
+                <Label>Reply for non-followers</Label>
+                <Textarea rows={2} {...form.register("notFollowingMessage")} />
+                <p className="text-muted-foreground text-xs">
+                  Instagram can&apos;t always tell whether a commenter follows you. When the
+                  check can&apos;t resolve, the link is sent anyway rather than turning away a
+                  real follower — those cases show as &ldquo;Reply sent&rdquo; in the log.
+                </p>
+              </div>
             )}
           </div>
 

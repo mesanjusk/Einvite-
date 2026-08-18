@@ -3,9 +3,15 @@ import { after } from "next/server";
 
 import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
-import { sendInstagramMessage } from "@/lib/instagram";
+import { fetchInstagramFollowStatus, sendInstagramMessage } from "@/lib/instagram";
 
 const DM_HELP_MESSAGE = "Comment FREE on our latest post to get your invite link!";
+const DEFAULT_NOT_FOLLOWING_MESSAGE =
+  "Please follow us first, then comment again to get your free invite link!";
+// Only a positive follow result is cached. Someone told to follow first will
+// follow and re-comment within seconds, so a cached "not following" would
+// keep locking them out — negatives are always re-checked live.
+const FOLLOWER_CACHE_MS = 60 * 60 * 1000;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -39,6 +45,45 @@ function isValidSignature(rawBody: string, signature: string | null, appSecret: 
 // from Instagram — so it isn't reusable here as-is.
 function generatePlaceholderLink() {
   return `${getAppUrl()}/create?ref=${randomUUID()}`;
+}
+
+/**
+ * Follower status for a commenter, reading the cache first and only calling
+ * Instagram when there's no fresh positive result. Returns null when the
+ * status can't be determined — callers fail open on that rather than
+ * blocking someone the API simply couldn't resolve.
+ */
+async function resolveFollowStatus(
+  igUserId: string,
+  username?: string,
+): Promise<boolean | null> {
+  const cached = await db.instagramProfile.findUnique({ where: { igUserId } });
+  if (
+    cached?.isFollower &&
+    Date.now() - cached.checkedAt.getTime() < FOLLOWER_CACHE_MS
+  ) {
+    return true;
+  }
+
+  const { isFollower, username: fetchedUsername } = await fetchInstagramFollowStatus(igUserId);
+  if (isFollower === null) return null;
+
+  await db.instagramProfile.upsert({
+    where: { igUserId },
+    create: {
+      igUserId,
+      username: fetchedUsername ?? username,
+      isFollower,
+      checkedAt: new Date(),
+    },
+    update: {
+      username: fetchedUsername ?? username,
+      isFollower,
+      checkedAt: new Date(),
+    },
+  });
+
+  return isFollower;
 }
 
 function renderTemplate(template: string, vars: { link: string; username: string }) {
@@ -85,6 +130,29 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
         data: { ...logBase, automationId: automation.id, outcome: "TRIGGER_NOT_MATCHED" },
       });
       return;
+    }
+
+    // Optional follow gate. Fails open: an unresolvable check sends the link
+    // rather than turning away someone who may well be a follower.
+    if (automation.requireFollow && igUserId) {
+      const isFollower = await resolveFollowStatus(igUserId, username);
+      if (isFollower === false) {
+        const followText = renderTemplate(
+          automation.notFollowingMessage || DEFAULT_NOT_FOLLOWING_MESSAGE,
+          { link: "", username: username ?? "" },
+        );
+        const { delivered } = await sendInstagramMessage({ comment_id: commentId }, followText);
+        await db.instagramCommentLog.create({
+          data: {
+            ...logBase,
+            automationId: automation.id,
+            outcome: delivered ? "NOT_FOLLOWING" : "SEND_FAILED",
+            replyText: followText,
+            error: delivered ? null : "Send API rejected the follow-first reply",
+          },
+        });
+        return;
+      }
     }
 
     // One link per account per reel — claiming on one reel leaves the others

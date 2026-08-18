@@ -595,7 +595,12 @@ model InstagramAutomation {
   replyMessage String
   // Reply sent when this commenter already claimed this reel's link.
   duplicateMessage String
-  isActive         Boolean @default(true)
+  // Gate the link behind following the account. The follow check is
+  // best-effort (see InstagramProfile) and fails open, so an unresolvable
+  // check sends the link rather than blocking a real person.
+  requireFollow       Boolean @default(false)
+  notFollowingMessage String?
+  isActive            Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -631,7 +636,24 @@ enum InstagramCommentOutcome {
   TRIGGER_NOT_MATCHED
   NO_AUTOMATION
   AUTOMATION_INACTIVE
+  NOT_FOLLOWING
   SEND_FAILED
+}
+
+// Cached follower status per commenter. Instagram has no "does X follow me"
+// lookup for arbitrary users — only the messaging User Profile endpoint's
+// is_user_follow_business — so results are cached here to avoid re-querying
+// on every comment. Only positive results are trusted for the cache window:
+// someone told to follow first will follow and immediately re-comment, so a
+// cached "not following" would keep locking them out.
+model InstagramProfile {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  igUserId   String   @unique
+  username   String?
+  isFollower Boolean
+  checkedAt  DateTime @default(now())
+
+  @@map("instagram_profiles")
 }
 
 // Every comment the webhook processes, matched or not, so the admin
