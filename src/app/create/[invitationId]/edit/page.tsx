@@ -46,6 +46,7 @@ export default async function EditGuestInvitationPage({
         <GuestInvitationWizard
           existingInvitationId={invitation.id}
           isPublished={invitation.status === "PUBLISHED"}
+          hasPhoneLink={Boolean(invitation.phoneLink)}
           themes={themes.map((t) => ({
             slug: t.slug,
             name: t.name,

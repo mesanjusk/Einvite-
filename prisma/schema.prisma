@@ -330,7 +330,6 @@ model Invitation {
   analyticsEvents AnalyticsEvent[]
   deployment      Deployment?
   phoneLink       PhoneLink?
-  otpChallenges   OtpChallenge[]
   videos          InvitationVideo[]
 
   @@index([userId])
@@ -338,14 +337,15 @@ model Invitation {
 }
 
 // ---------------------------------------------------------------------------
-// Guest publish flow — WhatsApp OTP verification
+// Guest publish flow
 // ---------------------------------------------------------------------------
 
-// Created once an OTP challenge succeeds. Both `phone` and `invitationId`
-// are unique, so this is the enforcement point for "one mobile number, one
-// invitation": a phone can appear in at most one row, an invitation can be
-// linked to at most one phone. `editTokenHash` backs the pre-logged
-// WhatsApp link sent to the owner for future edits.
+// Established directly at publish time (no OTP round-trip) from a phone
+// number the couple provides. Both `phone` and `invitationId` are unique,
+// so this is the enforcement point for "one mobile number, one invitation":
+// a phone can appear in at most one row, an invitation can be linked to at
+// most one phone. `editTokenHash` backs the pre-logged WhatsApp link sent
+// to the owner for future edits.
 model PhoneLink {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   phone         String   @unique
@@ -356,22 +356,6 @@ model PhoneLink {
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
 
   @@map("phone_links")
-}
-
-model OtpChallenge {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  invitationId String   @db.ObjectId
-  phone       String
-  codeHash    String
-  attempts    Int       @default(0)
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  createdAt   DateTime  @default(now())
-
-  invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
-
-  @@index([invitationId, phone])
-  @@map("otp_challenges")
 }
 
 model Event {
