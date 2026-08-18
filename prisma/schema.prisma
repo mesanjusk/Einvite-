@@ -290,7 +290,11 @@ model Invitation {
   pdfThemeId String? @db.ObjectId
   // Last video template picked/used for Gemini video generation — surfaced
   // as the default selection next time the couple regenerates one.
-  videoTemplateId  String? @db.ObjectId
+  videoTemplateId String? @db.ObjectId
+  // Couple's own Gemini API key (from Google AI Studio), used instead of the
+  // platform's GEMINI_API_KEY when set. Never rendered back to the client —
+  // forms only report whether one is configured.
+  geminiApiKey    String?
   fontPairing      Json? // override of theme default, { display, body, script }
   colorPalette     Json? // override of theme default
   musicTrackId     String? @db.ObjectId

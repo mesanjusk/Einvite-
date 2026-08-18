@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import type { ActionResult } from "@/lib/actions/auth";
 import {
   buildVideoPrompt,
@@ -13,13 +13,21 @@ import {
   pollGeminiVideoOperation,
 } from "@/lib/ai/gemini-video";
 
-async function authorizeOwner(invitationId: string, userId: string) {
-  const invitation = await db.invitation.findUnique({
+// Reachable from both the signed-in dashboard (Publish → Video) and the
+// guest "pre-logged-in" manage page (/manage/[invitationId]) — ownership is
+// authorized the same way either flow already authorizes edits.
+async function authorizeOwner(invitationId: string) {
+  const access = await authorizeInvitationAccess(invitationId);
+  if (!access) return null;
+  return db.invitation.findUnique({
     where: { id: invitationId },
     include: { theme: true, events: { orderBy: { order: "asc" } }, media: true },
   });
-  if (!invitation || invitation.userId !== userId) return null;
-  return invitation;
+}
+
+function revalidateInvitationPaths(invitationId: string) {
+  revalidatePath("/dashboard/publish/video");
+  revalidatePath(`/manage/${invitationId}`);
 }
 
 const generateVideoSchema = z.object({
@@ -30,22 +38,20 @@ const generateVideoSchema = z.object({
 /**
  * Kicks off a Gemini video generation job from the invitation's own
  * captured details (names, date, venue, events, theme colors) — the same
- * data already used for the website and PDF. Without GEMINI_API_KEY
- * configured, this still records the resolved prompt and a FAILED job so
- * the UI can explain why, rather than silently doing nothing.
+ * data already used for the website and PDF. Prefers the invitation's own
+ * Gemini key (Google AI Studio) when the couple has added one, falling
+ * back to the platform's GEMINI_API_KEY; without either, this still
+ * records the resolved prompt and a FAILED job so the UI can explain why.
  */
 export async function generateInvitationVideoAction(
   input: z.infer<typeof generateVideoSchema>,
 ): Promise<ActionResult<{ videoId: string }>> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Unauthorized" };
-
   const parsed = generateVideoSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const invitation = await authorizeOwner(parsed.data.invitationId, session.user.id);
+  const invitation = await authorizeOwner(parsed.data.invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
 
   const template = await db.videoTemplate.findUnique({
@@ -94,21 +100,23 @@ export async function generateInvitationVideoAction(
     data: { videoTemplateId: template.id },
   });
 
-  if (!isGeminiVideoConfigured()) {
+  if (!isGeminiVideoConfigured(invitation.geminiApiKey)) {
     await db.invitationVideo.update({
       where: { id: video.id },
       data: {
         status: "FAILED",
-        error: "Video generation isn't configured yet — ask an admin to set GEMINI_API_KEY.",
+        error:
+          "No Gemini API key is configured — add your own key above, or ask an admin to set GEMINI_API_KEY.",
       },
     });
-    revalidatePath("/dashboard/publish/video");
+    revalidateInvitationPaths(invitation.id);
     return { success: true, data: { videoId: video.id } };
   }
 
   const started = await startGeminiVideoGeneration(prompt, {
     model: template.geminiModel,
     aspectRatio: template.aspectRatio,
+    apiKey: invitation.geminiApiKey,
   });
 
   await db.invitationVideo.update({
@@ -118,7 +126,7 @@ export async function generateInvitationVideoAction(
       : { status: "FAILED", error: started.error },
   });
 
-  revalidatePath("/dashboard/publish/video");
+  revalidateInvitationPaths(invitation.id);
   return { success: true, data: { videoId: video.id } };
 }
 
@@ -128,23 +136,21 @@ export async function generateInvitationVideoAction(
  * since this pass doesn't wire up a job queue.
  */
 export async function refreshInvitationVideoAction(videoId: string): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Unauthorized" };
-
   const video = await db.invitationVideo.findUnique({
     where: { id: videoId },
-    include: { invitation: { select: { userId: true, slug: true } } },
+    include: { invitation: { select: { id: true, geminiApiKey: true } } },
   });
-  if (!video || video.invitation.userId !== session.user.id) {
-    return { success: false, error: "Video job not found." };
-  }
+  if (!video) return { success: false, error: "Video job not found." };
+
+  const access = await authorizeInvitationAccess(video.invitation.id);
+  if (!access) return { success: false, error: "Video job not found." };
 
   if (video.status !== "PROCESSING" || !video.geminiOperationId) {
-    revalidatePath("/dashboard/publish/video");
+    revalidateInvitationPaths(video.invitation.id);
     return { success: true, data: undefined };
   }
 
-  const result = await pollGeminiVideoOperation(video.geminiOperationId);
+  const result = await pollGeminiVideoOperation(video.geminiOperationId, video.invitation.geminiApiKey);
 
   if (result.status === "PROCESSING") {
     return { success: true, data: undefined };
@@ -158,23 +164,52 @@ export async function refreshInvitationVideoAction(videoId: string): Promise<Act
         : { status: "FAILED", error: result.error },
   });
 
-  revalidatePath("/dashboard/publish/video");
+  revalidateInvitationPaths(video.invitation.id);
   return { success: true, data: undefined };
 }
 
 export async function deleteInvitationVideoAction(videoId: string): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Unauthorized" };
-
   const video = await db.invitationVideo.findUnique({
     where: { id: videoId },
-    include: { invitation: { select: { userId: true } } },
+    include: { invitation: { select: { id: true } } },
   });
-  if (!video || video.invitation.userId !== session.user.id) {
-    return { success: false, error: "Video job not found." };
-  }
+  if (!video) return { success: false, error: "Video job not found." };
+
+  const access = await authorizeInvitationAccess(video.invitation.id);
+  if (!access) return { success: false, error: "Video job not found." };
 
   await db.invitationVideo.delete({ where: { id: videoId } });
-  revalidatePath("/dashboard/publish/video");
+  revalidateInvitationPaths(video.invitation.id);
+  return { success: true, data: undefined };
+}
+
+const updateGeminiKeySchema = z.object({
+  invitationId: z.string(),
+  geminiApiKey: z.string().trim().min(1).nullable(),
+});
+
+/**
+ * Sets or clears the couple's own Gemini API key for this invitation. The
+ * key is write-only from the client's perspective — this action never
+ * returns the stored value, only success/failure, so it's never rendered
+ * back into a page.
+ */
+export async function updateInvitationGeminiKeyAction(
+  input: z.infer<typeof updateGeminiKeySchema>,
+): Promise<ActionResult> {
+  const parsed = updateGeminiKeySchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const access = await authorizeInvitationAccess(parsed.data.invitationId);
+  if (!access) return { success: false, error: "Invitation not found." };
+
+  await db.invitation.update({
+    where: { id: parsed.data.invitationId },
+    data: { geminiApiKey: parsed.data.geminiApiKey },
+  });
+
+  revalidateInvitationPaths(parsed.data.invitationId);
   return { success: true, data: undefined };
 }

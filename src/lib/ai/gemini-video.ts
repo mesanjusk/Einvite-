@@ -61,8 +61,17 @@ export function buildVideoPrompt(
   return `${resolved}\n\n${details}`;
 }
 
-export function isGeminiVideoConfigured(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY);
+/**
+ * True if a key is available for this generation — either the couple's own
+ * (from Google AI Studio, entered on their invitation) or the platform's
+ * shared GEMINI_API_KEY. The couple's own key always takes priority.
+ */
+export function isGeminiVideoConfigured(customApiKey?: string | null): boolean {
+  return Boolean(customApiKey || process.env.GEMINI_API_KEY);
+}
+
+function resolveApiKey(customApiKey?: string | null): string | null {
+  return customApiKey || process.env.GEMINI_API_KEY || null;
 }
 
 export type GeminiVideoStartResult =
@@ -76,10 +85,10 @@ export type GeminiVideoStartResult =
  */
 export async function startGeminiVideoGeneration(
   prompt: string,
-  options: { model: string; aspectRatio: string },
+  options: { model: string; aspectRatio: string; apiKey?: string | null },
 ): Promise<GeminiVideoStartResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return { ok: false, error: "GEMINI_API_KEY is not configured." };
+  const apiKey = resolveApiKey(options.apiKey);
+  if (!apiKey) return { ok: false, error: "No Gemini API key is configured for this invitation." };
 
   try {
     const response = await fetch(
@@ -123,9 +132,10 @@ export type GeminiVideoPollResult =
  */
 export async function pollGeminiVideoOperation(
   operationName: string,
+  customApiKey?: string | null,
 ): Promise<GeminiVideoPollResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return { status: "FAILED", error: "GEMINI_API_KEY is not configured." };
+  const apiKey = resolveApiKey(customApiKey);
+  if (!apiKey) return { status: "FAILED", error: "No Gemini API key is configured for this invitation." };
 
   try {
     const response = await fetch(`${GEMINI_API_BASE}/${operationName}?key=${apiKey}`);
