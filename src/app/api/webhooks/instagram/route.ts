@@ -28,6 +28,18 @@ function isValidSignature(rawBody: string, signature: string | null, appSecret: 
   const expectedBuffer = Buffer.from(expected);
   const signatureBuffer = Buffer.from(signature);
 
+  // TEMPORARY DEBUG LOGGING — remove once the 401 mismatch is root-caused.
+  // Never logs the secret itself, only lengths/prefixes of already-public
+  // (hashed) values, safe to appear in Vercel's logs.
+  console.log("[instagram-webhook:debug]", {
+    appSecretLength: appSecret.length,
+    rawBodyLength: rawBody.length,
+    receivedSignaturePrefix: signature.slice(0, 15),
+    receivedSignatureLength: signature.length,
+    expectedSignaturePrefix: expected.slice(0, 15),
+    expectedSignatureLength: expected.length,
+  });
+
   if (expectedBuffer.length !== signatureBuffer.length) return false;
   return timingSafeEqual(expectedBuffer, signatureBuffer);
 }
@@ -110,6 +122,9 @@ export async function POST(request: Request) {
   const appSecret = process.env.META_APP_SECRET;
   const rawBody = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
+
+  // TEMPORARY DEBUG LOGGING — remove once the 401 mismatch is root-caused.
+  console.log("[instagram-webhook:debug] appSecretConfigured:", Boolean(appSecret));
 
   if (!appSecret || !isValidSignature(rawBody, signature, appSecret)) {
     return new Response(null, { status: 401 });
