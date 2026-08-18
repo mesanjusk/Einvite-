@@ -12,8 +12,10 @@ import {
   themeFormSchema,
   musicTrackFormSchema,
   updateUserRoleSchema,
+  videoTemplateFormSchema,
   type ThemeFormInput,
   type MusicTrackFormInput,
+  type VideoTemplateFormInput,
 } from "@/lib/validations/admin";
 
 async function requireAdmin() {
@@ -40,6 +42,7 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
   }
 
   const themeFields = {
+    type: data.type,
     name: data.name,
     slug: data.slug,
     description: data.description,
@@ -68,9 +71,12 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     },
   });
 
-  revalidatePath("/admin/themes");
+  const adminPath = data.type === "PDF" ? "/admin/pdf-themes" : "/admin/themes";
+  revalidatePath(adminPath);
   revalidatePath("/dashboard/templates");
   revalidatePath("/dashboard/invitations/new");
+  revalidatePath("/dashboard/publish/theme");
+  revalidatePath("/dashboard/publish/pdf");
 
   return { success: true, data: undefined };
 }
@@ -79,7 +85,12 @@ export async function deleteThemeAction(themeId: string): Promise<ActionResult> 
   const session = await requireAdmin();
   if (!session) return { success: false, error: "Admin access required." };
 
-  const inUse = await db.invitation.count({ where: { themeId } });
+  const theme = await db.theme.findUnique({ where: { id: themeId } });
+  if (!theme) return { success: false, error: "Theme not found." };
+
+  const inUse = await db.invitation.count({
+    where: { OR: [{ themeId }, { pdfThemeId: themeId }] },
+  });
   if (inUse > 0) {
     return {
       success: false,
@@ -90,7 +101,7 @@ export async function deleteThemeAction(themeId: string): Promise<ActionResult> 
   await db.template.deleteMany({ where: { themeId } });
   await db.theme.delete({ where: { id: themeId } });
 
-  revalidatePath("/admin/themes");
+  revalidatePath(theme.type === "PDF" ? "/admin/pdf-themes" : "/admin/themes");
   return { success: true, data: undefined };
 }
 
@@ -219,6 +230,68 @@ export async function deleteUserAction(userId: string): Promise<ActionResult> {
   await db.user.delete({ where: { id: userId } });
 
   revalidatePath("/admin/users");
+  return { success: true, data: undefined };
+}
+
+export async function upsertVideoTemplateAction(
+  input: VideoTemplateFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = videoTemplateFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const data = parsed.data;
+
+  if (!data.id) {
+    const existing = await db.videoTemplate.findUnique({ where: { slug: data.slug } });
+    if (existing) return { success: false, error: "A video template with this slug already exists." };
+  }
+
+  const fields = {
+    name: data.name,
+    slug: data.slug,
+    description: data.description,
+    previewImage: data.previewImage,
+    aspectRatio: data.aspectRatio,
+    durationSeconds: data.durationSeconds,
+    promptTemplate: data.promptTemplate,
+    styleKeywords: data.styleKeywords,
+    geminiModel: data.geminiModel,
+    isPremium: data.isPremium,
+    sortOrder: data.sortOrder,
+  };
+
+  if (data.id) {
+    await db.videoTemplate.update({ where: { id: data.id }, data: fields });
+  } else {
+    await db.videoTemplate.create({ data: fields });
+  }
+
+  revalidatePath("/admin/video-templates");
+  revalidatePath("/dashboard/publish/video");
+
+  return { success: true, data: undefined };
+}
+
+export async function deleteVideoTemplateAction(videoTemplateId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const inUse = await db.invitation.count({ where: { videoTemplateId } });
+  if (inUse > 0) {
+    return {
+      success: false,
+      error: `${inUse} invitation(s) still reference this video template — cannot delete.`,
+    };
+  }
+
+  await db.invitationVideo.deleteMany({ where: { videoTemplateId } });
+  await db.videoTemplate.delete({ where: { id: videoTemplateId } });
+
+  revalidatePath("/admin/video-templates");
   return { success: true, data: undefined };
 }
 

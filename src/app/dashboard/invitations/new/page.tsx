@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Create Invitation" };
 
 export default async function NewInvitationPage() {
   const [themes, musicTracks] = await Promise.all([
-    db.theme.findMany({ orderBy: { sortOrder: "asc" } }),
+    db.theme.findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } }),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }),
   ]);
 

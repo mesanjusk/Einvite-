@@ -44,6 +44,8 @@ type ThemeRecord = {
   sectionOrder: string[];
 };
 
+type ThemeType = "WEBSITE" | "PDF";
+
 const FONT_OPTIONS = [
   "Playfair Display",
   "Cormorant Garamond",
@@ -52,9 +54,10 @@ const FONT_OPTIONS = [
   "EB Garamond",
 ];
 
-function defaultValues(theme?: ThemeRecord): ThemeFormValues {
+function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
   return {
     id: theme?.id,
+    type,
     name: theme?.name ?? "",
     slug: theme?.slug ?? "",
     description: theme?.description ?? "",
@@ -88,14 +91,20 @@ function defaultValues(theme?: ThemeRecord): ThemeFormValues {
   };
 }
 
-export function ThemeFormDialog({ theme }: { theme?: ThemeRecord }) {
+export function ThemeFormDialog({
+  theme,
+  type = "WEBSITE",
+}: {
+  theme?: ThemeRecord;
+  type?: ThemeType;
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const form = useForm<ThemeFormValues, unknown, ThemeFormInput>({
     resolver: zodResolver(themeFormSchema),
-    defaultValues: defaultValues(theme),
+    defaultValues: defaultValues(type, theme),
   });
 
   const sectionOrder = form.watch("sectionOrder");
@@ -144,13 +153,15 @@ export function ThemeFormDialog({ theme }: { theme?: ThemeRecord }) {
         ) : (
           <Button>
             <Plus />
-            New theme
+            New {type === "PDF" ? "PDF theme" : "theme"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{theme ? `Edit ${theme.name}` : "New theme"}</DialogTitle>
+          <DialogTitle>
+            {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-5">
@@ -170,39 +181,41 @@ export function ThemeFormDialog({ theme }: { theme?: ThemeRecord }) {
             <Textarea rows={2} {...form.register("description")} />
           </div>
 
-          <div className="grid gap-1.5">
-            <Label>Envelope reveal</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => form.setValue("revealMode", "ANIMATION")}
-                className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("revealMode") === "ANIMATION" ? "border-primary bg-primary/5" : ""}`}
-              >
-                <span className="font-medium">Coded animation</span>
-                <p className="text-muted-foreground text-xs">Instant, no video file needed.</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => form.setValue("revealMode", "VIDEO")}
-                className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("revealMode") === "VIDEO" ? "border-primary bg-primary/5" : ""}`}
-              >
-                <span className="font-medium">Video clip</span>
-                <p className="text-muted-foreground text-xs">Cinematic — falls back to the animation if not preloaded in time.</p>
-              </button>
-            </div>
-            {form.watch("revealMode") === "VIDEO" && (
-              <div className="mt-2">
-                <Input
-                  placeholder="https://…/envelope-open.mp4"
-                  {...form.register("revealVideoUrl")}
-                />
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Short (3–5s), muted, ideally under a few MB — h264 mp4 for the widest browser
-                  support.
-                </p>
+          {type === "WEBSITE" && (
+            <div className="grid gap-1.5">
+              <Label>Envelope reveal</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => form.setValue("revealMode", "ANIMATION")}
+                  className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("revealMode") === "ANIMATION" ? "border-primary bg-primary/5" : ""}`}
+                >
+                  <span className="font-medium">Coded animation</span>
+                  <p className="text-muted-foreground text-xs">Instant, no video file needed.</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setValue("revealMode", "VIDEO")}
+                  className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("revealMode") === "VIDEO" ? "border-primary bg-primary/5" : ""}`}
+                >
+                  <span className="font-medium">Video clip</span>
+                  <p className="text-muted-foreground text-xs">Cinematic — falls back to the animation if not preloaded in time.</p>
+                </button>
               </div>
-            )}
-          </div>
+              {form.watch("revealMode") === "VIDEO" && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="https://…/envelope-open.mp4"
+                    {...form.register("revealVideoUrl")}
+                  />
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Short (3–5s), muted, ideally under a few MB — h264 mp4 for the widest browser
+                    support.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
@@ -330,7 +343,7 @@ export function ThemeFormDialog({ theme }: { theme?: ThemeRecord }) {
 
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving…" : theme ? "Save changes" : "Create theme"}
+              {loading ? "Saving…" : theme ? "Save changes" : type === "PDF" ? "Create PDF theme" : "Create theme"}
             </Button>
           </DialogFooter>
         </form>

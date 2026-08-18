@@ -28,7 +28,9 @@ const FEATURES = [
 
 export default async function Home() {
   const [themes, demos] = await Promise.all([
-    db.theme.findMany({ orderBy: { sortOrder: "asc" }, take: 6 }).catch(() => []),
+    db.theme
+      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" }, take: 6 })
+      .catch(() => []),
     db.invitation
       .findMany({
         where: { isDemo: true, status: "PUBLISHED" },

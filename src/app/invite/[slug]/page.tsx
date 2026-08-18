@@ -85,7 +85,10 @@ export default async function InvitePage({
     },
   });
 
-  const { inviteData, themeStyle, sectionConfig } = toInviteRenderData(invitation);
+  const { inviteData, themeStyle, sectionConfig } = toInviteRenderData(
+    invitation,
+    print === "1" ? "print" : "web",
+  );
 
   return (
     <div

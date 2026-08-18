@@ -7,26 +7,36 @@ import { deleteThemeAction } from "@/lib/actions/admin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const metadata: Metadata = { title: "Manage Themes" };
+export const metadata: Metadata = { title: "Manage PDF Themes" };
 
-export default async function AdminThemesPage() {
+export default async function AdminPdfThemesPage() {
   const themes = await db.theme.findMany({
-    where: { type: "WEBSITE" },
+    where: { type: "PDF" },
     orderBy: { sortOrder: "asc" },
-    include: { templates: true, _count: { select: { invitations: true } } },
+    include: { templates: true, _count: { select: { pdfInvitations: true } } },
   });
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl">Manage Themes</h1>
+          <h1 className="font-display text-2xl">Manage PDF Themes</h1>
           <p className="text-muted-foreground text-sm">
-            Colors, fonts, and default section layout for each one-click theme.
+            Colors, fonts, and layout for the &quot;Download PDF&quot; stylesheet — independent
+            from the website theme.
           </p>
         </div>
-        <ThemeFormDialog />
+        <ThemeFormDialog type="PDF" />
       </div>
+
+      {themes.length === 0 && (
+        <Card>
+          <CardContent className="text-muted-foreground py-12 text-center text-sm">
+            No PDF themes yet. Couples printing their invitation fall back to their website
+            theme until you add one.
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {themes.map((theme) => {
@@ -51,6 +61,7 @@ export default async function AdminThemesPage() {
                   <div className="flex items-center gap-1">
                     {theme.isPremium && <Badge variant="gold">Premium</Badge>}
                     <ThemeFormDialog
+                      type="PDF"
                       theme={{
                         id: theme.id,
                         name: theme.name,
@@ -68,13 +79,13 @@ export default async function AdminThemesPage() {
                     />
                     <DeleteEntityButton
                       id={theme.id}
-                      confirmLabel={`Delete the ${theme.name} theme? This can't be undone.`}
+                      confirmLabel={`Delete the ${theme.name} PDF theme? This can't be undone.`}
                       action={deleteThemeAction}
                     />
                   </div>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  {theme._count.invitations} invitation(s) using this theme
+                  {theme._count.pdfInvitations} invitation(s) using this PDF theme
                 </p>
               </CardContent>
             </Card>

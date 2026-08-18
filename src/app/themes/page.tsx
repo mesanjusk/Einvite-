@@ -14,7 +14,9 @@ export const metadata: Metadata = {
 
 export default async function PublicThemesPage() {
   const [themes, demos] = await Promise.all([
-    db.theme.findMany({ orderBy: { sortOrder: "asc" } }).catch(() => []),
+    db.theme
+      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } })
+      .catch(() => []),
     db.invitation
       .findMany({
         where: { isDemo: true, status: "PUBLISHED" },

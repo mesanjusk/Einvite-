@@ -30,8 +30,11 @@ export const SECTION_TYPES = [
 
 export const THEME_CATEGORIES = ["traditional", "modern", "fusion", "minimal", "classic"] as const;
 
+export const THEME_TYPES = ["WEBSITE", "PDF"] as const;
+
 export const themeFormSchema = z.object({
   id: z.string().optional(),
+  type: z.enum(THEME_TYPES).default("WEBSITE"),
   name: z.string().min(1, "Name is required"),
   slug: z
     .string()
@@ -69,3 +72,26 @@ export const updateUserRoleSchema = z.object({
   userId: z.string(),
   role: z.enum(["USER", "ADMIN"]),
 });
+
+export const VIDEO_ASPECT_RATIOS = ["9:16", "16:9", "1:1"] as const;
+
+export const videoTemplateFormSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
+  description: z.string().optional(),
+  previewImage: z.string().optional(),
+  aspectRatio: z.enum(VIDEO_ASPECT_RATIOS).default("9:16"),
+  durationSeconds: z.coerce.number().int().min(5).max(60).default(15),
+  promptTemplate: z.string().min(1, "Prompt template is required"),
+  styleKeywords: z.array(z.string()).default([]),
+  geminiModel: z.string().min(1).default("veo-3.0-generate-001"),
+  isPremium: z.boolean().default(false),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+export type VideoTemplateFormInput = z.infer<typeof videoTemplateFormSchema>;
+export type VideoTemplateFormValues = z.input<typeof videoTemplateFormSchema>;
