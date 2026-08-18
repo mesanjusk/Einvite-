@@ -574,3 +574,20 @@ model InvitationVideo {
   @@index([invitationId])
   @@map("invitation_videos")
 }
+
+// ---------------------------------------------------------------------------
+// Instagram comment-to-DM automation
+// ---------------------------------------------------------------------------
+
+// Tracks which Instagram accounts have already received their free access
+// link, so the webhook can enforce "1 free link per Instagram account"
+// (see /privacy) instead of re-sending on every "FREE" comment.
+model InstagramLead {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  igUserId  String   @unique
+  commentId String
+  link      String
+  createdAt DateTime @default(now())
+
+  @@map("instagram_leads")
+}
