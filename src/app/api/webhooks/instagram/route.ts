@@ -66,12 +66,15 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
     }
 
     const link = generatePlaceholderLink();
-    await sendInstagramMessage(
+    const { delivered } = await sendInstagramMessage(
       { comment_id: commentId },
       `Here's your free wedding invitation link: ${link}`,
     );
 
-    if (igUserId) {
+    // Only record the lead once the link actually reached them — otherwise a
+    // failed send would still burn their one free link, leaving them stuck on
+    // "you already have a link" for a link they never received.
+    if (igUserId && delivered) {
       await db.instagramLead.create({ data: { igUserId, commentId, link } });
     }
   } catch (error) {
@@ -79,9 +82,16 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
   }
 }
 
-async function handleMessagingEvent(event: { sender?: { id?: string }; message?: { is_echo?: boolean } }) {
+async function handleMessagingEvent(event: {
+  sender?: { id?: string };
+  message?: { is_echo?: boolean; text?: string };
+}) {
   const senderId = event.sender?.id;
-  if (!senderId || event.message?.is_echo) return;
+  // Only genuine inbound text messages get a reply. The same messaging array
+  // also carries read receipts, message edits, reactions, and echoes of our
+  // own sends — replying to those is both wrong and rejected by Meta with
+  // "This message is sent outside of allowed window".
+  if (!senderId || event.message?.is_echo || !event.message?.text) return;
 
   try {
     await sendInstagramMessage({ id: senderId }, DM_HELP_MESSAGE);
@@ -93,7 +103,10 @@ async function handleMessagingEvent(event: { sender?: { id?: string }; message?:
 async function processWebhookPayload(payload: {
   entry?: Array<{
     changes?: Array<{ field?: string; value?: Record<string, unknown> }>;
-    messaging?: Array<{ sender?: { id?: string }; message?: { is_echo?: boolean } }>;
+    messaging?: Array<{
+      sender?: { id?: string };
+      message?: { is_echo?: boolean; text?: string };
+    }>;
   }>;
 }) {
   for (const entry of payload.entry ?? []) {
