@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/dashboard/publish/theme", label: "Theme" },
   { href: "/dashboard/publish/sections", label: "Sections" },
+  { href: "/dashboard/publish/pdf", label: "PDF" },
+  { href: "/dashboard/publish/video", label: "Video" },
   { href: "/dashboard/publish/deploy", label: "Deploy & Share" },
 ];
 

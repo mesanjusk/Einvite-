@@ -372,6 +372,46 @@ export const THEMES = [
   },
 ];
 
+// PDF-type themes for the "Download PDF" stylesheet — same shape as website
+// themes, filtered by `type` so they never show up in the website picker.
+export const PDF_THEMES = [
+  {
+    type: "PDF" as const,
+    name: "Elegant Print",
+    slug: "elegant-print",
+    description: "A high-contrast, ink-friendly layout tuned for printing.",
+    category: "classic",
+    colorPalette: {
+      primary: "#3a1414",
+      secondary: "#e8d9c8",
+      accent: "#8a1f1f",
+      background: "#ffffff",
+      foreground: "#1a1a1a",
+    },
+    fontPairing: { display: "Playfair Display", body: "EB Garamond", script: "Great Vibes" },
+    isPremium: false,
+    sortOrder: 0,
+  },
+];
+
+// Gemini video prompt templates — {{placeholders}} are filled from the
+// invitation's own captured details at generation time.
+export const VIDEO_TEMPLATES = [
+  {
+    name: "Cinematic Teaser",
+    slug: "cinematic-teaser",
+    description: "A romantic, golden-hour teaser announcing the wedding date and venue.",
+    aspectRatio: "9:16",
+    durationSeconds: 15,
+    promptTemplate:
+      "A cinematic, romantic wedding invitation teaser for {{coupleNames}}, announcing their wedding on {{weddingDate}}. Warm golden-hour lighting, gentle camera movement, elegant typography overlay with the couple's names.",
+    styleKeywords: ["golden hour", "romantic", "slow motion", "elegant"],
+    geminiModel: "veo-3.0-generate-001",
+    isPremium: false,
+    sortOrder: 0,
+  },
+];
+
 // No bundled "Studio Library" tracks: shipping placeholder mp3 URLs with no
 // actual audio file behind them (the original state of this list) silently
 // breaks music for anyone who picks one — the button shows up but nothing

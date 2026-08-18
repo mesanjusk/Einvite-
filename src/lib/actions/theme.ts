@@ -54,7 +54,7 @@ export async function updateInvitationThemeAction(
   let themeId: string | undefined;
   if (parsed.data.themeSlug) {
     const theme = await db.theme.findUnique({ where: { slug: parsed.data.themeSlug } });
-    if (!theme) return { success: false, error: "Unknown theme." };
+    if (!theme || theme.type !== "WEBSITE") return { success: false, error: "Unknown theme." };
     themeId = theme.id;
   }
 
@@ -80,6 +80,52 @@ export async function updateInvitationThemeAction(
   });
 
   revalidatePath("/dashboard/publish/theme");
+  revalidatePath(`/invite/${invitation.slug}`);
+
+  return { success: true, data: undefined };
+}
+
+const updatePdfThemeSchema = z.object({
+  invitationId: z.string(),
+  pdfThemeSlug: z.string().nullable(),
+});
+
+/**
+ * Sets (or clears) the PDF-specific theme override used by the
+ * `?print=1` "Download PDF" flow. Clearing it falls back to the
+ * invitation's website theme.
+ */
+export async function updateInvitationPdfThemeAction(
+  input: z.infer<typeof updatePdfThemeSchema>,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { success: false, error: "Unauthorized" };
+
+  const parsed = updatePdfThemeSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const invitation = await db.invitation.findUnique({
+    where: { id: parsed.data.invitationId },
+  });
+  if (!invitation || invitation.userId !== session.user.id) {
+    return { success: false, error: "Invitation not found." };
+  }
+
+  let pdfThemeId: string | null = null;
+  if (parsed.data.pdfThemeSlug) {
+    const theme = await db.theme.findUnique({ where: { slug: parsed.data.pdfThemeSlug } });
+    if (!theme || theme.type !== "PDF") return { success: false, error: "Unknown PDF theme." };
+    pdfThemeId = theme.id;
+  }
+
+  await db.invitation.update({
+    where: { id: parsed.data.invitationId },
+    data: { pdfThemeId },
+  });
+
+  revalidatePath("/dashboard/publish/pdf");
   revalidatePath(`/invite/${invitation.slug}`);
 
   return { success: true, data: undefined };

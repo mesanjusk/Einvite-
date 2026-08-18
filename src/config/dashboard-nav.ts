@@ -11,6 +11,8 @@ import {
   Paintbrush,
   Music,
   UserCog,
+  FileText,
+  Clapperboard,
 } from "lucide-react";
 
 export type NavItem = {
@@ -34,6 +36,8 @@ export const adminNav: NavItem[] = [
   { title: "Admin Panel", href: "/admin", icon: ShieldCheck },
   { title: "All Invitations", href: "/admin/invitations", icon: LayoutTemplate },
   { title: "Manage Themes", href: "/admin/themes", icon: Paintbrush },
+  { title: "Manage PDF Themes", href: "/admin/pdf-themes", icon: FileText },
+  { title: "Manage Video Templates", href: "/admin/video-templates", icon: Clapperboard },
   { title: "Manage Music", href: "/admin/music", icon: Music },
   { title: "Manage Users", href: "/admin/users", icon: UserCog },
 ];

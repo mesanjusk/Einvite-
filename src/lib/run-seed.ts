@@ -1,6 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
 
-import { DEMO_INVITATIONS, MUSIC_TRACKS, SECTION_ORDER, THEMES } from "./seed-data";
+import {
+  DEMO_INVITATIONS,
+  MUSIC_TRACKS,
+  PDF_THEMES,
+  SECTION_ORDER,
+  THEMES,
+  VIDEO_TEMPLATES,
+} from "./seed-data";
 import { pickStockPhotos } from "./media/stock-photos";
 
 export async function runSeed(db: PrismaClient) {
@@ -13,6 +20,22 @@ export async function runSeed(db: PrismaClient) {
       create: theme,
     });
     themeBySlug.set(theme.slug, record.id);
+  }
+
+  for (const theme of PDF_THEMES) {
+    await db.theme.upsert({
+      where: { slug: theme.slug },
+      update: theme,
+      create: theme,
+    });
+  }
+
+  for (const template of VIDEO_TEMPLATES) {
+    await db.videoTemplate.upsert({
+      where: { slug: template.slug },
+      update: template,
+      create: template,
+    });
   }
 
   for (const theme of THEMES) {
@@ -110,6 +133,8 @@ export async function runSeed(db: PrismaClient) {
   return {
     themes: THEMES.length,
     templates: THEMES.length,
+    pdfThemes: PDF_THEMES.length,
+    videoTemplates: VIDEO_TEMPLATES.length,
     musicTracks: MUSIC_TRACKS.length,
     demoInvitations,
   };

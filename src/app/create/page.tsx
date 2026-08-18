@@ -17,7 +17,9 @@ export default async function CreateInvitationPage({
 }) {
   const [{ theme: themeSlugParam }, themes, musicTracks] = await Promise.all([
     searchParams,
-    db.theme.findMany({ orderBy: { sortOrder: "asc" } }).catch(() => []),
+    db.theme
+      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } })
+      .catch(() => []),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }).catch(() => []),
   ]);
   const initialThemeSlug = themes.some((t) => t.slug === themeSlugParam)

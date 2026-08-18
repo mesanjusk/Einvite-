@@ -27,7 +27,7 @@ export default async function EditGuestInvitationPage({
   if (!invitation) notFound();
 
   const [themes, musicTracks, events, familyMembers, media] = await Promise.all([
-    db.theme.findMany({ orderBy: { sortOrder: "asc" } }),
+    db.theme.findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } }),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }),
     db.event.findMany({ where: { invitationId }, orderBy: { order: "asc" } }),
     db.familyMember.findMany({ where: { invitationId }, orderBy: { order: "asc" } }),

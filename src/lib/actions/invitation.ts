@@ -32,7 +32,7 @@ export async function createInvitationAction(
   const data = parsed.data;
 
   const theme = await db.theme.findUnique({ where: { slug: data.themeSlug } });
-  if (!theme) return { success: false, error: "Unknown theme selected." };
+  if (!theme || theme.type !== "WEBSITE") return { success: false, error: "Unknown theme selected." };
 
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
