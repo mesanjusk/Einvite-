@@ -8,6 +8,8 @@ import { SiteLogo } from "@/components/brand/site-logo";
 import { Button } from "@/components/ui/button";
 import { PhoneMockup } from "@/components/marketing/phone-mockup";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
+import { InstagramBanner } from "@/components/marketing/instagram-banner";
+import { SiteFooter } from "@/components/marketing/site-footer";
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} — AI-Generated Wedding Invitations`,
@@ -39,6 +41,7 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-svh flex-col">
+      <InstagramBanner />
       <header className="flex items-center justify-between px-6 py-5 lg:px-12">
         <SiteLogo size="lg" />
         <nav className="flex items-center gap-3">
@@ -167,9 +170,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="text-muted-foreground border-t px-6 py-8 text-center text-sm">
-        {SITE_NAME}
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
