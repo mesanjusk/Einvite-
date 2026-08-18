@@ -11,10 +11,20 @@ import { EventCategoryChips } from "@/components/marketing/event-category-chips"
 import { InstagramBanner } from "@/components/marketing/instagram-banner";
 import { SiteFooter } from "@/components/marketing/site-footer";
 
+const TITLE = `${SITE_NAME} — AI-Generated Wedding Invitations`;
+const DESCRIPTION =
+  "Answer a few questions and get a premium, animated wedding invitation website — envelope reveal, countdown, RSVP, and more — live in minutes.";
+
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — AI-Generated Wedding Invitations`,
-  description:
-    "Answer a few questions and get a premium, animated wedding invitation website — envelope reveal, countdown, RSVP, and more — live in minutes.",
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+    images: ["/favicon.ico"],
+    type: "website",
+  },
 };
 
 const FEATURES = [
