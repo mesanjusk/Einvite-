@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import type { ActionResult } from "@/lib/actions/auth";
 
 const colorPaletteSchema = z.object({
@@ -91,27 +92,22 @@ const updatePdfThemeSchema = z.object({
 });
 
 /**
- * Sets (or clears) the PDF-specific theme override used by the
- * `?print=1` "Download PDF" flow. Clearing it falls back to the
- * invitation's website theme.
+ * Sets (or clears) the PDF-specific theme override used by the downloadable
+ * PDF. Clearing it falls back to the platform's default PDF theme. Reachable
+ * from both the dashboard and the guest "pre-logged-in link" flow, same as
+ * the video actions — authorized via authorizeInvitationAccess rather than
+ * requiring a real session, since guest invitations have no userId.
  */
 export async function updateInvitationPdfThemeAction(
   input: z.infer<typeof updatePdfThemeSchema>,
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Unauthorized" };
-
   const parsed = updatePdfThemeSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const invitation = await db.invitation.findUnique({
-    where: { id: parsed.data.invitationId },
-  });
-  if (!invitation || invitation.userId !== session.user.id) {
-    return { success: false, error: "Invitation not found." };
-  }
+  const invitation = await authorizeInvitationAccess(parsed.data.invitationId);
+  if (!invitation) return { success: false, error: "Invitation not found." };
 
   let pdfThemeId: string | null = null;
   if (parsed.data.pdfThemeSlug) {
@@ -126,7 +122,40 @@ export async function updateInvitationPdfThemeAction(
   });
 
   revalidatePath("/dashboard/publish/pdf");
+  revalidatePath(`/manage/${invitation.id}`);
   revalidatePath(`/invite/${invitation.slug}`);
+
+  return { success: true, data: undefined };
+}
+
+const updatePdfExtraTextSchema = z.object({
+  invitationId: z.string(),
+  pdfExtraText: z.string().max(4000).nullable(),
+});
+
+/**
+ * Saves PDF-only text (e.g. a formal invitation letter) that doesn't
+ * appear on the website — bindable to a "pdfExtraText" placeholder on a
+ * PDF template page.
+ */
+export async function updateInvitationPdfExtraTextAction(
+  input: z.infer<typeof updatePdfExtraTextSchema>,
+): Promise<ActionResult> {
+  const parsed = updatePdfExtraTextSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const invitation = await authorizeInvitationAccess(parsed.data.invitationId);
+  if (!invitation) return { success: false, error: "Invitation not found." };
+
+  await db.invitation.update({
+    where: { id: parsed.data.invitationId },
+    data: { pdfExtraText: parsed.data.pdfExtraText || null },
+  });
+
+  revalidatePath("/dashboard/publish/pdf");
+  revalidatePath(`/manage/${invitation.id}`);
 
   return { success: true, data: undefined };
 }

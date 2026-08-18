@@ -118,8 +118,7 @@ export default async function DeployPage({
                 Share to Instagram
               </a>
               <a
-                href={`${liveUrl}?print=1`}
-                target="_blank"
+                href={`/api/pdf/${invitation.slug}`}
                 className="text-primary text-sm underline"
               >
                 Download PDF

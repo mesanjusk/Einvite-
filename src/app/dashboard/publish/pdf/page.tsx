@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { PdfThemePicker } from "@/components/dashboard/pdf-theme-picker";
+import { PdfExtraTextForm } from "@/components/dashboard/pdf-extra-text-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Publish — PDF" };
@@ -78,6 +79,15 @@ export default async function PublishPdfPage({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Extra PDF info</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PdfExtraTextForm invitationId={invitation.id} initialText={invitation.pdfExtraText ?? ""} />
+        </CardContent>
+      </Card>
+
       {invitation.status === "PUBLISHED" ? (
         <Card>
           <CardHeader>
@@ -85,8 +95,7 @@ export default async function PublishPdfPage({
           </CardHeader>
           <CardContent>
             <a
-              href={`/invite/${invitation.slug}?print=1`}
-              target="_blank"
+              href={`/api/pdf/${invitation.slug}`}
               className="text-primary text-sm underline"
             >
               Download PDF

@@ -61,22 +61,11 @@ type InvitationWithRelations = NonNullable<
   Awaited<ReturnType<typeof getInvitationBySlug>>
 >;
 
-export function toInviteRenderData(
-  invitation: InvitationWithRelations,
-  variant: "web" | "print" = "web",
-) {
-  // In the PDF print flow, an explicit pdfTheme takes over the palette/fonts;
-  // otherwise (and always on the website) fall back to the invitation's own
-  // overrides, then its website theme.
-  const usePdfTheme = variant === "print" && invitation.pdfTheme;
-  const palette = (usePdfTheme
-    ? invitation.pdfTheme?.colorPalette
-    : (invitation.colorPalette ?? invitation.theme?.colorPalette)) as
+export function toInviteRenderData(invitation: InvitationWithRelations) {
+  const palette = (invitation.colorPalette ?? invitation.theme?.colorPalette) as
     | typeof DEFAULT_PALETTE
     | undefined;
-  const fonts = (usePdfTheme
-    ? invitation.pdfTheme?.fontPairing
-    : (invitation.fontPairing ?? invitation.theme?.fontPairing)) as
+  const fonts = (invitation.fontPairing ?? invitation.theme?.fontPairing) as
     | typeof DEFAULT_FONTS
     | undefined;
 

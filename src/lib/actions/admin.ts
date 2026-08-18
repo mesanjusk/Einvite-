@@ -17,6 +17,7 @@ import {
   type MusicTrackFormInput,
   type VideoTemplateFormInput,
 } from "@/lib/validations/admin";
+import { pdfTemplatePagesSchema, type PdfTemplatePage } from "@/lib/validations/pdf-template";
 
 async function requireAdmin() {
   const session = await auth();
@@ -78,6 +79,35 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
   revalidatePath("/dashboard/publish/theme");
   revalidatePath("/dashboard/publish/pdf");
 
+  return { success: true, data: undefined };
+}
+
+/**
+ * Saves a PDF theme's multi-page layout (background + positioned text
+ * placeholders per page) onto its auto-created Template row. Website
+ * themes don't use this — their layout is just `sectionOrder`.
+ */
+export async function upsertPdfTemplatePagesAction(input: {
+  themeId: string;
+  pages: PdfTemplatePage[];
+}): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const theme = await db.theme.findUnique({ where: { id: input.themeId } });
+  if (!theme || theme.type !== "PDF") return { success: false, error: "PDF theme not found." };
+
+  const parsed = pdfTemplatePagesSchema.safeParse(input.pages);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid pages" };
+  }
+
+  const template = await db.template.findFirst({ where: { themeId: theme.id } });
+  if (!template) return { success: false, error: "This theme has no template row yet." };
+
+  await db.template.update({ where: { id: template.id }, data: { pages: parsed.data } });
+
+  revalidatePath("/admin/pdf-themes");
   return { success: true, data: undefined };
 }
 
