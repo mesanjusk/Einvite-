@@ -579,15 +579,79 @@ model InvitationVideo {
 // Instagram comment-to-DM automation
 // ---------------------------------------------------------------------------
 
-// Tracks which Instagram accounts have already received their free access
-// link, so the webhook can enforce "1 free link per Instagram account"
-// (see /privacy) instead of re-sending on every "FREE" comment.
-model InstagramLead {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  igUserId  String   @unique
-  commentId String
-  link      String
-  createdAt DateTime @default(now())
+// One automation rule per Instagram post/reel. Without a rule for the media
+// a comment arrived on, the webhook does nothing — automation is opt-in per
+// reel rather than replying to every "FREE" anywhere on the account.
+model InstagramAutomation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  // Instagram media ID the rule applies to, from the comment webhook's
+  // value.media.id. Unique so one reel has exactly one rule.
+  mediaId String @unique
+  // Admin-facing name so reels are recognisable in the dashboard.
+  label       String
+  permalink   String?
+  triggerWord String
+  // Reply sent on a first match. Supports {{link}} and {{username}}.
+  replyMessage String
+  // Reply sent when this commenter already claimed this reel's link.
+  duplicateMessage String
+  isActive         Boolean @default(true)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads InstagramLead[]
+  logs  InstagramCommentLog[]
+
+  @@map("instagram_automations")
+}
+
+// Tracks which Instagram accounts have already received their access link
+// for a given reel, enforcing one link per account per automation. Written
+// only after the send actually succeeds.
+model InstagramLead {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  // Optional so rows created before per-reel automations still read; those
+  // legacy rows simply never match a (user, automation) pair again.
+  automationId String? @db.ObjectId
+  igUserId     String
+  commentId    String
+  link         String
+  createdAt    DateTime @default(now())
+
+  automation InstagramAutomation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@unique([igUserId, automationId])
   @@map("instagram_leads")
+}
+
+enum InstagramCommentOutcome {
+  REPLY_SENT
+  DUPLICATE_SKIPPED
+  TRIGGER_NOT_MATCHED
+  NO_AUTOMATION
+  AUTOMATION_INACTIVE
+  SEND_FAILED
+}
+
+// Every comment the webhook processes, matched or not, so the admin
+// dashboard can show what came in per reel and what was replied.
+model InstagramCommentLog {
+  id           String                  @id @default(auto()) @map("_id") @db.ObjectId
+  automationId String?                 @db.ObjectId
+  mediaId      String
+  commentId    String
+  igUserId     String?
+  username     String?
+  commentText  String
+  outcome      InstagramCommentOutcome
+  replyText    String?
+  error        String?
+  createdAt    DateTime                @default(now())
+
+  automation InstagramAutomation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
+
+  @@index([mediaId])
+  @@index([createdAt])
+  @@map("instagram_comment_logs")
 }
