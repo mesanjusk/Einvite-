@@ -15,6 +15,7 @@ import {
 } from "@/lib/validations/admin";
 import { upsertVideoTemplateAction } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -97,14 +98,13 @@ export function VideoTemplateFormDialog({ template }: { template?: VideoTemplate
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {template ? (
-          <Button variant="ghost" size="icon">
+          <IconButton label="Edit">
             <Pencil className="size-4" />
-          </Button>
+          </IconButton>
         ) : (
-          <Button>
-            <Plus />
-            New video template
-          </Button>
+          <IconButton label="New video template" variant="default">
+            <Plus className="size-4" />
+          </IconButton>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
@@ -133,9 +133,7 @@ export function VideoTemplateFormDialog({ template }: { template?: VideoTemplate
             <Label>Prompt template</Label>
             <Textarea rows={4} {...form.register("promptTemplate")} />
             <p className="text-muted-foreground text-xs">
-              Placeholders: {"{{brideName}}"}, {"{{groomName}}"}, {"{{coupleNames}}"},{" "}
-              {"{{weddingDate}}"}, {"{{venueName}}"}, {"{{customMessage}}"}, {"{{events}}"},{" "}
-              {"{{style}}"} — filled in from the couple&apos;s own invitation details.
+              {"{{brideName}} {{groomName}} {{coupleNames}} {{weddingDate}} {{venueName}} {{customMessage}} {{events}} {{style}}"}
             </p>
             {form.formState.errors.promptTemplate && (
               <p className="text-destructive text-xs">

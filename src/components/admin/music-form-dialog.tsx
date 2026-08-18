@@ -14,6 +14,7 @@ import {
 } from "@/lib/validations/admin";
 import { upsertMusicTrackAction } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -97,14 +98,13 @@ export function MusicFormDialog({ track }: { track?: MusicTrackRecord }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {track ? (
-          <Button variant="ghost" size="icon">
+          <IconButton label="Edit">
             <Pencil className="size-4" />
-          </Button>
+          </IconButton>
         ) : (
-          <Button>
-            <Plus />
-            New track
-          </Button>
+          <IconButton label="New track" variant="default">
+            <Plus className="size-4" />
+          </IconButton>
         )}
       </DialogTrigger>
       <DialogContent>

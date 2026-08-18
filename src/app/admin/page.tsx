@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Users, LayoutTemplate, ClipboardCheck, CreditCard } from "lucide-react";
 
 import { db } from "@/lib/db";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -39,10 +40,7 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl">Admin Panel</h1>
-        <p className="text-muted-foreground text-sm">Platform-wide overview.</p>
-      </div>
+      <PageHeader title="Admin" />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (

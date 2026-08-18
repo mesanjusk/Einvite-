@@ -4,8 +4,9 @@ import { PlusCircle } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { InvitationListCard } from "@/components/dashboard/invitation-list-card";
 
 export const metadata: Metadata = { title: "My Invitations" };
@@ -20,15 +21,13 @@ export default async function InvitationsListPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl">My Invitations</h1>
-        <Button asChild>
+      <PageHeader title="Invitations" meta={`${invitations.length} total`}>
+        <IconButton label="New invitation" variant="default" asChild>
           <Link href="/dashboard/invitations/new">
-            <PlusCircle />
-            New invitation
+            <PlusCircle className="size-4" />
           </Link>
-        </Button>
-      </div>
+        </IconButton>
+      </PageHeader>
 
       {invitations.length === 0 ? (
         <Card>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import type { ActionResult } from "@/lib/actions/auth";
 
 export function DeleteEntityButton({
@@ -34,8 +34,8 @@ export function DeleteEntityButton({
   }
 
   return (
-    <Button variant="ghost" size="icon" disabled={isPending} onClick={handleDelete}>
+    <IconButton label="Delete" disabled={isPending} onClick={handleDelete}>
       <Trash2 className="text-destructive size-4" />
-    </Button>
+    </IconButton>
   );
 }

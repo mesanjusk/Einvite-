@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { MusicFormDialog } from "@/components/admin/music-form-dialog";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteMusicTrackAction } from "@/lib/actions/admin";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -18,15 +19,9 @@ export default async function AdminMusicPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl">Manage Music</h1>
-          <p className="text-muted-foreground text-sm">
-            The library couples pick from in the wizard.
-          </p>
-        </div>
+      <PageHeader title="Music" meta={`${tracks.length} tracks`}>
         <MusicFormDialog />
-      </div>
+      </PageHeader>
 
       <div className="grid grid-cols-1 gap-3">
         {tracks.map((track) => (

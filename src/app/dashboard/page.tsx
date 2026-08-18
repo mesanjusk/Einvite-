@@ -4,7 +4,8 @@ import { PlusCircle, Eye, Users, ClipboardCheck } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -34,22 +35,15 @@ export default async function DashboardOverviewPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl text-foreground">
-            Welcome back{session?.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Here&apos;s what&apos;s happening with your invitations.
-          </p>
-        </div>
-        <Button asChild>
+      <PageHeader
+        title={`Welcome back${session?.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}`}
+      >
+        <IconButton label="Create invitation" variant="default" asChild>
           <Link href="/dashboard/invitations/new">
-            <PlusCircle />
-            Create Invitation
+            <PlusCircle className="size-4" />
           </Link>
-        </Button>
-      </div>
+        </IconButton>
+      </PageHeader>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (

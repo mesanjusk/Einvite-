@@ -6,6 +6,7 @@ import { deleteUserAction } from "@/lib/actions/admin";
 import { UserRoleToggle } from "@/components/admin/user-role-toggle";
 import { UserActiveToggle } from "@/components/admin/user-active-toggle";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,10 +21,7 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl">Manage Users</h1>
-        <p className="text-muted-foreground text-sm">{users.length} accounts.</p>
-      </div>
+      <PageHeader title="Users" meta={`${users.length} accounts`} />
 
       <Card className="py-0">
         <CardContent className="p-0">

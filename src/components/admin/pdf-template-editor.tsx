@@ -15,6 +15,7 @@ import {
   type PdfTemplatePage,
 } from "@/lib/validations/pdf-template";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -187,14 +188,17 @@ export function PdfTemplateEditor({
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={addPage}>
+            <IconButton label="Add page" variant="outline" onClick={addPage}>
               <Plus className="size-4" />
-              Add page
-            </Button>
-            <Button variant="outline" size="sm" onClick={removePage} disabled={pages.length <= 1}>
+            </IconButton>
+            <IconButton
+              label="Remove page"
+              variant="outline"
+              onClick={removePage}
+              disabled={pages.length <= 1}
+            >
               <Trash2 className="size-4" />
-              Remove page
-            </Button>
+            </IconButton>
           </div>
         </div>
 
@@ -273,10 +277,9 @@ export function PdfTemplateEditor({
               <option value="LETTER">Letter</option>
             </select>
           </div>
-          <Button size="sm" onClick={addPlaceholder}>
+          <IconButton label="Add text" variant="default" onClick={addPlaceholder}>
             <Plus className="size-4" />
-            Add text
-          </Button>
+          </IconButton>
         </div>
       </div>
 

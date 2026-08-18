@@ -56,11 +56,7 @@ export default async function PublishVideoPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-muted-foreground text-sm">
-          Generate a Gemini video teaser from the details you already entered — names, date,
-          venue, and your theme colors — using an admin-managed style template.
-        </p>
+      <div className="flex justify-end">
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
       </div>
 

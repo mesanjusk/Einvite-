@@ -8,6 +8,7 @@ import { isCloudinaryConfigured } from "@/lib/media/cloudinary";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { MediaUploader } from "@/components/dashboard/media-uploader";
 import { VideoUploader } from "@/components/dashboard/video-uploader";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -57,16 +58,9 @@ export default async function MediaPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl">Media Library</h1>
-          <p className="text-muted-foreground text-sm">
-            Photos, video, and music for this invitation — uploads are auto-optimized by
-            Cloudinary.
-          </p>
-        </div>
+      <PageHeader title="Media">
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
-      </div>
+      </PageHeader>
 
       {!isCloudinaryConfigured() && (
         <Card className="border-accent/50">

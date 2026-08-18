@@ -53,11 +53,7 @@ export default async function PublishPdfPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-muted-foreground text-sm">
-          Pick a PDF-specific look, or leave it matching your website theme — either way, the
-          same details you already entered (names, date, venue, photos) fill the PDF.
-        </p>
+      <div className="flex justify-end">
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
       </div>
 

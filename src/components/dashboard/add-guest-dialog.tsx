@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { guestSchema, type GuestInput } from "@/lib/validations/invitation";
 import { addGuestAction } from "@/lib/actions/rsvp";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -61,10 +62,9 @@ export function AddGuestDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button size="sm">
-            <PlusCircle />
-            Add guest
-          </Button>
+          <IconButton label="Add guest" variant="default">
+            <PlusCircle className="size-4" />
+          </IconButton>
         )}
       </DialogTrigger>
       <DialogContent>

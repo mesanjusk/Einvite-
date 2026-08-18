@@ -16,6 +16,7 @@ import {
 } from "@/lib/validations/admin";
 import { upsertThemeAction } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -147,14 +148,13 @@ export function ThemeFormDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {theme ? (
-          <Button variant="ghost" size="icon">
+          <IconButton label="Edit">
             <Pencil className="size-4" />
-          </Button>
+          </IconButton>
         ) : (
-          <Button>
-            <Plus />
-            New {type === "PDF" ? "PDF theme" : "theme"}
-          </Button>
+          <IconButton label={type === "PDF" ? "New PDF theme" : "New theme"} variant="default">
+            <Plus className="size-4" />
+          </IconButton>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">

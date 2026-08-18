@@ -6,6 +6,7 @@ import { InstagramAutomationFormDialog } from "@/components/admin/instagram-auto
 import { InstagramAutomationToggle } from "@/components/admin/instagram-automation-toggle";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteInstagramAutomationAction } from "@/lib/actions/admin";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -43,22 +44,14 @@ export default async function AdminInstagramPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl">Instagram Automation</h1>
-          <p className="text-muted-foreground text-sm">
-            Per-reel comment-to-DM rules. Each reel gets its own trigger word and reply — a
-            comment on a reel without a rule is logged but never answered.
-          </p>
-        </div>
+      <PageHeader title="Instagram" meta={`${automations.length} reel automations`}>
         <InstagramAutomationFormDialog />
-      </div>
+      </PageHeader>
 
       {!isInstagramSendConfigured() && (
         <Card className="border-dashed">
           <CardContent className="text-muted-foreground py-4 text-sm">
-            <code className="font-mono">IG_ACCESS_TOKEN</code> isn&apos;t set — rules can be
-            managed here, but replies will fail until it&apos;s configured in the environment.
+            <code className="font-mono">IG_ACCESS_TOKEN</code> not set — replies will fail.
           </CardContent>
         </Card>
       )}
@@ -66,8 +59,7 @@ export default async function AdminInstagramPage() {
       {automations.length === 0 && (
         <Card>
           <CardContent className="text-muted-foreground py-12 text-center text-sm">
-            No reel automations yet. Comment on a reel to make it appear in the activity log
-            below, then use &ldquo;Automate this reel&rdquo; to set it up.
+            No reel automations yet.
           </CardContent>
         </Card>
       )}
@@ -145,12 +137,7 @@ export default async function AdminInstagramPage() {
       {unautomatedMediaIds.length > 0 && (
         <Card>
           <CardContent className="flex flex-col gap-3 py-4">
-            <div>
-              <p className="font-medium">Reels with comments but no automation</p>
-              <p className="text-muted-foreground text-sm">
-                These reels received comments that went unanswered because no rule covers them.
-              </p>
-            </div>
+            <p className="font-medium">Unautomated reels</p>
             <div className="flex flex-col gap-2">
               {unautomatedMediaIds.map((mediaId) => (
                 <div
@@ -168,12 +155,7 @@ export default async function AdminInstagramPage() {
 
       <Card>
         <CardContent className="flex flex-col gap-3 py-4">
-          <div>
-            <p className="font-medium">Recent comment activity</p>
-            <p className="text-muted-foreground text-sm">
-              Every comment the webhook processed, and what was replied.
-            </p>
-          </div>
+          <p className="font-medium">Recent activity</p>
 
           {logs.length === 0 ? (
             <p className="text-muted-foreground py-8 text-center text-sm">
