@@ -4,9 +4,9 @@ import { PlusCircle } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { InvitationListCard } from "@/components/dashboard/invitation-list-card";
 
 export const metadata: Metadata = { title: "My Invitations" };
 
@@ -43,40 +43,16 @@ export default async function InvitationsListPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {invitations.map((invitation) => (
-            <Card key={invitation.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="font-display text-base">
-                    {invitation.brideName} &amp; {invitation.groomName}
-                  </CardTitle>
-                  <Badge variant={invitation.status === "PUBLISHED" ? "gold" : "secondary"}>
-                    {invitation.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="flex items-center justify-between">
-                <span className="text-muted-foreground text-xs">
-                  {invitation.theme?.name ?? "No theme"} · {invitation._count.rsvps} RSVPs
-                </span>
-                <div className="flex gap-3">
-                  {invitation.status === "PUBLISHED" && (
-                    <a
-                      href={`/invite/${invitation.slug}`}
-                      target="_blank"
-                      className="text-primary text-sm underline underline-offset-4"
-                    >
-                      View
-                    </a>
-                  )}
-                  <Link
-                    href={`/dashboard/publish/deploy?invitationId=${invitation.id}`}
-                    className="text-primary text-sm underline underline-offset-4"
-                  >
-                    Manage
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+            <InvitationListCard
+              key={invitation.id}
+              id={invitation.id}
+              slug={invitation.slug}
+              brideName={invitation.brideName}
+              groomName={invitation.groomName}
+              status={invitation.status}
+              themeName={invitation.theme?.name ?? "No theme"}
+              rsvpCount={invitation._count.rsvps}
+            />
           ))}
         </div>
       )}
