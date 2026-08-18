@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { SiteLogo } from "@/components/brand/site-logo";
+import { GeminiKeyForm } from "@/components/dashboard/gemini-key-form";
+import { VideoGeneratorPanel } from "@/components/dashboard/video-generator-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +40,15 @@ export default async function ManageGuestInvitationPage({
     );
   }
 
-  const media = await db.media.count({ where: { invitationId } });
+  const [media, videoTemplates, videos] = await Promise.all([
+    db.media.count({ where: { invitationId } }),
+    db.videoTemplate.findMany({ orderBy: { sortOrder: "asc" } }),
+    db.invitationVideo.findMany({
+      where: { invitationId },
+      orderBy: { createdAt: "desc" },
+      include: { videoTemplate: { select: { name: true } } },
+    }),
+  ]);
   const appUrl = getAppUrl();
   const liveUrl = `${appUrl}/invite/${invitation.slug}`;
   const qrDataUrl =
@@ -109,6 +119,28 @@ export default async function ManageGuestInvitationPage({
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Video teaser</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <GeminiKeyForm invitationId={invitation.id} hasKey={Boolean(invitation.geminiApiKey)} />
+          <VideoGeneratorPanel
+            invitationId={invitation.id}
+            templates={videoTemplates.map((t) => ({
+              id: t.id,
+              slug: t.slug,
+              name: t.name,
+              description: t.description,
+              aspectRatio: t.aspectRatio,
+              durationSeconds: t.durationSeconds,
+            }))}
+            currentTemplateId={invitation.videoTemplateId}
+            jobs={videos}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

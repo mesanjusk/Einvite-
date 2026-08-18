@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { isGeminiVideoConfigured } from "@/lib/ai/gemini-video";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { VideoGeneratorPanel } from "@/components/dashboard/video-generator-panel";
+import { GeminiKeyForm } from "@/components/dashboard/gemini-key-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Publish — Video" };
@@ -63,14 +64,23 @@ export default async function PublishVideoPage({
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
       </div>
 
-      {!isGeminiVideoConfigured() && (
+      {!isGeminiVideoConfigured(invitation.geminiApiKey) && (
         <Card className="border-dashed">
           <CardContent className="text-muted-foreground py-4 text-sm">
-            Video generation isn&apos;t configured on this deployment yet — you can start a job,
-            but it will fail until an admin sets <code className="font-mono">GEMINI_API_KEY</code>.
+            No Gemini key is available yet — add your own below, or ask an admin to set{" "}
+            <code className="font-mono">GEMINI_API_KEY</code> for the whole platform.
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Gemini API key</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <GeminiKeyForm invitationId={invitation.id} hasKey={Boolean(invitation.geminiApiKey)} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
