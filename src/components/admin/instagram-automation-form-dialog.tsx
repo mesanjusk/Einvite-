@@ -14,6 +14,7 @@ import {
 } from "@/lib/validations/admin";
 import { upsertInstagramAutomationAction } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -98,19 +99,17 @@ export function InstagramAutomationFormDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {automation ? (
-          <Button variant="ghost" size="icon">
+          <IconButton label="Edit">
             <Pencil className="size-4" />
-          </Button>
+          </IconButton>
         ) : presetMediaId ? (
-          <Button variant="outline" size="sm">
-            <Plus className="size-3.5" />
-            Automate this reel
-          </Button>
+          <IconButton label="Automate this reel" variant="outline">
+            <Plus className="size-4" />
+          </IconButton>
         ) : (
-          <Button>
-            <Plus />
-            New reel automation
-          </Button>
+          <IconButton label="New reel automation" variant="default">
+            <Plus className="size-4" />
+          </IconButton>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
@@ -132,10 +131,6 @@ export function InstagramAutomationFormDialog({
           <div className="grid gap-1.5">
             <Label>Instagram media ID</Label>
             <Input placeholder="17969960076129962" {...form.register("mediaId")} />
-            <p className="text-muted-foreground text-xs">
-              Comment on the reel once — it appears in the activity log below with an
-              &ldquo;Automate this reel&rdquo; button that fills this in for you.
-            </p>
             {form.formState.errors.mediaId && (
               <p className="text-destructive text-xs">{form.formState.errors.mediaId.message}</p>
             )}
@@ -149,9 +144,6 @@ export function InstagramAutomationFormDialog({
           <div className="grid gap-1.5">
             <Label>Trigger word</Label>
             <Input placeholder="FREE" {...form.register("triggerWord")} />
-            <p className="text-muted-foreground text-xs">
-              Matched case-insensitively anywhere in the comment.
-            </p>
             {form.formState.errors.triggerWord && (
               <p className="text-destructive text-xs">
                 {form.formState.errors.triggerWord.message}
@@ -163,7 +155,7 @@ export function InstagramAutomationFormDialog({
             <Label>Reply message</Label>
             <Textarea rows={3} {...form.register("replyMessage")} />
             <p className="text-muted-foreground text-xs">
-              Placeholders: {"{{link}}"} (required) and {"{{username}}"}.
+              {"{{link}} {{username}}"}
             </p>
             {form.formState.errors.replyMessage && (
               <p className="text-destructive text-xs">
@@ -186,9 +178,6 @@ export function InstagramAutomationFormDialog({
             <div className="flex items-center justify-between">
               <div>
                 <Label>Followers only</Label>
-                <p className="text-muted-foreground text-xs">
-                  Ask non-followers to follow before sending the link.
-                </p>
               </div>
               <Switch
                 checked={form.watch("requireFollow")}
@@ -201,9 +190,7 @@ export function InstagramAutomationFormDialog({
                 <Label>Reply for non-followers</Label>
                 <Textarea rows={2} {...form.register("notFollowingMessage")} />
                 <p className="text-muted-foreground text-xs">
-                  Instagram can&apos;t always tell whether a commenter follows you. When the
-                  check can&apos;t resolve, the link is sent anyway rather than turning away a
-                  real follower — those cases show as &ldquo;Reply sent&rdquo; in the log.
+                  Sends the link anyway when follow status can&apos;t be determined.
                 </p>
               </div>
             )}
@@ -212,9 +199,6 @@ export function InstagramAutomationFormDialog({
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>
               <Label>Active</Label>
-              <p className="text-muted-foreground text-xs">
-                Paused reels still log comments but never reply.
-              </p>
             </div>
             <Switch
               checked={form.watch("isActive")}

@@ -55,11 +55,7 @@ export default async function BuilderPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-muted-foreground text-sm">
-          Drag to reorder, hide, lock, duplicate, or remove sections — the preview
-          updates live.
-        </p>
+      <div className="flex justify-end">
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
       </div>
 

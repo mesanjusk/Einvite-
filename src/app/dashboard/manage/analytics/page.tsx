@@ -80,9 +80,6 @@ export default async function AnalyticsPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-muted-foreground text-sm">
-          Real traffic recorded from your published invitation page.
-        </p>
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
       </div>
 

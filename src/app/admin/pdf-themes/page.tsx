@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { ThemeFormDialog } from "@/components/admin/theme-form-dialog";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteThemeAction } from "@/lib/actions/admin";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,16 +23,9 @@ export default async function AdminPdfThemesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl">Manage PDF Themes</h1>
-          <p className="text-muted-foreground text-sm">
-            Design the multi-page layout couples download as a PDF — background images/colors
-            plus text boxes bound to their details, independent from the website theme.
-          </p>
-        </div>
+      <PageHeader title="PDF Themes" meta={`${themes.length} themes`}>
         <ThemeFormDialog type="PDF" />
-      </div>
+      </PageHeader>
 
       {themes.length === 0 && (
         <Card>

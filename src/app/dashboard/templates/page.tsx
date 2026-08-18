@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -28,13 +29,7 @@ export default async function TemplatesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl">Templates</h1>
-        <p className="text-muted-foreground text-sm">
-          One-click themes — each changes colors, fonts, and decoration across your
-          invitation.
-        </p>
-      </div>
+      <PageHeader title="Templates" meta={`${themes.length} themes`} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {themes.map((theme) => {

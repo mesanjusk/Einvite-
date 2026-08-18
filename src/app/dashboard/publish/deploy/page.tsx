@@ -65,10 +65,7 @@ export default async function DeployPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-muted-foreground text-sm">
-          Publish your invitation and share it with a link, QR code, or custom domain.
-        </p>
+      <div className="flex justify-end">
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
       </div>
 

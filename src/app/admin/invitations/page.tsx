@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,10 +20,7 @@ export default async function AdminInvitationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl">All Invitations</h1>
-        <p className="text-muted-foreground text-sm">{invitations.length} created.</p>
-      </div>
+      <PageHeader title="Invitations" meta={`${invitations.length} created`} />
 
       <Card className="py-0">
         <CardContent className="overflow-x-auto p-0">

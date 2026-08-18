@@ -5,6 +5,7 @@ import { VideoTemplateFormDialog } from "@/components/admin/video-template-form-
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteVideoTemplateAction } from "@/lib/actions/admin";
 import { isGeminiVideoConfigured } from "@/lib/ai/gemini-video";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -18,15 +19,9 @@ export default async function AdminVideoTemplatesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl">Manage Video Templates</h1>
-          <p className="text-muted-foreground text-sm">
-            Prompt templates and style presets for Gemini-generated invitation video teasers.
-          </p>
-        </div>
+      <PageHeader title="Video Templates" meta={`${templates.length} templates`}>
         <VideoTemplateFormDialog />
-      </div>
+      </PageHeader>
 
       {!isGeminiVideoConfigured() && (
         <Card className="border-dashed">

@@ -15,9 +15,6 @@ export default async function SettingsPage() {
     <div className="flex max-w-2xl flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl">Settings</h1>
-        <p className="text-muted-foreground text-sm">
-          Manage your account details.
-        </p>
       </div>
 
       <Card>

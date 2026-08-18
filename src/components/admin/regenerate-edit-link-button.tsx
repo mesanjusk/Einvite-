@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { KeyRound } from "lucide-react";
 
 import { adminRegenerateEditLinkAction } from "@/lib/actions/admin";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 
 export function RegenerateEditLinkButton({ invitationId }: { invitationId: string }) {
   const [isPending, startTransition] = useTransition();
@@ -42,9 +42,13 @@ export function RegenerateEditLinkButton({ invitationId }: { invitationId: strin
   }
 
   return (
-    <Button variant="outline" size="sm" disabled={isPending} onClick={handleClick}>
-      <KeyRound />
-      {isPending ? "Generating…" : "Generate new edit link"}
-    </Button>
+    <IconButton
+      label={isPending ? "Generating…" : "Generate new edit link"}
+      variant="outline"
+      disabled={isPending}
+      onClick={handleClick}
+    >
+      <KeyRound className="size-4" />
+    </IconButton>
   );
 }
