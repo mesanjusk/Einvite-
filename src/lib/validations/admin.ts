@@ -95,3 +95,23 @@ export const videoTemplateFormSchema = z.object({
 
 export type VideoTemplateFormInput = z.infer<typeof videoTemplateFormSchema>;
 export type VideoTemplateFormValues = z.input<typeof videoTemplateFormSchema>;
+
+export const instagramAutomationFormSchema = z.object({
+  id: z.string().optional(),
+  mediaId: z
+    .string()
+    .min(1, "Instagram media ID is required")
+    .regex(/^\d+$/, "Media IDs are numeric — copy it from the dashboard's comment log"),
+  label: z.string().min(1, "Give the reel a name you'll recognise"),
+  permalink: z.string().optional(),
+  triggerWord: z.string().min(1, "Trigger word is required"),
+  replyMessage: z
+    .string()
+    .min(1, "Reply message is required")
+    .refine((v) => v.includes("{{link}}"), "Include {{link}} so the invite link is sent"),
+  duplicateMessage: z.string().min(1, "Duplicate reply is required"),
+  isActive: z.boolean().default(true),
+});
+
+export type InstagramAutomationFormInput = z.infer<typeof instagramAutomationFormSchema>;
+export type InstagramAutomationFormValues = z.input<typeof instagramAutomationFormSchema>;

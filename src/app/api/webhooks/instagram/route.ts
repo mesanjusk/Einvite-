@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
 import { sendInstagramMessage } from "@/lib/instagram";
 
-const FREE_TRIGGER_WORD = "free";
 const DM_HELP_MESSAGE = "Comment FREE on our latest post to get your invite link!";
 
 export async function GET(request: Request) {
@@ -42,41 +41,105 @@ function generatePlaceholderLink() {
   return `${getAppUrl()}/create?ref=${randomUUID()}`;
 }
 
+function renderTemplate(template: string, vars: { link: string; username: string }) {
+  return template
+    .replaceAll("{{link}}", vars.link)
+    .replaceAll("{{username}}", vars.username);
+}
+
 async function handleCommentChange(change: { field?: string; value?: Record<string, unknown> }) {
   if (change.field !== "comments") return;
 
   const value = change.value ?? {};
   const commentId = typeof value.id === "string" ? value.id : undefined;
   const text = typeof value.text === "string" ? value.text : "";
-  const from = value.from as { id?: string } | undefined;
+  const from = value.from as { id?: string; username?: string } | undefined;
   const igUserId = typeof from?.id === "string" ? from.id : undefined;
+  const username = typeof from?.username === "string" ? from.username : undefined;
+  const media = value.media as { id?: string } | undefined;
+  const mediaId = typeof media?.id === "string" ? media.id : undefined;
 
-  if (!commentId || !text.trim().toLowerCase().includes(FREE_TRIGGER_WORD)) return;
+  if (!commentId || !mediaId) return;
+
+  const logBase = { mediaId, commentId, igUserId, username, commentText: text };
 
   try {
+    const automation = await db.instagramAutomation.findUnique({ where: { mediaId } });
+
+    // Automation is opt-in per reel: a comment on a reel with no rule (or a
+    // paused one) is recorded for the dashboard but never replied to.
+    if (!automation) {
+      await db.instagramCommentLog.create({ data: { ...logBase, outcome: "NO_AUTOMATION" } });
+      return;
+    }
+    if (!automation.isActive) {
+      await db.instagramCommentLog.create({
+        data: { ...logBase, automationId: automation.id, outcome: "AUTOMATION_INACTIVE" },
+      });
+      return;
+    }
+
+    const matched = text.trim().toLowerCase().includes(automation.triggerWord.trim().toLowerCase());
+    if (!matched) {
+      await db.instagramCommentLog.create({
+        data: { ...logBase, automationId: automation.id, outcome: "TRIGGER_NOT_MATCHED" },
+      });
+      return;
+    }
+
+    // One link per account per reel — claiming on one reel leaves the others
+    // still claimable.
     if (igUserId) {
-      const existingLead = await db.instagramLead.findUnique({ where: { igUserId } });
+      const existingLead = await db.instagramLead.findUnique({
+        where: { igUserId_automationId: { igUserId, automationId: automation.id } },
+      });
       if (existingLead) {
-        await sendInstagramMessage(
+        const duplicateText = renderTemplate(automation.duplicateMessage, {
+          link: existingLead.link,
+          username: username ?? "",
+        });
+        const { delivered } = await sendInstagramMessage(
           { comment_id: commentId },
-          "You already have a link! Check your DMs for your invite link.",
+          duplicateText,
         );
+        await db.instagramCommentLog.create({
+          data: {
+            ...logBase,
+            automationId: automation.id,
+            outcome: delivered ? "DUPLICATE_SKIPPED" : "SEND_FAILED",
+            replyText: duplicateText,
+            error: delivered ? null : "Send API rejected the duplicate reply",
+          },
+        });
         return;
       }
     }
 
     const link = generatePlaceholderLink();
-    const { delivered } = await sendInstagramMessage(
-      { comment_id: commentId },
-      `Here's your free wedding invitation link: ${link}`,
-    );
+    const replyText = renderTemplate(automation.replyMessage, {
+      link,
+      username: username ?? "",
+    });
+    const { delivered } = await sendInstagramMessage({ comment_id: commentId }, replyText);
 
     // Only record the lead once the link actually reached them — otherwise a
     // failed send would still burn their one free link, leaving them stuck on
     // "you already have a link" for a link they never received.
     if (igUserId && delivered) {
-      await db.instagramLead.create({ data: { igUserId, commentId, link } });
+      await db.instagramLead.create({
+        data: { igUserId, automationId: automation.id, commentId, link },
+      });
     }
+
+    await db.instagramCommentLog.create({
+      data: {
+        ...logBase,
+        automationId: automation.id,
+        outcome: delivered ? "REPLY_SENT" : "SEND_FAILED",
+        replyText,
+        error: delivered ? null : "Send API rejected the reply",
+      },
+    });
   } catch (error) {
     console.error("Failed to handle Instagram comment event", error);
   }

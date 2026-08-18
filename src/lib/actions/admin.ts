@@ -13,9 +13,11 @@ import {
   musicTrackFormSchema,
   updateUserRoleSchema,
   videoTemplateFormSchema,
+  instagramAutomationFormSchema,
   type ThemeFormInput,
   type MusicTrackFormInput,
   type VideoTemplateFormInput,
+  type InstagramAutomationFormInput,
 } from "@/lib/validations/admin";
 import { pdfTemplatePagesSchema, type PdfTemplatePage } from "@/lib/validations/pdf-template";
 
@@ -367,4 +369,80 @@ export async function adminRegenerateEditLinkAction(
 
   revalidatePath("/admin/invitations");
   return { success: true, data: { editUrl: `${getAppUrl()}/e/${rawEditToken}` } };
+}
+
+export async function upsertInstagramAutomationAction(
+  input: InstagramAutomationFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = instagramAutomationFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const data = parsed.data;
+
+  // One rule per reel, so a media ID already claimed by another rule is a
+  // conflict rather than a silent overwrite.
+  const existing = await db.instagramAutomation.findUnique({ where: { mediaId: data.mediaId } });
+  if (existing && existing.id !== data.id) {
+    return { success: false, error: "Another automation already covers this reel." };
+  }
+
+  const fields = {
+    mediaId: data.mediaId,
+    label: data.label,
+    permalink: data.permalink || null,
+    triggerWord: data.triggerWord,
+    replyMessage: data.replyMessage,
+    duplicateMessage: data.duplicateMessage,
+    isActive: data.isActive,
+  };
+
+  if (data.id) {
+    await db.instagramAutomation.update({ where: { id: data.id }, data: fields });
+  } else {
+    await db.instagramAutomation.create({ data: fields });
+  }
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
+}
+
+export async function toggleInstagramAutomationAction(
+  automationId: string,
+  isActive: boolean,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  await db.instagramAutomation.update({ where: { id: automationId }, data: { isActive } });
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
+}
+
+export async function deleteInstagramAutomationAction(
+  automationId: string,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  await db.instagramAutomation.delete({ where: { id: automationId } });
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
+}
+
+// Frees a commenter to claim this reel's link again — used when a send broke
+// mid-flight and left them marked as claimed for a link they never got.
+export async function resetInstagramLeadAction(leadId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  await db.instagramLead.delete({ where: { id: leadId } });
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
 }
