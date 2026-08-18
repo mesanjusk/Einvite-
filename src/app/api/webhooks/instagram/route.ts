@@ -111,11 +111,6 @@ export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
 
-  // TEMPORARY DEBUG LOGGING — remove once real vs. dashboard-Test-button
-  // deliveries can be told apart. Logs only the payload content (never the
-  // secret or signature), so this is safe to appear in Vercel's logs.
-  console.log("[instagram-webhook:debug] rawBody:", rawBody.slice(0, 300));
-
   if (!appSecret || !isValidSignature(rawBody, signature, appSecret)) {
     return new Response(null, { status: 401 });
   }
