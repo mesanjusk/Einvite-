@@ -285,6 +285,10 @@ model Invitation {
   googleMapsUrl String?
   customMessage String?
   language      InvitationLanguage @default(EN)
+  // Culture, asked first in the wizard so the ceremony list can be
+  // pre-filled with the rituals that tradition actually observes.
+  religion String?
+  caste    String?
   // Extra text for the PDF only (e.g. a formal invitation letter) — not
   // shown on the website, bindable to a placeholder on a PDF template page.
   pdfExtraText  String?

@@ -13,12 +13,17 @@ import {
   Upload,
   X,
   Heart,
-  MapPinned,
   CalendarDays,
   Palette,
   Images,
   PartyPopper,
   Check,
+  Users,
+  Landmark,
+  Clock,
+  Shirt,
+  Quote,
+  MapPin,
 } from "lucide-react";
 
 import {
@@ -27,6 +32,7 @@ import {
   type InvitationWizardFormValues,
 } from "@/lib/validations/invitation";
 import {
+  autoFillPhotosAction,
   createDraftInvitationAction,
   updateGuestInvitationAction,
   publishGuestInvitationAction,
@@ -39,16 +45,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { GuestPhotosStep, REQUIRED_PHOTOS, type GuestMediaItem } from "./guest-photos-step";
+import { GuestPhotosStep, type GuestMediaItem } from "./guest-photos-step";
+import { MusicPicker } from "./music-picker";
 import { PublishDialog } from "./publish-dialog";
+import { RELIGIONS, ceremonyNamesFor } from "@/lib/culture-presets";
 
 type Theme = {
   slug: string;
@@ -58,10 +59,12 @@ type Theme = {
   colorPalette: { primary: string; accent: string };
 };
 
-type MusicTrack = { id: string; title: string; mood: string | null };
+type MusicTrack = { id: string; title: string; artist: string | null; mood: string | null; url: string };
 
-const STEPS = ["Couple", "Venue", "Events", "Design", "Photos", "Review"] as const;
-const STEP_ICONS = [Heart, MapPinned, CalendarDays, Palette, Images, PartyPopper] as const;
+const STEPS = ["Culture", "Couple", "Events", "Family", "Design", "Photos", "Review"] as const;
+const STEP_ICONS = [Landmark, Heart, CalendarDays, Users, Palette, Images, PartyPopper] as const;
+
+const PHOTOS_STEP = 5;
 
 const CATEGORY_TABS = [
   { value: "all", label: "All" },
@@ -72,10 +75,11 @@ const CATEGORY_TABS = [
 ] as const;
 
 const STEP_FIELDS: Record<number, (keyof InvitationWizardFormValues)[]> = {
-  0: ["brideName", "groomName", "weddingDate", "language"],
-  1: ["venueName", "venueAddress", "googleMapsUrl", "customMessage"],
-  2: ["events"],
-  3: ["themeSlug", "musicTrackId"],
+  0: ["religion", "caste"],
+  1: ["brideName", "groomName", "weddingDate"],
+  2: ["venueName", "venueAddress", "googleMapsUrl", "customMessage", "events"],
+  3: ["familyMembers"],
+  4: ["themeSlug", "musicTrackId"],
 };
 
 const DRAFT_ID_STORAGE_KEY = "einvite-guest-draft-id";
@@ -150,7 +154,8 @@ export function GuestInvitationWizard({
       venueAddress: "",
       googleMapsUrl: "",
       customMessage: "",
-      language: "EN",
+      religion: "",
+      caste: "",
       themeSlug: themes[0]?.slug ?? "royal",
       musicTrackId: undefined,
       customMusicUrl: undefined,
@@ -164,6 +169,45 @@ export function GuestInvitationWizard({
   });
 
   const eventFields = useFieldArray({ control: form.control, name: "events" });
+  const relativeFields = useFieldArray({ control: form.control, name: "familyMembers" });
+
+  // Which optional detail rows are open per event, so the card stays a name
+  // and a date until someone asks for more.
+  const [openDetails, setOpenDetails] = useState<Record<number, Set<string>>>({});
+
+  function toggleDetail(index: number, key: string) {
+    setOpenDetails((prev) => {
+      const next = new Set(prev[index] ?? []);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return { ...prev, [index]: next };
+    });
+  }
+
+  // Choosing a tradition fills the ceremony list with what it observes —
+  // only while the couple hasn't started editing events themselves, so it
+  // can never overwrite real input.
+  function applyReligion(religion: string) {
+    form.setValue("religion", religion);
+    const names = ceremonyNamesFor(religion);
+    if (names.length === 0) return;
+
+    const current = form.getValues("events") ?? [];
+    const untouched = current.every((e) => !e.date && !e.venueName && !e.time);
+    if (!untouched) return;
+
+    eventFields.replace(
+      names.map((name) => ({
+        name,
+        date: "",
+        time: "",
+        venueName: "",
+        address: "",
+        dressCode: "",
+        tagline: "",
+      })),
+    );
+  }
 
   useEffect(() => {
     if (isEditMode) return;
@@ -194,18 +238,26 @@ export function GuestInvitationWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Photos are optional: moving on without any quietly fills the gallery
+  // with ready-made ones rather than stopping to ask.
+  async function ensurePhotos() {
+    if (!invitationId || media.length > 0) return;
+    const result = await autoFillPhotosAction(invitationId);
+    if (result.success) setMedia(result.data.media);
+  }
+
   async function goNext() {
-    if (step === 4) {
-      if (media.length < REQUIRED_PHOTOS) {
-        toast.error(`Add ${REQUIRED_PHOTOS - media.length} more photo(s) to continue.`);
-        return;
-      }
+    if (step === PHOTOS_STEP) {
+      await ensurePhotos();
       setStep((s) => Math.min(s + 1, STEPS.length - 1));
       return;
     }
 
-    const valid = await form.trigger(STEP_FIELDS[step]);
-    if (!valid) return;
+    const fields = STEP_FIELDS[step];
+    if (fields) {
+      const valid = await form.trigger(fields);
+      if (!valid) return;
+    }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
@@ -235,11 +287,7 @@ export function GuestInvitationWizard({
 
   async function onSubmit(values: InvitationWizardInput) {
     if (!invitationId) return;
-    if (media.length < REQUIRED_PHOTOS) {
-      toast.error(`Add ${REQUIRED_PHOTOS - media.length} more photo(s) before publishing.`);
-      setStep(4);
-      return;
-    }
+    await ensurePhotos();
 
     setSubmitting(true);
     const result = await updateGuestInvitationAction(invitationId, values);
@@ -354,6 +402,37 @@ export function GuestInvitationWizard({
             >
             {step === 0 && (
               <>
+                <Field label="Religion">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {RELIGIONS.map((religion) => {
+                      const selected = form.watch("religion") === religion;
+                      return (
+                        <button
+                          key={religion}
+                          type="button"
+                          onClick={() => applyReligion(religion)}
+                          aria-pressed={selected}
+                          className={cn(
+                            "rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
+                            selected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "hover:border-primary/60",
+                          )}
+                        >
+                          {religion}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+                <Field label="Community or caste (optional)">
+                  <Input placeholder="Maratha, Agarwal, Syrian Catholic…" {...form.register("caste")} />
+                </Field>
+              </>
+            )}
+
+            {step === 1 && (
+              <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {(() => {
                     const brideField = (
@@ -394,122 +473,163 @@ export function GuestInvitationWizard({
                 <Field label="Wedding date" error={form.formState.errors.weddingDate?.message}>
                   <Input type="date" {...form.register("weddingDate")} />
                 </Field>
-                <Field label="Language">
-                  <Select
-                    value={form.watch("language")}
-                    onValueChange={(v) =>
-                      form.setValue("language", v as InvitationWizardInput["language"])
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {["EN", "HI", "MR", "GU", "TA", "TE", "ES", "FR"].map((lang) => (
-                        <SelectItem key={lang} value={lang}>
-                          {lang}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </>
-            )}
-
-            {step === 1 && (
-              <>
-                <Field label="Venue name">
-                  <Input {...form.register("venueName")} />
-                </Field>
-                <Field label="Venue address">
-                  <Input {...form.register("venueAddress")} />
-                </Field>
-                <Field
-                  label="Google Maps link (optional)"
-                  error={form.formState.errors.googleMapsUrl?.message}
-                >
-                  <Input placeholder="https://maps.google.com/?q=…" {...form.register("googleMapsUrl")} />
-                </Field>
-                <Field label="Custom message (optional)">
-                  <Textarea
-                    rows={3}
-                    placeholder="Anything you'd like guests to know…"
-                    {...form.register("customMessage")}
-                  />
-                </Field>
               </>
             )}
 
             {step === 2 && (
-              <div className="flex flex-col gap-4">
-                {eventFields.fields.map((field, index) => (
-                  <div key={field.id} className="grid gap-3 rounded-lg border p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Event {index + 1}</span>
-                      {eventFields.fields.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => eventFields.remove(index)}
-                        >
-                          <Trash2 className="text-destructive size-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field label="Name">
-                        <Input {...form.register(`events.${index}.name` as const)} />
-                      </Field>
-                      <Field label="Date">
-                        <Input type="date" {...form.register(`events.${index}.date` as const)} />
-                      </Field>
-                      <Field label="Time">
-                        <Input
-                          placeholder="6:00 PM onwards"
-                          {...form.register(`events.${index}.time` as const)}
-                        />
-                      </Field>
-                      <Field label="Dress code">
-                        <Input
-                          placeholder="Bridal Gold, Traditional Indian"
-                          {...form.register(`events.${index}.dressCode` as const)}
-                        />
-                      </Field>
-                      <Field label="Venue" className="sm:col-span-2">
-                        <Input {...form.register(`events.${index}.venueName` as const)} />
-                      </Field>
-                      <Field label="Tagline (optional)" className="sm:col-span-2">
-                        <Input
-                          placeholder="The groom's royal procession begins!"
-                          {...form.register(`events.${index}.tagline` as const)}
-                        />
-                      </Field>
-                    </div>
+              <div className="flex flex-col gap-5">
+                <div className="grid gap-4 rounded-lg border p-4">
+                  <p className="text-sm font-medium">Main venue</p>
+                  <Field label="Venue name">
+                    <Input {...form.register("venueName")} />
+                  </Field>
+                  <Field label="Venue address">
+                    <Input {...form.register("venueAddress")} />
+                  </Field>
+                  <Field
+                    label="Google Maps link (optional)"
+                    error={form.formState.errors.googleMapsUrl?.message}
+                  >
+                    <Input
+                      placeholder="https://maps.google.com/?q=…"
+                      {...form.register("googleMapsUrl")}
+                    />
+                  </Field>
+                  <Field label="Message for guests (optional)">
+                    <Textarea rows={2} {...form.register("customMessage")} />
+                  </Field>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm font-medium">Ceremonies</p>
+                  {eventFields.fields.map((field, index) => {
+                    const open = openDetails[index] ?? new Set<string>();
+                    const extras = [
+                      { key: "time", icon: Clock, label: "Time", placeholder: "6:00 PM onwards" },
+                      { key: "venueName", icon: MapPin, label: "Venue", placeholder: "If different from the main venue" },
+                      { key: "dressCode", icon: Shirt, label: "Dress code", placeholder: "Traditional, Bridal Gold" },
+                      { key: "tagline", icon: Quote, label: "Tagline", placeholder: "The royal procession begins!" },
+                    ] as const;
+
+                    return (
+                      <div key={field.id} className="grid gap-3 rounded-lg border p-4">
+                        <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+                          <Field label="Ceremony">
+                            <Input {...form.register(`events.${index}.name` as const)} />
+                          </Field>
+                          <Field label="Date">
+                            <Input type="date" {...form.register(`events.${index}.date` as const)} />
+                          </Field>
+                          {eventFields.fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Remove ceremony ${index + 1}`}
+                              onClick={() => eventFields.remove(index)}
+                            >
+                              <Trash2 className="text-destructive size-4" />
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {extras.map((extra) => (
+                            <button
+                              key={extra.key}
+                              type="button"
+                              onClick={() => toggleDetail(index, extra.key)}
+                              aria-pressed={open.has(extra.key)}
+                              title={extra.label}
+                              className={cn(
+                                "flex size-9 items-center justify-center rounded-full border transition-colors",
+                                open.has(extra.key)
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "text-muted-foreground hover:border-primary hover:text-foreground",
+                              )}
+                            >
+                              <extra.icon className="size-4" />
+                              <span className="sr-only">{extra.label}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {extras.some((e) => open.has(e.key)) && (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {extras
+                              .filter((extra) => open.has(extra.key))
+                              .map((extra) => (
+                                <Field key={extra.key} label={extra.label}>
+                                  <Input
+                                    placeholder={extra.placeholder}
+                                    {...form.register(`events.${index}.${extra.key}` as const)}
+                                  />
+                                </Field>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      eventFields.append({
+                        name: "",
+                        date: "",
+                        time: "",
+                        venueName: "",
+                        address: "",
+                        dressCode: "",
+                        tagline: "",
+                      })
+                    }
+                  >
+                    <Plus />
+                    Add ceremony
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="flex flex-col gap-3">
+                {relativeFields.fields.map((field, index) => (
+                  <div key={field.id} className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                    <Field label="Name">
+                      <Input {...form.register(`familyMembers.${index}.name` as const)} />
+                    </Field>
+                    <Field label="Relation">
+                      <Input
+                        placeholder="Mother of the bride, Uncle…"
+                        {...form.register(`familyMembers.${index}.relation` as const)}
+                      />
+                    </Field>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Remove relative ${index + 1}`}
+                      onClick={() => relativeFields.remove(index)}
+                    >
+                      <Trash2 className="text-destructive size-4" />
+                    </Button>
                   </div>
                 ))}
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() =>
-                    eventFields.append({
-                      name: "",
-                      date: "",
-                      time: "",
-                      venueName: "",
-                      address: "",
-                      dressCode: "",
-                      tagline: "",
-                    })
-                  }
+                  onClick={() => relativeFields.append({ side: "BRIDE", relation: "", name: "" })}
                 >
                   <Plus />
-                  Add event
+                  Add name
                 </Button>
               </div>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <>
                 <Field label="Theme">
                   <Tabs
@@ -551,24 +671,15 @@ export function GuestInvitationWizard({
                   </div>
                 </Field>
                 <Field label="Background music (optional)">
-                  <Select
-                    value={form.watch("musicTrackId")}
-                    onValueChange={(v) => {
-                      form.setValue("musicTrackId", v);
+                  <MusicPicker
+                    tracks={musicTracks}
+                    selectedId={form.watch("musicTrackId")}
+                    customUrl={form.watch("customMusicUrl")}
+                    onSelect={(id) => {
+                      form.setValue("musicTrackId", id);
                       form.setValue("customMusicUrl", undefined);
                     }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="No music" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {musicTracks.map((track) => (
-                        <SelectItem key={track.id} value={track.id}>
-                          {track.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
 
                   <input
                     ref={musicInputRef}
@@ -606,11 +717,11 @@ export function GuestInvitationWizard({
               </>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <GuestPhotosStep invitationId={invitationId} media={media} onMediaChange={setMedia} />
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <p className="flex items-center gap-2 text-sm font-medium">

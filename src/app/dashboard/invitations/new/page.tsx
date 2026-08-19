@@ -29,7 +29,7 @@ export default async function NewInvitationPage() {
           isPremium: t.isPremium,
           colorPalette: t.colorPalette as { primary: string; accent: string },
         }))}
-        musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, mood: m.mood }))}
+        musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, artist: m.artist, mood: m.mood, url: m.url }))}
       />
     </div>
   );

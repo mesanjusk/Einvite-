@@ -54,7 +54,7 @@ export default async function EditGuestInvitationPage({
             isPremium: t.isPremium,
             colorPalette: t.colorPalette as { primary: string; accent: string },
           }))}
-          musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, mood: m.mood }))}
+          musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, artist: m.artist, mood: m.mood, url: m.url }))}
           initialMedia={media.map((m) => ({ id: m.id, url: m.url, isAuto: m.isAuto }))}
           initialValues={{
             brideName: invitation.brideName,
@@ -66,7 +66,8 @@ export default async function EditGuestInvitationPage({
             venueAddress: invitation.venueAddress ?? "",
             googleMapsUrl: invitation.googleMapsUrl ?? "",
             customMessage: invitation.customMessage ?? "",
-            language: invitation.language,
+            religion: invitation.religion ?? "",
+            caste: invitation.caste ?? "",
             themeSlug: theme?.slug ?? "royal",
             musicTrackId: invitation.musicTrackId ?? undefined,
             customMusicUrl: invitation.customMusicUrl ?? undefined,

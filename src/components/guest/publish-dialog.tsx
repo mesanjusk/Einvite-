@@ -31,7 +31,7 @@ export function PublishDialog({
 }) {
   const [phase, setPhase] = useState<Phase>("phone");
   const [phone, setPhone] = useState("");
-  const [result, setResult] = useState<{ liveUrl: string; editUrl: string } | null>(null);
+  const [result, setResult] = useState<{ liveUrl: string; editUrl: string | null } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function reset() {
@@ -47,7 +47,11 @@ export function PublishDialog({
 
   function handlePublish() {
     startTransition(async () => {
-      const res = await publishGuestInvitationAction({ invitationId, phone });
+      const trimmed = phone.trim();
+      const res = await publishGuestInvitationAction({
+        invitationId,
+        ...(trimmed.length >= 6 ? { phone: trimmed } : {}),
+      });
       if (!res.success) {
         toast.error(res.error);
         return;
@@ -66,15 +70,11 @@ export function PublishDialog({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ShieldCheck className="text-primary size-5" />
-                Almost done
+                Publish
               </DialogTitle>
-              <DialogDescription>
-                Add your WhatsApp number so we can send you a private link to edit this
-                invitation later — no code, no waiting, you&apos;ll be live right away.
-              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-1.5">
-              <Label htmlFor="publish-phone">WhatsApp number</Label>
+              <Label htmlFor="publish-phone">Mobile number (optional)</Label>
               <Input
                 id="publish-phone"
                 type="tel"
@@ -84,7 +84,7 @@ export function PublishDialog({
                 autoFocus
               />
             </div>
-            <Button onClick={handlePublish} disabled={isPending || phone.trim().length < 6}>
+            <Button onClick={handlePublish} disabled={isPending}>
               {isPending ? "Publishing…" : "Publish my invitation"}
             </Button>
           </>
@@ -98,8 +98,7 @@ export function PublishDialog({
                 Your invitation is live!
               </DialogTitle>
               <DialogDescription>
-                We&apos;re also sending your shareable link and private edit link to your
-                WhatsApp — but keep this page open or bookmark the edit link below either way.
+                Bookmark your edit link — it&apos;s how you get back in.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2 text-sm">
@@ -109,12 +108,14 @@ export function PublishDialog({
                   {result.liveUrl}
                 </a>
               </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Your private edit link</Label>
-                <a href={result.editUrl} className="text-primary block truncate underline">
-                  {result.editUrl}
-                </a>
-              </div>
+              {result.editUrl && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">Your private edit link</Label>
+                  <a href={result.editUrl} className="text-primary block truncate underline">
+                    {result.editUrl}
+                  </a>
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button asChild className="flex-1">

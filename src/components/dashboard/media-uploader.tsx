@@ -7,7 +7,7 @@ import { Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { autoFillPhotosAction } from "@/lib/actions/guest-invitation";
-import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
+import { MAX_PHOTO_COUNT } from "@/lib/media/constants";
 import { compressImageFile } from "@/lib/media/compress-image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -85,15 +85,15 @@ export function MediaUploader({
     });
   }
 
-  const remaining = Math.max(0, REQUIRED_PHOTO_COUNT - media.length);
+  const remaining = Math.max(0, MAX_PHOTO_COUNT - media.length);
 
   return (
     <div className="flex flex-col gap-4">
-      {remaining > 0 && (
-        <p className="text-muted-foreground text-sm">
-          Publishing requires at least {REQUIRED_PHOTO_COUNT} photos — {remaining} more needed.
-        </p>
-      )}
+      <p className="text-muted-foreground text-sm">
+        {remaining > 0
+          ? `${remaining} of ${MAX_PHOTO_COUNT} photo slots left.`
+          : `Gallery is full (${MAX_PHOTO_COUNT} photos).`}
+      </p>
       <div className="flex flex-wrap items-center gap-3">
         <input
           ref={inputRef}

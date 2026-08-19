@@ -20,7 +20,7 @@ import { sendWhatsAppText, editLinkMessage } from "@/lib/whatsapp";
 import { issueDraftSecret, issueOwnerCookie } from "@/lib/guest-session";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
-import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
+import { DEFAULT_PHOTO_COUNT } from "@/lib/media/constants";
 
 /**
  * Shared by both the anonymous "Get started" flow and the signed-in
@@ -111,7 +111,6 @@ export async function updateGuestInvitationAction(
       groomName: data.groomName,
       weddingDateDisplay,
       venueName: data.venueName,
-      language: data.language,
       customMessage: data.customMessage,
     });
     aiGeneratedCopy = copy;
@@ -131,7 +130,8 @@ export async function updateGuestInvitationAction(
       venueAddress: data.venueAddress,
       googleMapsUrl: data.googleMapsUrl || null,
       customMessage: data.customMessage,
-      language: data.language,
+      religion: data.religion || null,
+      caste: data.caste || null,
       themeId: theme.id,
       templateId: template?.id,
       musicTrackId,
@@ -157,13 +157,14 @@ export async function updateGuestInvitationAction(
       },
       familyMembers: {
         deleteMany: {},
-        create: data.familyMembers.map((member, order) => ({
-          side: member.side,
-          relation: member.relation,
-          name: member.name,
-          photo: member.photo,
-          order,
-        })),
+        create: data.familyMembers
+          .filter((member) => member.name.trim() && member.relation.trim())
+          .map((member, order) => ({
+            side: member.side,
+            relation: member.relation.trim(),
+            name: member.name.trim(),
+            order,
+          })),
       },
     },
   });
@@ -185,7 +186,7 @@ export async function autoFillPhotosAction(
     orderBy: { order: "asc" },
   });
 
-  const needed = Math.max(0, REQUIRED_PHOTO_COUNT - existing.length);
+  const needed = Math.max(0, DEFAULT_PHOTO_COUNT - existing.length);
   if (needed > 0) {
     const urls = pickStockPhotos(
       needed,
@@ -219,7 +220,7 @@ export async function autoFillPhotosAction(
  */
 export async function publishGuestInvitationAction(
   input: { invitationId: string; phone?: string },
-): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string }>> {
+): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string | null }>> {
   const parsed = publishGuestInvitationSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -237,13 +238,30 @@ export async function publishGuestInvitationAction(
   if (!invitation.brideName || !invitation.groomName) {
     return { success: false, error: "Finish the couple details step first." };
   }
-  const mediaCount = await db.media.count({ where: { invitationId: invitation.id } });
-  if (mediaCount < REQUIRED_PHOTO_COUNT) {
-    return { success: false, error: `Add ${REQUIRED_PHOTO_COUNT} photos before publishing.` };
-  }
-
+  // The number is optional: publishing without one still works, it just
+  // means no durable cross-device edit link yet — this browser's cookie
+  // carries access, and the manage page asks for a number afterwards.
   const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : invitation.phoneLink?.phone;
-  if (!phone) return { success: false, error: "Enter a valid mobile number." };
+
+  if (!phone) {
+    const publishedWithoutPhone = await db.invitation.update({
+      where: { id: invitation.id },
+      data: { status: "PUBLISHED", publishedAt: invitation.publishedAt ?? new Date() },
+    });
+
+    const baseUrl = getAppUrl();
+    revalidatePath(`/invite/${publishedWithoutPhone.slug}`);
+    revalidatePath(`/manage/${invitation.id}`);
+
+    return {
+      success: true,
+      data: {
+        slug: publishedWithoutPhone.slug,
+        liveUrl: `${baseUrl}/invite/${publishedWithoutPhone.slug}`,
+        editUrl: null,
+      },
+    };
+  }
 
   const conflictingLink = await db.phoneLink.findUnique({ where: { phone } });
   if (conflictingLink && conflictingLink.invitationId !== invitation.id) {
