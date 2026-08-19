@@ -12,13 +12,17 @@ import {
 } from "@/lib/instagram";
 import { deleteInstagramUserData } from "@/lib/instagram-data-deletion";
 import { selectDmRule } from "@/lib/instagram-dm-rules";
+import { decideFollowGate } from "@/lib/instagram-follow-gate";
 import { SUPPORT_EMAIL } from "@/config/legal";
 
 const DM_DELETED_MESSAGE =
   "Done — your data is deleted. Your invitation, its link, your follower status, and your comment history are gone. Comment FREE any time to start fresh.";
 const DM_DELETE_FAILED_MESSAGE = `Sorry, we couldn't delete your data just now. Please email ${SUPPORT_EMAIL} with subject DELETE and we'll do it by hand.`;
+// Worded to fit both a confirmed non-follower and one we simply couldn't
+// verify: "make sure you're following" is true either way, and the second
+// comment is what lets the check resolve.
 const DEFAULT_NOT_FOLLOWING_MESSAGE =
-  "Please follow us first, then comment again to get your free invite link!";
+  "Please make sure you're following us, then comment again to get your free invite link!";
 // Only a positive follow result is cached. Someone told to follow first will
 // follow and re-comment within seconds, so a cached "not following" would
 // keep locking them out — negatives are always re-checked live.
@@ -225,11 +229,20 @@ async function handleCommentChange(
       return;
     }
 
-    // Optional follow gate. Fails open: an unresolvable check sends the link
-    // rather than turning away someone who may well be a follower.
+    // Optional follow gate. Fails *closed* (see decideFollowGate): a status
+    // Instagram won't resolve — its usual answer for someone who has never
+    // messaged the account — asks them to follow and comment again instead
+    // of handing over the link, which is what "followers only" has to mean
+    // to be worth anything. The reply is a private reply to the comment, so
+    // it opens a conversation and the next comment resolves for real.
     if (automation.requireFollow && igUserId) {
       const isFollower = await resolveFollowStatus(igUserId, username);
-      if (isFollower === false) {
+      const decision = decideFollowGate({
+        requireFollow: automation.requireFollow,
+        isFollower,
+      });
+
+      if (decision !== "ALLOW") {
         const followText = renderInstagramTemplate(
           automation.notFollowingMessage || DEFAULT_NOT_FOLLOWING_MESSAGE,
           { link: "", username: username ?? "" },
@@ -242,7 +255,14 @@ async function handleCommentChange(
           data: {
             ...logBase,
             automationId: automation.id,
-            outcome: delivered ? "NOT_FOLLOWING" : "SEND_FAILED",
+            // Logged apart from a confirmed non-follower so the dashboard
+            // shows when the gate is turning people away on an unresolved
+            // check rather than on a real "doesn't follow us".
+            outcome: delivered
+              ? decision === "UNVERIFIED"
+                ? "FOLLOW_UNVERIFIED"
+                : "NOT_FOLLOWING"
+              : "SEND_FAILED",
             replyText: followText,
             error: delivered ? null : "Send API rejected the follow-first reply",
           },

@@ -33,6 +33,7 @@ const OUTCOME_LABELS: Record<
   NO_AUTOMATION: { label: "No automation", variant: "outline" },
   AUTOMATION_INACTIVE: { label: "Paused", variant: "outline" },
   NOT_FOLLOWING: { label: "Asked to follow", variant: "secondary" },
+  FOLLOW_UNVERIFIED: { label: "Follow unverified", variant: "secondary" },
   SEND_FAILED: { label: "Send failed", variant: "destructive" },
 };
 
