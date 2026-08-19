@@ -107,7 +107,7 @@ export function VideoTemplateFormDialog({ template }: { template?: VideoTemplate
           </IconButton>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{template ? `Edit ${template.name}` : "New video template"}</DialogTitle>
         </DialogHeader>
@@ -151,7 +151,7 @@ export function VideoTemplateFormDialog({ template }: { template?: VideoTemplate
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="grid gap-1.5">
               <Label>Aspect ratio</Label>
               <select
