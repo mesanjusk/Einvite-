@@ -13,6 +13,7 @@ import {
   type VideoTemplateFormInput,
   type VideoTemplateFormValues,
 } from "@/lib/validations/admin";
+import { AUTO_VIDEO_MODEL } from "@/lib/ai/gemini-video";
 import { upsertVideoTemplateAction } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -55,7 +56,7 @@ function defaultValues(template?: VideoTemplateRecord): VideoTemplateFormValues 
       template?.promptTemplate ??
       "A cinematic, romantic wedding invitation teaser for {{coupleNames}}, celebrating on {{weddingDate}}.",
     styleKeywords: template?.styleKeywords ?? [],
-    geminiModel: template?.geminiModel ?? "veo-3.0-generate-001",
+    geminiModel: template?.geminiModel ?? AUTO_VIDEO_MODEL,
     isPremium: template?.isPremium ?? false,
     sortOrder: template?.sortOrder ?? 0,
   };
@@ -180,6 +181,11 @@ export function VideoTemplateFormDialog({ template }: { template?: VideoTemplate
             <div className="grid gap-1.5">
               <Label>Gemini model</Label>
               <Input {...form.register("geminiModel")} />
+              <p className="text-muted-foreground text-xs">
+                Leave as <code>{AUTO_VIDEO_MODEL}</code> to use the best video model the
+                generating key can reach. A pinned ID that the key can&apos;t reach falls back
+                to that same choice.
+              </p>
             </div>
           </div>
 

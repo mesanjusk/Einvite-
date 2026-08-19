@@ -1,11 +1,37 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  AUTO_VIDEO_MODEL,
+  NO_VIDEO_MODEL_ERROR,
   buildVideoPrompt,
   isGeminiVideoConfigured,
+  listGeminiVideoModels,
+  pickVideoModel,
   startGeminiVideoGeneration,
   pollGeminiVideoOperation,
 } from "./gemini-video";
+
+/** A ListModels page as Gemini returns it, for the model-discovery paths. */
+function modelListResponse(models: { name: string; video?: boolean }[], nextPageToken?: string) {
+  return new Response(
+    JSON.stringify({
+      models: models.map((model) => ({
+        name: `models/${model.name}`,
+        supportedGenerationMethods: model.video === false ? ["generateContent"] : ["predictLongRunning"],
+      })),
+      ...(nextPageToken ? { nextPageToken } : {}),
+    }),
+    { status: 200 },
+  );
+}
+
+const NOT_FOUND_BODY = JSON.stringify({
+  error: {
+    code: 404,
+    message: "models/veo-3.0-generate-001 is not found for API version v1beta, or is not supported for predictLongRunning.",
+    status: "NOT_FOUND",
+  },
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -109,7 +135,7 @@ describe("startGeminiVideoGeneration", () => {
       apiKey: "own-key",
     });
 
-    expect(result).toEqual({ ok: true, operationName: "operations/abc123" });
+    expect(result).toEqual({ ok: true, operationName: "operations/abc123", model: "veo-3.0-generate-001" });
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(
       "https://generativelanguage.googleapis.com/v1beta/models/veo-3.0-generate-001:predictLongRunning?key=own-key",
@@ -141,6 +167,110 @@ describe("startGeminiVideoGeneration", () => {
 
     const result = await startGeminiVideoGeneration("p", { model: "m", aspectRatio: "9:16" });
     expect(result).toEqual({ ok: false, error: "Gemini API error (429)" });
+  });
+
+  it("includes Gemini's own message when the failure body is a JSON API error", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: "Quota exceeded for quota metric" } }), { status: 429 }),
+      ),
+    );
+
+    const result = await startGeminiVideoGeneration("p", { model: "m", aspectRatio: "9:16" });
+    expect(result).toEqual({
+      ok: false,
+      error: "Gemini API error (429): Quota exceeded for quota metric",
+    });
+  });
+
+  it("retries with a model the key can reach when the template's model 404s", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(NOT_FOUND_BODY, { status: 404 }))
+      .mockResolvedValueOnce(modelListResponse([{ name: "veo-3.1-generate-preview" }]))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ name: "operations/retried" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await startGeminiVideoGeneration("p", {
+      model: "veo-3.0-generate-001",
+      aspectRatio: "9:16",
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      operationName: "operations/retried",
+      model: "veo-3.1-generate-preview",
+    });
+    expect(fetchMock.mock.calls[2][0]).toContain("models/veo-3.1-generate-preview:predictLongRunning");
+  });
+
+  it("explains that the key has no video models when nothing can replace a 404ing one", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(new Response(NOT_FOUND_BODY, { status: 404 }))
+        .mockResolvedValueOnce(modelListResponse([{ name: "gemini-2.5-flash", video: false }])),
+    );
+
+    const result = await startGeminiVideoGeneration("p", {
+      model: "veo-3.0-generate-001",
+      aspectRatio: "9:16",
+    });
+    expect(result).toEqual({ ok: false, error: NO_VIDEO_MODEL_ERROR });
+  });
+
+  it("resolves an \"auto\" template against the key's own model list before generating", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        modelListResponse([{ name: "veo-2.0-generate-001" }, { name: "veo-3.0-generate-001" }]),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ name: "operations/auto" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await startGeminiVideoGeneration("p", {
+      model: AUTO_VIDEO_MODEL,
+      aspectRatio: "9:16",
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      operationName: "operations/auto",
+      model: "veo-3.0-generate-001",
+    });
+  });
+
+  it("fails an \"auto\" template cleanly when the key has no video models at all", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(modelListResponse([])));
+
+    const result = await startGeminiVideoGeneration("p", {
+      model: AUTO_VIDEO_MODEL,
+      aspectRatio: "9:16",
+    });
+    expect(result).toEqual({ ok: false, error: NO_VIDEO_MODEL_ERROR });
+  });
+
+  it("blames a rejected key rather than the tier when the model list itself fails", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: "API key not valid." } }), { status: 400 }),
+      ),
+    );
+
+    const result = await startGeminiVideoGeneration("p", {
+      model: AUTO_VIDEO_MODEL,
+      aspectRatio: "9:16",
+    });
+    expect(result).toEqual({ ok: false, error: "Gemini API error (400): API key not valid." });
   });
 
   it("surfaces an error when the response has no operation name", async () => {
@@ -244,11 +374,102 @@ describe("pollGeminiVideoOperation", () => {
     expect(result).toEqual({ status: "FAILED", error: "Gemini API error (404)" });
   });
 
+  it("includes Gemini's own message on a JSON poll failure", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: "Operation not found" } }), { status: 404 }),
+      ),
+    );
+
+    const result = await pollGeminiVideoOperation("operations/abc");
+    expect(result).toEqual({ status: "FAILED", error: "Gemini API error (404): Operation not found" });
+  });
+
   it("catches a network throw while polling", async () => {
     vi.stubEnv("GEMINI_API_KEY", "env-key");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("timeout")));
 
     const result = await pollGeminiVideoOperation("operations/abc");
     expect(result).toEqual({ status: "FAILED", error: "Could not reach the Gemini API." });
+  });
+});
+
+describe("listGeminiVideoModels", () => {
+  it("returns only long-running video models, unprefixed, across pages", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          modelListResponse([{ name: "gemini-2.5-flash", video: false }, { name: "veo-3.0-generate-001" }], "page-2"),
+        )
+        .mockResolvedValueOnce(modelListResponse([{ name: "veo-2.0-generate-001" }])),
+    );
+
+    expect(await listGeminiVideoModels("k")).toEqual({
+      models: ["veo-3.0-generate-001", "veo-2.0-generate-001"],
+    });
+  });
+
+  it("reports why listing failed rather than throwing", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: "API key not valid." } }), { status: 400 }),
+      ),
+    );
+    expect(await listGeminiVideoModels("k")).toEqual({
+      models: [],
+      error: "Gemini API error (400): API key not valid.",
+    });
+
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNRESET")));
+    expect(await listGeminiVideoModels("k")).toEqual({
+      models: [],
+      error: "Could not reach the Gemini API.",
+    });
+  });
+});
+
+describe("pickVideoModel", () => {
+  const available = [
+    "veo-2.0-generate-001",
+    "veo-3.0-fast-generate-001",
+    "veo-3.0-generate-001",
+    "veo-3.1-generate-preview",
+  ];
+
+  it("honours the template's model when the key can reach it", () => {
+    expect(pickVideoModel(available, "veo-2.0-generate-001")).toBe("veo-2.0-generate-001");
+  });
+
+  it("prefers the newest family when the template's model is unreachable", () => {
+    expect(pickVideoModel(available, "veo-9.9-imaginary")).toBe("veo-3.1-generate-preview");
+  });
+
+  it("prefers full quality over fast within the same family", () => {
+    expect(pickVideoModel(["veo-3.0-fast-generate-001", "veo-3.0-generate-001"])).toBe(
+      "veo-3.0-generate-001",
+    );
+  });
+
+  it("prefers a stable release over a preview of the same family", () => {
+    expect(pickVideoModel(["veo-3.0-generate-preview", "veo-3.0-generate-001"])).toBe(
+      "veo-3.0-generate-001",
+    );
+  });
+
+  it("never returns the auto sentinel and resolves it like no preference", () => {
+    expect(pickVideoModel(available, AUTO_VIDEO_MODEL)).toBe("veo-3.1-generate-preview");
+  });
+
+  it("falls back to a non-Veo video model rather than nothing", () => {
+    expect(pickVideoModel(["some-other-video-model"])).toBe("some-other-video-model");
+  });
+
+  it("returns null when the key has no video models", () => {
+    expect(pickVideoModel([], "veo-3.0-generate-001")).toBeNull();
   });
 });

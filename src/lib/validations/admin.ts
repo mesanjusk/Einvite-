@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { AUTO_VIDEO_MODEL } from "@/lib/ai/gemini-video";
+
 export const colorPaletteSchema = z.object({
   primary: z.string().min(1),
   secondary: z.string().min(1),
@@ -96,7 +98,7 @@ export const videoTemplateFormSchema = z.object({
   durationSeconds: z.coerce.number().int().min(5).max(60).default(15),
   promptTemplate: z.string().min(1, "Prompt template is required"),
   styleKeywords: z.array(z.string()).default([]),
-  geminiModel: z.string().min(1).default("veo-3.0-generate-001"),
+  geminiModel: z.string().min(1).default(AUTO_VIDEO_MODEL),
   isPremium: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
 });

@@ -426,7 +426,7 @@ export const VIDEO_TEMPLATES = [
     promptTemplate:
       "A cinematic, romantic wedding invitation teaser for {{coupleNames}}, announcing their wedding on {{weddingDate}}. Warm golden-hour lighting, gentle camera movement, elegant typography overlay with the couple's names.",
     styleKeywords: ["golden hour", "romantic", "slow motion", "elegant"],
-    geminiModel: "veo-3.0-generate-001",
+    geminiModel: "auto",
     isPremium: false,
     sortOrder: 0,
   },

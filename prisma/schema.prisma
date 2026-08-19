@@ -227,7 +227,9 @@ model VideoTemplate {
   // invitation's own captured details at generation time.
   promptTemplate  String
   styleKeywords   Json? // string[] of mood/style keywords appended to the prompt
-  geminiModel     String  @default("veo-3.0-generate-001")
+  // "auto" resolves to the best video model the generating key can
+  // actually reach; a pinned ID is still honoured when it's available.
+  geminiModel     String  @default("auto")
   isPremium       Boolean @default(false)
   sortOrder       Int     @default(0)
 
@@ -597,6 +599,9 @@ model InvitationVideo {
   prompt            String
   videoUrl          String?
   geminiOperationId String?
+  // The model the job actually ran on — not always the template's, since
+  // an unreachable pinned model falls back to one the key can reach.
+  geminiModel       String?
   error             String?
 
   createdAt DateTime @default(now())
