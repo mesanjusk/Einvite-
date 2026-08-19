@@ -13,7 +13,11 @@ const TABS = [
   { href: "/admin/library/music", label: "Music" },
 ];
 
-export default function AdminLibraryLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLibraryLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
 
   return (
