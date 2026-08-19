@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-
 import { db } from "@/lib/db";
-import { cn } from "@/lib/utils";
 import {
   fetchInstagramMedia,
   fetchRecentInstagramMedia,
@@ -20,6 +17,7 @@ import {
   deleteInstagramDmRuleAction,
 } from "@/lib/actions/admin";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { TabNav } from "@/components/dashboard/tab-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -51,10 +49,11 @@ const DM_MATCH_LABELS: Record<string, string> = {
   ANY: "any message",
 };
 
-// The page is four views over the same account rather than one long scroll.
+// The page is five views over the same account rather than one long scroll.
 // Which one is showing lives in the URL, so only the active view's data — and
 // in particular only its Instagram API lookups — is fetched per request.
 const TABS = [
+  { id: "automations", label: "Reel automations" },
   { id: "reels", label: "Unautomated reels" },
   { id: "posts", label: "Recent posts" },
   { id: "dms", label: "Direct message replies" },
@@ -63,7 +62,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-const DEFAULT_TAB: TabId = "reels";
+const DEFAULT_TAB: TabId = "automations";
 
 function tabHref(id: TabId) {
   return id === DEFAULT_TAB ? "/admin/instagram" : `/admin/instagram?tab=${id}`;
@@ -80,6 +79,17 @@ async function resolveMedia(mediaIds: string[]) {
   return new Map<string, InstagramMedia>(
     resolved.filter((m): m is InstagramMedia => m !== null).map((m) => [m.id, m]),
   );
+}
+
+/**
+ * The automations, with the counts the cards show. Split out so the panel can
+ * take its rows as a prop without restating their shape.
+ */
+function loadAutomations() {
+  return db.instagramAutomation.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { leads: true, logs: true } } },
+  });
 }
 
 function EmptyPanel({ children }: { children: React.ReactNode }) {
@@ -102,15 +112,17 @@ export default async function AdminInstagramPage({
     TABS.find((t) => t.id === tab)?.id ?? DEFAULT_TAB;
 
   const [automations, dmRuleCount] = await Promise.all([
-    db.instagramAutomation.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { _count: { select: { leads: true, logs: true } } },
-    }),
+    loadAutomations(),
     db.instagramDmRule.count(),
   ]);
 
+  // Only the automations tab renders thumbnails; the other tabs need nothing
+  // from this set beyond which media already have a rule.
   const automatedMediaIds = new Set(automations.map((a) => a.mediaId));
-  const automationMedia = await resolveMedia([...automatedMediaIds]);
+  const automationMedia =
+    activeTab === "automations"
+      ? await resolveMedia([...automatedMediaIds])
+      : new Map<string, InstagramMedia>();
 
   return (
     <div className="flex flex-col gap-6">
@@ -131,130 +143,17 @@ export default async function AdminInstagramPage({
         </Card>
       )}
 
-      {automations.length === 0 ? (
-        <EmptyPanel>
-          No reel automations yet — comments are logged but never replied to.
-        </EmptyPanel>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {automations.map((automation) => {
-            const media = automationMedia.get(automation.mediaId);
-            const permalink = automation.permalink ?? media?.permalink;
+      <TabNav
+        items={TABS.map((t) => ({
+          href: tabHref(t.id),
+          label: t.label,
+          active: activeTab === t.id,
+        }))}
+      />
 
-            return (
-              <Card key={automation.id} className="py-0">
-                <CardContent className="flex flex-col gap-3 py-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex min-w-0 items-start gap-3">
-                      {media?.thumbnailUrl && (
-                        // Instagram CDN URLs are signed and short-lived, so they
-                        // are served straight through, not via the optimiser.
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={media.thumbnailUrl}
-                          alt=""
-                          className="size-12 shrink-0 rounded-md object-cover"
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{automation.label}</p>
-                        <p className="text-muted-foreground truncate font-mono text-xs">
-                          {automation.mediaId}
-                        </p>
-                        {media?.caption && (
-                          <p className="text-muted-foreground truncate text-xs">
-                            {media.caption}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <InstagramAutomationToggle
-                        automationId={automation.id}
-                        isActive={automation.isActive}
-                      />
-                      <InstagramAutomationFormDialog
-                        automation={{
-                          id: automation.id,
-                          mediaId: automation.mediaId,
-                          label: automation.label,
-                          permalink: automation.permalink,
-                          triggerWord: automation.triggerWord,
-                          replyMessage: automation.replyMessage,
-                          duplicateMessage: automation.duplicateMessage,
-                          requireFollow: automation.requireFollow,
-                          notFollowingMessage: automation.notFollowingMessage,
-                          isActive: automation.isActive,
-                        }}
-                      />
-                      <DeleteEntityButton
-                        id={automation.id}
-                        confirmLabel={`Delete the ${automation.label} automation? Its claim history goes too.`}
-                        action={deleteInstagramAutomationAction}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={automation.isActive ? "default" : "outline"}>
-                      {automation.isActive ? "Active" : "Paused"}
-                    </Badge>
-                    <Badge variant="secondary">Trigger: {automation.triggerWord}</Badge>
-                    {automation.requireFollow && (
-                      <Badge variant="outline">Followers only</Badge>
-                    )}
-                  </div>
-
-                  <p className="text-muted-foreground line-clamp-2 text-xs">
-                    {automation.replyMessage}
-                  </p>
-
-                  <p className="text-muted-foreground text-xs">
-                    {automation._count.leads} link(s) claimed · {automation._count.logs}{" "}
-                    comment(s) logged
-                    {permalink && (
-                      <>
-                        {" · "}
-                        <a
-                          href={permalink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="underline underline-offset-2"
-                        >
-                          View reel
-                        </a>
-                      </>
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+      {activeTab === "automations" && (
+        <AutomationsPanel automations={automations} media={automationMedia} />
       )}
-
-      {/* Bleeds to the screen edge on small viewports so the row scrolls
-          sideways instead of squeezing four labels into a phone's width. */}
-      <div className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-        <nav className="bg-muted text-muted-foreground inline-flex w-max items-center gap-1 rounded-lg p-1">
-          {TABS.map((t) => (
-            <Link
-              key={t.id}
-              href={tabHref(t.id)}
-              aria-current={activeTab === t.id ? "page" : undefined}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm whitespace-nowrap transition-colors",
-                activeTab === t.id
-                  ? "bg-background text-foreground shadow-sm"
-                  : "hover:text-foreground",
-              )}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
       {activeTab === "reels" && (
         <UnautomatedReelsPanel automatedMediaIds={automatedMediaIds} />
       )}
@@ -263,6 +162,120 @@ export default async function AdminInstagramPage({
       )}
       {activeTab === "dms" && <DirectMessagesPanel />}
       {activeTab === "comments" && <RecentCommentsPanel />}
+    </div>
+  );
+}
+
+function AutomationsPanel({
+  automations,
+  media: automationMedia,
+}: {
+  automations: Awaited<ReturnType<typeof loadAutomations>>;
+  media: Map<string, InstagramMedia>;
+}) {
+  if (automations.length === 0) {
+    return (
+      <EmptyPanel>
+        No reel automations yet — comments are logged but never replied to.
+      </EmptyPanel>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      {automations.map((automation) => {
+        const media = automationMedia.get(automation.mediaId);
+        const permalink = automation.permalink ?? media?.permalink;
+
+        return (
+          <Card key={automation.id} className="py-0">
+            <CardContent className="flex flex-col gap-3 py-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 items-start gap-3">
+                  {media?.thumbnailUrl && (
+                    // Instagram CDN URLs are signed and short-lived, so they
+                    // are served straight through, not via the optimiser.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={media.thumbnailUrl}
+                      alt=""
+                      className="size-12 shrink-0 rounded-md object-cover"
+                    />
+                  )}
+              <div className="min-w-0">
+                    <p className="truncate font-medium">{automation.label}</p>
+                    <p className="text-muted-foreground truncate font-mono text-xs">
+                      {automation.mediaId}
+                    </p>
+                    {media?.caption && (
+                      <p className="text-muted-foreground truncate text-xs">
+                        {media.caption}
+                      </p>
+                    )}
+                  </div>
+                </div>
+            <div className="flex shrink-0 items-center gap-1">
+                  <InstagramAutomationToggle
+                    automationId={automation.id}
+                    isActive={automation.isActive}
+                  />
+                  <InstagramAutomationFormDialog
+                    automation={{
+                      id: automation.id,
+                      mediaId: automation.mediaId,
+                      label: automation.label,
+                      permalink: automation.permalink,
+                      triggerWord: automation.triggerWord,
+                      replyMessage: automation.replyMessage,
+                      duplicateMessage: automation.duplicateMessage,
+                      requireFollow: automation.requireFollow,
+                      notFollowingMessage: automation.notFollowingMessage,
+                      isActive: automation.isActive,
+                    }}
+                  />
+                  <DeleteEntityButton
+                    id={automation.id}
+                    confirmLabel={`Delete the ${automation.label} automation? Its claim history goes too.`}
+                    action={deleteInstagramAutomationAction}
+                  />
+                </div>
+              </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={automation.isActive ? "default" : "outline"}>
+                  {automation.isActive ? "Active" : "Paused"}
+                </Badge>
+                <Badge variant="secondary">Trigger: {automation.triggerWord}</Badge>
+                {automation.requireFollow && (
+                  <Badge variant="outline">Followers only</Badge>
+                )}
+              </div>
+
+              <p className="text-muted-foreground line-clamp-2 text-xs">
+                {automation.replyMessage}
+              </p>
+
+              <p className="text-muted-foreground text-xs">
+                {automation._count.leads} link(s) claimed · {automation._count.logs}{" "}
+                comment(s) logged
+                {permalink && (
+                  <>
+                    {" · "}
+                    <a
+                      href={permalink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-2"
+                    >
+                      View reel
+                    </a>
+                  </>
+                )}
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

@@ -90,9 +90,9 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     },
   });
 
-  const adminPath = data.type === "PDF" ? "/admin/pdf-themes" : "/admin/themes";
+  const adminPath = data.type === "PDF" ? "/admin/library/pdf-themes" : "/admin/library/themes";
   revalidatePath(adminPath);
-  revalidatePath("/dashboard/templates");
+  revalidatePath("/dashboard/invitations/templates");
   revalidatePath("/dashboard/invitations/new");
   revalidatePath("/dashboard/publish/theme");
   revalidatePath("/dashboard/publish/pdf");
@@ -133,7 +133,7 @@ export async function upsertPdfTemplatePagesAction(input: {
     data: { pages: parsed.data },
   });
 
-  revalidatePath("/admin/pdf-themes");
+  revalidatePath("/admin/library/pdf-themes");
   return { success: true, data: undefined };
 }
 
@@ -157,7 +157,7 @@ export async function deleteThemeAction(themeId: string): Promise<ActionResult> 
   await db.template.deleteMany({ where: { themeId } });
   await db.theme.delete({ where: { id: themeId } });
 
-  revalidatePath(theme.type === "PDF" ? "/admin/pdf-themes" : "/admin/themes");
+  revalidatePath(theme.type === "PDF" ? "/admin/library/pdf-themes" : "/admin/library/themes");
   return { success: true, data: undefined };
 }
 
@@ -209,7 +209,7 @@ export async function upsertMusicTrackAction(
     });
   }
 
-  revalidatePath("/admin/music");
+  revalidatePath("/admin/library/music");
   revalidatePath("/dashboard/media");
   revalidatePath("/dashboard/invitations/new");
 
@@ -229,7 +229,7 @@ export async function deleteMusicTrackAction(trackId: string): Promise<ActionRes
   }
 
   await db.musicTrack.delete({ where: { id: trackId } });
-  revalidatePath("/admin/music");
+  revalidatePath("/admin/library/music");
   return { success: true, data: undefined };
 }
 
@@ -336,7 +336,7 @@ export async function upsertVideoTemplateAction(
     await db.videoTemplate.create({ data: fields });
   }
 
-  revalidatePath("/admin/video-templates");
+  revalidatePath("/admin/library/video-templates");
   revalidatePath("/dashboard/publish/video");
 
   return { success: true, data: undefined };
@@ -359,7 +359,7 @@ export async function deleteVideoTemplateAction(
   await db.invitationVideo.deleteMany({ where: { videoTemplateId } });
   await db.videoTemplate.delete({ where: { id: videoTemplateId } });
 
-  revalidatePath("/admin/video-templates");
+  revalidatePath("/admin/library/video-templates");
   return { success: true, data: undefined };
 }
 
@@ -657,7 +657,7 @@ export async function upsertThemeColorwayAction(
     await db.themeColorway.create({ data: fields });
   }
 
-  revalidatePath("/admin/themes");
+  revalidatePath("/admin/library/themes");
   revalidatePath("/");
   return { success: true, data: undefined };
 }
@@ -678,6 +678,6 @@ export async function deleteThemeColorwayAction(
 
   await db.themeColorway.delete({ where: { id: colorwayId } });
 
-  revalidatePath("/admin/themes");
+  revalidatePath("/admin/library/themes");
   return { success: true, data: undefined };
 }

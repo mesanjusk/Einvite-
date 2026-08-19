@@ -14,7 +14,7 @@ import { pickStockPhotos } from "./media/stock-photos";
 import { newPdfPlaceholder, type PdfTemplatePage } from "./validations/pdf-template";
 
 // A simple starter layout so "Elegant Print" is usable out of the box —
-// admins can redesign it entirely from /admin/pdf-themes/[id].
+// admins can redesign it entirely from /admin/library/pdf-themes/[id].
 const DEFAULT_PDF_PAGES: PdfTemplatePage[] = [
   {
     id: "page-1",
