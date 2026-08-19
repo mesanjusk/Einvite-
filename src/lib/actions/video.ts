@@ -135,7 +135,13 @@ export async function generateInvitationVideoAction(
   await db.invitationVideo.update({
     where: { id: video.id },
     data: started.ok
-      ? { status: "PROCESSING", geminiOperationId: started.operationName }
+      ? {
+          status: "PROCESSING",
+          geminiOperationId: started.operationName,
+          // Which model actually ran — the template's pinned one, or the
+          // fallback picked when the key couldn't reach it.
+          geminiModel: started.model,
+        }
       : { status: "FAILED", error: started.error },
   });
 
