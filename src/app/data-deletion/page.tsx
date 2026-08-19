@@ -34,10 +34,10 @@ export default function DataDeletionPage() {
 
       <p>
         Deletion removes your Instagram user ID, your username, your stored follower
-        status, every comment of yours we logged, and your invitation together with its
-        access link, photos, events, and guest list. It cannot be undone — the
-        invitation link stops working immediately. You are welcome to start again at any
-        time by commenting on one of our posts.
+        status, every comment of yours we logged, the direct messages you sent us, and
+        your invitation together with its access link, photos, events, and guest list.
+        It cannot be undone — the invitation link stops working immediately. You are
+        welcome to start again at any time by commenting on one of our posts.
       </p>
     </LegalPage>
   );

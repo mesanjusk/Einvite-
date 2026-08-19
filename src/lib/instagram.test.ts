@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchInstagramFollowStatus,
   isInstagramSendConfigured,
+  renderInstagramTemplate,
   sendInstagramMessage,
 } from "./instagram";
 
@@ -79,7 +80,9 @@ describe("sendInstagramMessage", () => {
 describe("fetchInstagramFollowStatus", () => {
   it("returns the follower flag and username when Instagram resolves the user", async () => {
     vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
-    stubFetch({ json: async () => ({ username: "priya", is_user_follow_business: true }) });
+    stubFetch({
+      json: async () => ({ username: "priya", is_user_follow_business: true }),
+    });
 
     await expect(fetchInstagramFollowStatus("123")).resolves.toEqual({
       isFollower: true,
@@ -89,7 +92,9 @@ describe("fetchInstagramFollowStatus", () => {
 
   it("distinguishes a real 'not following' from an unresolvable lookup", async () => {
     vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
-    stubFetch({ json: async () => ({ username: "priya", is_user_follow_business: false }) });
+    stubFetch({
+      json: async () => ({ username: "priya", is_user_follow_business: false }),
+    });
 
     await expect(fetchInstagramFollowStatus("123")).resolves.toEqual({
       isFollower: false,
@@ -115,7 +120,9 @@ describe("fetchInstagramFollowStatus", () => {
     stubFetch({ ok: false, status: 400, text: async () => "nope" });
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(fetchInstagramFollowStatus("123")).resolves.toEqual({ isFollower: null });
+    await expect(fetchInstagramFollowStatus("123")).resolves.toEqual({
+      isFollower: null,
+    });
   });
 
   it("returns null on a network throw rather than propagating", async () => {
@@ -123,6 +130,19 @@ describe("fetchInstagramFollowStatus", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(fetchInstagramFollowStatus("123")).resolves.toEqual({ isFollower: null });
+    await expect(fetchInstagramFollowStatus("123")).resolves.toEqual({
+      isFollower: null,
+    });
+  });
+});
+
+describe("renderInstagramTemplate", () => {
+  it("fills every occurrence of both placeholders", () => {
+    expect(
+      renderInstagramTemplate("Hi {{username}}, here: {{link}} — again: {{link}}", {
+        link: "https://x.test/e/abc",
+        username: "priya",
+      }),
+    ).toBe("Hi priya, here: https://x.test/e/abc — again: https://x.test/e/abc");
   });
 });

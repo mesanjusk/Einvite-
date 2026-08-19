@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { deleteImage, isCloudinaryConfigured } from "@/lib/media/cloudinary";
+import { fetchInstagramMedia, type InstagramMedia } from "@/lib/instagram";
 import { generateToken, hashToken } from "@/lib/otp";
 import { getAppUrl } from "@/lib/app-url";
 import type { ActionResult } from "@/lib/actions/auth";
@@ -14,14 +15,19 @@ import {
   updateUserRoleSchema,
   videoTemplateFormSchema,
   instagramAutomationFormSchema,
+  instagramDmRuleFormSchema,
   themeColorwayFormSchema,
   type ThemeFormInput,
   type MusicTrackFormInput,
   type VideoTemplateFormInput,
   type InstagramAutomationFormInput,
+  type InstagramDmRuleFormInput,
   type ThemeColorwayFormInput,
 } from "@/lib/validations/admin";
-import { pdfTemplatePagesSchema, type PdfTemplatePage } from "@/lib/validations/pdf-template";
+import {
+  pdfTemplatePagesSchema,
+  type PdfTemplatePage,
+} from "@/lib/validations/pdf-template";
 
 async function requireAdmin() {
   const session = await auth();
@@ -37,13 +43,17 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
 
   const parsed = themeFormSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
   const data = parsed.data;
 
   if (!data.id) {
     const existing = await db.theme.findUnique({ where: { slug: data.slug } });
-    if (existing) return { success: false, error: "A theme with this slug already exists." };
+    if (existing)
+      return { success: false, error: "A theme with this slug already exists." };
   }
 
   const themeFields = {
@@ -67,7 +77,11 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
 
   await db.template.upsert({
     where: { slug: `${theme.slug}-classic` },
-    update: { name: `${theme.name} Classic`, themeId: theme.id, sectionOrder: data.sectionOrder },
+    update: {
+      name: `${theme.name} Classic`,
+      themeId: theme.id,
+      sectionOrder: data.sectionOrder,
+    },
     create: {
       name: `${theme.name} Classic`,
       slug: `${theme.slug}-classic`,
@@ -99,17 +113,25 @@ export async function upsertPdfTemplatePagesAction(input: {
   if (!session) return { success: false, error: "Admin access required." };
 
   const theme = await db.theme.findUnique({ where: { id: input.themeId } });
-  if (!theme || theme.type !== "PDF") return { success: false, error: "PDF theme not found." };
+  if (!theme || theme.type !== "PDF")
+    return { success: false, error: "PDF theme not found." };
 
   const parsed = pdfTemplatePagesSchema.safeParse(input.pages);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid pages" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid pages",
+    };
   }
 
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
-  if (!template) return { success: false, error: "This theme has no template row yet." };
+  if (!template)
+    return { success: false, error: "This theme has no template row yet." };
 
-  await db.template.update({ where: { id: template.id }, data: { pages: parsed.data } });
+  await db.template.update({
+    where: { id: template.id },
+    data: { pages: parsed.data },
+  });
 
   revalidatePath("/admin/pdf-themes");
   return { success: true, data: undefined };
@@ -147,7 +169,10 @@ export async function upsertMusicTrackAction(
 
   const parsed = musicTrackFormSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
   const data = parsed.data;
 
@@ -275,13 +300,20 @@ export async function upsertVideoTemplateAction(
 
   const parsed = videoTemplateFormSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
   const data = parsed.data;
 
   if (!data.id) {
     const existing = await db.videoTemplate.findUnique({ where: { slug: data.slug } });
-    if (existing) return { success: false, error: "A video template with this slug already exists." };
+    if (existing)
+      return {
+        success: false,
+        error: "A video template with this slug already exists.",
+      };
   }
 
   const fields = {
@@ -310,7 +342,9 @@ export async function upsertVideoTemplateAction(
   return { success: true, data: undefined };
 }
 
-export async function deleteVideoTemplateAction(videoTemplateId: string): Promise<ActionResult> {
+export async function deleteVideoTemplateAction(
+  videoTemplateId: string,
+): Promise<ActionResult> {
   const session = await requireAdmin();
   if (!session) return { success: false, error: "Admin access required." };
 
@@ -337,9 +371,10 @@ export async function adminDeleteMediaAction(mediaId: string): Promise<ActionRes
   if (!media) return { success: false, error: "Not found." };
 
   if (media.cloudinaryId && isCloudinaryConfigured()) {
-    await deleteImage(media.cloudinaryId, media.type === "VIDEO" ? "video" : "image").catch(
-      (error) => console.error("Failed to delete Cloudinary asset", error),
-    );
+    await deleteImage(
+      media.cloudinaryId,
+      media.type === "VIDEO" ? "video" : "image",
+    ).catch((error) => console.error("Failed to delete Cloudinary asset", error));
   }
 
   await db.media.delete({ where: { id: mediaId } });
@@ -360,7 +395,10 @@ export async function adminRegenerateEditLinkAction(
   });
   if (!invitation) return { success: false, error: "Invitation not found." };
   if (!invitation.phoneLink) {
-    return { success: false, error: "This invitation has no WhatsApp-verified owner yet." };
+    return {
+      success: false,
+      error: "This invitation has no WhatsApp-verified owner yet.",
+    };
   }
 
   const rawEditToken = generateToken();
@@ -381,13 +419,18 @@ export async function upsertInstagramAutomationAction(
 
   const parsed = instagramAutomationFormSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
   const data = parsed.data;
 
   // One rule per reel, so a media ID already claimed by another rule is a
   // conflict rather than a silent overwrite.
-  const existing = await db.instagramAutomation.findUnique({ where: { mediaId: data.mediaId } });
+  const existing = await db.instagramAutomation.findUnique({
+    where: { mediaId: data.mediaId },
+  });
   if (existing && existing.id !== data.id) {
     return { success: false, error: "Another automation already covers this reel." };
   }
@@ -421,7 +464,10 @@ export async function toggleInstagramAutomationAction(
   const session = await requireAdmin();
   if (!session) return { success: false, error: "Admin access required." };
 
-  await db.instagramAutomation.update({ where: { id: automationId }, data: { isActive } });
+  await db.instagramAutomation.update({
+    where: { id: automationId },
+    data: { isActive },
+  });
 
   revalidatePath("/admin/instagram");
   return { success: true, data: undefined };
@@ -439,6 +485,89 @@ export async function deleteInstagramAutomationAction(
   return { success: true, data: undefined };
 }
 
+export async function upsertInstagramDmRuleAction(
+  input: InstagramDmRuleFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = instagramDmRuleFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const data = parsed.data;
+
+  const fields = {
+    label: data.label,
+    matchType: data.matchType,
+    // A catch-all carries no keyword, so an admin switching a rule to ANY
+    // doesn't leave a stale one behind to confuse the next reader.
+    keyword: data.matchType === "ANY" ? null : data.keyword?.trim() || null,
+    replyMessage: data.replyMessage,
+    issueLink: data.issueLink,
+    duplicateMessage: data.duplicateMessage?.trim() || null,
+    priority: data.priority,
+    isActive: data.isActive,
+  };
+
+  if (data.id) {
+    await db.instagramDmRule.update({ where: { id: data.id }, data: fields });
+  } else {
+    await db.instagramDmRule.create({ data: fields });
+  }
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
+}
+
+export async function toggleInstagramDmRuleAction(
+  ruleId: string,
+  isActive: boolean,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  await db.instagramDmRule.update({ where: { id: ruleId }, data: { isActive } });
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
+}
+
+export async function deleteInstagramDmRuleAction(
+  ruleId: string,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  await db.instagramDmRule.delete({ where: { id: ruleId } });
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
+}
+
+// Turns a bare media ID into the reel it belongs to, so an admin can confirm
+// they are automating the post they think they are before saving a rule.
+export async function lookupInstagramMediaAction(
+  mediaId: string,
+): Promise<ActionResult<InstagramMedia>> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const media = await fetchInstagramMedia(mediaId.trim());
+  if (!media) {
+    return {
+      success: false,
+      error:
+        "Instagram couldn't identify that ID — check it belongs to the connected account.",
+    };
+  }
+
+  return { success: true, data: media };
+}
+
 // Frees a commenter to claim this reel's link again — used when a send broke
 // mid-flight and left them marked as claimed for a link they never got.
 export async function resetInstagramLeadAction(leadId: string): Promise<ActionResult> {
@@ -454,7 +583,9 @@ export async function resetInstagramLeadAction(leadId: string): Promise<ActionRe
 // Admin-scoped delete: the dashboard's own deleteInvitationAction only ever
 // removes an invitation the signed-in user owns, which never covers the guest
 // and Instagram invitations an admin needs to clear out.
-export async function adminDeleteInvitationAction(invitationId: string): Promise<ActionResult> {
+export async function adminDeleteInvitationAction(
+  invitationId: string,
+): Promise<ActionResult> {
   const session = await requireAdmin();
   if (!session) return { success: false, error: "Admin access required." };
 
@@ -498,7 +629,10 @@ export async function upsertThemeColorwayAction(
 
   const parsed = themeColorwayFormSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
   const data = parsed.data;
 
@@ -528,7 +662,9 @@ export async function upsertThemeColorwayAction(
   return { success: true, data: undefined };
 }
 
-export async function deleteThemeColorwayAction(colorwayId: string): Promise<ActionResult> {
+export async function deleteThemeColorwayAction(
+  colorwayId: string,
+): Promise<ActionResult> {
   const session = await requireAdmin();
   if (!session) return { success: false, error: "Admin access required." };
 

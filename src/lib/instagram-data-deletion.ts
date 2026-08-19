@@ -18,6 +18,7 @@ export type InstagramDeletionSummary = {
   leadsDeleted: number;
   profilesDeleted: number;
   commentLogsDeleted: number;
+  messageLogsDeleted: number;
 };
 
 export async function deleteInstagramUserData(
@@ -45,10 +46,14 @@ export async function deleteInstagramUserData(
   const strayLinks = await db.instagramLink.deleteMany({ where: { igUserId } });
   linksDeleted += strayLinks.count;
 
-  const [leads, profiles, commentLogs] = await Promise.all([
+  const [leads, profiles, commentLogs, messageLogs] = await Promise.all([
     db.instagramLead.deleteMany({ where: { igUserId } }),
     db.instagramProfile.deleteMany({ where: { igUserId } }),
     db.instagramCommentLog.deleteMany({ where: { igUserId } }),
+    // The DM log holds message text this person sent us, so it goes with the
+    // rest. A "DELETE" DM logs its own row after this runs, on purpose: that
+    // row records the request, not the erased history.
+    db.instagramMessageLog.deleteMany({ where: { igUserId } }),
   ]);
 
   return {
@@ -57,5 +62,6 @@ export async function deleteInstagramUserData(
     leadsDeleted: leads.count,
     profilesDeleted: profiles.count,
     commentLogsDeleted: commentLogs.count,
+    messageLogsDeleted: messageLogs.count,
   };
 }
