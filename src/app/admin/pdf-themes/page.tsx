@@ -66,6 +66,7 @@ export default async function AdminPdfThemesPage() {
                         name: theme.name,
                         slug: theme.slug,
                         description: theme.description,
+                        previewImage: theme.previewImage,
                         revealMode: theme.revealMode,
                         revealVideoUrl: theme.revealVideoUrl,
                         category: theme.category,

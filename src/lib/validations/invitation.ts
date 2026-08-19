@@ -19,6 +19,14 @@ export const familyMemberSchema = z.object({
   photo: z.string().optional(),
 });
 
+// Relatives are entirely optional, so a half-typed row shouldn't block the
+// step — blank entries are dropped before saving rather than rejected.
+export const relativeSchema = z.object({
+  side: z.enum(["BRIDE", "GROOM"]),
+  relation: z.string(),
+  name: z.string(),
+});
+
 export const invitationWizardSchema = z.object({
   brideName: z.string().min(1, "Bride's name is required"),
   bridePhoto: z.string().optional(),
@@ -29,14 +37,14 @@ export const invitationWizardSchema = z.object({
   venueAddress: z.string().optional(),
   googleMapsUrl: z.url().optional().or(z.literal("")),
   customMessage: z.string().optional(),
-  language: z
-    .enum(["EN", "HI", "MR", "GU", "TA", "TE", "ES", "FR"])
-    .default("EN"),
+  religion: z.string().optional(),
+  caste: z.string().optional(),
   themeSlug: z.string().min(1, "Choose a theme"),
+  colorwaySlug: z.string().optional(),
   musicTrackId: z.string().optional(),
   customMusicUrl: z.string().optional(),
   events: z.array(eventSchema).default([]),
-  familyMembers: z.array(familyMemberSchema).default([]),
+  familyMembers: z.array(relativeSchema).default([]),
   useAiCopy: z.boolean().default(true),
 });
 

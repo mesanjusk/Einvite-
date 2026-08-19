@@ -10,6 +10,7 @@ import { GeminiKeyForm } from "@/components/dashboard/gemini-key-form";
 import { VideoGeneratorPanel } from "@/components/dashboard/video-generator-panel";
 import { PdfThemePicker } from "@/components/dashboard/pdf-theme-picker";
 import { PdfExtraTextForm } from "@/components/dashboard/pdf-extra-text-form";
+import { AddPhoneCard } from "@/components/guest/add-phone-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,6 +92,10 @@ export default async function ManageGuestInvitationPage({
           </Button>
         </CardContent>
       </Card>
+
+      {invitation.status === "PUBLISHED" && !invitation.phoneLink && (
+        <AddPhoneCard invitationId={invitation.id} />
+      )}
 
       {invitation.status === "PUBLISHED" ? (
         <Card>

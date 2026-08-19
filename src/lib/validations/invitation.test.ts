@@ -38,7 +38,6 @@ describe("invitationWizardSchema", () => {
     const result = invitationWizardSchema.safeParse(base);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.language).toBe("EN");
       expect(result.data.events).toEqual([]);
       expect(result.data.useAiCopy).toBe(true);
     }

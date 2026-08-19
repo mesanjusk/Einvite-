@@ -20,7 +20,7 @@ import { sendWhatsAppText, editLinkMessage } from "@/lib/whatsapp";
 import { issueDraftSecret, issueOwnerCookie } from "@/lib/guest-session";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
-import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
+import { DEFAULT_PHOTO_COUNT } from "@/lib/media/constants";
 
 /**
  * Shared by both the anonymous "Get started" flow and the signed-in
@@ -84,6 +84,15 @@ export async function updateGuestInvitationAction(
   if (!theme || theme.type !== "WEBSITE") return { success: false, error: "Unknown theme selected." };
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
+  // A colourway is one of the theme's palettes. Its palette is copied onto
+  // the invitation so every render path keeps reading colorPalette and never
+  // needs to resolve colourways itself.
+  const colorway = data.colorwaySlug
+    ? await db.themeColorway.findUnique({
+        where: { themeId_slug: { themeId: theme.id, slug: data.colorwaySlug } },
+      })
+    : null;
+
   // No music picked or uploaded — fall back to the admin-flagged default
   // track (if one exists) so the invitation never plays silent.
   let musicTrackId = data.musicTrackId || null;
@@ -111,7 +120,6 @@ export async function updateGuestInvitationAction(
       groomName: data.groomName,
       weddingDateDisplay,
       venueName: data.venueName,
-      language: data.language,
       customMessage: data.customMessage,
     });
     aiGeneratedCopy = copy;
@@ -131,9 +139,12 @@ export async function updateGuestInvitationAction(
       venueAddress: data.venueAddress,
       googleMapsUrl: data.googleMapsUrl || null,
       customMessage: data.customMessage,
-      language: data.language,
+      religion: data.religion || null,
+      caste: data.caste || null,
       themeId: theme.id,
       templateId: template?.id,
+      colorwayId: colorway?.id ?? null,
+      colorPalette: colorway?.colorPalette ?? undefined,
       musicTrackId,
       customMusicUrl: data.customMusicUrl || null,
       aiGenerated,
@@ -157,13 +168,14 @@ export async function updateGuestInvitationAction(
       },
       familyMembers: {
         deleteMany: {},
-        create: data.familyMembers.map((member, order) => ({
-          side: member.side,
-          relation: member.relation,
-          name: member.name,
-          photo: member.photo,
-          order,
-        })),
+        create: data.familyMembers
+          .filter((member) => member.name.trim() && member.relation.trim())
+          .map((member, order) => ({
+            side: member.side,
+            relation: member.relation.trim(),
+            name: member.name.trim(),
+            order,
+          })),
       },
     },
   });
@@ -185,7 +197,7 @@ export async function autoFillPhotosAction(
     orderBy: { order: "asc" },
   });
 
-  const needed = Math.max(0, REQUIRED_PHOTO_COUNT - existing.length);
+  const needed = Math.max(0, DEFAULT_PHOTO_COUNT - existing.length);
   if (needed > 0) {
     const urls = pickStockPhotos(
       needed,
@@ -219,7 +231,7 @@ export async function autoFillPhotosAction(
  */
 export async function publishGuestInvitationAction(
   input: { invitationId: string; phone?: string },
-): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string }>> {
+): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string | null }>> {
   const parsed = publishGuestInvitationSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -237,13 +249,30 @@ export async function publishGuestInvitationAction(
   if (!invitation.brideName || !invitation.groomName) {
     return { success: false, error: "Finish the couple details step first." };
   }
-  const mediaCount = await db.media.count({ where: { invitationId: invitation.id } });
-  if (mediaCount < REQUIRED_PHOTO_COUNT) {
-    return { success: false, error: `Add ${REQUIRED_PHOTO_COUNT} photos before publishing.` };
-  }
-
+  // The number is optional: publishing without one still works, it just
+  // means no durable cross-device edit link yet — this browser's cookie
+  // carries access, and the manage page asks for a number afterwards.
   const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : invitation.phoneLink?.phone;
-  if (!phone) return { success: false, error: "Enter a valid mobile number." };
+
+  if (!phone) {
+    const publishedWithoutPhone = await db.invitation.update({
+      where: { id: invitation.id },
+      data: { status: "PUBLISHED", publishedAt: invitation.publishedAt ?? new Date() },
+    });
+
+    const baseUrl = getAppUrl();
+    revalidatePath(`/invite/${publishedWithoutPhone.slug}`);
+    revalidatePath(`/manage/${invitation.id}`);
+
+    return {
+      success: true,
+      data: {
+        slug: publishedWithoutPhone.slug,
+        liveUrl: `${baseUrl}/invite/${publishedWithoutPhone.slug}`,
+        editUrl: null,
+      },
+    };
+  }
 
   const conflictingLink = await db.phoneLink.findUnique({ where: { phone } });
   if (conflictingLink && conflictingLink.invitationId !== invitation.id) {
@@ -315,4 +344,57 @@ export async function publishGuestInvitationAction(
     success: true,
     data: { slug: updated.slug, liveUrl, editUrl },
   };
+}
+
+/**
+ * Attaches a mobile number to an already-published invitation that went out
+ * without one, minting the durable cross-device edit link that publishing
+ * without a number deliberately skips.
+ */
+export async function attachPhoneToInvitationAction(input: {
+  invitationId: string;
+  phone: string;
+}): Promise<ActionResult<{ editUrl: string }>> {
+  const invitation = await authorizeInvitationAccess(input.invitationId);
+  if (!invitation) return { success: false, error: "Invitation not found." };
+
+  const phone = normalizePhone(input.phone);
+  if (!phone || phone.length < 6) {
+    return { success: false, error: "Enter a valid mobile number." };
+  }
+
+  const existingForPhone = await db.phoneLink.findUnique({ where: { phone } });
+  if (existingForPhone && existingForPhone.invitationId !== invitation.id) {
+    return {
+      success: false,
+      error: "That number already belongs to another invitation. Use a different one.",
+    };
+  }
+
+  const rawEditToken = generateToken();
+  const editTokenHash = hashToken(rawEditToken);
+
+  if (invitation.phoneLink) {
+    await db.phoneLink.update({
+      where: { id: invitation.phoneLink.id },
+      data: { phone, editTokenHash },
+    });
+  } else {
+    await db.phoneLink.create({
+      data: { phone, invitationId: invitation.id, editTokenHash },
+    });
+  }
+
+  await issueOwnerCookie(invitation.id, rawEditToken);
+
+  const editUrl = `${getAppUrl()}/e/${rawEditToken}`;
+  const liveUrl = `${getAppUrl()}/invite/${invitation.slug}`;
+
+  sendWhatsAppText(
+    phone,
+    editLinkMessage(invitation.brideName, invitation.groomName, liveUrl, editUrl),
+  ).catch((error) => console.error("Failed to send edit-link WhatsApp message", error));
+
+  revalidatePath(`/manage/${invitation.id}`);
+  return { success: true, data: { editUrl } };
 }

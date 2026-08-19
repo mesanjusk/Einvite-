@@ -12,7 +12,7 @@ import {
 } from "@/lib/validations/invitation";
 import type { ActionResult } from "@/lib/actions/auth";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
-import { REQUIRED_PHOTO_COUNT } from "@/lib/media/constants";
+import { DEFAULT_PHOTO_COUNT } from "@/lib/media/constants";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
 import { generateToken, hashToken } from "@/lib/otp";
 import { getAppUrl } from "@/lib/app-url";
@@ -36,6 +36,15 @@ export async function createInvitationAction(
 
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
+  // A colourway is one of the theme's palettes. Its palette is copied onto
+  // the invitation so every render path keeps reading colorPalette and never
+  // needs to resolve colourways itself.
+  const colorway = data.colorwaySlug
+    ? await db.themeColorway.findUnique({
+        where: { themeId_slug: { themeId: theme.id, slug: data.colorwaySlug } },
+      })
+    : null;
+
   const slug = await uniqueSlug(`${data.brideName}-${data.groomName}`);
   const weddingDate = new Date(data.weddingDate);
   const weddingDateDisplay = weddingDate.toLocaleDateString("en-US", {
@@ -53,7 +62,6 @@ export async function createInvitationAction(
       groomName: data.groomName,
       weddingDateDisplay,
       venueName: data.venueName,
-      language: data.language,
       customMessage: data.customMessage,
     });
     aiGeneratedCopy = copy;
@@ -74,9 +82,12 @@ export async function createInvitationAction(
       venueAddress: data.venueAddress,
       googleMapsUrl: data.googleMapsUrl || null,
       customMessage: data.customMessage,
-      language: data.language,
+      religion: data.religion || null,
+      caste: data.caste || null,
       themeId: theme.id,
       templateId: template?.id,
+      colorwayId: colorway?.id ?? null,
+      colorPalette: colorway?.colorPalette ?? undefined,
       musicTrackId: data.musicTrackId || null,
       customMusicUrl: data.customMusicUrl || null,
       sectionConfig: (template?.sectionOrder as string[] | undefined ?? DEFAULT_SECTION_ORDER).map(
@@ -100,13 +111,14 @@ export async function createInvitationAction(
         })),
       },
       familyMembers: {
-        create: data.familyMembers.map((member, order) => ({
-          side: member.side,
-          relation: member.relation,
-          name: member.name,
-          photo: member.photo,
-          order,
-        })),
+        create: data.familyMembers
+          .filter((member) => member.name.trim() && member.relation.trim())
+          .map((member, order) => ({
+            side: member.side,
+            relation: member.relation.trim(),
+            name: member.name.trim(),
+            order,
+          })),
       },
     },
   });
@@ -136,7 +148,7 @@ export async function publishInvitationAction(
     where: { invitationId },
     orderBy: { order: "asc" },
   });
-  const autoFilledPhotos = Math.max(0, REQUIRED_PHOTO_COUNT - existingMedia.length);
+  const autoFilledPhotos = Math.max(0, DEFAULT_PHOTO_COUNT - existingMedia.length);
   if (autoFilledPhotos > 0) {
     const urls = pickStockPhotos(
       autoFilledPhotos,

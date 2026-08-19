@@ -10,6 +10,11 @@ import { HeroCarousel } from "@/components/marketing/hero-carousel";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 import { InstagramBanner } from "@/components/marketing/instagram-banner";
 import { SiteFooter } from "@/components/marketing/site-footer";
+import {
+  FALLBACK_SLIDES,
+  FALLBACK_THEMES,
+  fallbackThumbnailFor,
+} from "@/lib/marketing-fallbacks";
 
 const TITLE = `${SITE_NAME} — AI-Generated Wedding Invitations`;
 const DESCRIPTION =
@@ -64,24 +69,29 @@ export default async function Home() {
       primary: palette?.primary ?? "#7a2e2e",
       accent: palette?.accent ?? "#c9942a",
       background: palette?.background ?? "#faf3ea",
+      image: demo.theme?.previewImage ?? fallbackThumbnailFor(demo.slug),
     };
   });
 
-  const fallbackSlides = themes.slice(0, 3).map((theme) => {
-    const palette = theme.colorPalette as Palette;
-    return {
-      id: theme.id,
-      eyebrow: "Ready-made theme",
-      title: theme.name,
-      href: "/create",
-      cta: "Start with this theme",
-      primary: palette.primary,
-      accent: palette.accent,
-      background: palette.background ?? "#faf3ea",
-    };
-  });
+  // Placeholder slides and themes only stand in while the database has
+  // nothing published yet, so a fresh deploy still looks like a shop.
+  const slides = demoSlides.length > 0 ? demoSlides : FALLBACK_SLIDES;
 
-  const slides = demoSlides.length > 0 ? demoSlides : fallbackSlides;
+  const themeCards =
+    themes.length > 0
+      ? themes.map((theme) => {
+          const palette = theme.colorPalette as Palette;
+          return {
+            id: theme.id,
+            name: theme.name,
+            slug: theme.slug,
+            category: theme.category,
+            isPremium: theme.isPremium,
+            previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
+            colorPalette: palette,
+          };
+        })
+      : FALLBACK_THEMES;
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -110,7 +120,7 @@ export default async function Home() {
           <EventCategoryChips />
         </section>
 
-        {themes.length > 0 && (
+        {themeCards.length > 0 && (
           <section className="mx-auto max-w-5xl px-6 pb-14">
             <div className="mb-6 flex items-baseline justify-between gap-4">
               <h2 className="font-display text-2xl sm:text-3xl">Themes</h2>
@@ -123,23 +133,22 @@ export default async function Home() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 sm:gap-5">
-              {themes.map((theme) => {
-                const palette = theme.colorPalette as Palette;
+              {themeCards.map((theme) => {
+                const palette = theme.colorPalette;
                 return (
                   <Link
                     key={theme.id}
                     href={`/create?theme=${theme.slug}`}
                     className="group focus-visible:ring-primary hover:border-primary/60 overflow-hidden rounded-xl border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                   >
+                    {/* The gradient always sits underneath, so a thumbnail that
+                        fails to load degrades to the theme's colours rather
+                        than a broken-image icon. */}
                     <div
                       className="relative flex aspect-[4/3] items-end overflow-hidden sm:aspect-[16/10]"
-                      style={
-                        theme.previewImage
-                          ? undefined
-                          : {
-                              background: `linear-gradient(140deg, ${palette.primary}, ${palette.accent})`,
-                            }
-                      }
+                      style={{
+                        background: `linear-gradient(140deg, ${palette.primary}, ${palette.accent})`,
+                      }}
                     >
                       {theme.previewImage && (
                         // eslint-disable-next-line @next/next/no-img-element

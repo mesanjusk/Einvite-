@@ -12,6 +12,26 @@ export const SECTION_ORDER = [
   "THANK_YOU",
 ];
 
+// Stock thumbnails so a freshly seeded catalogue shows photos rather than
+// bare gradients. Admins can replace any of these from Manage Themes.
+const THEME_THUMBNAILS: Record<string, string> = {
+  royal: "1519741497674-611481863552",
+  traditional: "1519225421980-715cb0215aed",
+  luxury: "1544078751-58fee2d8b03f",
+  minimal: "1511285560929-80b456fea0bc",
+  modern: "1583939003579-730e3918a45a",
+  temple: "1606216794074-735e91aa2c92",
+  palace: "1583334026965-2a3f37c8e9fb",
+  beach: "1520854221256-17451cc331bf",
+  floral: "1465495976277-4387d4b0b4c6",
+  pastel: "1521543387236-8c6f80e7d70e",
+};
+
+export function seedThumbnailFor(slug: string): string | undefined {
+  const id = THEME_THUMBNAILS[slug];
+  return id ? `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=80` : undefined;
+}
+
 export const THEMES = [
   {
     name: "Royal",
@@ -461,3 +481,222 @@ export const DEMO_INVITATIONS = [
     customMessage: "Two hearts, one promise — join us for a wedding to remember.",
   },
 ] as const;
+
+// Colourways per theme: same design, different palette. Keyed by theme slug;
+// a theme with no entry simply ships in its own default palette. Each entry
+// mirrors the shape of Theme.colorPalette.
+export const THEME_COLORWAYS: Record<
+  string,
+  { name: string; slug: string; colorPalette: Record<string, string> }[]
+> = {
+  royal: [
+    {
+      name: "Maroon & Gold",
+      slug: "maroon-gold",
+      colorPalette: {
+        primary: "#7a2e2e",
+        secondary: "#f3d9d9",
+        accent: "#c9942a",
+        background: "#faf3ea",
+        foreground: "#3a1414",
+      },
+    },
+    {
+      name: "Emerald & Gold",
+      slug: "emerald-gold",
+      colorPalette: {
+        primary: "#1f5140",
+        secondary: "#d8e8e0",
+        accent: "#c9942a",
+        background: "#f6faf7",
+        foreground: "#12362a",
+      },
+    },
+    {
+      name: "Midnight & Rose",
+      slug: "midnight-rose",
+      colorPalette: {
+        primary: "#2b2f52",
+        secondary: "#dcdff0",
+        accent: "#c98a9a",
+        background: "#f7f7fb",
+        foreground: "#1a1d33",
+      },
+    },
+  ],
+  traditional: [
+    {
+      name: "Kumkum Red",
+      slug: "kumkum-red",
+      colorPalette: {
+        primary: "#8f2f24",
+        secondary: "#f6dcd6",
+        accent: "#d9a520",
+        background: "#fdf6ee",
+        foreground: "#3d1410",
+      },
+    },
+    {
+      name: "Turmeric",
+      slug: "turmeric",
+      colorPalette: {
+        primary: "#a8720f",
+        secondary: "#f7e6c4",
+        accent: "#7a2e2e",
+        background: "#fdf8ee",
+        foreground: "#3f2a08",
+      },
+    },
+    {
+      name: "Peacock",
+      slug: "peacock",
+      colorPalette: {
+        primary: "#14566b",
+        secondary: "#cfe6ed",
+        accent: "#d9a520",
+        background: "#f3fafc",
+        foreground: "#0b3140",
+      },
+    },
+  ],
+  beach: [
+    {
+      name: "Ocean",
+      slug: "ocean",
+      colorPalette: {
+        primary: "#2e6a7a",
+        secondary: "#d6ecf1",
+        accent: "#8fd0d8",
+        background: "#f2f8fa",
+        foreground: "#12333c",
+      },
+    },
+    {
+      name: "Sunset",
+      slug: "sunset",
+      colorPalette: {
+        primary: "#b4573c",
+        secondary: "#f8dfd3",
+        accent: "#e8a76a",
+        background: "#fdf6f1",
+        foreground: "#4a1e12",
+      },
+    },
+    {
+      name: "Palm",
+      slug: "palm",
+      colorPalette: {
+        primary: "#3d6b46",
+        secondary: "#dcebdd",
+        accent: "#c8b06a",
+        background: "#f5faf5",
+        foreground: "#1e3a23",
+      },
+    },
+  ],
+  floral: [
+    {
+      name: "Blush",
+      slug: "blush",
+      colorPalette: {
+        primary: "#a04a6a",
+        secondary: "#f7dce6",
+        accent: "#f0c0d0",
+        background: "#fdf3f7",
+        foreground: "#4a1c2c",
+      },
+    },
+    {
+      name: "Lavender",
+      slug: "lavender",
+      colorPalette: {
+        primary: "#6f5a9a",
+        secondary: "#e4dcf2",
+        accent: "#c0aee0",
+        background: "#f8f5fd",
+        foreground: "#2f2450",
+      },
+    },
+    {
+      name: "Marigold",
+      slug: "marigold",
+      colorPalette: {
+        primary: "#c07a12",
+        secondary: "#fae5c2",
+        accent: "#e0a93c",
+        background: "#fdf8ef",
+        foreground: "#4c2f04",
+      },
+    },
+  ],
+  minimal: [
+    {
+      name: "Ink",
+      slug: "ink",
+      colorPalette: {
+        primary: "#3a3a3a",
+        secondary: "#e6e4e0",
+        accent: "#b9a179",
+        background: "#f7f5f2",
+        foreground: "#1c1c1c",
+      },
+    },
+    {
+      name: "Sage",
+      slug: "sage",
+      colorPalette: {
+        primary: "#5c6f5c",
+        secondary: "#e2e9e0",
+        accent: "#a8b89f",
+        background: "#f6f8f5",
+        foreground: "#2b352b",
+      },
+    },
+    {
+      name: "Sand",
+      slug: "sand",
+      colorPalette: {
+        primary: "#8a7350",
+        secondary: "#f0e7d8",
+        accent: "#c9b38c",
+        background: "#faf6ee",
+        foreground: "#3b3020",
+      },
+    },
+  ],
+  pastel: [
+    {
+      name: "Lilac",
+      slug: "lilac",
+      colorPalette: {
+        primary: "#8a6a9a",
+        secondary: "#ece0f2",
+        accent: "#e0c8e8",
+        background: "#faf6fb",
+        foreground: "#3d2b47",
+      },
+    },
+    {
+      name: "Mint",
+      slug: "mint",
+      colorPalette: {
+        primary: "#4e8a7a",
+        secondary: "#d9efe7",
+        accent: "#a8ddcd",
+        background: "#f4fbf8",
+        foreground: "#20443a",
+      },
+    },
+    {
+      name: "Peach",
+      slug: "peach",
+      colorPalette: {
+        primary: "#c4735a",
+        secondary: "#fae0d5",
+        accent: "#f0b79c",
+        background: "#fdf6f2",
+        foreground: "#4f2618",
+      },
+    },
+  ],
+};

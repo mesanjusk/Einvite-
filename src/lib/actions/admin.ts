@@ -14,10 +14,12 @@ import {
   updateUserRoleSchema,
   videoTemplateFormSchema,
   instagramAutomationFormSchema,
+  themeColorwayFormSchema,
   type ThemeFormInput,
   type MusicTrackFormInput,
   type VideoTemplateFormInput,
   type InstagramAutomationFormInput,
+  type ThemeColorwayFormInput,
 } from "@/lib/validations/admin";
 import { pdfTemplatePagesSchema, type PdfTemplatePage } from "@/lib/validations/pdf-template";
 
@@ -463,5 +465,83 @@ export async function adminDeleteInvitationAction(invitationId: string): Promise
 
   revalidatePath("/admin/invitations");
   revalidatePath("/admin");
+  return { success: true, data: undefined };
+}
+
+// Marks a published invitation as a homepage showcase. Only published ones
+// qualify — a draft in the carousel would link visitors to an empty page.
+export async function setInvitationDemoAction(
+  invitationId: string,
+  isDemo: boolean,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const invitation = await db.invitation.findUnique({ where: { id: invitationId } });
+  if (!invitation) return { success: false, error: "Invitation not found." };
+  if (isDemo && invitation.status !== "PUBLISHED") {
+    return { success: false, error: "Publish the invitation before featuring it." };
+  }
+
+  await db.invitation.update({ where: { id: invitationId }, data: { isDemo } });
+
+  revalidatePath("/admin/invitations");
+  revalidatePath("/");
+  return { success: true, data: undefined };
+}
+
+export async function upsertThemeColorwayAction(
+  input: ThemeColorwayFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = themeColorwayFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const data = parsed.data;
+
+  const clash = await db.themeColorway.findUnique({
+    where: { themeId_slug: { themeId: data.themeId, slug: data.slug } },
+  });
+  if (clash && clash.id !== data.id) {
+    return { success: false, error: "This theme already has a colour with that slug." };
+  }
+
+  const fields = {
+    themeId: data.themeId,
+    name: data.name,
+    slug: data.slug,
+    colorPalette: data.colorPalette,
+    sortOrder: data.sortOrder,
+  };
+
+  if (data.id) {
+    await db.themeColorway.update({ where: { id: data.id }, data: fields });
+  } else {
+    await db.themeColorway.create({ data: fields });
+  }
+
+  revalidatePath("/admin/themes");
+  revalidatePath("/");
+  return { success: true, data: undefined };
+}
+
+export async function deleteThemeColorwayAction(colorwayId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const inUse = await db.invitation.count({ where: { colorwayId } });
+  if (inUse > 0) {
+    return {
+      success: false,
+      error: `${inUse} invitation(s) use this colour — cannot delete.`,
+    };
+  }
+
+  await db.themeColorway.delete({ where: { id: colorwayId } });
+
+  revalidatePath("/admin/themes");
   return { success: true, data: undefined };
 }
