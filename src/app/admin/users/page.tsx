@@ -24,7 +24,7 @@ export default async function AdminUsersPage() {
       <PageHeader title="Users" meta={`${users.length} accounts`} />
 
       <Card className="py-0">
-        <CardContent className="p-0">
+        <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead className="text-muted-foreground border-b text-left text-xs uppercase">
               <tr>

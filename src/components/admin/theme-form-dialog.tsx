@@ -183,7 +183,7 @@ export function ThemeFormDialog({
           </IconButton>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
@@ -334,7 +334,7 @@ export function ThemeFormDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {(["display", "body", "script"] as const).map((key) => (
               <div key={key} className="grid gap-1.5">
                 <Label className="text-xs capitalize">{key} font</Label>

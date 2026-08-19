@@ -105,7 +105,7 @@ export default async function RsvpPage({
       </div>
 
       <Card className="py-0">
-        <CardContent className="p-0">
+        <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead className="text-muted-foreground border-b text-left text-xs uppercase">
               <tr>

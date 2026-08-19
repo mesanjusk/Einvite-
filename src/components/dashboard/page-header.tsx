@@ -15,7 +15,7 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="min-w-0">
         <h1 className="font-display truncate text-2xl">{title}</h1>
         {meta && <p className="text-muted-foreground mt-0.5 text-xs">{meta}</p>}

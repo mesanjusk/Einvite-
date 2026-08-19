@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
 import {
   fetchInstagramMedia,
   fetchRecentInstagramMedia,
@@ -23,10 +25,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Instagram Automation" };
 
-const OUTCOME_LABELS: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
+const OUTCOME_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   REPLY_SENT: { label: "Reply sent", variant: "default" },
   DUPLICATE_SKIPPED: { label: "Already claimed", variant: "secondary" },
   TRIGGER_NOT_MATCHED: { label: "No trigger word", variant: "outline" },
@@ -36,10 +35,7 @@ const OUTCOME_LABELS: Record<
   SEND_FAILED: { label: "Send failed", variant: "destructive" },
 };
 
-const DM_OUTCOME_LABELS: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
+const DM_OUTCOME_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   REPLY_SENT: { label: "Reply sent", variant: "default" },
   DUPLICATE_REPLY_SENT: { label: "Already had a link", variant: "secondary" },
   NO_RULE_MATCHED: { label: "Left for you", variant: "outline" },
@@ -55,74 +51,72 @@ const DM_MATCH_LABELS: Record<string, string> = {
   ANY: "any message",
 };
 
-export default async function AdminInstagramPage() {
-  const [automations, logs, dmRules, messageLogs] = await Promise.all([
+// The page is four views over the same account rather than one long scroll.
+// Which one is showing lives in the URL, so only the active view's data — and
+// in particular only its Instagram API lookups — is fetched per request.
+const TABS = [
+  { id: "reels", label: "Unautomated reels" },
+  { id: "posts", label: "Recent posts" },
+  { id: "dms", label: "Direct message replies" },
+  { id: "comments", label: "Recent comments" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+const DEFAULT_TAB: TabId = "reels";
+
+function tabHref(id: TabId) {
+  return id === DEFAULT_TAB ? "/admin/instagram" : `/admin/instagram?tab=${id}`;
+}
+
+/**
+ * Media IDs resolved to the reels they name, keyed by ID. Lookups are
+ * per-media and cached in the fetch layer, so asking for a list an admin is
+ * already looking at costs nothing on the second render.
+ */
+async function resolveMedia(mediaIds: string[]) {
+  const unique = [...new Set(mediaIds)];
+  const resolved = await Promise.all(unique.map((id) => fetchInstagramMedia(id)));
+  return new Map<string, InstagramMedia>(
+    resolved.filter((m): m is InstagramMedia => m !== null).map((m) => [m.id, m]),
+  );
+}
+
+function EmptyPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <Card>
+      <CardContent className="text-muted-foreground py-12 text-center text-sm">
+        {children}
+      </CardContent>
+    </Card>
+  );
+}
+
+export default async function AdminInstagramPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab } = await searchParams;
+  const activeTab: TabId =
+    TABS.find((t) => t.id === tab)?.id ?? DEFAULT_TAB;
+
+  const [automations, dmRuleCount] = await Promise.all([
     db.instagramAutomation.findMany({
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { leads: true, logs: true } } },
     }),
-    db.instagramCommentLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: { automation: { select: { label: true } } },
-    }),
-    db.instagramDmRule.findMany({
-      orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
-    }),
-    db.instagramMessageLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: { rule: { select: { label: true } } },
-    }),
+    db.instagramDmRule.count(),
   ]);
 
-  // Who claimed an invitation, and what they've built with it — the
-  // lead-to-invitation view the comment log alone can't show.
-  const claims = await db.instagramLink.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 25,
-    include: {
-      invitation: {
-        select: {
-          id: true,
-          slug: true,
-          brideName: true,
-          groomName: true,
-          status: true,
-          _count: { select: { videos: true } },
-        },
-      },
-    },
-  });
-
-  // Reels that have received comments but have no rule yet — the fast path
-  // for turning a real comment into a new automation without hunting for IDs.
   const automatedMediaIds = new Set(automations.map((a) => a.mediaId));
-  const unautomatedMediaIds = [
-    ...new Set(
-      logs.filter((l) => !automatedMediaIds.has(l.mediaId)).map((l) => l.mediaId),
-    ),
-  ];
-
-  // Every media ID on this page resolved to the reel it names, so a bare
-  // 18112141504901807 is shown with its thumbnail, caption and permalink
-  // rather than left for an admin to identify by hand.
-  const idsToResolve = [...new Set([...automatedMediaIds, ...unautomatedMediaIds])];
-  const resolved = await Promise.all(idsToResolve.map((id) => fetchInstagramMedia(id)));
-  const mediaById = new Map<string, InstagramMedia>(
-    resolved.filter((m): m is InstagramMedia => m !== null).map((m) => [m.id, m]),
-  );
-
-  // The account's own recent posts, so a reel can be automated before anyone
-  // has commented on it — and so an unfamiliar ID can be matched to a post.
-  const recentMedia = await fetchRecentInstagramMedia(12);
-  const unansweredDms = messageLogs.filter((m) => m.outcome === "NO_RULE_MATCHED");
+  const automationMedia = await resolveMedia([...automatedMediaIds]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Instagram"
-        meta={`${automations.length} reel automations · ${dmRules.length} DM rules`}
+        meta={`${automations.length} reel automations · ${dmRuleCount} DM rules`}
       >
         <InstagramDmRuleFormDialog />
         <InstagramAutomationFormDialog />
@@ -131,116 +125,257 @@ export default async function AdminInstagramPage() {
       {!isInstagramSendConfigured() && (
         <Card className="border-dashed">
           <CardContent className="text-muted-foreground py-4 text-sm">
-            <code className="font-mono">IG_ACCESS_TOKEN</code> not set — replies will
-            fail and reels can&apos;t be previewed.
+            <code className="font-mono">IG_ACCESS_TOKEN</code> not set — replies will fail
+            and reels can&apos;t be previewed.
           </CardContent>
         </Card>
       )}
 
-      {automations.length === 0 && (
-        <Card>
-          <CardContent className="text-muted-foreground py-12 text-center text-sm">
-            No reel automations yet.
-          </CardContent>
-        </Card>
-      )}
+      {automations.length === 0 ? (
+        <EmptyPanel>
+          No reel automations yet — comments are logged but never replied to.
+        </EmptyPanel>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          {automations.map((automation) => {
+            const media = automationMedia.get(automation.mediaId);
+            const permalink = automation.permalink ?? media?.permalink;
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {automations.map((automation) => {
-          const media = mediaById.get(automation.mediaId);
-          const permalink = automation.permalink ?? media?.permalink;
-
-          return (
-            <Card key={automation.id} className="py-0">
-              <CardContent className="flex flex-col gap-3 py-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex min-w-0 items-start gap-3">
-                    {media?.thumbnailUrl && (
-                      // Instagram CDN URLs are signed and short-lived, so they
-                      // are served straight through, not via the optimiser.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={media.thumbnailUrl}
-                        alt=""
-                        className="size-12 shrink-0 rounded-md object-cover"
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{automation.label}</p>
-                      <p className="text-muted-foreground font-mono text-xs">
-                        {automation.mediaId}
-                      </p>
-                      {media?.caption && (
-                        <p className="text-muted-foreground truncate text-xs">
-                          {media.caption}
-                        </p>
+            return (
+              <Card key={automation.id} className="py-0">
+                <CardContent className="flex flex-col gap-3 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-start gap-3">
+                      {media?.thumbnailUrl && (
+                        // Instagram CDN URLs are signed and short-lived, so they
+                        // are served straight through, not via the optimiser.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={media.thumbnailUrl}
+                          alt=""
+                          className="size-12 shrink-0 rounded-md object-cover"
+                        />
                       )}
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{automation.label}</p>
+                        <p className="text-muted-foreground truncate font-mono text-xs">
+                          {automation.mediaId}
+                        </p>
+                        {media?.caption && (
+                          <p className="text-muted-foreground truncate text-xs">
+                            {media.caption}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <InstagramAutomationToggle
+                        automationId={automation.id}
+                        isActive={automation.isActive}
+                      />
+                      <InstagramAutomationFormDialog
+                        automation={{
+                          id: automation.id,
+                          mediaId: automation.mediaId,
+                          label: automation.label,
+                          permalink: automation.permalink,
+                          triggerWord: automation.triggerWord,
+                          replyMessage: automation.replyMessage,
+                          duplicateMessage: automation.duplicateMessage,
+                          requireFollow: automation.requireFollow,
+                          notFollowingMessage: automation.notFollowingMessage,
+                          isActive: automation.isActive,
+                        }}
+                      />
+                      <DeleteEntityButton
+                        id={automation.id}
+                        confirmLabel={`Delete the ${automation.label} automation? Its claim history goes too.`}
+                        action={deleteInstagramAutomationAction}
+                      />
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <InstagramAutomationToggle
-                      automationId={automation.id}
-                      isActive={automation.isActive}
-                    />
-                    <InstagramAutomationFormDialog
-                      automation={{
-                        id: automation.id,
-                        mediaId: automation.mediaId,
-                        label: automation.label,
-                        permalink: automation.permalink,
-                        triggerWord: automation.triggerWord,
-                        replyMessage: automation.replyMessage,
-                        duplicateMessage: automation.duplicateMessage,
-                        requireFollow: automation.requireFollow,
-                        notFollowingMessage: automation.notFollowingMessage,
-                        isActive: automation.isActive,
-                      }}
-                    />
-                    <DeleteEntityButton
-                      id={automation.id}
-                      confirmLabel={`Delete the ${automation.label} automation? Its claim history goes too.`}
-                      action={deleteInstagramAutomationAction}
-                    />
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={automation.isActive ? "default" : "outline"}>
+                      {automation.isActive ? "Active" : "Paused"}
+                    </Badge>
+                    <Badge variant="secondary">Trigger: {automation.triggerWord}</Badge>
+                    {automation.requireFollow && (
+                      <Badge variant="outline">Followers only</Badge>
+                    )}
                   </div>
-                </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={automation.isActive ? "default" : "outline"}>
-                    {automation.isActive ? "Active" : "Paused"}
-                  </Badge>
-                  <Badge variant="secondary">Trigger: {automation.triggerWord}</Badge>
-                  {automation.requireFollow && (
-                    <Badge variant="outline">Followers only</Badge>
-                  )}
-                </div>
+                  <p className="text-muted-foreground line-clamp-2 text-xs">
+                    {automation.replyMessage}
+                  </p>
 
-                <p className="text-muted-foreground line-clamp-2 text-xs">
-                  {automation.replyMessage}
-                </p>
+                  <p className="text-muted-foreground text-xs">
+                    {automation._count.leads} link(s) claimed · {automation._count.logs}{" "}
+                    comment(s) logged
+                    {permalink && (
+                      <>
+                        {" · "}
+                        <a
+                          href={permalink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline underline-offset-2"
+                        >
+                          View reel
+                        </a>
+                      </>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-                <p className="text-muted-foreground text-xs">
-                  {automation._count.leads} link(s) claimed · {automation._count.logs}{" "}
-                  comment(s) logged
-                  {permalink && (
-                    <>
-                      {" · "}
-                      <a
-                        href={permalink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline underline-offset-2"
-                      >
-                        View reel
-                      </a>
-                    </>
-                  )}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* Bleeds to the screen edge on small viewports so the row scrolls
+          sideways instead of squeezing four labels into a phone's width. */}
+      <div className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+        <nav className="bg-muted text-muted-foreground inline-flex w-max items-center gap-1 rounded-lg p-1">
+          {TABS.map((t) => (
+            <Link
+              key={t.id}
+              href={tabHref(t.id)}
+              aria-current={activeTab === t.id ? "page" : undefined}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm whitespace-nowrap transition-colors",
+                activeTab === t.id
+                  ? "bg-background text-foreground shadow-sm"
+                  : "hover:text-foreground",
+              )}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
       </div>
 
+      {activeTab === "reels" && (
+        <UnautomatedReelsPanel automatedMediaIds={automatedMediaIds} />
+      )}
+      {activeTab === "posts" && (
+        <RecentPostsPanel automatedMediaIds={automatedMediaIds} />
+      )}
+      {activeTab === "dms" && <DirectMessagesPanel />}
+      {activeTab === "comments" && <RecentCommentsPanel />}
+    </div>
+  );
+}
+
+/**
+ * Reels that have received comments but have no rule yet — the fast path for
+ * turning a real comment into a new automation without hunting for IDs.
+ */
+async function UnautomatedReelsPanel({
+  automatedMediaIds,
+}: {
+  automatedMediaIds: Set<string>;
+}) {
+  const logs = await db.instagramCommentLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: { mediaId: true },
+  });
+
+  const mediaIds = [...new Set(logs.map((l) => l.mediaId))].filter(
+    (id) => !automatedMediaIds.has(id),
+  );
+  const media = await resolveMedia(mediaIds);
+
+  if (mediaIds.length === 0) {
+    return (
+      <EmptyPanel>
+        Every reel that has been commented on already has an automation.
+      </EmptyPanel>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3 py-4">
+        <div>
+          <p className="font-medium">Unautomated reels</p>
+          <p className="text-muted-foreground text-xs">
+            These got comments but have no rule, so nothing was replied.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          {mediaIds.map((mediaId) => (
+            <InstagramMediaCard key={mediaId} mediaId={mediaId} media={media.get(mediaId)}>
+              <InstagramAutomationFormDialog presetMediaId={mediaId} />
+            </InstagramMediaCard>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * The account's own recent posts, so a reel can be automated before anyone has
+ * commented on it — and so an unfamiliar ID can be matched to a post.
+ */
+async function RecentPostsPanel({
+  automatedMediaIds,
+}: {
+  automatedMediaIds: Set<string>;
+}) {
+  const recentMedia = await fetchRecentInstagramMedia(12);
+
+  if (recentMedia.length === 0) {
+    return (
+      <EmptyPanel>
+        No posts to show. This list needs <code className="font-mono">IG_ACCESS_TOKEN</code>{" "}
+        set for the connected account.
+      </EmptyPanel>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3 py-4">
+        <div>
+          <p className="font-medium">Your recent posts</p>
+          <p className="text-muted-foreground text-xs">
+            Every post with the media ID it goes by — the way to check which reel an ID
+            names before automating it.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          {recentMedia.map((media) => (
+            <InstagramMediaCard key={media.id} mediaId={media.id} media={media}>
+              {automatedMediaIds.has(media.id) ? (
+                <Badge variant="secondary">Automated</Badge>
+              ) : (
+                <InstagramAutomationFormDialog presetMediaId={media.id} />
+              )}
+            </InstagramMediaCard>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function DirectMessagesPanel() {
+  const [dmRules, messageLogs] = await Promise.all([
+    db.instagramDmRule.findMany({ orderBy: [{ priority: "desc" }, { createdAt: "asc" }] }),
+    db.instagramMessageLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { rule: { select: { label: true } } },
+    }),
+  ]);
+
+  const unansweredDms = messageLogs.filter((m) => m.outcome === "NO_RULE_MATCHED");
+
+  return (
+    <div className="flex flex-col gap-6">
       <Card>
         <CardContent className="flex flex-col gap-3 py-4">
           <div>
@@ -277,12 +412,8 @@ export default async function AdminInstagramPage() {
                       <Badge variant={rule.isActive ? "default" : "outline"}>
                         {rule.isActive ? "Active" : "Paused"}
                       </Badge>
-                      {rule.issueLink && (
-                        <Badge variant="secondary">Sends invite link</Badge>
-                      )}
-                      {rule.matchType === "ANY" && (
-                        <Badge variant="outline">Catch-all</Badge>
-                      )}
+                      {rule.issueLink && <Badge variant="secondary">Sends invite link</Badge>}
+                      {rule.matchType === "ANY" && <Badge variant="outline">Catch-all</Badge>}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
@@ -313,16 +444,18 @@ export default async function AdminInstagramPage() {
         </CardContent>
       </Card>
 
-      {messageLogs.length > 0 && (
-        <Card>
-          <CardContent className="flex flex-col gap-3 py-4">
-            <div>
-              <p className="font-medium">Recent direct messages</p>
-              <p className="text-muted-foreground text-xs">
-                {unansweredDms.length} of the last {messageLogs.length} were left for
-                you. Use the button on a row to turn that message into a rule.
-              </p>
-            </div>
+      <Card>
+        <CardContent className="flex flex-col gap-3 py-4">
+          <div>
+            <p className="font-medium">Recent direct messages</p>
+            <p className="text-muted-foreground text-xs">
+              {messageLogs.length === 0
+                ? "No messages received yet."
+                : `${unansweredDms.length} of the last ${messageLogs.length} were left for you. Use the button on a row to turn that message into a rule.`}
+            </p>
+          </div>
+
+          {messageLogs.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -343,7 +476,7 @@ export default async function AdminInstagramPage() {
                     };
                     return (
                       <tr key={log.id} className="border-b last:border-0">
-                        <td className="text-muted-foreground py-2 pr-3 text-xs whitespace-nowrap">
+                        <td className="text-muted-foreground py-2 pr-3 whitespace-nowrap text-xs">
                           {log.createdAt.toLocaleString()}
                         </td>
                         <td className="py-2 pr-3 whitespace-nowrap">
@@ -359,9 +492,7 @@ export default async function AdminInstagramPage() {
                           <div className="flex items-center gap-1">
                             <Badge variant={outcome.variant}>{outcome.label}</Badge>
                             {log.outcome === "NO_RULE_MATCHED" && (
-                              <InstagramDmRuleFormDialog
-                                presetKeyword={log.messageText}
-                              />
+                              <InstagramDmRuleFormDialog presetKeyword={log.messageText} />
                             )}
                           </div>
                         </td>
@@ -374,58 +505,100 @@ export default async function AdminInstagramPage() {
                 </tbody>
               </table>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
-      {unautomatedMediaIds.length > 0 && (
-        <Card>
-          <CardContent className="flex flex-col gap-3 py-4">
-            <div>
-              <p className="font-medium">Unautomated reels</p>
-              <p className="text-muted-foreground text-xs">
-                These got comments but have no rule, so nothing was replied.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              {unautomatedMediaIds.map((mediaId) => (
-                <InstagramMediaCard
-                  key={mediaId}
-                  mediaId={mediaId}
-                  media={mediaById.get(mediaId)}
-                >
-                  <InstagramAutomationFormDialog presetMediaId={mediaId} />
-                </InstagramMediaCard>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+async function RecentCommentsPanel() {
+  const [logs, claims] = await Promise.all([
+    db.instagramCommentLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { automation: { select: { label: true } } },
+    }),
+    // Who claimed an invitation, and what they've built with it — the
+    // lead-to-invitation view the comment log alone can't show.
+    db.instagramLink.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 25,
+      include: {
+        invitation: {
+          select: {
+            id: true,
+            slug: true,
+            brideName: true,
+            groomName: true,
+            status: true,
+            _count: { select: { videos: true } },
+          },
+        },
+      },
+    }),
+  ]);
 
-      {recentMedia.length > 0 && (
-        <Card>
-          <CardContent className="flex flex-col gap-3 py-4">
-            <div>
-              <p className="font-medium">Your recent posts</p>
-              <p className="text-muted-foreground text-xs">
-                Every post with the media ID it goes by — the way to check which reel an
-                ID names before automating it.
-              </p>
+  const media = await resolveMedia(logs.map((l) => l.mediaId));
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Card>
+        <CardContent className="flex flex-col gap-3 py-4">
+          <p className="font-medium">Recent comment activity</p>
+
+          {logs.length === 0 ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              No comments received yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-muted-foreground border-b text-left text-xs">
+                    <th className="py-2 pr-3 font-medium">When</th>
+                    <th className="py-2 pr-3 font-medium">From</th>
+                    <th className="py-2 pr-3 font-medium">Reel</th>
+                    <th className="py-2 pr-3 font-medium">Comment</th>
+                    <th className="py-2 pr-3 font-medium">Outcome</th>
+                    <th className="py-2 font-medium">Reply</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((log) => {
+                    const outcome = OUTCOME_LABELS[log.outcome] ?? {
+                      label: log.outcome,
+                      variant: "outline" as const,
+                    };
+                    return (
+                      <tr key={log.id} className="border-b last:border-0">
+                        <td className="text-muted-foreground py-2 pr-3 whitespace-nowrap text-xs">
+                          {log.createdAt.toLocaleString()}
+                        </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {log.username ? `@${log.username}` : "—"}
+                        </td>
+                        <td className="text-muted-foreground max-w-[10rem] truncate py-2 pr-3 text-xs">
+                          {log.automation?.label ??
+                            media.get(log.mediaId)?.caption ??
+                            log.mediaId}
+                        </td>
+                        <td className="max-w-[12rem] truncate py-2 pr-3">{log.commentText}</td>
+                        <td className="py-2 pr-3">
+                          <Badge variant={outcome.variant}>{outcome.label}</Badge>
+                        </td>
+                        <td className="text-muted-foreground max-w-[16rem] truncate py-2 text-xs">
+                          {log.error ?? log.replyText ?? "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            <div className="flex flex-col gap-2">
-              {recentMedia.map((media) => (
-                <InstagramMediaCard key={media.id} mediaId={media.id} media={media}>
-                  {automatedMediaIds.has(media.id) ? (
-                    <Badge variant="secondary">Automated</Badge>
-                  ) : (
-                    <InstagramAutomationFormDialog presetMediaId={media.id} />
-                  )}
-                </InstagramMediaCard>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {claims.length > 0 && (
         <Card>
@@ -456,9 +629,7 @@ export default async function AdminInstagramPage() {
                       <td className="py-2 pr-3">
                         <Badge
                           variant={
-                            claim.invitation.status === "PUBLISHED"
-                              ? "default"
-                              : "outline"
+                            claim.invitation.status === "PUBLISHED" ? "default" : "outline"
                           }
                         >
                           {claim.invitation.status}
@@ -467,7 +638,7 @@ export default async function AdminInstagramPage() {
                       <td className="text-muted-foreground py-2 pr-3 text-xs">
                         {claim.invitation._count.videos > 0 ? "Yes" : "—"}
                       </td>
-                      <td className="text-muted-foreground py-2 text-xs whitespace-nowrap">
+                      <td className="text-muted-foreground py-2 whitespace-nowrap text-xs">
                         {claim.createdAt.toLocaleDateString()}
                       </td>
                     </tr>
@@ -478,65 +649,6 @@ export default async function AdminInstagramPage() {
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardContent className="flex flex-col gap-3 py-4">
-          <p className="font-medium">Recent comment activity</p>
-
-          {logs.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
-              No comments received yet.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-muted-foreground border-b text-left text-xs">
-                    <th className="py-2 pr-3 font-medium">When</th>
-                    <th className="py-2 pr-3 font-medium">From</th>
-                    <th className="py-2 pr-3 font-medium">Reel</th>
-                    <th className="py-2 pr-3 font-medium">Comment</th>
-                    <th className="py-2 pr-3 font-medium">Outcome</th>
-                    <th className="py-2 font-medium">Reply</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map((log) => {
-                    const outcome = OUTCOME_LABELS[log.outcome] ?? {
-                      label: log.outcome,
-                      variant: "outline" as const,
-                    };
-                    return (
-                      <tr key={log.id} className="border-b last:border-0">
-                        <td className="text-muted-foreground py-2 pr-3 text-xs whitespace-nowrap">
-                          {log.createdAt.toLocaleString()}
-                        </td>
-                        <td className="py-2 pr-3 whitespace-nowrap">
-                          {log.username ? `@${log.username}` : "—"}
-                        </td>
-                        <td className="text-muted-foreground max-w-[10rem] truncate py-2 pr-3 text-xs">
-                          {log.automation?.label ??
-                            mediaById.get(log.mediaId)?.caption ??
-                            log.mediaId}
-                        </td>
-                        <td className="max-w-[12rem] truncate py-2 pr-3">
-                          {log.commentText}
-                        </td>
-                        <td className="py-2 pr-3">
-                          <Badge variant={outcome.variant}>{outcome.label}</Badge>
-                        </td>
-                        <td className="text-muted-foreground max-w-[16rem] truncate py-2 text-xs">
-                          {log.error ?? log.replyText ?? "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
