@@ -448,3 +448,20 @@ export async function resetInstagramLeadAction(leadId: string): Promise<ActionRe
   revalidatePath("/admin/instagram");
   return { success: true, data: undefined };
 }
+
+// Admin-scoped delete: the dashboard's own deleteInvitationAction only ever
+// removes an invitation the signed-in user owns, which never covers the guest
+// and Instagram invitations an admin needs to clear out.
+export async function adminDeleteInvitationAction(invitationId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const invitation = await db.invitation.findUnique({ where: { id: invitationId } });
+  if (!invitation) return { success: false, error: "Invitation not found." };
+
+  await db.invitation.delete({ where: { id: invitationId } });
+
+  revalidatePath("/admin/invitations");
+  revalidatePath("/admin");
+  return { success: true, data: undefined };
+}
