@@ -23,7 +23,10 @@ import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Instagram Automation" };
 
-const OUTCOME_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const OUTCOME_LABELS: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   REPLY_SENT: { label: "Reply sent", variant: "default" },
   DUPLICATE_SKIPPED: { label: "Already claimed", variant: "secondary" },
   TRIGGER_NOT_MATCHED: { label: "No trigger word", variant: "outline" },
@@ -33,7 +36,10 @@ const OUTCOME_LABELS: Record<string, { label: string; variant: "default" | "seco
   SEND_FAILED: { label: "Send failed", variant: "destructive" },
 };
 
-const DM_OUTCOME_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const DM_OUTCOME_LABELS: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   REPLY_SENT: { label: "Reply sent", variant: "default" },
   DUPLICATE_REPLY_SENT: { label: "Already had a link", variant: "secondary" },
   NO_RULE_MATCHED: { label: "Left for you", variant: "outline" },
@@ -108,8 +114,7 @@ export default async function AdminInstagramPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { tab } = await searchParams;
-  const activeTab: TabId =
-    TABS.find((t) => t.id === tab)?.id ?? DEFAULT_TAB;
+  const activeTab: TabId = TABS.find((t) => t.id === tab)?.id ?? DEFAULT_TAB;
 
   const [automations, dmRuleCount] = await Promise.all([
     loadAutomations(),
@@ -137,8 +142,8 @@ export default async function AdminInstagramPage({
       {!isInstagramSendConfigured() && (
         <Card className="border-dashed">
           <CardContent className="text-muted-foreground py-4 text-sm">
-            <code className="font-mono">IG_ACCESS_TOKEN</code> not set — replies will fail
-            and reels can&apos;t be previewed.
+            <code className="font-mono">IG_ACCESS_TOKEN</code> not set — replies will
+            fail and reels can&apos;t be previewed.
           </CardContent>
         </Card>
       )}
@@ -190,8 +195,8 @@ function AutomationsPanel({
         return (
           <Card key={automation.id} className="py-0">
             <CardContent className="flex flex-col gap-3 py-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex min-w-0 items-start gap-3">
                   {media?.thumbnailUrl && (
                     // Instagram CDN URLs are signed and short-lived, so they
                     // are served straight through, not via the optimiser.
@@ -202,7 +207,7 @@ function AutomationsPanel({
                       className="size-12 shrink-0 rounded-md object-cover"
                     />
                   )}
-              <div className="min-w-0">
+                  <div className="min-w-0">
                     <p className="truncate font-medium">{automation.label}</p>
                     <p className="text-muted-foreground truncate font-mono text-xs">
                       {automation.mediaId}
@@ -214,7 +219,7 @@ function AutomationsPanel({
                     )}
                   </div>
                 </div>
-            <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   <InstagramAutomationToggle
                     automationId={automation.id}
                     isActive={automation.isActive}
@@ -241,7 +246,7 @@ function AutomationsPanel({
                 </div>
               </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={automation.isActive ? "default" : "outline"}>
                   {automation.isActive ? "Active" : "Paused"}
                 </Badge>
@@ -319,7 +324,11 @@ async function UnautomatedReelsPanel({
         </div>
         <div className="flex flex-col gap-2">
           {mediaIds.map((mediaId) => (
-            <InstagramMediaCard key={mediaId} mediaId={mediaId} media={media.get(mediaId)}>
+            <InstagramMediaCard
+              key={mediaId}
+              mediaId={mediaId}
+              media={media.get(mediaId)}
+            >
               <InstagramAutomationFormDialog presetMediaId={mediaId} />
             </InstagramMediaCard>
           ))}
@@ -343,8 +352,9 @@ async function RecentPostsPanel({
   if (recentMedia.length === 0) {
     return (
       <EmptyPanel>
-        No posts to show. This list needs <code className="font-mono">IG_ACCESS_TOKEN</code>{" "}
-        set for the connected account.
+        No posts to show. This list needs{" "}
+        <code className="font-mono">IG_ACCESS_TOKEN</code> set for the connected
+        account.
       </EmptyPanel>
     );
   }
@@ -377,7 +387,9 @@ async function RecentPostsPanel({
 
 async function DirectMessagesPanel() {
   const [dmRules, messageLogs] = await Promise.all([
-    db.instagramDmRule.findMany({ orderBy: [{ priority: "desc" }, { createdAt: "asc" }] }),
+    db.instagramDmRule.findMany({
+      orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
+    }),
     db.instagramMessageLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -425,8 +437,12 @@ async function DirectMessagesPanel() {
                       <Badge variant={rule.isActive ? "default" : "outline"}>
                         {rule.isActive ? "Active" : "Paused"}
                       </Badge>
-                      {rule.issueLink && <Badge variant="secondary">Sends invite link</Badge>}
-                      {rule.matchType === "ANY" && <Badge variant="outline">Catch-all</Badge>}
+                      {rule.issueLink && (
+                        <Badge variant="secondary">Sends invite link</Badge>
+                      )}
+                      {rule.matchType === "ANY" && (
+                        <Badge variant="outline">Catch-all</Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
@@ -489,7 +505,7 @@ async function DirectMessagesPanel() {
                     };
                     return (
                       <tr key={log.id} className="border-b last:border-0">
-                        <td className="text-muted-foreground py-2 pr-3 whitespace-nowrap text-xs">
+                        <td className="text-muted-foreground py-2 pr-3 text-xs whitespace-nowrap">
                           {log.createdAt.toLocaleString()}
                         </td>
                         <td className="py-2 pr-3 whitespace-nowrap">
@@ -505,7 +521,9 @@ async function DirectMessagesPanel() {
                           <div className="flex items-center gap-1">
                             <Badge variant={outcome.variant}>{outcome.label}</Badge>
                             {log.outcome === "NO_RULE_MATCHED" && (
-                              <InstagramDmRuleFormDialog presetKeyword={log.messageText} />
+                              <InstagramDmRuleFormDialog
+                                presetKeyword={log.messageText}
+                              />
                             )}
                           </div>
                         </td>
@@ -585,7 +603,7 @@ async function RecentCommentsPanel() {
                     };
                     return (
                       <tr key={log.id} className="border-b last:border-0">
-                        <td className="text-muted-foreground py-2 pr-3 whitespace-nowrap text-xs">
+                        <td className="text-muted-foreground py-2 pr-3 text-xs whitespace-nowrap">
                           {log.createdAt.toLocaleString()}
                         </td>
                         <td className="py-2 pr-3 whitespace-nowrap">
@@ -596,7 +614,9 @@ async function RecentCommentsPanel() {
                             media.get(log.mediaId)?.caption ??
                             log.mediaId}
                         </td>
-                        <td className="max-w-[12rem] truncate py-2 pr-3">{log.commentText}</td>
+                        <td className="max-w-[12rem] truncate py-2 pr-3">
+                          {log.commentText}
+                        </td>
                         <td className="py-2 pr-3">
                           <Badge variant={outcome.variant}>{outcome.label}</Badge>
                         </td>
@@ -642,7 +662,9 @@ async function RecentCommentsPanel() {
                       <td className="py-2 pr-3">
                         <Badge
                           variant={
-                            claim.invitation.status === "PUBLISHED" ? "default" : "outline"
+                            claim.invitation.status === "PUBLISHED"
+                              ? "default"
+                              : "outline"
                           }
                         >
                           {claim.invitation.status}
@@ -651,7 +673,7 @@ async function RecentCommentsPanel() {
                       <td className="text-muted-foreground py-2 pr-3 text-xs">
                         {claim.invitation._count.videos > 0 ? "Yes" : "—"}
                       </td>
-                      <td className="text-muted-foreground py-2 whitespace-nowrap text-xs">
+                      <td className="text-muted-foreground py-2 text-xs whitespace-nowrap">
                         {claim.createdAt.toLocaleDateString()}
                       </td>
                     </tr>
