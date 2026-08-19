@@ -150,10 +150,15 @@ function renderTemplate(template: string, vars: { link: string; username: string
     .replaceAll("{{username}}", vars.username);
 }
 
-async function handleCommentChange(change: {
-  field?: string;
-  value?: Record<string, unknown>;
-}) {
+async function handleCommentChange(
+  change: {
+    field?: string;
+    value?: Record<string, unknown>;
+  },
+  // The Instagram business account the event belongs to — entry.id in the
+  // payload. Needed to recognise our own comments.
+  businessAccountId?: string,
+) {
   if (change.field !== "comments") return;
 
   const value = change.value ?? {};
@@ -167,9 +172,25 @@ async function handleCommentChange(change: {
 
   if (!commentId || !mediaId) return;
 
+  // Our own comments come back through the same webhook — replying to one
+  // would issue the business account an invitation and burn its own slot,
+  // and there is no one to DM. Recognised without extra config: the account
+  // that owns the event and the comment's author are the same id.
+  if (igUserId && businessAccountId && igUserId === businessAccountId) return;
+
   const logBase = { mediaId, commentId, igUserId, username, commentText: text };
 
   try {
+    // Meta re-delivers a webhook it thinks we missed, and a second delivery
+    // of the same comment would send the commenter a second DM. The comment
+    // log doubles as the record of what has already been handled: one row
+    // for this comment id means this event is a repeat, whatever its outcome.
+    const alreadyHandled = await db.instagramCommentLog.findFirst({
+      where: { commentId },
+      select: { id: true },
+    });
+    if (alreadyHandled) return;
+
     const automation = await db.instagramAutomation.findUnique({ where: { mediaId } });
 
     // Automation is opt-in per reel: a comment on a reel with no rule (or a
@@ -326,6 +347,7 @@ async function handleMessagingEvent(event: {
 
 async function processWebhookPayload(payload: {
   entry?: Array<{
+    id?: string;
     changes?: Array<{ field?: string; value?: Record<string, unknown> }>;
     messaging?: Array<{
       sender?: { id?: string };
@@ -335,7 +357,7 @@ async function processWebhookPayload(payload: {
 }) {
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
-      await handleCommentChange(change);
+      await handleCommentChange(change, entry.id);
     }
     for (const event of entry.messaging ?? []) {
       await handleMessagingEvent(event);
