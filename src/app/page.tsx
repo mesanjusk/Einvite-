@@ -1,12 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Sparkles, Palette, Music, ClipboardCheck, Rocket, Wand2 } from "lucide-react";
+import { FileText, Globe, Video } from "lucide-react";
 
 import { db } from "@/lib/db";
 import { SITE_NAME } from "@/config/site";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { Button } from "@/components/ui/button";
-import { PhoneMockup } from "@/components/marketing/phone-mockup";
+import { HeroCarousel } from "@/components/marketing/hero-carousel";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 import { InstagramBanner } from "@/components/marketing/instagram-banner";
 import { SiteFooter } from "@/components/marketing/site-footer";
@@ -27,158 +27,174 @@ export const metadata: Metadata = {
   },
 };
 
-const FEATURES = [
-  { icon: Wand2, title: "AI Wizard" },
-  { icon: Palette, title: "One-Click Themes" },
-  { icon: Music, title: "Music & Motion" },
-  { icon: ClipboardCheck, title: "RSVP & Guests" },
-  { icon: Sparkles, title: "Live Analytics" },
-  { icon: Rocket, title: "One-Click Publish" },
+const FORMATS = [
+  { label: "Video", icon: Video, href: "/create" },
+  { label: "PDF", icon: FileText, href: "/create" },
+  { label: "eInvite", icon: Globe, href: "/create" },
 ];
+
+type Palette = { primary: string; accent: string; background: string };
 
 export default async function Home() {
   const [themes, demos] = await Promise.all([
     db.theme
-      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" }, take: 6 })
+      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" }, take: 8 })
       .catch(() => []),
     db.invitation
       .findMany({
         where: { isDemo: true, status: "PUBLISHED" },
-        take: 3,
+        take: 4,
         include: { theme: true },
         orderBy: { createdAt: "asc" },
       })
       .catch(() => []),
   ]);
 
+  // Real published demos make the best carousel; when there are none (a fresh
+  // deploy, or the database is unreachable) the themes carry it instead so the
+  // page never opens on an empty frame.
+  const demoSlides = demos.map((demo) => {
+    const palette = demo.theme?.colorPalette as Palette | undefined;
+    return {
+      id: demo.id,
+      eyebrow: "Live invitation",
+      title: `${demo.brideName} & ${demo.groomName}`,
+      href: `/invite/${demo.slug}`,
+      cta: "View invitation",
+      primary: palette?.primary ?? "#7a2e2e",
+      accent: palette?.accent ?? "#c9942a",
+      background: palette?.background ?? "#faf3ea",
+    };
+  });
+
+  const fallbackSlides = themes.slice(0, 3).map((theme) => {
+    const palette = theme.colorPalette as Palette;
+    return {
+      id: theme.id,
+      eyebrow: "Ready-made theme",
+      title: theme.name,
+      href: "/create",
+      cta: "Start with this theme",
+      primary: palette.primary,
+      accent: palette.accent,
+      background: palette.background ?? "#faf3ea",
+    };
+  });
+
+  const slides = demoSlides.length > 0 ? demoSlides : fallbackSlides;
+
   return (
     <div className="flex min-h-svh flex-col">
       <InstagramBanner />
-      <header className="flex items-center justify-between px-6 py-5 lg:px-12">
+
+      <header className="flex items-center justify-between px-6 py-4 lg:px-12">
         <SiteLogo size="lg" />
-        <nav className="flex items-center gap-3">
-          <Button variant="ghost" asChild>
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/create">Get started</Link>
-          </Button>
-        </nav>
+        <Button asChild>
+          <Link href="/create">Get started</Link>
+        </Button>
       </header>
 
       <main className="flex-1">
-        <section
-          className="flex flex-col items-center gap-6 px-6 py-20 text-center"
-          style={{
-            background:
-              "radial-gradient(120% 60% at 50% 0%, oklch(0.95 0.025 340) 0%, var(--background) 60%)",
-          }}
-        >
-          <h1 className="font-display max-w-3xl text-4xl leading-tight text-balance sm:text-6xl">
-            Your wedding invite, designed by AI in{" "}
-            <span className="text-primary">minutes, not months</span>
-          </h1>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" asChild>
-              <Link href="/create">Create your invitation — free</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/themes">Browse themes</Link>
-            </Button>
-          </div>
-          <EventCategoryChips />
-        </section>
-
-        <section className="mx-auto grid max-w-5xl grid-cols-2 gap-4 px-6 py-16 sm:grid-cols-3 lg:grid-cols-6">
-          {FEATURES.map((feature) => (
-            <div key={feature.title} className="flex flex-col items-center gap-2 rounded-xl border p-5 text-center">
-              <feature.icon className="text-accent size-6" strokeWidth={1.5} />
-              <span className="text-sm font-medium">{feature.title}</span>
-            </div>
-          ))}
-        </section>
-
-        {demos.length > 0 && (
-          <section className="px-6 py-16" style={{ background: "color-mix(in srgb, var(--muted) 40%, transparent)" }}>
-            <div className="mx-auto max-w-5xl">
-              <h2 className="font-display mb-10 text-center text-3xl">See it in action</h2>
-              <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
-                {demos.map((demo) => {
-                  const palette = demo.theme?.colorPalette as
-                    | { primary: string; accent: string; background: string }
-                    | undefined;
-                  const dateDisplay = demo.weddingDate.toLocaleDateString("en-US", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  });
-                  return (
-                    <div key={demo.id} className="flex flex-col items-center gap-4">
-                      <PhoneMockup>
-                        <Link
-                          href={`/invite/${demo.slug}`}
-                          target="_blank"
-                          className="flex size-full flex-col items-center justify-center gap-4 px-4 text-center"
-                          style={{
-                            background: `radial-gradient(120% 100% at 50% 0%, ${palette?.primary ?? "#7a2e2e"} 0%, color-mix(in srgb, ${palette?.primary ?? "#7a2e2e"} 70%, black 25%) 100%)`,
-                            color: palette?.background ?? "#faf3ea",
-                          }}
-                        >
-                          <span className="text-[10px] tracking-[0.3em] uppercase opacity-80">
-                            Demo invitation
-                          </span>
-                          <span className="font-display text-2xl">
-                            {demo.brideName}
-                            <span style={{ color: palette?.accent ?? "#c9942a" }}> &amp; </span>
-                            {demo.groomName}
-                          </span>
-                          <span className="text-xs tracking-[0.15em] opacity-80">{dateDisplay}</span>
-                          <span
-                            className="mt-4 rounded-full border px-4 py-1.5 text-[10px] tracking-[0.2em] uppercase"
-                            style={{ borderColor: palette?.accent ?? "#c9942a" }}
-                          >
-                            Tap to view
-                          </span>
-                        </Link>
-                      </PhoneMockup>
-                      <p className="text-sm font-medium">
-                        {demo.brideName} &amp; {demo.groomName}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+        {slides.length > 0 ? (
+          <HeroCarousel slides={slides} />
+        ) : (
+          <section className="px-6 py-16 text-center">
+            <h1 className="font-display mx-auto max-w-2xl text-4xl leading-tight text-balance sm:text-5xl">
+              Your wedding invite, designed in{" "}
+              <span className="text-primary">minutes, not months</span>
+            </h1>
           </section>
         )}
 
+        <section className="mx-auto max-w-5xl px-6 py-12">
+          <EventCategoryChips />
+        </section>
+
         {themes.length > 0 && (
-          <section className="mx-auto max-w-5xl px-6 py-16">
-            <h2 className="font-display mb-6 text-center text-3xl">Themes for every wedding</h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <section className="mx-auto max-w-5xl px-6 pb-14">
+            <div className="mb-6 flex items-baseline justify-between gap-4">
+              <h2 className="font-display text-2xl sm:text-3xl">Themes</h2>
+              <Link
+                href="/themes"
+                className="text-primary text-sm underline underline-offset-4"
+              >
+                View all
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 sm:gap-5">
               {themes.map((theme) => {
-                const palette = theme.colorPalette as { primary: string; accent: string };
+                const palette = theme.colorPalette as Palette;
                 return (
-                  <div key={theme.id} className="overflow-hidden rounded-lg border">
+                  <Link
+                    key={theme.id}
+                    href={`/create?theme=${theme.slug}`}
+                    className="group focus-visible:ring-primary hover:border-primary/60 overflow-hidden rounded-xl border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  >
                     <div
-                      className="h-16"
-                      style={{
-                        background: `linear-gradient(135deg, ${palette.primary}, ${palette.accent})`,
-                      }}
-                    />
-                    <p className="p-2 text-center text-xs font-medium">{theme.name}</p>
-                  </div>
+                      className="relative flex aspect-[4/3] items-end overflow-hidden sm:aspect-[16/10]"
+                      style={
+                        theme.previewImage
+                          ? undefined
+                          : {
+                              background: `linear-gradient(140deg, ${palette.primary}, ${palette.accent})`,
+                            }
+                      }
+                    >
+                      {theme.previewImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={theme.previewImage}
+                          alt=""
+                          className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      )}
+                      {theme.isPremium && (
+                        <span className="absolute top-2.5 right-2.5 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-white uppercase backdrop-blur-sm">
+                          Premium
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 p-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{theme.name}</p>
+                        <p className="text-muted-foreground text-xs capitalize">
+                          {theme.category}
+                        </p>
+                      </div>
+                      <span className="text-primary shrink-0 text-xs font-semibold">Free</span>
+                    </div>
+                  </Link>
                 );
               })}
             </div>
           </section>
         )}
 
-        <section className="px-6 py-20 text-center">
-          <h2 className="font-display mb-4 text-3xl">Ready to send the invite?</h2>
-          <Button size="lg" asChild>
-            <Link href="/create">Start for free</Link>
-          </Button>
+        <section className="bg-muted/40 border-y px-6 py-10">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-6 gap-y-4 text-center sm:justify-between sm:text-left">
+            <h2 className="font-display text-2xl sm:text-3xl">Ready to send the invite?</h2>
+            <Button size="lg" asChild>
+              <Link href="/create">Start for free</Link>
+            </Button>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl px-6 py-14">
+          <div className="flex flex-wrap items-start justify-center gap-10 sm:gap-16">
+            {FORMATS.map((format) => (
+              <Link
+                key={format.label}
+                href={format.href}
+                className="group focus-visible:ring-primary flex flex-col items-center gap-3 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              >
+                <span className="border-primary/25 bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground flex size-20 items-center justify-center rounded-full border transition-all group-hover:scale-105 sm:size-24">
+                  <format.icon className="size-8" strokeWidth={1.5} />
+                </span>
+                <span className="text-sm font-medium">{format.label}</span>
+              </Link>
+            ))}
+          </div>
         </section>
       </main>
 

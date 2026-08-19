@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SITE_NAME } from "@/config/site";
+import { LEGAL_BRAND_NAME } from "@/config/legal";
 
 const LEGAL_LINKS = [
   { label: "Privacy Policy", href: "/privacy" },
@@ -19,7 +20,12 @@ export function SiteFooter() {
           </Link>
         ))}
       </nav>
-      <p>{SITE_NAME}</p>
+      <p className="text-foreground font-medium">
+        {SITE_NAME} — a product of {LEGAL_BRAND_NAME}
+      </p>
+      <p className="mt-1 text-xs">
+        © {new Date().getFullYear()} {LEGAL_BRAND_NAME}. All rights reserved.
+      </p>
     </footer>
   );
 }

@@ -2,30 +2,64 @@
 
 import Link from "next/link";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import {
+  Baby,
+  Cake,
+  Gem,
+  Heart,
+  House,
+  PartyPopper,
+  HeartHandshake,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 
-const CATEGORIES = [
-  { label: "Wedding", href: "/create", live: true },
-  { label: "Ring Ceremony", live: false },
-  { label: "Engagement", live: false },
-  { label: "Birthday", live: false },
-  { label: "Naming Ceremony", live: false },
-  { label: "Anniversary", live: false },
-  { label: "Housewarming", live: false },
-  { label: "Baby Shower", live: false },
-] as const;
+const CATEGORIES: {
+  label: string;
+  icon: LucideIcon;
+  href?: string;
+  live: boolean;
+}[] = [
+  { label: "Wedding", icon: Heart, href: "/create", live: true },
+  { label: "Ring Ceremony", icon: HeartHandshake, live: false },
+  { label: "Engagement", icon: Gem, live: false },
+  { label: "Birthday", icon: Cake, live: false },
+  { label: "Naming", icon: Sparkles, live: false },
+  { label: "Anniversary", icon: PartyPopper, live: false },
+  { label: "Housewarming", icon: House, live: false },
+  { label: "Baby Shower", icon: Baby, live: false },
+];
+
+const circle =
+  "flex size-16 items-center justify-center rounded-full border transition-transform sm:size-18";
 
 export function EventCategoryChips() {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      {CATEGORIES.map((category) =>
-        category.live ? (
+    <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:flex sm:flex-wrap sm:justify-center sm:gap-6">
+      {CATEGORIES.map((category) => {
+        const Icon = category.icon;
+        const content = (
+          <>
+            <span
+              className={
+                category.live
+                  ? `${circle} border-primary bg-primary text-primary-foreground group-hover:scale-105`
+                  : `${circle} bg-card text-muted-foreground group-hover:border-primary group-hover:text-foreground group-hover:scale-105`
+              }
+            >
+              <Icon className="size-6" strokeWidth={1.5} />
+            </span>
+            <span className="text-center text-xs font-medium">{category.label}</span>
+          </>
+        );
+
+        return category.live && category.href ? (
           <Link
             key={category.label}
             href={category.href}
-            className="rounded-full border px-4 py-1.5 text-sm font-medium transition-colors bg-primary text-primary-foreground border-primary"
+            className="group focus-visible:ring-primary flex flex-col items-center gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
-            {category.label}
+            {content}
           </Link>
         ) : (
           <button
@@ -36,14 +70,12 @@ export function EventCategoryChips() {
                 description: "Wedding invitations are live today — more event types are on the way.",
               })
             }
-            className={cn(
-              "text-muted-foreground hover:border-primary hover:text-foreground rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-            )}
+            className="group focus-visible:ring-primary flex flex-col items-center gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
-            {category.label}
+            {content}
           </button>
-        ),
-      )}
+        );
+      })}
     </div>
   );
 }
