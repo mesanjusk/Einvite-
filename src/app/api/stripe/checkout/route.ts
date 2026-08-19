@@ -51,8 +51,8 @@ export async function POST(request: Request) {
     customer_email: subscription?.stripeCustomerId ? undefined : session.user.email!,
     client_reference_id: session.user.id,
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/dashboard/billing?success=1`,
-    cancel_url: `${appUrl}/dashboard/billing?canceled=1`,
+    success_url: `${appUrl}/dashboard/settings/billing?success=1`,
+    cancel_url: `${appUrl}/dashboard/settings/billing?canceled=1`,
     metadata: { userId: session.user.id, plan: parsed.data.plan },
   });
 

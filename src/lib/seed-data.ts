@@ -436,7 +436,7 @@ export const VIDEO_TEMPLATES = [
 // actual audio file behind them (the original state of this list) silently
 // breaks music for anyone who picks one — the button shows up but nothing
 // plays. Real tracks need real licensed audio files hosted somewhere; add
-// them via /admin/music with a working URL once you have one.
+// them via /admin/library/music with a working URL once you have one.
 export const MUSIC_TRACKS: {
   title: string;
   artist: string;
