@@ -728,5 +728,8 @@ model InstagramCommentLog {
 
   @@index([mediaId])
   @@index([createdAt])
+  // Read on every incoming comment to spot a webhook Meta re-delivered.
+  // Deliberately not unique: existing rows predate the check and may repeat.
+  @@index([commentId])
   @@map("instagram_comment_logs")
 }
