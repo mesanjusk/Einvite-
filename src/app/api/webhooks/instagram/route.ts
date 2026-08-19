@@ -285,9 +285,21 @@ async function handleCommentChange(
       return;
     }
 
+    // Which of this reel's two replies to send is a *per-reel* question, and
+    // the lead row is the per-reel record of a claim. Asking the invitation
+    // instead — "does this person have a link at all?" — got it wrong for
+    // every returning commenter: the invitation is one per Instagram account
+    // (see issueInvitationLink), so from their second reel onwards everyone
+    // took the duplicate branch and no reel's own reply was ever sent again.
+    const claimedThisReel = await db.instagramLead.findUnique({
+      where: { igUserId_automationId: { igUserId, automationId: automation.id } },
+      select: { id: true },
+    });
+    const alreadyClaimed = claimedThisReel !== null;
+
     // One invitation per Instagram account: a returning commenter is handed
     // their existing invitation again, on any reel, rather than a second one.
-    const { link, alreadyClaimed } = await issueInvitationLink(igUserId, username);
+    const { link } = await issueInvitationLink(igUserId, username);
     const replyText = renderInstagramTemplate(
       alreadyClaimed ? automation.duplicateMessage : automation.replyMessage,
       { link, username: username ?? "" },
