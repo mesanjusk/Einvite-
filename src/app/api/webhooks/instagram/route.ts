@@ -6,8 +6,13 @@ import { getAppUrl } from "@/lib/app-url";
 import { generateToken, hashToken } from "@/lib/otp";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import { fetchInstagramFollowStatus, sendInstagramMessage } from "@/lib/instagram";
+import { deleteInstagramUserData } from "@/lib/instagram-data-deletion";
+import { SUPPORT_EMAIL } from "@/config/legal";
 
 const DM_HELP_MESSAGE = "Comment FREE on our latest post to get your invite link!";
+const DM_DELETED_MESSAGE =
+  "Done — your data is deleted. Your invitation, its link, your follower status, and your comment history are gone. Comment FREE any time to start fresh.";
+const DM_DELETE_FAILED_MESSAGE = `Sorry, we couldn't delete your data just now. Please email ${SUPPORT_EMAIL} with subject DELETE and we'll do it by hand.`;
 const DEFAULT_NOT_FOLLOWING_MESSAGE =
   "Please follow us first, then comment again to get your free invite link!";
 // Only a positive follow result is cached. Someone told to follow first will
@@ -28,7 +33,11 @@ export async function GET(request: Request) {
   return new Response(null, { status: 403 });
 }
 
-function isValidSignature(rawBody: string, signature: string | null, appSecret: string) {
+function isValidSignature(
+  rawBody: string,
+  signature: string | null,
+  appSecret: string,
+) {
   if (!signature) return false;
 
   const expected = `sha256=${createHmac("sha256", appSecret).update(rawBody).digest("hex")}`;
@@ -113,7 +122,8 @@ async function resolveFollowStatus(
     return true;
   }
 
-  const { isFollower, username: fetchedUsername } = await fetchInstagramFollowStatus(igUserId);
+  const { isFollower, username: fetchedUsername } =
+    await fetchInstagramFollowStatus(igUserId);
   if (isFollower === null) return null;
 
   await db.instagramProfile.upsert({
@@ -140,7 +150,10 @@ function renderTemplate(template: string, vars: { link: string; username: string
     .replaceAll("{{username}}", vars.username);
 }
 
-async function handleCommentChange(change: { field?: string; value?: Record<string, unknown> }) {
+async function handleCommentChange(change: {
+  field?: string;
+  value?: Record<string, unknown>;
+}) {
   if (change.field !== "comments") return;
 
   const value = change.value ?? {};
@@ -162,20 +175,33 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
     // Automation is opt-in per reel: a comment on a reel with no rule (or a
     // paused one) is recorded for the dashboard but never replied to.
     if (!automation) {
-      await db.instagramCommentLog.create({ data: { ...logBase, outcome: "NO_AUTOMATION" } });
+      await db.instagramCommentLog.create({
+        data: { ...logBase, outcome: "NO_AUTOMATION" },
+      });
       return;
     }
     if (!automation.isActive) {
       await db.instagramCommentLog.create({
-        data: { ...logBase, automationId: automation.id, outcome: "AUTOMATION_INACTIVE" },
+        data: {
+          ...logBase,
+          automationId: automation.id,
+          outcome: "AUTOMATION_INACTIVE",
+        },
       });
       return;
     }
 
-    const matched = text.trim().toLowerCase().includes(automation.triggerWord.trim().toLowerCase());
+    const matched = text
+      .trim()
+      .toLowerCase()
+      .includes(automation.triggerWord.trim().toLowerCase());
     if (!matched) {
       await db.instagramCommentLog.create({
-        data: { ...logBase, automationId: automation.id, outcome: "TRIGGER_NOT_MATCHED" },
+        data: {
+          ...logBase,
+          automationId: automation.id,
+          outcome: "TRIGGER_NOT_MATCHED",
+        },
       });
       return;
     }
@@ -189,7 +215,10 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
           automation.notFollowingMessage || DEFAULT_NOT_FOLLOWING_MESSAGE,
           { link: "", username: username ?? "" },
         );
-        const { delivered } = await sendInstagramMessage({ comment_id: commentId }, followText);
+        const { delivered } = await sendInstagramMessage(
+          { comment_id: commentId },
+          followText,
+        );
         await db.instagramCommentLog.create({
           data: {
             ...logBase,
@@ -207,7 +236,12 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
     // there's nothing safe to send — recording it is all that's left.
     if (!igUserId) {
       await db.instagramCommentLog.create({
-        data: { ...logBase, automationId: automation.id, outcome: "SEND_FAILED", error: "Comment carried no sender ID" },
+        data: {
+          ...logBase,
+          automationId: automation.id,
+          outcome: "SEND_FAILED",
+          error: "Comment carried no sender ID",
+        },
       });
       return;
     }
@@ -219,7 +253,10 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
       alreadyClaimed ? automation.duplicateMessage : automation.replyMessage,
       { link, username: username ?? "" },
     );
-    const { delivered } = await sendInstagramMessage({ comment_id: commentId }, replyText);
+    const { delivered } = await sendInstagramMessage(
+      { comment_id: commentId },
+      replyText,
+    );
 
     // The lead row records which reel drove this claim, so a returning user
     // commenting on a new reel still attributes to that reel. Written only on
@@ -236,7 +273,11 @@ async function handleCommentChange(change: { field?: string; value?: Record<stri
       data: {
         ...logBase,
         automationId: automation.id,
-        outcome: delivered ? (alreadyClaimed ? "DUPLICATE_SKIPPED" : "REPLY_SENT") : "SEND_FAILED",
+        outcome: delivered
+          ? alreadyClaimed
+            ? "DUPLICATE_SKIPPED"
+            : "REPLY_SENT"
+          : "SEND_FAILED",
         replyText,
         error: delivered ? null : "Send API rejected the reply",
       },
@@ -256,6 +297,25 @@ async function handleMessagingEvent(event: {
   // own sends — replying to those is both wrong and rejected by Meta with
   // "This message is sent outside of allowed window".
   if (!senderId || event.message?.is_echo || !event.message?.text) return;
+
+  // /data-deletion tells people they can DM "DELETE" to have their data
+  // erased, so that word has to actually erase it rather than fall through
+  // to the marketing reply. Matched on the whole trimmed message: someone
+  // writing "don't delete my invite" is not making a deletion request.
+  if (event.message.text.trim().toLowerCase() === "delete") {
+    try {
+      const summary = await deleteInstagramUserData(senderId);
+      console.log(
+        "Instagram DELETE request — erased user data:",
+        JSON.stringify(summary),
+      );
+      await sendInstagramMessage({ id: senderId }, DM_DELETED_MESSAGE);
+    } catch (error) {
+      console.error("Failed to erase data on DELETE request", error);
+      await sendInstagramMessage({ id: senderId }, DM_DELETE_FAILED_MESSAGE);
+    }
+    return;
+  }
 
   try {
     await sendInstagramMessage({ id: senderId }, DM_HELP_MESSAGE);

@@ -15,19 +15,29 @@ export default function DataDeletionPage() {
 
       <ol>
         <li>
-          <strong>Option 1:</strong> Email us at{" "}
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> with subject &ldquo;DELETE&rdquo;
-          and your Instagram username
+          <strong>DM us &ldquo;DELETE&rdquo; on Instagram.</strong> This is immediate
+          and automatic — your data is erased within seconds and we reply to confirm.
         </li>
         <li>
-          <strong>Option 2:</strong> DM us &ldquo;DELETE&rdquo; on Instagram
+          <strong>Disconnect the app</strong> from your Instagram settings. We treat
+          that as a deletion request and erase your data straight away, without you
+          asking twice.
+        </li>
+        <li>
+          <strong>
+            Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+          </strong>{" "}
+          with subject &ldquo;DELETE&rdquo; and your Instagram username, if you would
+          rather not use Instagram. We action these within 7 business days.
         </li>
       </ol>
 
       <p>
-        We will delete your Instagram user ID, username, stored follower status, comment
-        records, and your invitation with its access link within 7 business days, and confirm
-        via reply.
+        Deletion removes your Instagram user ID, your username, your stored follower
+        status, every comment of yours we logged, and your invitation together with its
+        access link, photos, events, and guest list. It cannot be undone — the
+        invitation link stops working immediately. You are welcome to start again at any
+        time by commenting on one of our posts.
       </p>
     </LegalPage>
   );
