@@ -635,8 +635,10 @@ model InstagramAutomation {
   // Reply sent when this commenter already claimed this reel's link.
   duplicateMessage    String
   // Gate the link behind following the account. The follow check is
-  // best-effort (see InstagramProfile) and fails open, so an unresolvable
-  // check sends the link rather than blocking a real person.
+  // best-effort (see InstagramProfile) and fails closed: a status Instagram
+  // won't resolve is treated as "not following", because it won't resolve
+  // for most first-time commenters and failing open handed the link to
+  // everyone. They're asked to follow and comment again instead.
   requireFollow       Boolean @default(false)
   notFollowingMessage String?
   isActive            Boolean @default(true)
@@ -694,7 +696,12 @@ enum InstagramCommentOutcome {
   TRIGGER_NOT_MATCHED
   NO_AUTOMATION
   AUTOMATION_INACTIVE
+  // Instagram confirmed they don't follow the account.
   NOT_FOLLOWING
+  // Instagram wouldn't say either way, so the followers-only gate held the
+  // link back. Distinct from NOT_FOLLOWING so an admin can see whether the
+  // gate is turning people away on real answers or on unresolved checks.
+  FOLLOW_UNVERIFIED
   SEND_FAILED
 }
 
@@ -703,7 +710,9 @@ enum InstagramCommentOutcome {
 // is_user_follow_business — so results are cached here to avoid re-querying
 // on every comment. Only positive results are trusted for the cache window:
 // someone told to follow first will follow and immediately re-comment, so a
-// cached "not following" would keep locking them out.
+// cached "not following" would keep locking them out. Unresolved checks are
+// not stored at all — the private reply sent on one opens a conversation,
+// which is often exactly what lets the next check resolve.
 model InstagramProfile {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   igUserId   String   @unique

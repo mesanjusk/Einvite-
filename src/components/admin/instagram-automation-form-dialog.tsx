@@ -60,7 +60,7 @@ function defaultValues(automation?: AutomationRecord): InstagramAutomationFormVa
     requireFollow: automation?.requireFollow ?? false,
     notFollowingMessage:
       automation?.notFollowingMessage ??
-      "Please follow us first, then comment again to get your free invite link!",
+      "Please make sure you're following us, then comment again to get your free invite link!",
     isActive: automation?.isActive ?? true,
   };
 }
@@ -272,7 +272,10 @@ export function InstagramAutomationFormDialog({
                 <Label>Reply for non-followers</Label>
                 <Textarea rows={2} {...form.register("notFollowingMessage")} />
                 <p className="text-muted-foreground text-xs">
-                  Sends the link anyway when follow status can&apos;t be determined.
+                  Sent to anyone we can&apos;t confirm is a follower — Instagram
+                  often can&apos;t resolve someone who has never messaged you, and
+                  this reply opens that conversation, so their next comment
+                  checks out properly.
                 </p>
               </div>
             )}
