@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AUTO_VIDEO_MODEL,
   NO_VIDEO_MODEL_ERROR,
+  VEO_QUOTA_HINT,
   buildVideoPrompt,
   isGeminiVideoConfigured,
   listGeminiVideoModels,
@@ -163,10 +164,18 @@ describe("startGeminiVideoGeneration", () => {
 
   it("surfaces a clean error on a non-2xx response instead of throwing", async () => {
     vi.stubEnv("GEMINI_API_KEY", "env-key");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("upstream exploded", { status: 500 })));
+
+    const result = await startGeminiVideoGeneration("p", { model: "m", aspectRatio: "9:16" });
+    expect(result).toEqual({ ok: false, error: "Gemini API error (500)" });
+  });
+
+  it("still flags the free tier when a quota failure has no JSON body", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("quota exceeded", { status: 429 })));
 
     const result = await startGeminiVideoGeneration("p", { model: "m", aspectRatio: "9:16" });
-    expect(result).toEqual({ ok: false, error: "Gemini API error (429)" });
+    expect(result).toEqual({ ok: false, error: `Gemini API error (429) ${VEO_QUOTA_HINT}` });
   });
 
   it("includes Gemini's own message when the failure body is a JSON API error", async () => {
@@ -181,8 +190,21 @@ describe("startGeminiVideoGeneration", () => {
     const result = await startGeminiVideoGeneration("p", { model: "m", aspectRatio: "9:16" });
     expect(result).toEqual({
       ok: false,
-      error: "Gemini API error (429): Quota exceeded for quota metric",
+      error: `Gemini API error (429): Quota exceeded for quota metric ${VEO_QUOTA_HINT}`,
     });
+  });
+
+  it("adds the free-tier hint only to quota failures, not to every error", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "env-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: "Invalid aspect ratio" } }), { status: 400 }),
+      ),
+    );
+
+    const result = await startGeminiVideoGeneration("p", { model: "m", aspectRatio: "1:1" });
+    expect(result).toEqual({ ok: false, error: "Gemini API error (400): Invalid aspect ratio" });
   });
 
   it("retries with a model the key can reach when the template's model 404s", async () => {

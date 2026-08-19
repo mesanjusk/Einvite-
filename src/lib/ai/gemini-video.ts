@@ -14,6 +14,15 @@ const LONG_RUNNING_METHOD = "predictLongRunning";
 export const NO_VIDEO_MODEL_ERROR =
   "This Gemini API key can't reach any video (Veo) model. Veo needs a paid-tier key — enable billing on the key in Google AI Studio, or use a different key.";
 
+// Google's 429 text ("You exceeded your current quota, please check your plan
+// and billing details") reads as though the allowance ran out. For Veo on a
+// free-tier key there was never an allowance: the models are listed, they
+// just carry no quota, so the very first request of the day gets this. Left
+// unexplained it sends couples looking through their usage for spend that
+// isn't there.
+export const VEO_QUOTA_HINT =
+  "Note: video generation isn't included in the Gemini free tier at all — if this is the first video attempted on this key, enable billing on it in Google AI Studio rather than waiting for quota to reset.";
+
 export type VideoPromptInvitationInput = {
   brideName: string;
   groomName: string;
@@ -246,7 +255,11 @@ export async function startGeminiVideoGeneration(
     if (!response.ok) {
       const body = await response.text();
       console.error("Gemini video generation failed to start", body);
-      return { ok: false, error: describeApiError(response.status, body) };
+      const message = describeApiError(response.status, body);
+      return {
+        ok: false,
+        error: response.status === 429 ? `${message} ${VEO_QUOTA_HINT}` : message,
+      };
     }
 
     const data = await response.json();
