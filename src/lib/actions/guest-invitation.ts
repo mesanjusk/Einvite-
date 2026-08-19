@@ -84,6 +84,15 @@ export async function updateGuestInvitationAction(
   if (!theme || theme.type !== "WEBSITE") return { success: false, error: "Unknown theme selected." };
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
+  // A colourway is one of the theme's palettes. Its palette is copied onto
+  // the invitation so every render path keeps reading colorPalette and never
+  // needs to resolve colourways itself.
+  const colorway = data.colorwaySlug
+    ? await db.themeColorway.findUnique({
+        where: { themeId_slug: { themeId: theme.id, slug: data.colorwaySlug } },
+      })
+    : null;
+
   // No music picked or uploaded — fall back to the admin-flagged default
   // track (if one exists) so the invitation never plays silent.
   let musicTrackId = data.musicTrackId || null;
@@ -134,6 +143,8 @@ export async function updateGuestInvitationAction(
       caste: data.caste || null,
       themeId: theme.id,
       templateId: template?.id,
+      colorwayId: colorway?.id ?? null,
+      colorPalette: colorway?.colorPalette ?? undefined,
       musicTrackId,
       customMusicUrl: data.customMusicUrl || null,
       aiGenerated,

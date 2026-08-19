@@ -156,6 +156,7 @@ model Theme {
   revealVideoUrl String?
 
   templates      Template[]
+  colorways      ThemeColorway[]
   invitations    Invitation[] @relation("InvitationWebsiteTheme")
   pdfInvitations Invitation[] @relation("InvitationPdfTheme")
 
@@ -163,6 +164,29 @@ model Theme {
   updatedAt DateTime @updatedAt
 
   @@map("themes")
+}
+
+// A theme is a design — layout, fonts, ornament, reveal — and a colourway is
+// one of the colour schemes it ships in. "Royal" in maroon-and-gold and
+// "Royal" in emerald are the same design, so they share a Theme and differ
+// only here. The theme's own `colorPalette` remains its default colourway.
+model ThemeColorway {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  themeId      String  @db.ObjectId
+  name         String // "Maroon & Gold", "Emerald", "Blush"
+  slug         String
+  colorPalette Json // { primary, secondary, accent, background, foreground }
+  previewImage String?
+  sortOrder    Int     @default(0)
+
+  theme       Theme        @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  invitations Invitation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([themeId, slug])
+  @@map("theme_colorways")
 }
 
 model Template {
@@ -307,7 +331,11 @@ model Invitation {
   // forms only report whether one is configured.
   geminiApiKey    String?
   fontPairing      Json? // override of theme default, { display, body, script }
-  colorPalette     Json? // override of theme default
+  // Which of the theme's colourways was chosen. The resolved palette is
+  // copied into `colorPalette` on save, so rendering never has to know
+  // colourways exist — this only records the choice for the pickers.
+  colorwayId       String? @db.ObjectId
+  colorPalette     Json? // resolved palette: colourway, or a manual override
   musicTrackId     String? @db.ObjectId
   customMusicUrl   String? // couple's own uploaded audio — takes priority over musicTrackId when set
   galleryAnimation String  @default("fade") // "fade" | "slide" | "zoom" | "flip" | "blur" — gallery photo reveal style
@@ -328,6 +356,7 @@ model Invitation {
 
   user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   theme         Theme?         @relation("InvitationWebsiteTheme", fields: [themeId], references: [id])
+  colorway      ThemeColorway? @relation(fields: [colorwayId], references: [id])
   pdfTheme      Theme?         @relation("InvitationPdfTheme", fields: [pdfThemeId], references: [id])
   template      Template?      @relation(fields: [templateId], references: [id])
   music         MusicTrack?    @relation(fields: [musicTrackId], references: [id])

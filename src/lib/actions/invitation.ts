@@ -36,6 +36,15 @@ export async function createInvitationAction(
 
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
+  // A colourway is one of the theme's palettes. Its palette is copied onto
+  // the invitation so every render path keeps reading colorPalette and never
+  // needs to resolve colourways itself.
+  const colorway = data.colorwaySlug
+    ? await db.themeColorway.findUnique({
+        where: { themeId_slug: { themeId: theme.id, slug: data.colorwaySlug } },
+      })
+    : null;
+
   const slug = await uniqueSlug(`${data.brideName}-${data.groomName}`);
   const weddingDate = new Date(data.weddingDate);
   const weddingDateDisplay = weddingDate.toLocaleDateString("en-US", {
@@ -77,6 +86,8 @@ export async function createInvitationAction(
       caste: data.caste || null,
       themeId: theme.id,
       templateId: template?.id,
+      colorwayId: colorway?.id ?? null,
+      colorPalette: colorway?.colorPalette ?? undefined,
       musicTrackId: data.musicTrackId || null,
       customMusicUrl: data.customMusicUrl || null,
       sectionConfig: (template?.sectionOrder as string[] | undefined ?? DEFAULT_SECTION_ORDER).map(

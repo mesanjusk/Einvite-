@@ -7,7 +7,12 @@ export const metadata: Metadata = { title: "Create Invitation" };
 
 export default async function NewInvitationPage() {
   const [themes, musicTracks] = await Promise.all([
-    db.theme.findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } }),
+    db.theme
+      .findMany({
+        where: { type: "WEBSITE" },
+        orderBy: { sortOrder: "asc" },
+        include: { colorways: { orderBy: { sortOrder: "asc" } } },
+      }),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }),
   ]);
 
@@ -16,8 +21,7 @@ export default async function NewInvitationPage() {
       <div>
         <h1 className="font-display text-2xl">Create Invitation</h1>
         <p className="text-muted-foreground text-sm">
-          Answer a few questions, add at least 5 photos, and we&apos;ll lay out every
-          section for you — the same builder your couples use.
+          The same builder your couples use.
         </p>
       </div>
 
@@ -27,7 +31,13 @@ export default async function NewInvitationPage() {
           name: t.name,
           category: t.category,
           isPremium: t.isPremium,
+          previewImage: t.previewImage,
           colorPalette: t.colorPalette as { primary: string; accent: string },
+          colorways: t.colorways.map((c) => ({
+            slug: c.slug,
+            name: c.name,
+            colorPalette: c.colorPalette as { primary: string; accent: string },
+          })),
         }))}
         musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, artist: m.artist, mood: m.mood, url: m.url }))}
       />

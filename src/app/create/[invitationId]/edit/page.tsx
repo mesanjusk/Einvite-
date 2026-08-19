@@ -26,8 +26,20 @@ export default async function EditGuestInvitationPage({
   const invitation = await authorizeInvitationAccess(invitationId);
   if (!invitation) notFound();
 
+  const savedColorway = invitation.colorwayId
+    ? await db.themeColorway.findUnique({
+        where: { id: invitation.colorwayId },
+        select: { slug: true },
+      })
+    : null;
+
   const [themes, musicTracks, events, familyMembers, media] = await Promise.all([
-    db.theme.findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } }),
+    db.theme
+      .findMany({
+        where: { type: "WEBSITE" },
+        orderBy: { sortOrder: "asc" },
+        include: { colorways: { orderBy: { sortOrder: "asc" } } },
+      }),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }),
     db.event.findMany({ where: { invitationId }, orderBy: { order: "asc" } }),
     db.familyMember.findMany({ where: { invitationId }, orderBy: { order: "asc" } }),
@@ -52,7 +64,13 @@ export default async function EditGuestInvitationPage({
             name: t.name,
             category: t.category,
             isPremium: t.isPremium,
+            previewImage: t.previewImage,
             colorPalette: t.colorPalette as { primary: string; accent: string },
+            colorways: t.colorways.map((c) => ({
+              slug: c.slug,
+              name: c.name,
+              colorPalette: c.colorPalette as { primary: string; accent: string },
+            })),
           }))}
           musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, artist: m.artist, mood: m.mood, url: m.url }))}
           initialMedia={media.map((m) => ({ id: m.id, url: m.url, isAuto: m.isAuto }))}
@@ -69,6 +87,7 @@ export default async function EditGuestInvitationPage({
             religion: invitation.religion ?? "",
             caste: invitation.caste ?? "",
             themeSlug: theme?.slug ?? "royal",
+            colorwaySlug: savedColorway?.slug ?? undefined,
             musicTrackId: invitation.musicTrackId ?? undefined,
             customMusicUrl: invitation.customMusicUrl ?? undefined,
             events: events.map((event) => ({

@@ -51,12 +51,21 @@ import { MusicPicker } from "./music-picker";
 import { PublishDialog } from "./publish-dialog";
 import { RELIGIONS, ceremonyNamesFor } from "@/lib/culture-presets";
 
+type Colorway = {
+  slug: string;
+  name: string;
+  colorPalette: { primary: string; accent: string };
+};
+
 type Theme = {
   slug: string;
   name: string;
   category: string;
   isPremium: boolean;
+  previewImage?: string | null;
   colorPalette: { primary: string; accent: string };
+  /** Colour schemes this design ships in; the theme's own palette when empty. */
+  colorways: Colorway[];
 };
 
 type MusicTrack = { id: string; title: string; artist: string | null; mood: string | null; url: string };
@@ -169,6 +178,14 @@ export function GuestInvitationWizard({
   });
 
   const eventFields = useFieldArray({ control: form.control, name: "events" });
+
+  // Colourways of the currently selected design — a theme with only its own
+  // palette has none to choose between, so the picker stays hidden.
+  const watchedThemeSlug = form.watch("themeSlug");
+  const selectedThemeColorways = useMemo(
+    () => themes.find((t) => t.slug === watchedThemeSlug)?.colorways ?? [],
+    [themes, watchedThemeSlug],
+  );
   const relativeFields = useFieldArray({ control: form.control, name: "familyMembers" });
 
   // Which optional detail rows are open per event, so the card stays a name
@@ -652,24 +669,82 @@ export function GuestInvitationWizard({
                         <button
                           key={theme.slug}
                           type="button"
-                          onClick={() => form.setValue("themeSlug", theme.slug)}
+                          onClick={() => {
+                            form.setValue("themeSlug", theme.slug);
+                            // Colourways belong to a design, so switching
+                            // design clears a choice that no longer exists.
+                            form.setValue("colorwaySlug", undefined);
+                          }}
                           className={cn(
-                            "rounded-lg border p-3 text-left",
+                            "overflow-hidden rounded-lg border text-left",
                             selected ? "border-primary ring-primary/30 ring-2" : "",
                           )}
                         >
                           <div
-                            className="mb-2 h-10 rounded-md"
+                            className="relative h-20"
                             style={{
                               background: `linear-gradient(135deg, ${theme.colorPalette.primary}, ${theme.colorPalette.accent})`,
                             }}
-                          />
-                          <span className="text-xs font-medium">{theme.name}</span>
+                          >
+                            {theme.previewImage && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={theme.previewImage}
+                                alt=""
+                                className="absolute inset-0 size-full object-cover"
+                              />
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between gap-2 p-2.5">
+                            <span className="truncate text-xs font-medium">{theme.name}</span>
+                            {theme.colorways.length > 1 && (
+                              <span className="flex shrink-0 -space-x-1" aria-hidden>
+                                {theme.colorways.slice(0, 3).map((c) => (
+                                  <span
+                                    key={c.slug}
+                                    className="border-background size-3 rounded-full border"
+                                    style={{ background: c.colorPalette.primary }}
+                                  />
+                                ))}
+                              </span>
+                            )}
+                          </div>
                         </button>
                       );
                     })}
                   </div>
                 </Field>
+
+                {selectedThemeColorways.length > 0 && (
+                  <Field label="Colour">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedThemeColorways.map((colorway) => {
+                        const active = form.watch("colorwaySlug") === colorway.slug;
+                        return (
+                          <button
+                            key={colorway.slug}
+                            type="button"
+                            onClick={() => form.setValue("colorwaySlug", colorway.slug)}
+                            aria-pressed={active}
+                            className={cn(
+                              "flex items-center gap-2 rounded-full border py-1.5 pr-3 pl-1.5 text-xs font-medium transition-colors",
+                              active ? "border-primary bg-primary/5" : "hover:border-primary/60",
+                            )}
+                          >
+                            <span
+                              className="size-5 rounded-full"
+                              style={{
+                                background: `linear-gradient(135deg, ${colorway.colorPalette.primary}, ${colorway.colorPalette.accent})`,
+                              }}
+                            />
+                            {colorway.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </Field>
+                )}
+
                 <Field label="Background music (optional)">
                   <MusicPicker
                     tracks={musicTracks}

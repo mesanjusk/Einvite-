@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { themeFormSchema, musicTrackFormSchema } from "./admin";
+import { themeFormSchema, musicTrackFormSchema, themeColorwayFormSchema } from "./admin";
 
 const PALETTE = {
   primary: "#7a2e2e",
@@ -53,5 +53,45 @@ describe("musicTrackFormSchema", () => {
     expect(
       musicTrackFormSchema.safeParse({ title: "Song", url: "/music/song.mp3" }).success,
     ).toBe(true);
+  });
+});
+
+describe("themeColorwayFormSchema", () => {
+  const palette = {
+    primary: "#1f5140",
+    secondary: "#d8e8e0",
+    accent: "#c9942a",
+    background: "#f6faf7",
+    foreground: "#12362a",
+  };
+  const base = {
+    themeId: "t1",
+    name: "Emerald & Gold",
+    slug: "emerald-gold",
+    colorPalette: palette,
+  };
+
+  it("accepts a colourway belonging to a theme", () => {
+    const result = themeColorwayFormSchema.safeParse(base);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.sortOrder).toBe(0);
+  });
+
+  it("requires the owning theme", () => {
+    expect(themeColorwayFormSchema.safeParse({ ...base, themeId: "" }).success).toBe(false);
+  });
+
+  it("rejects slugs that aren't url-safe", () => {
+    expect(themeColorwayFormSchema.safeParse({ ...base, slug: "Emerald Gold" }).success).toBe(
+      false,
+    );
+  });
+
+  it("requires every palette role, so a partial palette can't render", () => {
+    const partial = { ...palette } as Partial<typeof palette>;
+    delete partial.foreground;
+    expect(
+      themeColorwayFormSchema.safeParse({ ...base, colorPalette: partial }).success,
+    ).toBe(false);
   });
 });

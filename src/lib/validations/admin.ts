@@ -117,3 +117,18 @@ export const instagramAutomationFormSchema = z.object({
 
 export type InstagramAutomationFormInput = z.infer<typeof instagramAutomationFormSchema>;
 export type InstagramAutomationFormValues = z.input<typeof instagramAutomationFormSchema>;
+
+export const themeColorwayFormSchema = z.object({
+  id: z.string().optional(),
+  themeId: z.string().min(1),
+  name: z.string().min(1, "Name is required"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
+  colorPalette: colorPaletteSchema,
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+export type ThemeColorwayFormInput = z.infer<typeof themeColorwayFormSchema>;
+export type ThemeColorwayFormValues = z.input<typeof themeColorwayFormSchema>;

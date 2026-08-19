@@ -40,6 +40,7 @@ export const invitationWizardSchema = z.object({
   religion: z.string().optional(),
   caste: z.string().optional(),
   themeSlug: z.string().min(1, "Choose a theme"),
+  colorwaySlug: z.string().optional(),
   musicTrackId: z.string().optional(),
   customMusicUrl: z.string().optional(),
   events: z.array(eventSchema).default([]),

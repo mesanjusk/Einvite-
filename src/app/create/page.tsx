@@ -18,7 +18,11 @@ export default async function CreateInvitationPage({
   const [{ theme: themeSlugParam }, themes, musicTracks] = await Promise.all([
     searchParams,
     db.theme
-      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } })
+      .findMany({
+        where: { type: "WEBSITE" },
+        orderBy: { sortOrder: "asc" },
+        include: { colorways: { orderBy: { sortOrder: "asc" } } },
+      })
       .catch(() => []),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }).catch(() => []),
   ]);
@@ -39,7 +43,13 @@ export default async function CreateInvitationPage({
             name: t.name,
             category: t.category,
             isPremium: t.isPremium,
+            previewImage: t.previewImage,
             colorPalette: t.colorPalette as { primary: string; accent: string },
+            colorways: t.colorways.map((c) => ({
+              slug: c.slug,
+              name: c.name,
+              colorPalette: c.colorPalette as { primary: string; accent: string },
+            })),
           }))}
           musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, artist: m.artist, mood: m.mood, url: m.url }))}
           initialValues={initialThemeSlug ? { themeSlug: initialThemeSlug } : undefined}
