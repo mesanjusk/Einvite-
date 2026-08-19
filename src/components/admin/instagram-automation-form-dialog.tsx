@@ -5,14 +5,18 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Search } from "lucide-react";
 
 import {
   instagramAutomationFormSchema,
   type InstagramAutomationFormInput,
   type InstagramAutomationFormValues,
 } from "@/lib/validations/admin";
-import { upsertInstagramAutomationAction } from "@/lib/actions/admin";
+import {
+  lookupInstagramMediaAction,
+  upsertInstagramAutomationAction,
+} from "@/lib/actions/admin";
+import type { InstagramMedia } from "@/lib/instagram";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -49,8 +53,7 @@ function defaultValues(automation?: AutomationRecord): InstagramAutomationFormVa
     permalink: automation?.permalink ?? "",
     triggerWord: automation?.triggerWord ?? "FREE",
     replyMessage:
-      automation?.replyMessage ??
-      "Here's your free wedding invitation link: {{link}}",
+      automation?.replyMessage ?? "Here's your free wedding invitation link: {{link}}",
     duplicateMessage:
       automation?.duplicateMessage ??
       "You already have a link! Check your DMs for your invite link.",
@@ -71,15 +74,51 @@ export function InstagramAutomationFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [media, setMedia] = useState<InstagramMedia | null>(null);
   const router = useRouter();
 
-  const form = useForm<InstagramAutomationFormValues, unknown, InstagramAutomationFormInput>({
+  const form = useForm<
+    InstagramAutomationFormValues,
+    unknown,
+    InstagramAutomationFormInput
+  >({
     resolver: zodResolver(instagramAutomationFormSchema),
     defaultValues: {
       ...defaultValues(automation),
       ...(presetMediaId ? { mediaId: presetMediaId } : {}),
     },
   });
+
+  // Confirms the pasted ID is the reel the admin has in mind, and fills in
+  // the name and link from the post itself so neither has to be typed.
+  async function lookUpMedia() {
+    const mediaId = form.getValues("mediaId")?.trim();
+    if (!mediaId) {
+      toast.error("Enter a media ID first.");
+      return;
+    }
+
+    setLookingUp(true);
+    const result = await lookupInstagramMediaAction(mediaId);
+    setLookingUp(false);
+
+    if (!result.success) {
+      setMedia(null);
+      toast.error(result.error);
+      return;
+    }
+
+    setMedia(result.data);
+    if (result.data.permalink) form.setValue("permalink", result.data.permalink);
+    if (!form.getValues("label")?.trim()) {
+      const caption = result.data.caption?.trim();
+      form.setValue(
+        "label",
+        caption ? caption.slice(0, 60) : `Reel ${mediaId.slice(-6)}`,
+      );
+    }
+  }
 
   async function onSubmit(values: InstagramAutomationFormInput) {
     setLoading(true);
@@ -124,21 +163,66 @@ export function InstagramAutomationFormDialog({
             <Label>Reel name</Label>
             <Input placeholder="Diwali campaign reel" {...form.register("label")} />
             {form.formState.errors.label && (
-              <p className="text-destructive text-xs">{form.formState.errors.label.message}</p>
+              <p className="text-destructive text-xs">
+                {form.formState.errors.label.message}
+              </p>
             )}
           </div>
 
           <div className="grid gap-1.5">
             <Label>Instagram media ID</Label>
-            <Input placeholder="17969960076129962" {...form.register("mediaId")} />
+            <div className="flex gap-2">
+              <Input placeholder="17969960076129962" {...form.register("mediaId")} />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={lookingUp}
+                onClick={lookUpMedia}
+              >
+                <Search className="size-4" />
+                {lookingUp ? "Checking…" : "Check"}
+              </Button>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              Check confirms which reel the ID is, and fills in the name and link.
+            </p>
             {form.formState.errors.mediaId && (
-              <p className="text-destructive text-xs">{form.formState.errors.mediaId.message}</p>
+              <p className="text-destructive text-xs">
+                {form.formState.errors.mediaId.message}
+              </p>
+            )}
+            {media && (
+              <div className="mt-1 flex items-center gap-3 rounded-lg border p-2">
+                {media.thumbnailUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={media.thumbnailUrl}
+                    alt=""
+                    className="size-12 shrink-0 rounded-md object-cover"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium">
+                    {media.caption?.trim() || "(no caption)"}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {media.mediaProductType ?? media.mediaType}
+                    {media.timestamp &&
+                      ` · ${new Date(media.timestamp).toLocaleDateString()}`}
+                    {typeof media.commentsCount === "number" &&
+                      ` · ${media.commentsCount} comment(s)`}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
 
           <div className="grid gap-1.5">
             <Label>Reel link (optional)</Label>
-            <Input placeholder="https://instagram.com/reel/..." {...form.register("permalink")} />
+            <Input
+              placeholder="https://instagram.com/reel/..."
+              {...form.register("permalink")}
+            />
           </div>
 
           <div className="grid gap-1.5">
@@ -154,9 +238,7 @@ export function InstagramAutomationFormDialog({
           <div className="grid gap-1.5">
             <Label>Reply message</Label>
             <Textarea rows={3} {...form.register("replyMessage")} />
-            <p className="text-muted-foreground text-xs">
-              {"{{link}} {{username}}"}
-            </p>
+            <p className="text-muted-foreground text-xs">{"{{link}} {{username}}"}</p>
             {form.formState.errors.replyMessage && (
               <p className="text-destructive text-xs">
                 {form.formState.errors.replyMessage.message}

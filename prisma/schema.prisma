@@ -136,29 +136,29 @@ enum ThemeType {
 }
 
 model Theme {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  type         ThemeType @default(WEBSITE)
-  name         String
-  slug         String    @unique
-  description  String?
-  previewImage String?
-  category     String    @default("classic") // "traditional" | "modern" | "fusion" | "minimal" | "classic"
-  colorPalette Json // { primary, secondary, accent, background, foreground }
-  fontPairing  Json // { display, body, script }
-  decorAssets  Json? // preset decoration config (petals, sparkles, motifs...)
-  isPremium    Boolean   @default(false)
-  sortOrder    Int       @default(0)
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  type           ThemeType @default(WEBSITE)
+  name           String
+  slug           String    @unique
+  description    String?
+  previewImage   String?
+  category       String    @default("classic") // "traditional" | "modern" | "fusion" | "minimal" | "classic"
+  colorPalette   Json // { primary, secondary, accent, background, foreground }
+  fontPairing    Json // { display, body, script }
+  decorAssets    Json? // preset decoration config (petals, sparkles, motifs...)
+  isPremium      Boolean   @default(false)
+  sortOrder      Int       @default(0)
   // Envelope-open moment: admin picks "ANIMATION" (coded burst only) or
   // "VIDEO" (a short muted clip, preloaded and layered over the coded
   // burst once ready — falls back to the coded burst if it isn't ready
   // in time, so the reveal never blocks on the network). WEBSITE themes only.
-  revealMode     String  @default("ANIMATION") // "ANIMATION" | "VIDEO"
+  revealMode     String    @default("ANIMATION") // "ANIMATION" | "VIDEO"
   revealVideoUrl String?
 
   templates      Template[]
   colorways      ThemeColorway[]
-  invitations    Invitation[] @relation("InvitationWebsiteTheme")
-  pdfInvitations Invitation[] @relation("InvitationPdfTheme")
+  invitations    Invitation[]    @relation("InvitationWebsiteTheme")
+  pdfInvitations Invitation[]    @relation("InvitationPdfTheme")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -215,21 +215,21 @@ model Template {
 // Gemini video "themes": a reusable prompt template + style/aspect ratio
 // preset, admin-managed the same way website/PDF themes are.
 model VideoTemplate {
-  id             String  @id @default(auto()) @map("_id") @db.ObjectId
-  name           String
-  slug           String  @unique
-  description    String?
-  previewImage   String?
-  aspectRatio    String  @default("9:16") // "9:16" | "16:9" | "1:1"
-  durationSeconds Int    @default(15)
+  id              String  @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  slug            String  @unique
+  description     String?
+  previewImage    String?
+  aspectRatio     String  @default("9:16") // "9:16" | "16:9" | "1:1"
+  durationSeconds Int     @default(15)
   // Prompt sent to Gemini's video model. Supports {{brideName}}, {{groomName}},
   // {{weddingDate}}, {{venueName}}, {{style}} placeholders, filled in from the
   // invitation's own captured details at generation time.
-  promptTemplate String
-  styleKeywords  Json? // string[] of mood/style keywords appended to the prompt
-  geminiModel    String  @default("veo-3.0-generate-001")
-  isPremium      Boolean @default(false)
-  sortOrder      Int     @default(0)
+  promptTemplate  String
+  styleKeywords   Json? // string[] of mood/style keywords appended to the prompt
+  geminiModel     String  @default("veo-3.0-generate-001")
+  isPremium       Boolean @default(false)
+  sortOrder       Int     @default(0)
 
   invitations Invitation[]
   videos      InvitationVideo[]
@@ -241,13 +241,13 @@ model VideoTemplate {
 }
 
 model MusicTrack {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  title      String  @unique
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String   @unique
   artist     String?
   url        String
   durationMs Int?
   mood       String? // e.g. "romantic", "upbeat", "traditional"
-  isPremium  Boolean @default(false)
+  isPremium  Boolean  @default(false)
   // Auto-assigned when a couple doesn't pick a track. Optional (not defaulted)
   // so existing tracks without this field still read fine — only one track
   // should be true at a time; enforced in upsertMusicTrackAction, not here.
@@ -294,7 +294,7 @@ model Invitation {
   // cookie on the creator's browser). Once the owner verifies a WhatsApp
   // OTP, a PhoneLink takes over as the durable, cross-device "login".
   draftSecretHash String?
-  isDemo          Boolean  @default(false)
+  isDemo          Boolean @default(false)
 
   // Couple
   brideName  String
@@ -311,25 +311,25 @@ model Invitation {
   language      InvitationLanguage @default(EN)
   // Culture, asked first in the wizard so the ceremony list can be
   // pre-filled with the rituals that tradition actually observes.
-  religion String?
-  caste    String?
+  religion      String?
+  caste         String?
   // Extra text for the PDF only (e.g. a formal invitation letter) — not
   // shown on the website, bindable to a placeholder on a PDF template page.
   pdfExtraText  String?
 
   // Design
-  themeId    String? @db.ObjectId // WEBSITE-type Theme
-  templateId String? @db.ObjectId
+  themeId          String? @db.ObjectId // WEBSITE-type Theme
+  templateId       String? @db.ObjectId
   // Optional PDF-type Theme override for the downloadable PDF — falls back
   // to `theme` (the website theme's palette) when unset.
-  pdfThemeId String? @db.ObjectId
+  pdfThemeId       String? @db.ObjectId
   // Last video template picked/used for Gemini video generation — surfaced
   // as the default selection next time the couple regenerates one.
-  videoTemplateId String? @db.ObjectId
+  videoTemplateId  String? @db.ObjectId
   // Couple's own Gemini API key (from Google AI Studio), used instead of the
   // platform's GEMINI_API_KEY when set. Never rendered back to the client —
   // forms only report whether one is configured.
-  geminiApiKey    String?
+  geminiApiKey     String?
   fontPairing      Json? // override of theme default, { display, body, script }
   // Which of the theme's colourways was chosen. The resolved palette is
   // copied into `colorPalette` on save, so rendering never has to know
@@ -588,10 +588,10 @@ enum VideoJobStatus {
 // One row per generation attempt (couples can regenerate with a different
 // template), so history stays visible instead of being overwritten.
 model InvitationVideo {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
-  invitationId    String         @db.ObjectId
-  videoTemplateId String         @db.ObjectId
-  status          VideoJobStatus @default(PENDING)
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId      String         @db.ObjectId
+  videoTemplateId   String         @db.ObjectId
+  status            VideoJobStatus @default(PENDING)
   // The fully-resolved prompt sent to Gemini, built from the invitation's
   // own captured details (names, date, venue, theme colors) + the template.
   prompt            String
@@ -617,18 +617,18 @@ model InvitationVideo {
 // a comment arrived on, the webhook does nothing — automation is opt-in per
 // reel rather than replying to every "FREE" anywhere on the account.
 model InstagramAutomation {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id                  String  @id @default(auto()) @map("_id") @db.ObjectId
   // Instagram media ID the rule applies to, from the comment webhook's
   // value.media.id. Unique so one reel has exactly one rule.
-  mediaId String @unique
+  mediaId             String  @unique
   // Admin-facing name so reels are recognisable in the dashboard.
-  label       String
-  permalink   String?
-  triggerWord String
+  label               String
+  permalink           String?
+  triggerWord         String
   // Reply sent on a first match. Supports {{link}} and {{username}}.
-  replyMessage String
+  replyMessage        String
   // Reply sent when this commenter already claimed this reel's link.
-  duplicateMessage String
+  duplicateMessage    String
   // Gate the link behind following the account. The follow check is
   // best-effort (see InstagramProfile) and fails open, so an unresolvable
   // check sends the link rather than blocking a real person.
@@ -668,10 +668,10 @@ model InstagramLink {
 }
 
 model InstagramLead {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   // Optional so rows created before per-reel automations still read; those
   // legacy rows simply never match a (user, automation) pair again.
-  automationId String? @db.ObjectId
+  automationId String?  @db.ObjectId
   igUserId     String
   commentId    String
   link         String
@@ -732,4 +732,89 @@ model InstagramCommentLog {
   // Deliberately not unique: existing rows predate the check and may repeat.
   @@index([commentId])
   @@map("instagram_comment_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Instagram DM automation
+// ---------------------------------------------------------------------------
+
+enum InstagramDmMatchType {
+  // The whole message, trimmed, equals the keyword.
+  EXACT
+  // The keyword appears anywhere in the message.
+  CONTAINS
+  // The message opens with the keyword.
+  STARTS_WITH
+  // No keyword — matches anything. The deliberate catch-all, so "reply to
+  // every DM" stays possible but has to be switched on rather than assumed.
+  ANY
+}
+
+// One rule per kind of incoming DM. Like the per-reel comment automations,
+// DM replies are opt-in: a message matching no active rule is logged for the
+// dashboard and left for a human, instead of every DM getting the same
+// canned answer.
+model InstagramDmRule {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  label String
+
+  matchType InstagramDmMatchType @default(CONTAINS)
+  // Ignored (and stored null) when matchType is ANY.
+  keyword   String?
+
+  // Reply text. Supports {{username}}, plus {{link}} when issueLink is on.
+  replyMessage     String
+  // Hand the sender their invitation link, the same one the comment
+  // automations issue, so a DM can carry the whole flow on its own.
+  issueLink        Boolean @default(false)
+  // Sent instead of replyMessage when this sender already has a link.
+  duplicateMessage String?
+
+  // Higher wins. Rules are compared in priority order and the first match
+  // replies, so a specific keyword can be placed above a catch-all.
+  priority Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  logs InstagramMessageLog[]
+
+  @@map("instagram_dm_rules")
+}
+
+enum InstagramDmOutcome {
+  REPLY_SENT
+  DUPLICATE_REPLY_SENT
+  // Nothing matched, so nothing was sent — the quiet default.
+  NO_RULE_MATCHED
+  DATA_DELETED
+  DATA_DELETE_FAILED
+  SEND_FAILED
+}
+
+// Every inbound DM the webhook processes, replied to or not, so an admin can
+// see what people actually send and write rules for the messages that need
+// one.
+model InstagramMessageLog {
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  ruleId      String?            @db.ObjectId
+  // Meta's message id (mid). Optional because a payload can omit it; when
+  // present it is what stops a re-delivered webhook sending a second reply.
+  messageId   String?
+  igUserId    String
+  username    String?
+  messageText String
+  outcome     InstagramDmOutcome
+  replyText   String?
+  error       String?
+  createdAt   DateTime           @default(now())
+
+  rule InstagramDmRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([igUserId])
+  @@index([createdAt])
+  // Read on every inbound message to spot a webhook Meta re-delivered.
+  @@index([messageId])
+  @@map("instagram_message_logs")
 }

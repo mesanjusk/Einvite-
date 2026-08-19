@@ -28,7 +28,13 @@ export const SECTION_TYPES = [
   "THANK_YOU",
 ] as const;
 
-export const THEME_CATEGORIES = ["traditional", "modern", "fusion", "minimal", "classic"] as const;
+export const THEME_CATEGORIES = [
+  "traditional",
+  "modern",
+  "fusion",
+  "minimal",
+  "classic",
+] as const;
 
 export const THEME_TYPES = ["WEBSITE", "PDF"] as const;
 
@@ -49,7 +55,9 @@ export const themeFormSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,
   fontPairing: fontPairingSchema,
-  sectionOrder: z.array(z.enum(SECTION_TYPES)).min(1, "At least one section is required"),
+  sectionOrder: z
+    .array(z.enum(SECTION_TYPES))
+    .min(1, "At least one section is required"),
 });
 
 export type ThemeFormInput = z.infer<typeof themeFormSchema>;
@@ -108,15 +116,56 @@ export const instagramAutomationFormSchema = z.object({
   replyMessage: z
     .string()
     .min(1, "Reply message is required")
-    .refine((v) => v.includes("{{link}}"), "Include {{link}} so the invite link is sent"),
+    .refine(
+      (v) => v.includes("{{link}}"),
+      "Include {{link}} so the invite link is sent",
+    ),
   duplicateMessage: z.string().min(1, "Duplicate reply is required"),
   requireFollow: z.boolean().default(false),
   notFollowingMessage: z.string().optional(),
   isActive: z.boolean().default(true),
 });
 
-export type InstagramAutomationFormInput = z.infer<typeof instagramAutomationFormSchema>;
-export type InstagramAutomationFormValues = z.input<typeof instagramAutomationFormSchema>;
+export type InstagramAutomationFormInput = z.infer<
+  typeof instagramAutomationFormSchema
+>;
+export type InstagramAutomationFormValues = z.input<
+  typeof instagramAutomationFormSchema
+>;
+
+export const INSTAGRAM_DM_MATCH_TYPES = [
+  "EXACT",
+  "CONTAINS",
+  "STARTS_WITH",
+  "ANY",
+] as const;
+
+export const instagramDmRuleFormSchema = z
+  .object({
+    id: z.string().optional(),
+    label: z.string().min(1, "Give the rule a name you'll recognise"),
+    matchType: z.enum(INSTAGRAM_DM_MATCH_TYPES).default("CONTAINS"),
+    keyword: z.string().optional(),
+    replyMessage: z.string().min(1, "Reply message is required"),
+    issueLink: z.boolean().default(false),
+    duplicateMessage: z.string().optional(),
+    priority: z.coerce.number().int().default(0),
+    isActive: z.boolean().default(true),
+  })
+  // ANY is the deliberate catch-all and needs no keyword; every other type is
+  // meaningless without one, and a blank keyword would quietly match every
+  // DM — the behaviour these rules exist to stop.
+  .refine((v) => v.matchType === "ANY" || Boolean(v.keyword?.trim()), {
+    message: "Keyword is required unless the rule replies to every message",
+    path: ["keyword"],
+  })
+  .refine((v) => !v.issueLink || v.replyMessage.includes("{{link}}"), {
+    message: "Include {{link}} so the invite link is sent",
+    path: ["replyMessage"],
+  });
+
+export type InstagramDmRuleFormInput = z.infer<typeof instagramDmRuleFormSchema>;
+export type InstagramDmRuleFormValues = z.input<typeof instagramDmRuleFormSchema>;
 
 export const themeColorwayFormSchema = z.object({
   id: z.string().optional(),

@@ -5,11 +5,15 @@ import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
 import { generateToken, hashToken } from "@/lib/otp";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
-import { fetchInstagramFollowStatus, sendInstagramMessage } from "@/lib/instagram";
+import {
+  fetchInstagramFollowStatus,
+  renderInstagramTemplate,
+  sendInstagramMessage,
+} from "@/lib/instagram";
 import { deleteInstagramUserData } from "@/lib/instagram-data-deletion";
+import { selectDmRule } from "@/lib/instagram-dm-rules";
 import { SUPPORT_EMAIL } from "@/config/legal";
 
-const DM_HELP_MESSAGE = "Comment FREE on our latest post to get your invite link!";
 const DM_DELETED_MESSAGE =
   "Done — your data is deleted. Your invitation, its link, your follower status, and your comment history are gone. Comment FREE any time to start fresh.";
 const DM_DELETE_FAILED_MESSAGE = `Sorry, we couldn't delete your data just now. Please email ${SUPPORT_EMAIL} with subject DELETE and we'll do it by hand.`;
@@ -144,12 +148,6 @@ async function resolveFollowStatus(
   return isFollower;
 }
 
-function renderTemplate(template: string, vars: { link: string; username: string }) {
-  return template
-    .replaceAll("{{link}}", vars.link)
-    .replaceAll("{{username}}", vars.username);
-}
-
 async function handleCommentChange(
   change: {
     field?: string;
@@ -232,7 +230,7 @@ async function handleCommentChange(
     if (automation.requireFollow && igUserId) {
       const isFollower = await resolveFollowStatus(igUserId, username);
       if (isFollower === false) {
-        const followText = renderTemplate(
+        const followText = renderInstagramTemplate(
           automation.notFollowingMessage || DEFAULT_NOT_FOLLOWING_MESSAGE,
           { link: "", username: username ?? "" },
         );
@@ -270,7 +268,7 @@ async function handleCommentChange(
     // One invitation per Instagram account: a returning commenter is handed
     // their existing invitation again, on any reel, rather than a second one.
     const { link, alreadyClaimed } = await issueInvitationLink(igUserId, username);
-    const replyText = renderTemplate(
+    const replyText = renderInstagramTemplate(
       alreadyClaimed ? automation.duplicateMessage : automation.replyMessage,
       { link, username: username ?? "" },
     );
@@ -308,9 +306,26 @@ async function handleCommentChange(
   }
 }
 
+/**
+ * A best-effort @username for a DM sender, for the dashboard and for
+ * {{username}} in a reply. The messaging webhook carries only an ID, so this
+ * reads what earlier comment and follow-check traffic already stored rather
+ * than spending an API call on every message.
+ */
+async function knownUsernameFor(igUserId: string): Promise<string | undefined> {
+  const [profile, link] = await Promise.all([
+    db.instagramProfile.findUnique({
+      where: { igUserId },
+      select: { username: true },
+    }),
+    db.instagramLink.findUnique({ where: { igUserId }, select: { username: true } }),
+  ]);
+  return profile?.username ?? link?.username ?? undefined;
+}
+
 async function handleMessagingEvent(event: {
   sender?: { id?: string };
-  message?: { is_echo?: boolean; text?: string };
+  message?: { mid?: string; is_echo?: boolean; text?: string };
 }) {
   const senderId = event.sender?.id;
   // Only genuine inbound text messages get a reply. The same messaging array
@@ -319,27 +334,104 @@ async function handleMessagingEvent(event: {
   // "This message is sent outside of allowed window".
   if (!senderId || event.message?.is_echo || !event.message?.text) return;
 
-  // /data-deletion tells people they can DM "DELETE" to have their data
-  // erased, so that word has to actually erase it rather than fall through
-  // to the marketing reply. Matched on the whole trimmed message: someone
-  // writing "don't delete my invite" is not making a deletion request.
-  if (event.message.text.trim().toLowerCase() === "delete") {
-    try {
-      const summary = await deleteInstagramUserData(senderId);
-      console.log(
-        "Instagram DELETE request — erased user data:",
-        JSON.stringify(summary),
-      );
-      await sendInstagramMessage({ id: senderId }, DM_DELETED_MESSAGE);
-    } catch (error) {
-      console.error("Failed to erase data on DELETE request", error);
-      await sendInstagramMessage({ id: senderId }, DM_DELETE_FAILED_MESSAGE);
-    }
-    return;
-  }
+  const text = event.message.text;
+  const messageId = event.message.mid;
 
   try {
-    await sendInstagramMessage({ id: senderId }, DM_HELP_MESSAGE);
+    // Meta re-delivers a webhook it thinks we missed. The message log doubles
+    // as the record of what has already been handled, exactly as the comment
+    // log does: one row for this mid means this event is a repeat.
+    if (messageId) {
+      const alreadyHandled = await db.instagramMessageLog.findFirst({
+        where: { messageId },
+        select: { id: true },
+      });
+      if (alreadyHandled) return;
+    }
+
+    const username = await knownUsernameFor(senderId);
+    const logBase = { messageId, igUserId: senderId, username, messageText: text };
+
+    // /data-deletion tells people they can DM "DELETE" to have their data
+    // erased, so that word has to actually erase it rather than fall through
+    // to a rule. Matched on the whole trimmed message: someone writing
+    // "don't delete my invite" is not making a deletion request. Hard-wired
+    // rather than admin-editable — it is a promise made in the privacy
+    // policy, not a campaign reply.
+    if (text.trim().toLowerCase() === "delete") {
+      try {
+        const summary = await deleteInstagramUserData(senderId);
+        console.log(
+          "Instagram DELETE request — erased user data:",
+          JSON.stringify(summary),
+        );
+        await sendInstagramMessage({ id: senderId }, DM_DELETED_MESSAGE);
+        // Written after the erase, so it records the request rather than
+        // being swept away by it.
+        await db.instagramMessageLog.create({
+          data: { ...logBase, outcome: "DATA_DELETED", replyText: DM_DELETED_MESSAGE },
+        });
+      } catch (error) {
+        console.error("Failed to erase data on DELETE request", error);
+        await sendInstagramMessage({ id: senderId }, DM_DELETE_FAILED_MESSAGE);
+        await db.instagramMessageLog.create({
+          data: {
+            ...logBase,
+            outcome: "DATA_DELETE_FAILED",
+            replyText: DM_DELETE_FAILED_MESSAGE,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        });
+      }
+      return;
+    }
+
+    // DM replies are opt-in per rule, the same way comment replies are opt-in
+    // per reel. A message nothing matches is recorded for the dashboard and
+    // left for a human — the account no longer answers every DM with one
+    // canned line. An admin who does want that back adds an ANY rule.
+    const rules = await db.instagramDmRule.findMany({ where: { isActive: true } });
+    const rule = selectDmRule(rules, text);
+
+    if (!rule) {
+      await db.instagramMessageLog.create({
+        data: { ...logBase, outcome: "NO_RULE_MATCHED" },
+      });
+      return;
+    }
+
+    // Only a rule that issues a link touches the invitation tables; a plain
+    // informational reply must not create an invitation for someone who
+    // asked about opening hours.
+    let link = "";
+    let alreadyClaimed = false;
+    if (rule.issueLink) {
+      ({ link, alreadyClaimed } = await issueInvitationLink(senderId, username));
+    }
+
+    const template =
+      alreadyClaimed && rule.duplicateMessage
+        ? rule.duplicateMessage
+        : rule.replyMessage;
+    const replyText = renderInstagramTemplate(template, {
+      link,
+      username: username ?? "",
+    });
+    const { delivered } = await sendInstagramMessage({ id: senderId }, replyText);
+
+    await db.instagramMessageLog.create({
+      data: {
+        ...logBase,
+        ruleId: rule.id,
+        outcome: delivered
+          ? alreadyClaimed && rule.duplicateMessage
+            ? "DUPLICATE_REPLY_SENT"
+            : "REPLY_SENT"
+          : "SEND_FAILED",
+        replyText,
+        error: delivered ? null : "Send API rejected the reply",
+      },
+    });
   } catch (error) {
     console.error("Failed to handle Instagram messaging event", error);
   }
@@ -351,7 +443,7 @@ async function processWebhookPayload(payload: {
     changes?: Array<{ field?: string; value?: Record<string, unknown> }>;
     messaging?: Array<{
       sender?: { id?: string };
-      message?: { is_echo?: boolean; text?: string };
+      message?: { mid?: string; is_echo?: boolean; text?: string };
     }>;
   }>;
 }) {
