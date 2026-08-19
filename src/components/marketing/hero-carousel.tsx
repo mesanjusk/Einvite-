@@ -12,6 +12,8 @@ type Slide = {
   primary: string;
   accent: string;
   background: string;
+  /** Backdrop photo; the colour wash alone is used when absent. */
+  image?: string;
 };
 
 const ROTATE_MS = 5000;
@@ -58,14 +60,31 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
         {slides.map((slide, i) => (
           <div
             key={slide.id}
-            className="w-full shrink-0"
+            className="relative w-full shrink-0"
             aria-hidden={i !== index}
             style={{
               background: `radial-gradient(120% 120% at 20% 0%, ${slide.primary} 0%, color-mix(in srgb, ${slide.primary} 60%, black 35%) 100%)`,
               color: slide.background,
             }}
           >
-            <div className="mx-auto flex max-w-5xl flex-col items-start gap-4 px-6 py-16 sm:py-24">
+            {slide.image && (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slide.image}
+                  alt=""
+                  className="absolute inset-0 size-full object-cover"
+                />
+                {/* Keeps the headline legible whatever the photo underneath. */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(100deg, color-mix(in srgb, ${slide.primary} 88%, transparent) 0%, color-mix(in srgb, ${slide.primary} 45%, transparent) 65%, transparent 100%)`,
+                  }}
+                />
+              </>
+            )}
+            <div className="relative mx-auto flex max-w-5xl flex-col items-start gap-4 px-6 py-16 sm:py-24">
               <span className="text-[11px] tracking-[0.28em] uppercase opacity-80">
                 {slide.eyebrow}
               </span>

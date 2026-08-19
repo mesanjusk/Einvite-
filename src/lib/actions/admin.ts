@@ -465,3 +465,25 @@ export async function adminDeleteInvitationAction(invitationId: string): Promise
   revalidatePath("/admin");
   return { success: true, data: undefined };
 }
+
+// Marks a published invitation as a homepage showcase. Only published ones
+// qualify — a draft in the carousel would link visitors to an empty page.
+export async function setInvitationDemoAction(
+  invitationId: string,
+  isDemo: boolean,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const invitation = await db.invitation.findUnique({ where: { id: invitationId } });
+  if (!invitation) return { success: false, error: "Invitation not found." };
+  if (isDemo && invitation.status !== "PUBLISHED") {
+    return { success: false, error: "Publish the invitation before featuring it." };
+  }
+
+  await db.invitation.update({ where: { id: invitationId }, data: { isDemo } });
+
+  revalidatePath("/admin/invitations");
+  revalidatePath("/");
+  return { success: true, data: undefined };
+}

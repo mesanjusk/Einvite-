@@ -12,6 +12,26 @@ export const SECTION_ORDER = [
   "THANK_YOU",
 ];
 
+// Stock thumbnails so a freshly seeded catalogue shows photos rather than
+// bare gradients. Admins can replace any of these from Manage Themes.
+const THEME_THUMBNAILS: Record<string, string> = {
+  royal: "1519741497674-611481863552",
+  traditional: "1519225421980-715cb0215aed",
+  luxury: "1544078751-58fee2d8b03f",
+  minimal: "1511285560929-80b456fea0bc",
+  modern: "1583939003579-730e3918a45a",
+  temple: "1606216794074-735e91aa2c92",
+  palace: "1583334026965-2a3f37c8e9fb",
+  beach: "1520854221256-17451cc331bf",
+  floral: "1465495976277-4387d4b0b4c6",
+  pastel: "1521543387236-8c6f80e7d70e",
+};
+
+export function seedThumbnailFor(slug: string): string | undefined {
+  const id = THEME_THUMBNAILS[slug];
+  return id ? `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=80` : undefined;
+}
+
 export const THEMES = [
   {
     name: "Royal",

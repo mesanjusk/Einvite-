@@ -334,3 +334,56 @@ export async function publishGuestInvitationAction(
     data: { slug: updated.slug, liveUrl, editUrl },
   };
 }
+
+/**
+ * Attaches a mobile number to an already-published invitation that went out
+ * without one, minting the durable cross-device edit link that publishing
+ * without a number deliberately skips.
+ */
+export async function attachPhoneToInvitationAction(input: {
+  invitationId: string;
+  phone: string;
+}): Promise<ActionResult<{ editUrl: string }>> {
+  const invitation = await authorizeInvitationAccess(input.invitationId);
+  if (!invitation) return { success: false, error: "Invitation not found." };
+
+  const phone = normalizePhone(input.phone);
+  if (!phone || phone.length < 6) {
+    return { success: false, error: "Enter a valid mobile number." };
+  }
+
+  const existingForPhone = await db.phoneLink.findUnique({ where: { phone } });
+  if (existingForPhone && existingForPhone.invitationId !== invitation.id) {
+    return {
+      success: false,
+      error: "That number already belongs to another invitation. Use a different one.",
+    };
+  }
+
+  const rawEditToken = generateToken();
+  const editTokenHash = hashToken(rawEditToken);
+
+  if (invitation.phoneLink) {
+    await db.phoneLink.update({
+      where: { id: invitation.phoneLink.id },
+      data: { phone, editTokenHash },
+    });
+  } else {
+    await db.phoneLink.create({
+      data: { phone, invitationId: invitation.id, editTokenHash },
+    });
+  }
+
+  await issueOwnerCookie(invitation.id, rawEditToken);
+
+  const editUrl = `${getAppUrl()}/e/${rawEditToken}`;
+  const liveUrl = `${getAppUrl()}/invite/${invitation.slug}`;
+
+  sendWhatsAppText(
+    phone,
+    editLinkMessage(invitation.brideName, invitation.groomName, liveUrl, editUrl),
+  ).catch((error) => console.error("Failed to send edit-link WhatsApp message", error));
+
+  revalidatePath(`/manage/${invitation.id}`);
+  return { success: true, data: { editUrl } };
+}

@@ -7,6 +7,7 @@ import {
   SECTION_ORDER,
   THEMES,
   VIDEO_TEMPLATES,
+  seedThumbnailFor,
 } from "./seed-data";
 import { pickStockPhotos } from "./media/stock-photos";
 import { newPdfPlaceholder, type PdfTemplatePage } from "./validations/pdf-template";
@@ -32,10 +33,18 @@ export async function runSeed(db: PrismaClient) {
   const themeBySlug = new Map<string, string>();
 
   for (const theme of THEMES) {
+    // Seeded themes carry a stock thumbnail so the catalogue and home page
+    // show photos out of the box; an admin-uploaded one is never overwritten.
+    const existing = await db.theme.findUnique({
+      where: { slug: theme.slug },
+      select: { previewImage: true },
+    });
+    const previewImage = existing?.previewImage ?? seedThumbnailFor(theme.slug);
+
     const record = await db.theme.upsert({
       where: { slug: theme.slug },
-      update: theme,
-      create: theme,
+      update: { ...theme, previewImage },
+      create: { ...theme, previewImage },
     });
     themeBySlug.set(theme.slug, record.id);
   }

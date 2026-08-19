@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
+import { InvitationDemoToggle } from "@/components/admin/invitation-demo-toggle";
 import { adminDeleteInvitationAction } from "@/lib/actions/admin";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,6 +82,10 @@ export default async function AdminInvitationsPage() {
                       >
                         Manage
                       </Link>
+                      <InvitationDemoToggle
+                        invitationId={invitation.id}
+                        isDemo={invitation.isDemo}
+                      />
                       <DeleteEntityButton
                         id={invitation.id}
                         confirmLabel={`Delete ${invitation.brideName} & ${invitation.groomName}? Their website, PDF, media, guests, and RSVPs all go with it. This can't be undone.`}

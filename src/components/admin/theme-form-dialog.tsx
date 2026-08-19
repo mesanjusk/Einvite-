@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowUp, ArrowDown, Pencil, Plus } from "lucide-react";
+import { ArrowUp, ArrowDown, Image as ImageIcon, Pencil, Plus, Upload } from "lucide-react";
 
 import {
   themeFormSchema,
@@ -38,6 +38,7 @@ type ThemeRecord = {
   category: string;
   isPremium: boolean;
   sortOrder: number;
+  previewImage: string | null;
   revealMode: string;
   revealVideoUrl: string | null;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
@@ -62,6 +63,7 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
     name: theme?.name ?? "",
     slug: theme?.slug ?? "",
     description: theme?.description ?? "",
+    previewImage: theme?.previewImage ?? "",
     revealMode: (theme?.revealMode as ThemeFormValues["revealMode"]) ?? "ANIMATION",
     revealVideoUrl: theme?.revealVideoUrl ?? "",
     category: (theme?.category as ThemeFormValues["category"]) ?? "classic",
@@ -101,6 +103,9 @@ export function ThemeFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [thumbUploading, setThumbUploading] = useState(false);
+  const thumbInputRef = useRef<HTMLInputElement>(null);
+
   const router = useRouter();
 
   const form = useForm<ThemeFormValues, unknown, ThemeFormInput>({
@@ -128,6 +133,27 @@ export function ThemeFormDialog({
     if (target < 0 || target >= current.length) return;
     [current[index], current[target]] = [current[target], current[index]];
     form.setValue("sectionOrder", current);
+  }
+
+  async function handleThumbnailUpload(file: File | undefined) {
+    if (!file) return;
+    setThumbUploading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch("/api/admin/pdf-templates/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    setThumbUploading(false);
+
+    if (!response.ok) {
+      toast.error(data.error ?? "Failed to upload image");
+      return;
+    }
+    form.setValue("previewImage", data.url);
+    if (thumbInputRef.current) thumbInputRef.current.value = "";
   }
 
   async function onSubmit(values: ThemeFormInput) {
@@ -179,6 +205,52 @@ export function ThemeFormDialog({
           <div className="grid gap-1.5">
             <Label>Description</Label>
             <Textarea rows={2} {...form.register("description")} />
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>Thumbnail</Label>
+            <div className="flex items-center gap-3">
+              {form.watch("previewImage") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.watch("previewImage")}
+                  alt=""
+                  className="size-16 shrink-0 rounded-md border object-cover"
+                />
+              ) : (
+                <div className="text-muted-foreground flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed">
+                  <ImageIcon className="size-5" />
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <input
+                  ref={thumbInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleThumbnailUpload(e.target.files?.[0])}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={thumbUploading}
+                  onClick={() => thumbInputRef.current?.click()}
+                >
+                  <Upload className="size-4" />
+                  {thumbUploading ? "Uploading…" : "Upload"}
+                </Button>
+                {form.watch("previewImage") && (
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-destructive text-xs"
+                    onClick={() => form.setValue("previewImage", "")}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {type === "WEBSITE" && (
