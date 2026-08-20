@@ -6,21 +6,23 @@ import { db } from "@/lib/db";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DataResetCard } from "@/components/admin/data-reset-card";
 
 export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminOverviewPage() {
-  const [userCount, invitationCount, rsvpCount, subscriptions, recentUsers] = await Promise.all([
-    db.user.count(),
-    db.invitation.count(),
-    db.rsvp.count(),
-    db.subscription.groupBy({ by: ["plan"], _count: { _all: true } }),
-    db.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
-    }),
-  ]);
+  const [userCount, invitationCount, rsvpCount, subscriptions, recentUsers] =
+    await Promise.all([
+      db.user.count(),
+      db.invitation.count(),
+      db.rsvp.count(),
+      db.subscription.groupBy({ by: ["plan"], _count: { _all: true } }),
+      db.user.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        select: { id: true, name: true, email: true, role: true, createdAt: true },
+      }),
+    ]);
 
   const paidCount = subscriptions
     .filter((s) => s.plan !== "FREE")
@@ -44,7 +46,10 @@ export default async function AdminOverviewPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className={stat.href ? "hover:border-primary transition-colors" : undefined}>
+          <Card
+            key={stat.label}
+            className={stat.href ? "hover:border-primary transition-colors" : undefined}
+          >
             <CardContent className="flex items-center justify-between">
               {stat.href ? (
                 <Link href={stat.href}>
@@ -97,6 +102,10 @@ export default async function AdminOverviewPage() {
           </table>
         </CardContent>
       </Card>
+
+      {/* Last on the page on purpose: nobody should meet the reset button
+          before the numbers it would zero. */}
+      <DataResetCard />
     </div>
   );
 }

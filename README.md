@@ -316,6 +316,33 @@ generic template when one of them opens a link — Instagram gives those two
 different homes, and only the second can carry a URL. Where everyone has got
 to is visible in the same tab, as counts per step.
 
+## Managing it without a deploy
+
+Two things that used to be code are now admin screens.
+
+**Admin → Content Library → Celebrations.** Each celebration starts from the
+built-in catalogue in `src/lib/event-categories.ts` and can be overridden
+without touching it: the wording (what the two name slots are called, the
+joiner, the date and events labels, the family headings), which wizard steps
+are walked, and per field whether it is asked at all and whether it is
+required — caste and sub-caste included. Ceremonies pre-filled and family
+relations offered are lists you type. A celebration can also be taken off the
+public picker without touching the invitations already made under it.
+
+Every override is partial, so an untouched celebration behaves exactly as the
+code describes it, a cleared box goes back to the built-in wording, and
+"Restore built-in form" drops the row entirely. Two things can't be switched
+off — the Names and Review steps, and the name and date fields — because the
+invitation record cannot be written without them.
+
+**Admin → Admin Panel → Reset all user data.** Deletes every invitation and
+everything under it, the access links, and the Instagram claim history; keeps
+the content library, the Instagram automation setup, and admin accounts.
+Non-admin accounts go only if you tick the box; admins never do. The button
+shows both lists — kept and deleted — from the same declaration
+(`src/lib/admin-reset.ts`) the server acts on, and needs the phrase
+`DELETE ALL USER DATA` typed before it will fire. There is no undo.
+
 ## Testing
 
 ```bash

@@ -50,6 +50,7 @@ const UNIQUE_CONSTRAINTS = [
   { collection: "instagram_profiles", keys: ["igUserId"] },
   { collection: "instagram_flow_settings", keys: ["key"] },
   { collection: "instagram_flow_states", keys: ["igUserId"] },
+  { collection: "event_category_configs", keys: ["slug"] },
   { collection: "deployments", keys: ["invitationId"] },
   { collection: "guests", keys: ["inviteToken"] },
   { collection: "rsvps", keys: ["guestId"] },

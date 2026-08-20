@@ -331,6 +331,10 @@ model Invitation {
   // pre-filled with the rituals that tradition actually observes.
   religion      String?
   caste         String?
+  // Asked only where an admin has switched the field on for the category —
+  // see EventCategoryConfig. Optional here regardless: "required" is about
+  // the form, never about a record written before the field existed.
+  subCaste      String?
   // Extra text for the PDF only (e.g. a formal invitation letter) — not
   // shown on the website, bindable to a placeholder on a PDF template page.
   pdfExtraText  String?
@@ -638,10 +642,10 @@ model InvitationVideo {
 // a comment arrived on, the webhook does nothing — automation is opt-in per
 // reel rather than replying to every "FREE" anywhere on the account.
 model InstagramAutomation {
-  id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
   // Instagram media ID the rule applies to, from the comment webhook's
   // value.media.id. Unique so one reel has exactly one rule.
-  mediaId             String  @unique
+  mediaId             String   @unique
   // Admin-facing name so reels are recognisable in the dashboard.
   label               String
   permalink           String?
@@ -655,7 +659,7 @@ model InstagramAutomation {
   // won't resolve is treated as "not following", because it won't resolve
   // for most first-time commenters and failing open handed the link to
   // everyone. They're asked to follow and comment again instead.
-  requireFollow       Boolean @default(false)
+  requireFollow       Boolean  @default(false)
   notFollowingMessage String?
   // Reply with the tappable opener from InstagramFlowSettings instead of the
   // link itself, so the link is only issued after the follow is confirmed on
@@ -664,7 +668,7 @@ model InstagramAutomation {
   // `db push` doesn't backfill — a required field missing from a stored
   // document makes Prisma fail the whole read. Missing means off.
   useButtonFlow       Boolean?
-  isActive            Boolean @default(true)
+  isActive            Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -972,18 +976,71 @@ enum InstagramFlowStep {
 // understood, and what shows an admin how many people are sitting at the
 // follow gate rather than through it.
 model InstagramFlowState {
-  id       String            @id @default(auto()) @map("_id") @db.ObjectId
-  igUserId String            @unique
-  step     InstagramFlowStep
-  username String?
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  igUserId     String            @unique
+  step         InstagramFlowStep
+  username     String?
   // The reel whose comment started the flow, so the link claimed three taps
   // later still attributes to it. Not a relation: the flow outlives the
   // automation being edited or deleted, and a dangling id here only costs
   // the attribution, which is checked before it is used.
-  automationId String? @db.ObjectId
+  automationId String?           @db.ObjectId
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("instagram_flow_states")
+}
+
+// ---------------------------------------------------------------------------
+// Celebration form configuration
+// ---------------------------------------------------------------------------
+
+// An admin's overrides for one celebration's create form. `event-categories.ts`
+// holds the catalogue — what a wedding calls its two name slots, which
+// ceremonies it pre-fills — and this holds the parts of it that shouldn't
+// need a deploy to change: the wording, which steps the wizard walks, and per
+// field whether it is asked at all and whether it is required.
+//
+// Every column is optional and every list may be empty, because a row is a
+// *partial* override: an empty one changes nothing, and one that renames a
+// single label leaves the rest of the catalogue standing. A celebration with
+// no row here behaves exactly as the code describes it, which is what keeps
+// the two editable independently.
+model EventCategoryConfig {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  // The catalogue slug this configures: "wedding", "birthday", ...
+  slug String @unique
+
+  // Off takes the celebration off the public "Get started" picker without
+  // touching the invitations already made under it.
+  isEnabled Boolean?
+
+  label              String?
+  tagline            String?
+  primaryNameLabel   String?
+  secondaryNameLabel String?
+  // Whether the second name slot may be left blank — a birthday's host,
+  // where a wedding's groom may not.
+  secondaryOptional  Boolean?
+  joiner             String?
+  dateLabel          String?
+  eventsLabel        String?
+  familyBrideLabel   String?
+  familyGroomLabel   String?
+
+  // Empty means "use the catalogue's", not "offer none".
+  defaultEvents   String[]
+  familyRelations String[]
+  // Wizard steps to walk, by key. Empty means the catalogue's default set.
+  steps           String[]
+
+  // Per-field rules: { [fieldKey]: { enabled, required, label } }. Missing
+  // keys fall back to the defaults derived from the catalogue.
+  fields Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("event_category_configs")
 }

@@ -255,3 +255,50 @@ export const themeColorwayFormSchema = z.object({
 
 export type ThemeColorwayFormInput = z.infer<typeof themeColorwayFormSchema>;
 export type ThemeColorwayFormValues = z.input<typeof themeColorwayFormSchema>;
+
+// ---------------------------------------------------------------------------
+// Celebration form configuration
+// ---------------------------------------------------------------------------
+
+export const eventCategoryConfigFormSchema = z.object({
+  slug: z.string().min(1),
+  isEnabled: z.boolean().default(true),
+  label: z.string().optional(),
+  tagline: z.string().optional(),
+  primaryNameLabel: z.string().optional(),
+  secondaryNameLabel: z.string().optional(),
+  secondaryOptional: z.boolean().default(false),
+  joiner: z.string().optional(),
+  dateLabel: z.string().optional(),
+  eventsLabel: z.string().optional(),
+  familyBrideLabel: z.string().optional(),
+  familyGroomLabel: z.string().optional(),
+  // Typed one per line in the form; blank lines dropped on save.
+  defaultEvents: z.string().optional(),
+  familyRelations: z.string().optional(),
+  steps: z.array(z.string()).default([]),
+  fields: z
+    .record(
+      z.string(),
+      z.object({
+        enabled: z.boolean().default(true),
+        required: z.boolean().default(false),
+        label: z.string().optional(),
+      }),
+    )
+    .default({}),
+});
+
+export type EventCategoryConfigFormInput = z.infer<
+  typeof eventCategoryConfigFormSchema
+>;
+export type EventCategoryConfigFormValues = z.input<
+  typeof eventCategoryConfigFormSchema
+>;
+
+export const adminResetSchema = z.object({
+  confirmation: z.string(),
+  includeUserAccounts: z.boolean().default(false),
+});
+
+export type AdminResetInput = z.infer<typeof adminResetSchema>;

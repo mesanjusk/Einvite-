@@ -27,13 +27,17 @@ export async function createInvitationAction(
 
   const parsed = invitationWizardSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
 
   const data = parsed.data;
 
   const theme = await db.theme.findUnique({ where: { slug: data.themeSlug } });
-  if (!theme || theme.type !== "WEBSITE") return { success: false, error: "Unknown theme selected." };
+  if (!theme || theme.type !== "WEBSITE")
+    return { success: false, error: "Unknown theme selected." };
 
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
@@ -46,7 +50,9 @@ export async function createInvitationAction(
       })
     : null;
 
-  const slug = await uniqueSlug([data.brideName, data.groomName].filter(Boolean).join("-"));
+  const slug = await uniqueSlug(
+    [data.brideName, data.groomName].filter(Boolean).join("-"),
+  );
   const weddingDate = new Date(data.weddingDate);
   const weddingDateDisplay = weddingDate.toLocaleDateString("en-US", {
     day: "numeric",
@@ -88,15 +94,16 @@ export async function createInvitationAction(
       customMessage: data.customMessage,
       religion: data.religion || null,
       caste: data.caste || null,
+      subCaste: data.subCaste || null,
       themeId: theme.id,
       templateId: template?.id,
       colorwayId: colorway?.id ?? null,
       colorPalette: colorway?.colorPalette ?? undefined,
       musicTrackId: data.musicTrackId || null,
       customMusicUrl: data.customMusicUrl || null,
-      sectionConfig: (template?.sectionOrder as string[] | undefined ?? DEFAULT_SECTION_ORDER).map(
-        (type, order) => ({ id: type, type, visible: true, locked: false, order }),
-      ),
+      sectionConfig: (
+        (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER
+      ).map((type, order) => ({ id: type, type, visible: true, locked: false, order })),
       aiGenerated,
       aiGeneratedCopy: aiGeneratedCopy ?? undefined,
       seoTitle: aiGeneratedCopy?.seoTitle,
@@ -130,7 +137,10 @@ export async function createInvitationAction(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/invitations");
 
-  return { success: true, data: { invitationId: invitation.id, slug: invitation.slug } };
+  return {
+    success: true,
+    data: { invitationId: invitation.id, slug: invitation.slug },
+  };
 }
 
 export async function publishInvitationAction(
@@ -181,7 +191,9 @@ export async function publishInvitationAction(
   return { success: true, data: { autoFilledPhotos } };
 }
 
-export async function deleteInvitationAction(invitationId: string): Promise<ActionResult> {
+export async function deleteInvitationAction(
+  invitationId: string,
+): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { success: false, error: "Unauthorized" };
 
@@ -236,7 +248,10 @@ export async function ownerCreateEditLinkAction(
         data: { phone: normalized, invitationId, editTokenHash },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
         return {
           success: false,
           error: "That mobile number is already linked to another invitation.",

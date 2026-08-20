@@ -59,7 +59,10 @@ export async function createDraftInvitationAction(): Promise<
 
   if (!session?.user) {
     const draftSecretHash = await issueDraftSecret(invitation.id);
-    await db.invitation.update({ where: { id: invitation.id }, data: { draftSecretHash } });
+    await db.invitation.update({
+      where: { id: invitation.id },
+      data: { draftSecretHash },
+    });
   }
 
   return {
@@ -77,12 +80,16 @@ export async function updateGuestInvitationAction(
 
   const parsed = invitationWizardSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
   const data = parsed.data;
 
   const theme = await db.theme.findUnique({ where: { slug: data.themeSlug } });
-  if (!theme || theme.type !== "WEBSITE") return { success: false, error: "Unknown theme selected." };
+  if (!theme || theme.type !== "WEBSITE")
+    return { success: false, error: "Unknown theme selected." };
   const template = await db.template.findFirst({ where: { themeId: theme.id } });
 
   // A colourway is one of the theme's palettes. Its palette is copied onto
@@ -145,6 +152,7 @@ export async function updateGuestInvitationAction(
       customMessage: data.customMessage,
       religion: data.religion || null,
       caste: data.caste || null,
+      subCaste: data.subCaste || null,
       themeId: theme.id,
       templateId: template?.id,
       colorwayId: colorway?.id ?? null,
@@ -192,7 +200,9 @@ export async function updateGuestInvitationAction(
 
 export async function autoFillPhotosAction(
   invitationId: string,
-): Promise<ActionResult<{ added: number; media: { id: string; url: string; isAuto: boolean }[] }>> {
+): Promise<
+  ActionResult<{ added: number; media: { id: string; url: string; isAuto: boolean }[] }>
+> {
   const invitation = await authorizeInvitationAccess(invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
 
@@ -218,10 +228,16 @@ export async function autoFillPhotosAction(
     });
   }
 
-  const media = await db.media.findMany({ where: { invitationId }, orderBy: { order: "asc" } });
+  const media = await db.media.findMany({
+    where: { invitationId },
+    orderBy: { order: "asc" },
+  });
   return {
     success: true,
-    data: { added: needed, media: media.map((m) => ({ id: m.id, url: m.url, isAuto: m.isAuto })) },
+    data: {
+      added: needed,
+      media: media.map((m) => ({ id: m.id, url: m.url, isAuto: m.isAuto })),
+    },
   };
 }
 
@@ -233,12 +249,16 @@ export async function autoFillPhotosAction(
  * send that edit link over WhatsApp as a courtesy — but delivery is
  * best-effort and never blocks publishing, since it's shown on-screen too.
  */
-export async function publishGuestInvitationAction(
-  input: { invitationId: string; phone?: string },
-): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string | null }>> {
+export async function publishGuestInvitationAction(input: {
+  invitationId: string;
+  phone?: string;
+}): Promise<ActionResult<{ slug: string; liveUrl: string; editUrl: string | null }>> {
   const parsed = publishGuestInvitationSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
 
   const invitation = await loadInvitation(parsed.data.invitationId);
@@ -256,7 +276,9 @@ export async function publishGuestInvitationAction(
   // The number is optional: publishing without one still works, it just
   // means no durable cross-device edit link yet — this browser's cookie
   // carries access, and the manage page asks for a number afterwards.
-  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : invitation.phoneLink?.phone;
+  const phone = parsed.data.phone
+    ? normalizePhone(parsed.data.phone)
+    : invitation.phoneLink?.phone;
 
   if (!phone) {
     const publishedWithoutPhone = await db.invitation.update({
@@ -303,12 +325,16 @@ export async function publishGuestInvitationAction(
         data: { phone, invitationId: invitation.id, editTokenHash },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
         const existing = await db.phoneLink.findUnique({ where: { phone } });
         if (!existing || existing.invitationId !== invitation.id) {
           return {
             success: false,
-            error: "This mobile number was just linked to another invitation. Use a different number.",
+            error:
+              "This mobile number was just linked to another invitation. Use a different number.",
           };
         }
         phoneLink = existing;
