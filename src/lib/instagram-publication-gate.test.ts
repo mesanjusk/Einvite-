@@ -20,13 +20,14 @@ describe("decidePublication", () => {
     ).toBe("LIVE");
   });
 
-  it("fails open when Instagram won't answer", () => {
-    // The opposite of the gate on *issuing* a link, and deliberately so:
-    // taking a wedding invitation off the internet in front of its guests
-    // over an API hiccup is worse than a few hours of unearned circulation.
+  it("pauses when Instagram won't answer, rather than counting a maybe as a yes", () => {
+    // This read the other way first and made the gate ornamental: unresolved
+    // is a common enough answer that an unfollowed account kept circulating.
+    // The softness now lives in readFollowStatus, which stands a recent
+    // stored answer in before it ever reports null.
     expect(
       decidePublication({ gateEnabled: true, fromInstagram: true, isFollower: null }),
-    ).toBe("LIVE");
+    ).toBe("PAUSED");
   });
 
   it("never touches an invitation that didn't come from Instagram", () => {
@@ -56,6 +57,10 @@ describe("isFollowStatusStale", () => {
         now,
       ),
     ).toBe(true);
+  });
+
+  it("keeps the yes window short, so an unfollow takes effect in minutes", () => {
+    expect(FOLLOWING_TRUST_MS).toBeLessThanOrEqual(2 * 60 * 1000);
   });
 
   it("re-asks a no almost immediately, so following again lands fast", () => {

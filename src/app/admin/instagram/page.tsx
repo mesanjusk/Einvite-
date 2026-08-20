@@ -108,6 +108,39 @@ function loadAutomations() {
   });
 }
 
+/**
+ * Whether this claim's public link is currently circulating, and why.
+ *
+ * The couple's own screen says this too, but an admin asking "is the gate
+ * actually doing anything?" needs to see it per person — a column of
+ * "Following" beside people who unfollowed last week is the fastest way to
+ * spot a follow check that has quietly stopped resolving.
+ */
+function ShareableCell({
+  status,
+}: {
+  status?: { isFollower: boolean; checkedAt: Date };
+}) {
+  if (!status) {
+    return (
+      <Badge variant="outline" title="No follow check recorded for this account">
+        Never checked
+      </Badge>
+    );
+  }
+
+  const checked = status.checkedAt.toLocaleString();
+  return status.isFollower ? (
+    <Badge variant="default" title={`Following as of ${checked}`}>
+      Live
+    </Badge>
+  ) : (
+    <Badge variant="secondary" title={`Not following as of ${checked}`}>
+      Paused
+    </Badge>
+  );
+}
+
 function EmptyPanel({ children }: { children: React.ReactNode }) {
   return (
     <Card>
@@ -244,9 +277,9 @@ function AutomationsPanel({
                       triggerWord: automation.triggerWord,
                       replyMessage: automation.replyMessage,
                       duplicateMessage: automation.duplicateMessage,
-                      requireFollow: automation.requireFollow,
+                      requireFollow: automation.requireFollow ?? false,
                       notFollowingMessage: automation.notFollowingMessage,
-                      useButtonFlow: automation.useButtonFlow,
+                      useButtonFlow: automation.useButtonFlow ?? false,
                       isActive: automation.isActive,
                     }}
                   />
@@ -474,8 +507,8 @@ async function DirectMessagesPanel() {
                         replyMessage: rule.replyMessage,
                         issueLink: rule.issueLink,
                         duplicateMessage: rule.duplicateMessage,
-                        startFlow: rule.startFlow,
-                        requireFollow: rule.requireFollow,
+                        startFlow: rule.startFlow ?? false,
+                        requireFollow: rule.requireFollow ?? true,
                         notFollowingMessage: rule.notFollowingMessage,
                         priority: rule.priority,
                         isActive: rule.isActive,
@@ -689,6 +722,15 @@ async function RecentCommentsPanel() {
     }),
   ]);
 
+  // What the publication gate will make of each claim. Read from the stored
+  // status rather than re-asking Instagram 25 times to render a table — the
+  // page view itself is what refreshes it.
+  const followers = await db.instagramProfile.findMany({
+    where: { igUserId: { in: claims.map((c) => c.igUserId) } },
+    select: { igUserId: true, isFollower: true, checkedAt: true },
+  });
+  const followerByUser = new Map(followers.map((f) => [f.igUserId, f]));
+
   const media = await resolveMedia(logs.map((l) => l.mediaId));
 
   return (
@@ -763,6 +805,7 @@ async function RecentCommentsPanel() {
                     <th className="py-2 pr-3 font-medium">Instagram</th>
                     <th className="py-2 pr-3 font-medium">Couple</th>
                     <th className="py-2 pr-3 font-medium">Status</th>
+                    <th className="py-2 pr-3 font-medium">Shareable</th>
                     <th className="py-2 pr-3 font-medium">Video</th>
                     <th className="py-2 font-medium">Claimed</th>
                   </tr>
@@ -788,6 +831,9 @@ async function RecentCommentsPanel() {
                         >
                           {claim.invitation.status}
                         </Badge>
+                      </td>
+                      <td className="py-2 pr-3">
+                        <ShareableCell status={followerByUser.get(claim.igUserId)} />
                       </td>
                       <td className="text-muted-foreground py-2 pr-3 text-xs">
                         {claim.invitation._count.videos > 0 ? "Yes" : "—"}

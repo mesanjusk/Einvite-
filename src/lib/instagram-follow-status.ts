@@ -24,11 +24,18 @@ import { db } from "@/lib/db";
 import { fetchInstagramFollowStatus } from "@/lib/instagram";
 
 // How long a "they follow us" answer is trusted for the publication gate.
-export const FOLLOWING_TRUST_MS = 15 * 60 * 1000;
-// How long a "they don't" answer is trusted. Short: this is the answer that
-// keeps an invitation dark, and following again has to take effect quickly
-// or nobody believes it worked.
-export const NOT_FOLLOWING_TRUST_MS = 60 * 1000;
+// Short, because this is the answer that keeps an invitation circulating:
+// whatever sits here is how long someone can unfollow and still be shared
+// around. Two minutes costs at most one API call per owner per two minutes,
+// however many guests open the page.
+export const FOLLOWING_TRUST_MS = 2 * 60 * 1000;
+// How long a "they don't" answer is trusted. Shorter still: following again
+// has to take effect quickly or nobody believes it worked.
+export const NOT_FOLLOWING_TRUST_MS = 30 * 1000;
+// How long a stored answer stands in for one Instagram won't give at all.
+// Long enough to ride out an outage, short enough that permanent silence
+// stops passing for a yes — which is what a stale positive was doing.
+export const UNRESOLVED_GRACE_MS = 6 * 60 * 60 * 1000;
 
 export type StoredFollowStatus = {
   isFollower: boolean;
@@ -87,11 +94,12 @@ export async function checkFollowStatusLive(
  * The status as the publication gate should read it: stored while it is
  * fresh, re-asked when it isn't.
  *
- * When the re-ask comes back unresolved — a hiccup at Meta's end, a token
- * that needs refreshing — the stored answer stands rather than the
- * invitation going dark on a question nobody actually answered. With nothing
- * stored at all there is nothing to stand on, and null is returned for the
- * caller to treat as its own kind of no.
+ * When the re-ask comes back unresolved -- a hiccup at Meta's end, a token
+ * that needs refreshing -- a recent stored answer stands in, so an outage
+ * doesn't darken a wedding invitation in front of its guests. Only a recent
+ * one, though: an account Instagram has stopped resolving for at all would
+ * otherwise coast forever on a yes it gave days ago, which is precisely how
+ * an unfollowed account kept circulating.
  */
 export async function readFollowStatus(
   igUserId: string,
@@ -107,5 +115,9 @@ export async function readFollowStatus(
   }
 
   const live = await checkFollowStatusLive(igUserId);
-  return live ?? stored?.isFollower ?? null;
+  if (live !== null) return live;
+
+  const withinGrace =
+    stored && Date.now() - stored.checkedAt.getTime() < UNRESOLVED_GRACE_MS;
+  return withinGrace ? stored.isFollower : null;
 }
