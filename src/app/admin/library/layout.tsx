@@ -7,6 +7,9 @@ import { TabNav } from "@/components/dashboard/tab-nav";
 // Four separate sidebar entries for what is one job — curating the designs
 // couples pick from — now sit behind one entry and these tabs.
 const TABS = [
+  // What the form asks belongs with what it offers: both are "what a couple
+  // is given to work with", curated in one place.
+  { href: "/admin/library/celebrations", label: "Celebrations" },
   { href: "/admin/library/themes", label: "Website Themes" },
   { href: "/admin/library/pdf-themes", label: "PDF Themes" },
   { href: "/admin/library/video-templates", label: "Video Templates" },

@@ -6,6 +6,7 @@ import { SiteLogo } from "@/components/brand/site-logo";
 import { GuestInvitationWizard } from "@/components/guest/guest-invitation-wizard";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 import { DEFAULT_EVENT_CATEGORY, eventCategoryFor } from "@/lib/event-categories";
+import { loadEventCategory } from "@/lib/event-category-loader";
 
 export const metadata: Metadata = {
   title: "Create Your Invitation",
@@ -19,6 +20,8 @@ export default async function CreateInvitationPage({
 }) {
   const { theme: themeSlugParam, category: categoryParam } = await searchParams;
   const category = eventCategoryFor(categoryParam);
+  // What this celebration's form asks, as an admin configured it.
+  const categoryConfig = await loadEventCategory(category.slug);
 
   const [themes, musicTracks] = await Promise.all([
     db.theme
@@ -66,6 +69,7 @@ export default async function CreateInvitationPage({
       <div className="mx-auto w-full max-w-2xl">
         <GuestInvitationWizard
           eventCategory={category.slug}
+          categoryConfig={categoryConfig}
           themes={visibleThemes.map((t) => ({
             slug: t.slug,
             name: t.name,

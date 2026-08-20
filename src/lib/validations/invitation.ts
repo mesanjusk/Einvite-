@@ -47,6 +47,10 @@ export const invitationWizardSchema = z
     customMessage: z.string().optional(),
     religion: z.string().optional(),
     caste: z.string().optional(),
+    // Asked only where an admin switched it on for the celebration; always
+    // optional here, since "required" is a form rule (see
+    // event-category-config), not a rule about the record.
+    subCaste: z.string().optional(),
     themeSlug: z.string().min(1, "Choose a theme"),
     colorwaySlug: z.string().optional(),
     musicTrackId: z.string().optional(),

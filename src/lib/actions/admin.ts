@@ -8,6 +8,11 @@ import { deleteImage, isCloudinaryConfigured } from "@/lib/media/cloudinary";
 import { fetchInstagramMedia, type InstagramMedia } from "@/lib/instagram";
 import { generateToken, hashToken } from "@/lib/otp";
 import { getAppUrl } from "@/lib/app-url";
+import {
+  RESET_CONFIRMATION_PHRASE,
+  resetUserData,
+  type ResetSummary,
+} from "@/lib/admin-reset";
 import type { ActionResult } from "@/lib/actions/auth";
 import {
   themeFormSchema,
@@ -17,6 +22,8 @@ import {
   instagramAutomationFormSchema,
   instagramDmRuleFormSchema,
   instagramFlowSettingsFormSchema,
+  eventCategoryConfigFormSchema,
+  adminResetSchema,
   themeColorwayFormSchema,
   type ThemeFormInput,
   type MusicTrackFormInput,
@@ -24,6 +31,8 @@ import {
   type InstagramAutomationFormInput,
   type InstagramDmRuleFormInput,
   type InstagramFlowSettingsFormInput,
+  type EventCategoryConfigFormInput,
+  type AdminResetInput,
   type ThemeColorwayFormInput,
 } from "@/lib/validations/admin";
 import {
@@ -757,4 +766,115 @@ export async function deleteThemeColorwayAction(
 
   revalidatePath("/admin/library/themes");
   return { success: true, data: undefined };
+}
+
+/**
+ * One celebration's form configuration.
+ *
+ * Written as a full row rather than a patch: the form always shows every
+ * field, so what it submits *is* the configuration, and a blank input means
+ * "fall back to the catalogue" (stored as null) rather than "leave whatever
+ * was there before".
+ */
+export async function saveEventCategoryConfigAction(
+  input: EventCategoryConfigFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = eventCategoryConfigFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const data = parsed.data;
+
+  const lines = (value?: string) =>
+    (value ?? "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  const text = (value?: string) => value?.trim() || null;
+
+  const fields = {
+    isEnabled: data.isEnabled,
+    label: text(data.label),
+    tagline: text(data.tagline),
+    primaryNameLabel: text(data.primaryNameLabel),
+    secondaryNameLabel: text(data.secondaryNameLabel),
+    secondaryOptional: data.secondaryOptional,
+    joiner: text(data.joiner),
+    dateLabel: text(data.dateLabel),
+    eventsLabel: text(data.eventsLabel),
+    familyBrideLabel: text(data.familyBrideLabel),
+    familyGroomLabel: text(data.familyGroomLabel),
+    defaultEvents: lines(data.defaultEvents),
+    familyRelations: lines(data.familyRelations),
+    steps: data.steps,
+    fields: data.fields,
+  };
+
+  await db.eventCategoryConfig.upsert({
+    where: { slug: data.slug },
+    create: { slug: data.slug, ...fields },
+    update: fields,
+  });
+
+  revalidatePath("/admin/library/celebrations");
+  // The wizard and the picker both read this, and both are public.
+  revalidatePath("/create");
+  return { success: true, data: undefined };
+}
+
+/** Drops the overrides and puts the celebration back to its built-in form. */
+export async function resetEventCategoryConfigAction(
+  slug: string,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  await db.eventCategoryConfig.deleteMany({ where: { slug } });
+
+  revalidatePath("/admin/library/celebrations");
+  revalidatePath("/create");
+  return { success: true, data: undefined };
+}
+
+/**
+ * Deletes everything the public side has made.
+ *
+ * Guarded three ways, because it is the one button here that cannot be
+ * undone: an admin session, a typed confirmation phrase, and a summary
+ * returned afterwards saying exactly what went — so a reset that hit more
+ * than expected is visible immediately rather than discovered later.
+ */
+export async function resetUserDataAction(
+  input: AdminResetInput,
+): Promise<ActionResult<ResetSummary>> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = adminResetSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Invalid input" };
+
+  if (parsed.data.confirmation.trim() !== RESET_CONFIRMATION_PHRASE) {
+    return {
+      success: false,
+      error: `Type ${RESET_CONFIRMATION_PHRASE} exactly to confirm.`,
+    };
+  }
+
+  const summary = await resetUserData({
+    includeUserAccounts: parsed.data.includeUserAccounts,
+  });
+
+  console.log("Admin reset — deleted:", JSON.stringify(summary));
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/invitations");
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/instagram");
+  return { success: true, data: summary };
 }
