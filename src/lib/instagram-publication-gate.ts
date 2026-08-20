@@ -8,15 +8,18 @@
  * the couple sends to their family stays live while they follow, and goes
  * back to a follow-first screen when they don't.
  *
- * That is the whole trade, and it is why this gate looks nothing like the
- * one on issuing a link. That one fails closed on an unresolved check,
- * because a stranger who can't be resolved is exactly who it exists to stop.
- * This one fails *open* on the same answer: the person behind it already
- * passed the first gate, has a real conversation with the account, and
- * resolves reliably — so an unresolved answer here means Instagram is having
- * a moment, not that a couple is cheating. Taking a wedding invitation off
- * the internet in front of their guests over an API hiccup is the one
- * outcome worth engineering against.
+ * The gate wants a *confirmed* follow, not merely the absence of a refusal.
+ * It read the other way first — pause only on a plain "no" — and that made
+ * the whole thing ornamental: `is_user_follow_business` answers "I don't
+ * know" often enough, and a stale yes lives long enough, that an unfollowed
+ * account kept circulating exactly as before. "Unfollowing must stop the
+ * link working" cannot survive a maybe being counted as a yes.
+ *
+ * The softness that remains lives one layer down, in readFollowStatus: a
+ * check Instagram won't answer falls back to the last answer it did give,
+ * for a few hours, so an outage at Meta's end doesn't take a wedding
+ * invitation off the internet in front of its guests. Past that window the
+ * silence stops counting as a yes and the page pauses.
  */
 
 export type PublicationDecision =
@@ -40,8 +43,9 @@ export function decidePublication({
   isFollower: boolean | null;
 }): PublicationDecision {
   if (!gateEnabled || !fromInstagram) return "LIVE";
-  // Fails open, as above: only a plain "no" pauses an invitation.
-  return isFollower === false ? "PAUSED" : "LIVE";
+  // Only a confirmed follower circulates. A "no" and an "I don't know" both
+  // pause — see above for why the second one has to.
+  return isFollower === true ? "LIVE" : "PAUSED";
 }
 
 /**

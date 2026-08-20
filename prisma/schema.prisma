@@ -660,7 +660,10 @@ model InstagramAutomation {
   // Reply with the tappable opener from InstagramFlowSettings instead of the
   // link itself, so the link is only issued after the follow is confirmed on
   // a tap. The plain reply above is still what a non-flow reel sends.
-  useButtonFlow       Boolean @default(false)
+  // Optional, not defaulted: this arrived after these rows existed, and
+  // `db push` doesn't backfill — a required field missing from a stored
+  // document makes Prisma fail the whole read. Missing means off.
+  useButtonFlow       Boolean?
   isActive            Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -812,14 +815,16 @@ model InstagramDmRule {
 
   // Answer with the button flow's opener rather than replyMessage, so a
   // keyword DM runs the same tap-through-the-follow-gate flow a reel does.
-  startFlow Boolean @default(false)
+  // Optional for the same reason as InstagramAutomation.useButtonFlow:
+  // missing on a row written before it existed, and missing means off.
+  startFlow Boolean?
 
-  // Followers-only for this rule. Defaults *on*: a rule that issues a link
-  // used to have no follow check at all, which is how non-followers were
-  // getting links by DM however carefully the reels were gated. The
-  // account-wide rule in InstagramFlowSettings still wins — this can only
-  // tighten it (see decideLinkGate).
-  requireFollow       Boolean @default(true)
+  // Followers-only for this rule. Missing reads as *on*: a rule that issued
+  // a link used to have no follow check at all, which is how non-followers
+  // were getting links by DM however carefully the reels were gated, so the
+  // absent value has to be the safe one. The account-wide rule in
+  // InstagramFlowSettings still wins — this can only tighten it.
+  requireFollow       Boolean?
   notFollowingMessage String?
 
   // Higher wins. Rules are compared in priority order and the first match
@@ -934,7 +939,9 @@ model InstagramFlowSettings {
   // nothing. What following buys is circulation: with this on, an invitation
   // claimed through Instagram shows a follow-first screen to its guests
   // whenever its owner isn't following, and goes live again when they are.
-  gateInvitations Boolean @default(true)
+  // Missing reads as on, so a settings row saved before this existed still
+  // gates rather than failing to load at all.
+  gateInvitations Boolean?
   // What that screen says. Blank uses DEFAULT_PAUSED_MESSAGE.
   pausedMessage   String?
 

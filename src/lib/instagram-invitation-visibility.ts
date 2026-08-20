@@ -61,13 +61,22 @@ export async function resolveInvitationVisibility(
   if (!gateEnabled) return LIVE_UNGATED;
 
   const isFollower = await readFollowStatus(link.igUserId, options);
+  const decision = decidePublication({
+    gateEnabled: true,
+    fromInstagram: true,
+    isFollower,
+  });
+
+  // Logged because the answer is invisible from the outside: a paused
+  // invitation and a live one look the same in the database, and "is it the
+  // follow check or the gate switch?" is otherwise a guess. One line per
+  // uncached page view, which the trust window keeps rare.
+  console.log(
+    `[invite-gate] invitation=${invitationId} igUser=${link.igUserId} follower=${isFollower} decision=${decision}`,
+  );
 
   return {
-    decision: decidePublication({
-      gateEnabled: true,
-      fromInstagram: true,
-      isFollower,
-    }),
+    decision,
     gated: true,
     profileUrl: settings?.profileUrl ?? null,
     handle: instagramHandleFrom(settings?.profileUrl),

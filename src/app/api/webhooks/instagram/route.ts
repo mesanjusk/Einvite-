@@ -340,11 +340,12 @@ async function handleCommentChange(
     // The account-wide rule decides; this reel's own switch can only tighten
     // it. A reel left unticked no longer means "links for everyone".
     const accountFollowersOnly = await accountRequiresFollow();
-    if ((accountFollowersOnly || automation.requireFollow) && igUserId) {
+    const reelRequiresFollow = automation.requireFollow ?? false;
+    if ((accountFollowersOnly || reelRequiresFollow) && igUserId) {
       const isFollower = await checkFollowStatusLive(igUserId, username);
       const decision = decideLinkGate({
         accountFollowersOnly,
-        ruleRequiresFollow: automation.requireFollow,
+        ruleRequiresFollow: reelRequiresFollow,
         isFollower,
       });
 
@@ -808,9 +809,12 @@ async function handleMessagingEvent(event: MessagingEvent) {
       const accountFollowersOnly = await accountRequiresFollow();
       const decision = decideLinkGate({
         accountFollowersOnly,
-        ruleRequiresFollow: rule.requireFollow,
+        // Missing on a rule written before the field existed, and missing
+        // has to mean gated — those are exactly the rules that were handing
+        // links to anyone who asked.
+        ruleRequiresFollow: rule.requireFollow ?? true,
         isFollower:
-          accountFollowersOnly || rule.requireFollow
+          accountFollowersOnly || (rule.requireFollow ?? true)
             ? await checkFollowStatusLive(senderId, username)
             : true,
       });

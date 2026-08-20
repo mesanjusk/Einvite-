@@ -30,7 +30,8 @@ export type FlowSettingsRecord = {
   stillNotFollowingMessage: string;
   profileUrl: string | null;
   profileButtonLabel: string;
-  gateInvitations: boolean;
+  // Null on a settings row saved before the field existed; reads as on.
+  gateInvitations: boolean | null;
   pausedMessage: string | null;
   linkMessage: string;
   linkButtonLabel: string;
@@ -59,7 +60,7 @@ function defaultValues(
     stillNotFollowingMessage: base.stillNotFollowingMessage,
     profileUrl: base.profileUrl ?? "",
     profileButtonLabel: base.profileButtonLabel,
-    gateInvitations: base.gateInvitations,
+    gateInvitations: base.gateInvitations ?? true,
     pausedMessage: base.pausedMessage ?? "",
     linkMessage: base.linkMessage,
     linkButtonLabel: base.linkButtonLabel,
