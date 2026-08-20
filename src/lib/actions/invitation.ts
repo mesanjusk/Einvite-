@@ -8,9 +8,10 @@ import { db } from "@/lib/db";
 import { generateInvitationCopy } from "@/lib/ai/generate-copy";
 import {
   invitationWizardSchema,
-  type InvitationWizardInput,
+  type InvitationWizardFormValues,
 } from "@/lib/validations/invitation";
 import type { ActionResult } from "@/lib/actions/auth";
+import type { EventCategoryContent } from "@/lib/event-categories";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import { DEFAULT_PHOTO_COUNT } from "@/lib/media/constants";
 import { pickStockPhotos } from "@/lib/media/stock-photos";
@@ -19,7 +20,7 @@ import { getAppUrl } from "@/lib/app-url";
 import { normalizePhone } from "@/lib/phone";
 
 export async function createInvitationAction(
-  input: InvitationWizardInput,
+  input: InvitationWizardFormValues,
 ): Promise<ActionResult<{ invitationId: string; slug: string }>> {
   const session = await auth();
   if (!session?.user) return { success: false, error: "Unauthorized" };
@@ -45,7 +46,7 @@ export async function createInvitationAction(
       })
     : null;
 
-  const slug = await uniqueSlug(`${data.brideName}-${data.groomName}`);
+  const slug = await uniqueSlug([data.brideName, data.groomName].filter(Boolean).join("-"));
   const weddingDate = new Date(data.weddingDate);
   const weddingDateDisplay = weddingDate.toLocaleDateString("en-US", {
     day: "numeric",
@@ -63,6 +64,8 @@ export async function createInvitationAction(
       weddingDateDisplay,
       venueName: data.venueName,
       customMessage: data.customMessage,
+      eventCategory: data.eventCategory,
+      themeContent: theme.content as Partial<EventCategoryContent> | null,
     });
     aiGeneratedCopy = copy;
     aiGenerated = copy.source !== "template";
@@ -73,6 +76,7 @@ export async function createInvitationAction(
       userId: session.user.id,
       slug,
       status: "DRAFT",
+      eventCategory: data.eventCategory,
       brideName: data.brideName,
       bridePhoto: data.bridePhoto,
       groomName: data.groomName,

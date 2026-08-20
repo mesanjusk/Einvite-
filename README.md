@@ -1,7 +1,9 @@
 # AI Wedding Invitation Studio
 
-A SaaS for generating premium, animated digital wedding invitation websites:
-an AI wizard turns a couple's details into a full multi-section invite
+A SaaS for generating premium, animated digital invitation websites —
+weddings first, and now ring ceremonies, engagements, birthdays, namings,
+anniversaries, housewarmings, and baby showers too:
+an AI wizard turns the hosts' details into a full multi-section invite
 (envelope reveal, invitation letter, countdown, timeline, gallery, venue,
 RSVP, thank-you) rendered through a shared theme/animation engine, with a
 dashboard for guest management, analytics, billing, and deployment.
@@ -173,7 +175,8 @@ Built and verified in this pass, in the order the original spec asked for:
    for what is and isn't re-verified).
 4. **Dashboard** — all 14 sidebar sections, each a real page.
 5. **Template + Animation engine** — CSS-custom-property theme bridge,
-   11 seeded themes, reusable motion primitives.
+   42 seeded website designs across the eight event categories, reusable
+   motion primitives.
 6. **AI Generator** — wizard + standalone tool, Anthropic/OpenAI/template
    fallback chain.
 7. **Media system** — Cloudinary upload with auto WebP/AVIF + resize.
@@ -199,6 +202,58 @@ Built and verified in this pass, in the order the original spec asked for:
     hide/lock/duplicate/delete, undo/redo (Zustand), live device preview
     reusing the same `InviteExperience` the public page renders, saved to
     `Invitation.sectionConfig`.
+17. **Event categories** — weddings plus ring ceremonies, engagements,
+    birthdays, namings, anniversaries, housewarmings, and baby showers.
+    See below.
+18. **PDF generation** — every design prints, with the invitation's own
+    data and photos. See below.
+
+## Event categories
+
+`src/lib/event-categories.ts` is the single catalogue of the celebrations
+the studio makes invitations for. Each entry decides what the wizard asks
+("Bride's name" vs. "Birthday star's name"), which functions it pre-fills,
+what the fallback copy says, and what the PDF cover is titled.
+
+The invitation record stays wedding-shaped — `brideName`, `groomName`,
+`weddingDate` — because every renderer already reads those fields. The
+category decides what those two name slots *mean* and how they're joined:
+a wedding prints "Aisha & Rohan", a birthday prints "Aarav" with the host
+optional. `Invitation.eventCategory` records the choice.
+
+Designs belong to a category too (`Theme.eventCategory`), so the picker
+only ever offers a birthday's designs for a birthday, and each seeded
+design carries its own copy in `Theme.content` — headline, invitation
+letter, thank-you line — used when the couple asks for no AI copy. Admins
+set both from `/admin/library/themes`.
+
+## PDF generation
+
+`/api/pdf/<slug>` renders a printable version of the invitation. There are
+two routes through it:
+
+- **A hand-drawn template.** If the chosen PDF theme has one (background
+  images with field-bound placeholders, drawn at
+  `/admin/library/pdf-themes/[id]`), that layout wins.
+- **The themed renderer** (`src/lib/pdf/build-theme-pdf.tsx`), used
+  otherwise — which is the normal case. It draws a cover, a details page
+  (invitation letter, schedule, venue, family), and a photo page, from the
+  design's palette and fonts and the couple's own photos. Every theme in
+  the catalogue is printable the moment it's picked, with no admin setup.
+
+Photos are fetched and inlined ahead of render (`src/lib/pdf/images.ts`):
+Cloudinary and Unsplash URLs are rewritten to ask for JPEG, since PDF
+viewers can't decode the WebP/AVIF they negotiate by default, and anything
+that doesn't come back usable is dropped from the layout rather than
+failing the download. Fonts are mapped onto the built-in PDF families —
+registering a web font would mean a network fetch at render time.
+
+Three print layouts ship as PDF themes — "Elegant Print" (classic framed
+cover), "Photo Card", and "Photo Story" (adds a gallery page) — selected
+by `decorAssets.pdfLayout`. They're shared by every celebration; the words
+on the page come from the invitation's own category. Add `?design=<slug>`
+to the PDF URL to render the same invitation in another design without
+saving anything, which is what the "Preview PDF" links do.
 
 ## Testing
 

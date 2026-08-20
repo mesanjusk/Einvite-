@@ -37,6 +37,8 @@ export type InviteCopy = {
 export type InviteData = {
   id: string;
   slug: string;
+  /** Which celebration this is — see src/lib/event-categories.ts. */
+  eventCategory: string;
   brideName: string;
   bridePhoto: string | null;
   groomName: string;

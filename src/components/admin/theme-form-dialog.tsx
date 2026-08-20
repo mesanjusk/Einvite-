@@ -15,6 +15,7 @@ import {
   type ThemeFormValues,
 } from "@/lib/validations/admin";
 import { upsertThemeAction } from "@/lib/actions/admin";
+import { EVENT_CATEGORIES } from "@/lib/event-categories";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ type ThemeRecord = {
   slug: string;
   description: string | null;
   category: string;
+  eventCategory: string;
   isPremium: boolean;
   sortOrder: number;
   previewImage: string | null;
@@ -67,6 +69,7 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
     revealMode: (theme?.revealMode as ThemeFormValues["revealMode"]) ?? "ANIMATION",
     revealVideoUrl: theme?.revealVideoUrl ?? "",
     category: (theme?.category as ThemeFormValues["category"]) ?? "classic",
+    eventCategory: (theme?.eventCategory as ThemeFormValues["eventCategory"]) ?? "wedding",
     isPremium: theme?.isPremium ?? false,
     sortOrder: theme?.sortOrder ?? 0,
     colorPalette: theme?.colorPalette ?? {
@@ -289,9 +292,31 @@ export function ThemeFormDialog({
             </div>
           )}
 
+          {type === "WEBSITE" && (
+            <div className="grid gap-1.5">
+              <Label>Celebration</Label>
+              <select
+                className="border-input h-9 rounded-md border bg-transparent px-2 text-sm"
+                value={form.watch("eventCategory")}
+                onChange={(e) =>
+                  form.setValue("eventCategory", e.target.value as ThemeFormValues["eventCategory"])
+                }
+              >
+                {EVENT_CATEGORIES.map((category) => (
+                  <option key={category.slug} value={category.slug}>
+                    {category.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-muted-foreground text-xs">
+                Which celebration this design is offered for.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label>Category</Label>
+              <Label>Style</Label>
               <select
                 className="border-input h-9 rounded-md border bg-transparent px-2 text-sm capitalize"
                 value={form.watch("category")}

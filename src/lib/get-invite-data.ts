@@ -74,6 +74,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
   const inviteData: InviteData = {
     id: invitation.id,
     slug: invitation.slug,
+    eventCategory: invitation.eventCategory,
     brideName: invitation.brideName,
     bridePhoto: invitation.bridePhoto,
     groomName: invitation.groomName,

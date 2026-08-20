@@ -4,7 +4,10 @@ export function slugify(input: string) {
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    // A name slot left empty (a birthday with no host named) would otherwise
+    // leave a dangling dash on the slug.
+    .replace(/^-|-$/g, "");
 }
 
 export function randomSuffix(length = 5) {

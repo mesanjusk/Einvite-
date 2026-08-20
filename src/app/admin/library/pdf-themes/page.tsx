@@ -70,6 +70,7 @@ export default async function AdminPdfThemesPage() {
                         revealMode: theme.revealMode,
                         revealVideoUrl: theme.revealVideoUrl,
                         category: theme.category,
+                        eventCategory: theme.eventCategory,
                         isPremium: theme.isPremium,
                         sortOrder: theme.sortOrder,
                         colorPalette: theme.colorPalette as never,

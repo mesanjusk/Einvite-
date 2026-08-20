@@ -10,7 +10,7 @@ export const DEFAULT_SECTION_ORDER = SECTION_ORDER;
 
 export async function uniqueSlug(base: string) {
   let candidate = slugify(base);
-  if (!candidate) candidate = "our-wedding";
+  if (!candidate) candidate = "our-invitation";
 
   for (;;) {
     const existing = await db.invitation.findUnique({ where: { slug: candidate } });

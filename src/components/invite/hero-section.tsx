@@ -6,6 +6,7 @@ import { ShimmerText } from "@/components/animation/shimmer-text";
 import { fadeUp } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
 import type { Translations } from "@/lib/i18n/dictionary";
+import { celebrantNames, eventCategoryFor, fillContent } from "@/lib/event-categories";
 import type { InviteData, InviteFamilyMember } from "./types";
 
 function CornerBracket({ style }: { style: React.CSSProperties }) {
@@ -33,7 +34,24 @@ export function HeroSection({
   guestName?: string | null;
 }) {
   const { t } = useLocale();
-  const heroSubline = invite.copy?.invitationLetter ?? t.invitationLetterDefault;
+  const category = eventCategoryFor(invite.eventCategory);
+  const secondName = invite.groomName.trim();
+  // The translated default is written for a wedding; anything else falls back
+  // to its own category's letter rather than inviting people to a wedding
+  // that isn't happening.
+  const heroSubline =
+    invite.copy?.invitationLetter ??
+    (category.slug === "wedding"
+      ? t.invitationLetterDefault
+      : fillContent(category.content.invitationLetter, {
+          names: celebrantNames(category, invite.brideName, secondName),
+          date: invite.weddingDate.toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+          venue: invite.venueName,
+        }));
   const brideLine = parentsLine(invite.familyMembers, "BRIDE", t);
   const groomLine = parentsLine(invite.familyMembers, "GROOM", t);
 
@@ -71,7 +89,7 @@ export function HeroSection({
               }}
             >
               {invite.brideName[0]}
-              {invite.groomName[0]}
+              {secondName[0]}
             </div>
           </Reveal>
 
@@ -101,21 +119,25 @@ export function HeroSection({
             </h1>
           </Reveal>
 
-          <Reveal variants={fadeUp}>
-            <div className="my-2.5 flex items-center justify-center gap-3.5">
-              <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
-              <span style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-accent)" }} className="text-2xl">
-                &amp;
-              </span>
-              <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
-            </div>
-          </Reveal>
+          {secondName && (
+            <>
+              <Reveal variants={fadeUp}>
+                <div className="my-2.5 flex items-center justify-center gap-3.5">
+                  <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
+                  <span style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-accent)" }} className="text-2xl">
+                    {category.joiner}
+                  </span>
+                  <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
+                </div>
+              </Reveal>
 
-          <Reveal variants={fadeUp}>
-            <h1 className="mb-5 text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
-              <ShimmerText>{invite.groomName}</ShimmerText>
-            </h1>
-          </Reveal>
+              <Reveal variants={fadeUp}>
+                <h1 className="mb-5 text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
+                  <ShimmerText>{secondName}</ShimmerText>
+                </h1>
+              </Reveal>
+            </>
+          )}
 
           {(brideLine || groomLine) && (
             <Reveal variants={fadeUp}>

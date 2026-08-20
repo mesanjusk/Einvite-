@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { FileText, Globe, Video } from "lucide-react";
 
 import { db } from "@/lib/db";
 import { SITE_NAME } from "@/config/site";
@@ -31,12 +30,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
-
-const FORMATS = [
-  { label: "Video", icon: Video, href: "/create" },
-  { label: "PDF", icon: FileText, href: "/create" },
-  { label: "eInvite", icon: Globe, href: "/create" },
-];
 
 type Palette = { primary: string; accent: string; background: string };
 
@@ -179,32 +172,6 @@ export default async function Home() {
             </div>
           </section>
         )}
-
-        <section className="bg-muted/40 border-y px-6 py-10">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-6 gap-y-4 text-center sm:justify-between sm:text-left">
-            <h2 className="font-display text-2xl sm:text-3xl">Ready to send the invite?</h2>
-            <Button size="lg" asChild>
-              <Link href="/create">Start for free</Link>
-            </Button>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-5xl px-6 py-14">
-          <div className="flex flex-wrap items-start justify-center gap-10 sm:gap-16">
-            {FORMATS.map((format) => (
-              <Link
-                key={format.label}
-                href={format.href}
-                className="group focus-visible:ring-primary flex flex-col items-center gap-3 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-              >
-                <span className="border-primary/25 bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground flex size-20 items-center justify-center rounded-full border transition-all group-hover:scale-105 sm:size-24">
-                  <format.icon className="size-8" strokeWidth={1.5} />
-                </span>
-                <span className="text-sm font-medium">{format.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
       </main>
 
       <SiteFooter />

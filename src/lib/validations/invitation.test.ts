@@ -57,6 +57,35 @@ describe("invitationWizardSchema", () => {
     );
   });
 
+  it("defaults to a wedding when no category is given", () => {
+    const result = invitationWizardSchema.safeParse(base);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.eventCategory).toBe("wedding");
+  });
+
+  it("only requires the second name where the category needs one", () => {
+    expect(
+      invitationWizardSchema.safeParse({ ...base, eventCategory: "birthday", groomName: "" })
+        .success,
+    ).toBe(true);
+    expect(
+      invitationWizardSchema.safeParse({ ...base, eventCategory: "engagement", groomName: "  " })
+        .success,
+    ).toBe(false);
+  });
+
+  it("names the missing field after the category's own label", () => {
+    const result = invitationWizardSchema.safeParse({
+      ...base,
+      eventCategory: "engagement",
+      groomName: "",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("Groom-to-be's name is required");
+    }
+  });
+
   it("validates nested events", () => {
     const result = invitationWizardSchema.safeParse({
       ...base,

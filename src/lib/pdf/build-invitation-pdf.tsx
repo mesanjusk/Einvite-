@@ -2,10 +2,13 @@ import { Document, Page, Text, Image, StyleSheet, renderToBuffer } from "@react-
 import * as React from "react";
 
 import { PDF_PAGE_SIZES, type PdfPlaceholder, type PdfTemplatePage } from "@/lib/validations/pdf-template";
+import { toPdfSafeImageUrl } from "./images";
 
 export type PdfInvitationData = {
   brideName: string;
   groomName: string;
+  /** Both names joined the way this event category prints them. */
+  coupleNames: string;
   weddingDateDisplay: string;
   venueName?: string | null;
   venueAddress?: string | null;
@@ -20,7 +23,7 @@ function resolveFieldText(field: PdfPlaceholder["field"], placeholder: PdfPlaceh
     case "groomName":
       return data.groomName;
     case "coupleNames":
-      return `${data.brideName} & ${data.groomName}`;
+      return data.coupleNames;
     case "weddingDate":
       return data.weddingDateDisplay;
     case "venueName":
@@ -35,19 +38,6 @@ function resolveFieldText(field: PdfPlaceholder["field"], placeholder: PdfPlaceh
     default:
       return placeholder.staticText ?? "";
   }
-}
-
-/**
- * Forces a Cloudinary-hosted background to a PDF-safe raster format
- * (Cloudinary's default auto-format can pick AVIF/WebP, which most PDF
- * viewers can't decode) — inserted right after `/upload/` in the URL.
- */
-function toPdfSafeImageUrl(url: string): string {
-  const marker = "/upload/";
-  const index = url.indexOf(marker);
-  if (index === -1) return url;
-  const insertAt = index + marker.length;
-  return `${url.slice(0, insertAt)}f_jpg,q_auto/${url.slice(insertAt)}`;
 }
 
 const styles = StyleSheet.create({
