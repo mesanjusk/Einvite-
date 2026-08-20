@@ -50,6 +50,8 @@ const DM_OUTCOME_LABELS: Record<
   FLOW_FOLLOW_PROMPTED: { label: "Asked to follow", variant: "secondary" },
   FLOW_STILL_NOT_FOLLOWING: { label: "Follow still unconfirmed", variant: "secondary" },
   FLOW_LINK_SENT: { label: "Link sent", variant: "default" },
+  NOT_FOLLOWING: { label: "Asked to follow", variant: "secondary" },
+  FOLLOW_UNVERIFIED: { label: "Follow unverified", variant: "secondary" },
   DATA_DELETED: { label: "Data deleted", variant: "secondary" },
   DATA_DELETE_FAILED: { label: "Delete failed", variant: "destructive" },
   SEND_FAILED: { label: "Send failed", variant: "destructive" },
@@ -473,6 +475,8 @@ async function DirectMessagesPanel() {
                         issueLink: rule.issueLink,
                         duplicateMessage: rule.duplicateMessage,
                         startFlow: rule.startFlow,
+                        requireFollow: rule.requireFollow,
+                        notFollowingMessage: rule.notFollowingMessage,
                         priority: rule.priority,
                         isActive: rule.isActive,
                       }}
@@ -584,6 +588,9 @@ async function ButtonFlowPanel() {
       }),
     ]);
 
+  // No settings row means the code-side defaults are in force, and those gate.
+  const followersOnly = settings?.requireFollow ?? true;
+
   const steps = [
     { label: "Waiting to tap", count: awaitingTap },
     { label: "Waiting to follow", count: awaitingFollow },
@@ -594,13 +601,23 @@ async function ButtonFlowPanel() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardContent className="flex flex-col gap-3 py-4">
-          <div>
-            <p className="font-medium">Who is where</p>
-            <p className="text-muted-foreground text-xs">
-              Comment the keyword → tap the button → follow → get the link. Reels opt in
-              with &ldquo;Button flow&rdquo;; DM rules with &ldquo;Start button
-              flow&rdquo;.
-            </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-medium">Who is where</p>
+              <p className="text-muted-foreground text-xs">
+                Comment the keyword → tap the button → follow → get the link. Reels opt
+                in with &ldquo;Button flow&rdquo;; DM rules with &ldquo;Start button
+                flow&rdquo;.
+              </p>
+            </div>
+            {/* The account-wide rule decides who may have a link at all, so its
+                state belongs where the flow is read, not only in the form. */}
+            <Badge
+              variant={followersOnly ? "default" : "destructive"}
+              className="shrink-0"
+            >
+              {followersOnly ? "Followers only" : "Open to everyone"}
+            </Badge>
           </div>
 
           <div className="grid grid-cols-3 gap-3">

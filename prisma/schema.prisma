@@ -728,14 +728,17 @@ enum InstagramCommentOutcome {
   SEND_FAILED
 }
 
-// Cached follower status per commenter. Instagram has no "does X follow me"
-// lookup for arbitrary users — only the messaging User Profile endpoint's
-// is_user_follow_business — so results are cached here to avoid re-querying
-// on every comment. Only positive results are trusted for the cache window:
-// someone told to follow first will follow and immediately re-comment, so a
-// cached "not following" would keep locking them out. Unresolved checks are
-// not stored at all — the private reply sent on one opens a conversation,
-// which is often exactly what lets the next check resolve.
+// The last follower status we saw per person, as a record — not as an
+// authority. Instagram has no "does X follow me" lookup for arbitrary users;
+// only the messaging User Profile endpoint's is_user_follow_business answers,
+// and every gate decision asks it live (see resolveFollowStatus).
+//
+// This row used to authorise: a positive was trusted for an hour, which was
+// exactly long enough to follow, take a link, unfollow, and keep passing the
+// gate on the way back. Now it only feeds the dashboard and supplies a
+// username for someone who has commented before. Unresolved checks are not
+// stored at all — the reply sent on one opens a conversation, which is often
+// what lets the next check resolve.
 model InstagramProfile {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   igUserId   String   @unique
@@ -811,6 +814,14 @@ model InstagramDmRule {
   // keyword DM runs the same tap-through-the-follow-gate flow a reel does.
   startFlow Boolean @default(false)
 
+  // Followers-only for this rule. Defaults *on*: a rule that issues a link
+  // used to have no follow check at all, which is how non-followers were
+  // getting links by DM however carefully the reels were gated. The
+  // account-wide rule in InstagramFlowSettings still wins — this can only
+  // tighten it (see decideLinkGate).
+  requireFollow       Boolean @default(true)
+  notFollowingMessage String?
+
   // Higher wins. Rules are compared in priority order and the first match
   // replies, so a specific keyword can be placed above a catch-all.
   priority Int     @default(0)
@@ -833,6 +844,10 @@ enum InstagramDmOutcome {
   FLOW_FOLLOW_PROMPTED
   FLOW_STILL_NOT_FOLLOWING
   FLOW_LINK_SENT
+  // The link was held back: Instagram said they don't follow, or wouldn't
+  // say either way. Kept apart so the dashboard shows which it was.
+  NOT_FOLLOWING
+  FOLLOW_UNVERIFIED
   // Nothing matched, so nothing was sent — the quiet default.
   NO_RULE_MATCHED
   DATA_DELETED
@@ -898,6 +913,12 @@ model InstagramFlowSettings {
   // The check runs on the *tap*, not on the comment: tapping sends us a
   // message, which is exactly what lets Instagram resolve
   // is_user_follow_business for someone who has never messaged us.
+  //
+  // This switch is account-wide, not flow-only: on, it gates *every* path
+  // that issues a link — reel replies and DM rules included — and a per-reel
+  // or per-rule switch can only tighten it further (see decideLinkGate). It
+  // is the one place "hand links to everyone" can be turned on, and it holds
+  // even when the flow itself is switched off.
   requireFollow            Boolean @default(true)
   followMessage            String
   followButtonLabel        String

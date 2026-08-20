@@ -148,11 +148,12 @@ export function InstagramFlowSettingsForm({
         <CardContent className="grid gap-4 py-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="font-medium">2 · The follow gate</p>
+              <p className="font-medium">2 · Followers only</p>
               <p className="text-muted-foreground text-xs">
-                Shown when the check on their tap doesn&apos;t come back positive.
-                Tapping is a message, so Instagram can answer &ldquo;do they follow
-                us?&rdquo; here — on a bare comment it usually can&apos;t.
+                Account-wide: no link goes out to anyone who isn&apos;t a confirmed
+                follower — reel replies and DM rules included, whether or not the button
+                flow is on. A reel or rule can be stricter than this; none can be
+                looser.
               </p>
             </div>
             <Switch
@@ -161,10 +162,22 @@ export function InstagramFlowSettingsForm({
             />
           </div>
 
+          {!requireFollow && (
+            <p className="border-destructive/40 text-destructive rounded-lg border border-dashed p-3 text-xs">
+              Off means anyone who comments the keyword or DMs a link rule gets a link,
+              follower or not.
+            </p>
+          )}
+
           {requireFollow && (
             <>
               <div className="grid gap-1.5">
                 <Label>Follow-first message</Label>
+                <p className="text-muted-foreground text-xs">
+                  Sent when the check on a tap doesn&apos;t come back positive. Tapping
+                  is a message, so Instagram can answer &ldquo;do they follow us?&rdquo;
+                  here — on a bare comment it usually can&apos;t.
+                </p>
                 <Textarea rows={2} {...form.register("followMessage")} />
                 <FieldError message={errors.followMessage?.message} />
               </div>

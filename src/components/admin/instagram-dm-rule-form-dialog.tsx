@@ -44,6 +44,8 @@ type DmRuleRecord = {
   issueLink: boolean;
   duplicateMessage: string | null;
   startFlow: boolean;
+  requireFollow: boolean;
+  notFollowingMessage: string | null;
   priority: number;
   isActive: boolean;
 };
@@ -65,6 +67,8 @@ function defaultValues(rule?: DmRuleRecord): InstagramDmRuleFormValues {
     issueLink: rule?.issueLink ?? false,
     duplicateMessage: rule?.duplicateMessage ?? "",
     startFlow: rule?.startFlow ?? false,
+    requireFollow: rule?.requireFollow ?? true,
+    notFollowingMessage: rule?.notFollowingMessage ?? "",
     priority: rule?.priority ?? 0,
     isActive: rule?.isActive ?? true,
   };
@@ -228,6 +232,34 @@ export function InstagramDmRuleFormDialog({
                   onCheckedChange={(v) => form.setValue("issueLink", v)}
                 />
               </div>
+
+              {issueLink && (
+                <div className="grid gap-3 rounded-lg border p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <Label>Followers only</Label>
+                      <p className="text-muted-foreground text-xs">
+                        Checks the sender follows you before anything is issued. The
+                        account-wide rule in the Button flow tab already forces this —
+                        turning it off here only matters if that one is off too.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={Boolean(form.watch("requireFollow"))}
+                      onCheckedChange={(v) => form.setValue("requireFollow", v)}
+                    />
+                  </div>
+
+                  <div className="grid gap-1.5">
+                    <Label>Reply for non-followers (optional)</Label>
+                    <Textarea rows={2} {...form.register("notFollowingMessage")} />
+                    <p className="text-muted-foreground text-xs">
+                      Used only when the button flow is off — with it on they get the
+                      flow&apos;s follow step, whose buttons lead back to the link.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {issueLink && (
                 <div className="grid gap-1.5">

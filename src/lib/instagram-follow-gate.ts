@@ -46,3 +46,35 @@ export function decideFollowGate({
   if (isFollower === false) return "NOT_FOLLOWING";
   return "UNVERIFIED";
 }
+
+/**
+ * The same decision, for every path that hands out a link.
+ *
+ * The per-reel and per-rule "followers only" switches turned out to be a
+ * leak rather than a feature: a reel with the switch off, and *every* DM rule
+ * that issued a link (those had no check at all), handed the link to anyone
+ * who asked. One forgotten tick-box is all it took, and there is no signal
+ * afterwards that it was forgotten — the links just go out.
+ *
+ * So the account-wide rule wins. `accountFollowersOnly` is on by default and
+ * applies everywhere a link is issued; a per-reel or per-rule switch can only
+ * add strictness on top, never take it away. Turning the account rule off is
+ * the one deliberate act that means "hand links to everyone", and it has to
+ * be done once, in one place, rather than being the accident of an unticked
+ * box on a rule written months ago.
+ */
+export function decideLinkGate({
+  accountFollowersOnly,
+  ruleRequiresFollow,
+  isFollower,
+}: {
+  accountFollowersOnly: boolean;
+  // The reel's or rule's own switch. Only ever tightens.
+  ruleRequiresFollow?: boolean;
+  isFollower: boolean | null;
+}): FollowGateDecision {
+  return decideFollowGate({
+    requireFollow: accountFollowersOnly || Boolean(ruleRequiresFollow),
+    isFollower,
+  });
+}

@@ -537,6 +537,8 @@ export async function upsertInstagramDmRuleAction(
     issueLink: data.issueLink,
     duplicateMessage: data.duplicateMessage?.trim() || null,
     startFlow: data.startFlow,
+    requireFollow: data.requireFollow,
+    notFollowingMessage: data.notFollowingMessage?.trim() || null,
     priority: data.priority,
     isActive: data.isActive,
   };
