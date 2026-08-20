@@ -215,6 +215,8 @@ export const instagramFlowSettingsFormSchema = z.object({
     })
     .optional(),
   profileButtonLabel: flowButtonLabel("Profile button"),
+  gateInvitations: z.boolean().default(true),
+  pausedMessage: z.string().optional(),
   linkMessage: z
     .string()
     .min(1, "Link message is required")

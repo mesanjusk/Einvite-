@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
+import { resolveInvitationVisibility } from "@/lib/instagram-invitation-visibility";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { GeminiKeyForm } from "@/components/dashboard/gemini-key-form";
 import { VideoGeneratorPanel } from "@/components/dashboard/video-generator-panel";
@@ -33,8 +34,8 @@ export default async function ManageGuestInvitationPage({
       <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-24 text-center">
         <h1 className="font-display text-2xl">We couldn&apos;t verify access</h1>
         <p className="text-muted-foreground text-sm">
-          Open the private edit link we sent you on WhatsApp when you published, or create a new
-          invitation to get started.
+          Open the private edit link we sent you on WhatsApp when you published, or
+          create a new invitation to get started.
         </p>
         <Button asChild>
           <Link href="/create">Create an invitation</Link>
@@ -43,27 +44,43 @@ export default async function ManageGuestInvitationPage({
     );
   }
 
-  const [media, videoTemplates, videos, pdfThemes, pdfTheme, websiteTheme] = await Promise.all([
-    db.media.count({ where: { invitationId } }),
-    db.videoTemplate.findMany({ orderBy: { sortOrder: "asc" } }),
-    db.invitationVideo.findMany({
-      where: { invitationId },
-      orderBy: { createdAt: "desc" },
-      include: { videoTemplate: { select: { name: true } } },
-    }),
-    db.theme.findMany({ where: { type: "PDF" }, orderBy: { sortOrder: "asc" } }),
-    invitation.pdfThemeId
-      ? db.theme.findUnique({ where: { id: invitation.pdfThemeId }, select: { slug: true } })
-      : null,
-    invitation.themeId
-      ? db.theme.findUnique({ where: { id: invitation.themeId }, select: { name: true } })
-      : null,
-  ]);
+  const [media, videoTemplates, videos, pdfThemes, pdfTheme, websiteTheme] =
+    await Promise.all([
+      db.media.count({ where: { invitationId } }),
+      db.videoTemplate.findMany({ orderBy: { sortOrder: "asc" } }),
+      db.invitationVideo.findMany({
+        where: { invitationId },
+        orderBy: { createdAt: "desc" },
+        include: { videoTemplate: { select: { name: true } } },
+      }),
+      db.theme.findMany({ where: { type: "PDF" }, orderBy: { sortOrder: "asc" } }),
+      invitation.pdfThemeId
+        ? db.theme.findUnique({
+            where: { id: invitation.pdfThemeId },
+            select: { slug: true },
+          })
+        : null,
+      invitation.themeId
+        ? db.theme.findUnique({
+            where: { id: invitation.themeId },
+            select: { name: true },
+          })
+        : null,
+    ]);
+  // Whether the link they hand out is currently live. The couple find out
+  // here rather than from a relative telling them their invitation "doesn't
+  // work" — and editing is untouched either way, which is the part of the
+  // offer that was never conditional.
+  const visibility = await resolveInvitationVisibility(invitation.id);
+
   const appUrl = getAppUrl();
   const liveUrl = `${appUrl}/invite/${invitation.slug}`;
   const qrDataUrl =
     invitation.status === "PUBLISHED"
-      ? await QRCode.toDataURL(liveUrl, { margin: 1, color: { dark: "#3a1414", light: "#00000000" } })
+      ? await QRCode.toDataURL(liveUrl, {
+          margin: 1,
+          color: { dark: "#3a1414", light: "#00000000" },
+        })
       : null;
 
   return (
@@ -75,21 +92,49 @@ export default async function ManageGuestInvitationPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl">
-            {invitation.brideName || "Your"} &amp; {invitation.groomName || "invitation"}
+            {invitation.brideName || "Your"} &amp;{" "}
+            {invitation.groomName || "invitation"}
           </h1>
-          <p className="text-muted-foreground text-sm">Manage your invitation, photos, and details.</p>
+          <p className="text-muted-foreground text-sm">
+            Manage your invitation, photos, and details.
+          </p>
         </div>
         <Badge variant={invitation.status === "PUBLISHED" ? "gold" : "secondary"}>
           {invitation.status}
         </Badge>
       </div>
 
+      {visibility.decision === "PAUSED" && (
+        <Card className="border-[#e6c9a8] bg-[#fdf7ee]">
+          <CardHeader>
+            <CardTitle className="text-[#8a5a1b]">
+              Your invitation is paused for guests
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-start gap-3">
+            <p className="text-sm text-[#6b543a]">
+              {visibility.message} Nothing is lost — you can keep editing, and
+              everything reappears for your guests the moment the follow lands.
+            </p>
+            {visibility.profileUrl && (
+              <Button asChild>
+                <a href={visibility.profileUrl} target="_blank" rel="noreferrer">
+                  Follow {visibility.handle ?? "on Instagram"}
+                </a>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Details</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <p className="text-muted-foreground text-sm">{media} photo(s) in your gallery</p>
+          <p className="text-muted-foreground text-sm">
+            {media} photo(s) in your gallery
+          </p>
           <Button asChild>
             <Link href={`/create/${invitation.id}/edit`}>Edit invitation</Link>
           </Button>
@@ -106,7 +151,11 @@ export default async function ManageGuestInvitationPage({
             <CardTitle>Share</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-6">
-            <a href={liveUrl} target="_blank" className="text-primary text-sm underline">
+            <a
+              href={liveUrl}
+              target="_blank"
+              className="text-primary text-sm underline"
+            >
               {liveUrl}
             </a>
             {qrDataUrl && (
@@ -120,7 +169,10 @@ export default async function ManageGuestInvitationPage({
             >
               Share on WhatsApp
             </a>
-            <a href={`/api/pdf/${invitation.slug}`} className="text-primary text-sm underline">
+            <a
+              href={`/api/pdf/${invitation.slug}`}
+              className="text-primary text-sm underline"
+            >
               Download PDF
             </a>
           </CardContent>
@@ -128,8 +180,8 @@ export default async function ManageGuestInvitationPage({
       ) : (
         <Card>
           <CardContent className="text-muted-foreground py-8 text-center text-sm">
-            This invitation isn&apos;t published yet. Finish the wizard to verify your WhatsApp
-            number and go live.
+            This invitation isn&apos;t published yet. Finish the wizard to verify your
+            WhatsApp number and go live.
           </CardContent>
         </Card>
       )}
@@ -148,14 +200,21 @@ export default async function ManageGuestInvitationPage({
                 slug: t.slug,
                 name: t.name,
                 description: t.description,
-                colorPalette: t.colorPalette as { primary: string; accent: string; background: string },
+                colorPalette: t.colorPalette as {
+                  primary: string;
+                  accent: string;
+                  background: string;
+                },
               }))}
               currentSlug={pdfTheme?.slug ?? null}
               previewSlug={invitation.status === "PUBLISHED" ? invitation.slug : null}
               websiteThemeName={websiteTheme?.name ?? null}
             />
           </div>
-          <PdfExtraTextForm invitationId={invitation.id} initialText={invitation.pdfExtraText ?? ""} />
+          <PdfExtraTextForm
+            invitationId={invitation.id}
+            initialText={invitation.pdfExtraText ?? ""}
+          />
         </CardContent>
       </Card>
 
@@ -164,7 +223,10 @@ export default async function ManageGuestInvitationPage({
           <CardTitle>Video teaser</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <GeminiKeyForm invitationId={invitation.id} hasKey={Boolean(invitation.geminiApiKey)} />
+          <GeminiKeyForm
+            invitationId={invitation.id}
+            hasKey={Boolean(invitation.geminiApiKey)}
+          />
           <VideoGeneratorPanel
             invitationId={invitation.id}
             templates={videoTemplates.map((t) => ({

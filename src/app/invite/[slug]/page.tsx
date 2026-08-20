@@ -5,8 +5,14 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
-import { getInvitationBySlug, getGuestByToken, toInviteRenderData } from "@/lib/get-invite-data";
+import {
+  getInvitationBySlug,
+  getGuestByToken,
+  toInviteRenderData,
+} from "@/lib/get-invite-data";
 import { InviteExperience } from "@/components/invite/invite-experience";
+import { InvitationPaused } from "@/components/invite/invitation-paused";
+import { resolveInvitationVisibility } from "@/lib/instagram-invitation-visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +26,8 @@ export async function generateMetadata({
   if (!invitation) return {};
 
   const title =
-    invitation.seoTitle ?? `${invitation.brideName} & ${invitation.groomName} — Wedding`;
+    invitation.seoTitle ??
+    `${invitation.brideName} & ${invitation.groomName} — Wedding`;
   const description =
     invitation.seoDescription ??
     `Join us as we celebrate our wedding.${
@@ -63,6 +70,23 @@ export default async function InvitePage({
   const session = await auth();
   const isOwner = session?.user?.id === invitation.userId;
   if (invitation.status !== "PUBLISHED" && !isOwner) notFound();
+
+  // An invitation claimed through Instagram circulates while its owner
+  // follows the account. Building it was never gated — this is, because
+  // sending it to a hundred relatives is the part the offer is paid for
+  // with. Everything is still here; the screen below says so and offers the
+  // one thing that brings it back.
+  const visibility = await resolveInvitationVisibility(invitation.id);
+  if (visibility.decision === "PAUSED") {
+    return (
+      <InvitationPaused
+        slug={slug}
+        message={visibility.message}
+        profileUrl={visibility.profileUrl}
+        handle={visibility.handle}
+      />
+    );
+  }
 
   const guest = to ? await getGuestByToken(invitation.id, to) : null;
 

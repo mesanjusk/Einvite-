@@ -607,6 +607,8 @@ export async function saveInstagramFlowSettingsAction(
     followButtonLabel: data.followButtonLabel,
     stillNotFollowingMessage: data.stillNotFollowingMessage,
     profileUrl: data.profileUrl?.trim() || null,
+    gateInvitations: data.gateInvitations,
+    pausedMessage: data.pausedMessage?.trim() || null,
     profileButtonLabel: data.profileButtonLabel,
     linkMessage: data.linkMessage,
     linkButtonLabel: data.linkButtonLabel,

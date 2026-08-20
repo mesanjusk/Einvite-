@@ -6,11 +6,11 @@ import { getAppUrl } from "@/lib/app-url";
 import { generateToken, hashToken } from "@/lib/otp";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import {
-  fetchInstagramFollowStatus,
   renderInstagramTemplate,
   sendInstagramButtons,
   sendInstagramMessage,
 } from "@/lib/instagram";
+import { checkFollowStatusLive } from "@/lib/instagram-follow-status";
 import {
   DEFAULT_FLOW_SETTINGS,
   buildFollowStep,
@@ -127,45 +127,6 @@ async function issueInvitationLink(
 }
 
 /**
- * Follower status, asked of Instagram every time.
- *
- * This used to trust a cached "yes" for an hour, which is exactly long enough
- * to follow, take the link, unfollow, and come back for another — and long
- * enough that someone who unfollowed kept passing the gate. A follow check
- * that answers from memory isn't a check, so the cache no longer authorises
- * anything: the stored profile is only a record of what we last saw, read for
- * usernames and for the dashboard.
- *
- * Returns null when the status can't be determined at all; the gate fails
- * closed on that (see decideFollowGate).
- */
-async function resolveFollowStatus(
-  igUserId: string,
-  username?: string,
-): Promise<boolean | null> {
-  const { isFollower, username: fetchedUsername } =
-    await fetchInstagramFollowStatus(igUserId);
-  if (isFollower === null) return null;
-
-  await db.instagramProfile.upsert({
-    where: { igUserId },
-    create: {
-      igUserId,
-      username: fetchedUsername ?? username,
-      isFollower,
-      checkedAt: new Date(),
-    },
-    update: {
-      username: fetchedUsername ?? username,
-      isFollower,
-      checkedAt: new Date(),
-    },
-  });
-
-  return isFollower;
-}
-
-/**
  * The button flow's wording, the stored row falling back to the defaults
  * field by field so a half-filled settings row can't leave a step blank.
  *
@@ -200,45 +161,6 @@ async function loadFlowSettings(): Promise<{
       duplicateMessage: row.duplicateMessage || DEFAULT_FLOW_SETTINGS.duplicateMessage,
     },
   };
-}
-
-/**
- * Kills the link this account is holding, by rotating the edit token to one
- * nobody has ever seen.
- *
- * Following is a condition of *having* the link, not just of being sent it,
- * so the moment Instagram tells us someone has unfollowed, the link they were
- * given stops opening — the DM they still have in their thread, and the owner
- * cookie their browser kept, both stop matching. The invitation itself is
- * untouched: follow again, ask again, and a fresh link to the same website
- * comes back.
- *
- * Only ever called on a confirmed "doesn't follow us". A check Instagram
- * won't answer must never cost anyone their access.
- */
-async function revokeIssuedLink(igUserId: string) {
-  await db.instagramLink.updateMany({
-    where: { igUserId },
-    data: { editTokenHash: hashToken(generateToken()) },
-  });
-}
-
-/**
- * The side effect of a gate that held: an access already handed out is taken
- * back when — and only when — following was the condition it was handed out
- * under, and Instagram has now said plainly that they don't.
- */
-async function enforceGateOutcome({
-  igUserId,
-  decision,
-  accountFollowersOnly,
-}: {
-  igUserId: string;
-  decision: FollowGateDecision;
-  accountFollowersOnly: boolean;
-}) {
-  if (!accountFollowersOnly || decision !== "NOT_FOLLOWING") return;
-  await revokeIssuedLink(igUserId);
 }
 
 /**
@@ -419,7 +341,7 @@ async function handleCommentChange(
     // it. A reel left unticked no longer means "links for everyone".
     const accountFollowersOnly = await accountRequiresFollow();
     if ((accountFollowersOnly || automation.requireFollow) && igUserId) {
-      const isFollower = await resolveFollowStatus(igUserId, username);
+      const isFollower = await checkFollowStatusLive(igUserId, username);
       const decision = decideLinkGate({
         accountFollowersOnly,
         ruleRequiresFollow: automation.requireFollow,
@@ -427,8 +349,6 @@ async function handleCommentChange(
       });
 
       if (decision !== "ALLOW") {
-        await enforceGateOutcome({ igUserId, decision, accountFollowersOnly });
-
         const followText = renderInstagramTemplate(
           automation.notFollowingMessage || DEFAULT_NOT_FOLLOWING_MESSAGE,
           { link: "", username: username ?? "" },
@@ -584,7 +504,7 @@ async function handleFlowTap({
   }
 
   const isFollower = settings.requireFollow
-    ? await resolveFollowStatus(senderId, username)
+    ? await checkFollowStatusLive(senderId, username)
     : true;
   const decision = decideLinkGate({
     accountFollowersOnly: settings.requireFollow,
@@ -592,14 +512,6 @@ async function handleFlowTap({
   });
 
   if (decision !== "ALLOW") {
-    // Covers the unfollow: a link handed over on an earlier tap dies here,
-    // the moment Instagram says the follow it depended on is gone.
-    await enforceGateOutcome({
-      igUserId: senderId,
-      decision,
-      accountFollowersOnly: settings.requireFollow,
-    });
-
     // The retry wording is for someone who has already told us they follow
     // and been contradicted — same buttons, since tapping again is still the
     // way through once Instagram catches up.
@@ -899,17 +811,11 @@ async function handleMessagingEvent(event: MessagingEvent) {
         ruleRequiresFollow: rule.requireFollow,
         isFollower:
           accountFollowersOnly || rule.requireFollow
-            ? await resolveFollowStatus(senderId, username)
+            ? await checkFollowStatusLive(senderId, username)
             : true,
       });
 
       if (decision !== "ALLOW") {
-        await enforceGateOutcome({
-          igUserId: senderId,
-          decision,
-          accountFollowersOnly,
-        });
-
         await sendFollowGateReply({
           senderId,
           username,

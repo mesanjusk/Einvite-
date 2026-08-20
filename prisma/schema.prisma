@@ -929,6 +929,15 @@ model InstagramFlowSettings {
   profileUrl               String?
   profileButtonLabel       String
 
+  // The publication gate. Building an invitation is never gated — the offer
+  // is a free website, and a half-finished one nobody can share is worth
+  // nothing. What following buys is circulation: with this on, an invitation
+  // claimed through Instagram shows a follow-first screen to its guests
+  // whenever its owner isn't following, and goes live again when they are.
+  gateInvitations Boolean @default(true)
+  // What that screen says. Blank uses DEFAULT_PAUSED_MESSAGE.
+  pausedMessage   String?
+
   // Step 3 — the payoff. Supports {{link}} and {{username}}.
   linkMessage      String
   linkButtonLabel  String
