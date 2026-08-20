@@ -12,6 +12,7 @@ import { InstagramDmRuleFormDialog } from "@/components/admin/instagram-dm-rule-
 import { InstagramDmRuleToggle } from "@/components/admin/instagram-dm-rule-toggle";
 import { InstagramMediaCard } from "@/components/admin/instagram-media-card";
 import { InstagramFlowSettingsForm } from "@/components/admin/instagram-flow-settings-form";
+import { InstagramPerformancePanel } from "@/components/admin/instagram-performance-panel";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import {
   deleteInstagramAutomationAction,
@@ -64,11 +65,14 @@ const DM_MATCH_LABELS: Record<string, string> = {
   ANY: "any message",
 };
 
-// The page is six views over the same account rather than one long scroll.
+// The page is seven views over the same account rather than one long scroll.
 // Which one is showing lives in the URL, so only the active view's data — and
-// in particular only its Instagram API lookups — is fetched per request.
+// in particular only its Instagram API lookups — is fetched per request. That
+// matters most for Performance, which is the only tab that asks Instagram for
+// insights and so is by far the most request-hungry of the seven.
 const TABS = [
   { id: "automations", label: "Reel automations" },
+  { id: "performance", label: "Performance" },
   { id: "reels", label: "Unautomated reels" },
   { id: "posts", label: "Recent posts" },
   { id: "dms", label: "Direct message replies" },
@@ -202,6 +206,7 @@ export default async function AdminInstagramPage({
       {activeTab === "automations" && (
         <AutomationsPanel automations={automations} media={automationMedia} />
       )}
+      {activeTab === "performance" && <InstagramPerformancePanel />}
       {activeTab === "reels" && (
         <UnautomatedReelsPanel automatedMediaIds={automatedMediaIds} />
       )}
