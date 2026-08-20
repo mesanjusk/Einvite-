@@ -620,7 +620,8 @@ export async function saveInstagramFlowSettingsAction(
     pausedMessage: data.pausedMessage?.trim() || null,
     profileButtonLabel: data.profileButtonLabel,
     linkMessage: data.linkMessage,
-    linkButtonLabel: data.linkButtonLabel,
+    notifyOnPublish: data.notifyOnPublish,
+    publishedMessage: data.publishedMessage,
     duplicateMessage: data.duplicateMessage,
   };
 

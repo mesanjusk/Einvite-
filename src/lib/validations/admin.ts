@@ -224,7 +224,14 @@ export const instagramFlowSettingsFormSchema = z.object({
       (v) => v.includes("{{link}}"),
       "Include {{link}} so the invite link is sent",
     ),
-  linkButtonLabel: flowButtonLabel("Link button"),
+  notifyOnPublish: z.boolean().default(true),
+  publishedMessage: z
+    .string()
+    .min(1, "Published message is required")
+    .refine(
+      (v) => v.includes("{{link}}"),
+      "Include {{link}} so the invitation link is sent",
+    ),
   duplicateMessage: z
     .string()
     .min(1, "Message for someone who already claimed is required")

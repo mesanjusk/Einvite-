@@ -271,9 +271,17 @@ copy:
 2. **Follow gate.** The tap is checked against `is_user_follow_business`.
    Anything but a confirmed follow answers with "Visit profile" (the URL from
    the settings) plus "I'm following ✅", which re-runs the check.
-3. **Link.** Once the check passes, the invitation link is issued and sent
-   with an "Open my invite" button. One invitation per Instagram account, so
-   a returning tapper is handed the same website back.
+3. **Editor link.** Once the check passes, they get their private editor link
+   — one plain message, no button. There is no invitation to send yet, and a
+   link button would make Instagram render the message as a card, which caps
+   at 80 characters and splits anything longer into two bubbles. One
+   invitation per Instagram account, so a returning tapper is handed the same
+   one back rather than a second.
+4. **The invitation.** When they press Publish, the public link their guests
+   open is DM'd to them. Sent once per invitation, so the re-publishing people
+   do while tweaking doesn't become a stream of messages — and only inside
+   Instagram's 24-hour messaging window, so an invitation finished days later
+   can't be announced (logged, not retried).
 
 The follow check is asked of Instagram every time a link is issued — a cached
 "yes" was long enough to follow, take the link and unfollow.

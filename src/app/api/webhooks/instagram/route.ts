@@ -157,8 +157,9 @@ async function loadFlowSettings(): Promise<{
       profileButtonLabel:
         row.profileButtonLabel || DEFAULT_FLOW_SETTINGS.profileButtonLabel,
       linkMessage: row.linkMessage || DEFAULT_FLOW_SETTINGS.linkMessage,
-      linkButtonLabel: row.linkButtonLabel || DEFAULT_FLOW_SETTINGS.linkButtonLabel,
       duplicateMessage: row.duplicateMessage || DEFAULT_FLOW_SETTINGS.duplicateMessage,
+      notifyOnPublish: row.notifyOnPublish ?? DEFAULT_FLOW_SETTINGS.notifyOnPublish,
+      publishedMessage: row.publishedMessage || DEFAULT_FLOW_SETTINGS.publishedMessage,
     },
   };
 }

@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
+import { notifyInstagramOwnerOfPublish } from "@/lib/instagram-publish-notice";
 import { generateInvitationCopy } from "@/lib/ai/generate-copy";
 import {
   invitationWizardSchema,
@@ -287,6 +288,10 @@ export async function publishGuestInvitationAction(input: {
     });
 
     const baseUrl = getAppUrl();
+    // The Instagram flow handed this couple an editor link when they tapped
+    // through the follow gate; the link their guests open only exists now.
+    await notifyInstagramOwnerOfPublish(invitation.id, publishedWithoutPhone.slug);
+
     revalidatePath(`/invite/${publishedWithoutPhone.slug}`);
     revalidatePath(`/manage/${invitation.id}`);
 
@@ -366,6 +371,8 @@ export async function publishGuestInvitationAction(input: {
     phone,
     editLinkMessage(invitation.brideName, invitation.groomName, liveUrl, editUrl),
   ).catch((error) => console.error("Failed to send edit-link WhatsApp message", error));
+
+  await notifyInstagramOwnerOfPublish(invitation.id, updated.slug);
 
   revalidatePath(`/invite/${updated.slug}`);
   revalidatePath(`/manage/${invitation.id}`);

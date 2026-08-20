@@ -34,8 +34,9 @@ export type FlowSettingsRecord = {
   gateInvitations: boolean | null;
   pausedMessage: string | null;
   linkMessage: string;
-  linkButtonLabel: string;
   duplicateMessage: string;
+  notifyOnPublish: boolean | null;
+  publishedMessage: string | null;
 };
 
 // No stored row means the flow is running on its code-side defaults, so the
@@ -49,6 +50,8 @@ function defaultValues(
     isActive: true,
     gateInvitations: true,
     pausedMessage: null,
+    notifyOnPublish: true,
+    publishedMessage: DEFAULT_FLOW_SETTINGS.publishedMessage,
   };
   return {
     isActive: base.isActive,
@@ -63,8 +66,9 @@ function defaultValues(
     gateInvitations: base.gateInvitations ?? true,
     pausedMessage: base.pausedMessage ?? "",
     linkMessage: base.linkMessage,
-    linkButtonLabel: base.linkButtonLabel,
     duplicateMessage: base.duplicateMessage,
+    notifyOnPublish: base.notifyOnPublish ?? true,
+    publishedMessage: base.publishedMessage ?? "",
   };
 }
 
@@ -236,29 +240,33 @@ export function InstagramFlowSettingsForm({
       <Card>
         <CardContent className="grid gap-4 py-4">
           <div>
-            <p className="font-medium">3 · The link</p>
+            <p className="font-medium">3 · The editor link</p>
             <p className="text-muted-foreground text-xs">
-              Sent once the check passes. One invitation per Instagram account, so a
-              returning tapper gets the same website back — never a second one.
+              Sent once the check passes. {"{{link}}"} is their private editor — the
+              invitation itself doesn&apos;t exist yet, so that link comes later, when
+              they publish. One invitation per Instagram account, so a returning tapper
+              gets the same one back rather than a second.
             </p>
           </div>
 
           <div className="grid gap-1.5">
             <Label>Link message</Label>
             <Textarea rows={3} {...form.register("linkMessage")} />
-            <p className="text-muted-foreground text-xs">{"{{link}} {{username}}"}</p>
+            <p className="text-muted-foreground text-xs">
+              {"{{link}} {{username}}"} — sent as one plain message. A link button would
+              make Instagram render it as a card, and a card only holds 80 characters
+              before it splits into two bubbles.
+            </p>
             <FieldError message={errors.linkMessage?.message} />
-          </div>
-
-          <div className="grid gap-1.5">
-            <Label>Link button label</Label>
-            <Input placeholder="Open my invite" {...form.register("linkButtonLabel")} />
-            <FieldError message={errors.linkButtonLabel?.message} />
           </div>
 
           <div className="grid gap-1.5">
             <Label>If they already claimed a link</Label>
             <Textarea rows={2} {...form.register("duplicateMessage")} />
+            <p className="text-muted-foreground text-xs">
+              The same editor link again, so they can carry on where they stopped. One
+              message, nothing else sent alongside it.
+            </p>
             <FieldError message={errors.duplicateMessage?.message} />
           </div>
         </CardContent>
@@ -268,7 +276,41 @@ export function InstagramFlowSettingsForm({
         <CardContent className="grid gap-4 py-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="font-medium">4 · Live only while they follow</p>
+              <p className="font-medium">4 · When they publish</p>
+              <p className="text-muted-foreground text-xs">
+                The invitation card itself, sent the moment they publish it rather than
+                when they claim the link — before that there is no public page to send.
+                Sent once per invitation, so the re-publishes people do while tweaking
+                don&apos;t each become a message.
+              </p>
+            </div>
+            <Switch
+              checked={Boolean(form.watch("notifyOnPublish"))}
+              onCheckedChange={(v) => form.setValue("notifyOnPublish", v)}
+            />
+          </div>
+
+          {form.watch("notifyOnPublish") && (
+            <div className="grid gap-1.5">
+              <Label>Published message</Label>
+              <Textarea rows={3} {...form.register("publishedMessage")} />
+              <p className="text-muted-foreground text-xs">
+                {"{{link}}"} is the public invitation their guests open — not the
+                editor. Instagram only accepts a message within 24 hours of their last
+                one to you, so an invitation published days later can&apos;t be
+                announced; it&apos;s logged as a failed send rather than retried.
+              </p>
+              <FieldError message={errors.publishedMessage?.message} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="grid gap-4 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-medium">5 · Live only while they follow</p>
               <p className="text-muted-foreground text-xs">
                 Building an invitation is never gated — that is the offer. This gates{" "}
                 <em>circulation</em>: an invitation claimed through Instagram shows a
