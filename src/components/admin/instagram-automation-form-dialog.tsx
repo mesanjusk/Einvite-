@@ -285,6 +285,10 @@ export function InstagramAutomationFormDialog({
             <div className="flex items-center justify-between">
               <div>
                 <Label>Followers only</Label>
+                <p className="text-muted-foreground text-xs">
+                  The account-wide rule in the Button flow tab already gates every link.
+                  This only adds a gate when that one is off.
+                </p>
                 {useButtonFlow && (
                   <p className="text-muted-foreground text-xs">
                     The flow runs its own follow gate, on the tap — this one is skipped.

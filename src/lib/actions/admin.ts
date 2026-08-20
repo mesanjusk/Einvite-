@@ -31,11 +31,31 @@ import {
   type PdfTemplatePage,
 } from "@/lib/validations/pdf-template";
 
+/**
+ * The session, only if it still belongs to an active admin.
+ *
+ * The role is re-read from the record rather than taken from the session:
+ * sessions last until they are signed out of, so a token minted before a
+ * demotion would otherwise keep admin rights indefinitely. One indexed
+ * lookup per admin action is a fair price for a revocation that actually
+ * revokes.
+ */
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return null;
   }
+
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, isActive: true },
+  });
+  // isActive is optional on the model: documents predating it read as null
+  // and are active, so only an explicit false locks someone out.
+  if (user?.role !== "ADMIN" || user.isActive === false) {
+    return null;
+  }
+
   return session;
 }
 
@@ -517,6 +537,8 @@ export async function upsertInstagramDmRuleAction(
     issueLink: data.issueLink,
     duplicateMessage: data.duplicateMessage?.trim() || null,
     startFlow: data.startFlow,
+    requireFollow: data.requireFollow,
+    notFollowingMessage: data.notFollowingMessage?.trim() || null,
     priority: data.priority,
     isActive: data.isActive,
   };

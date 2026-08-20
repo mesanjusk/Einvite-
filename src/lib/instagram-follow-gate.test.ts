@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { decideFollowGate } from "./instagram-follow-gate";
+import { decideFollowGate, decideLinkGate } from "./instagram-follow-gate";
 
 describe("decideFollowGate", () => {
   it("sends the link when the automation isn't followers-only", () => {
@@ -25,5 +25,53 @@ describe("decideFollowGate", () => {
     expect(decideFollowGate({ requireFollow: true, isFollower: null })).toBe(
       "UNVERIFIED",
     );
+  });
+});
+
+describe("decideLinkGate", () => {
+  it("holds the link back when the account rule is on, whatever the rule says", () => {
+    // The leak this exists to close: a reel or DM rule with its own switch
+    // off used to hand links to non-followers.
+    expect(
+      decideLinkGate({
+        accountFollowersOnly: true,
+        ruleRequiresFollow: false,
+        isFollower: false,
+      }),
+    ).toBe("NOT_FOLLOWING");
+
+    expect(
+      decideLinkGate({
+        accountFollowersOnly: true,
+        ruleRequiresFollow: false,
+        isFollower: null,
+      }),
+    ).toBe("UNVERIFIED");
+  });
+
+  it("still sends to a confirmed follower", () => {
+    expect(decideLinkGate({ accountFollowersOnly: true, isFollower: true })).toBe(
+      "ALLOW",
+    );
+  });
+
+  it("lets a single reel tighten past an account rule that is off", () => {
+    expect(
+      decideLinkGate({
+        accountFollowersOnly: false,
+        ruleRequiresFollow: true,
+        isFollower: false,
+      }),
+    ).toBe("NOT_FOLLOWING");
+  });
+
+  it("opens the gate only when the account rule is off and nothing else asks", () => {
+    expect(
+      decideLinkGate({
+        accountFollowersOnly: false,
+        ruleRequiresFollow: false,
+        isFollower: false,
+      }),
+    ).toBe("ALLOW");
   });
 });

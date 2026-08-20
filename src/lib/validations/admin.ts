@@ -164,6 +164,8 @@ export const instagramDmRuleFormSchema = z
     issueLink: z.boolean().default(false),
     duplicateMessage: z.string().optional(),
     startFlow: z.boolean().default(false),
+    requireFollow: z.boolean().default(true),
+    notFollowingMessage: z.string().optional(),
     priority: z.coerce.number().int().default(0),
     isActive: z.boolean().default(true),
   })

@@ -275,6 +275,22 @@ copy:
    with an "Open my invite" button. One invitation per Instagram account, so
    a returning tapper is handed the same website back.
 
+Following is a condition of *having* the link, not only of being sent it. The
+follow check is asked of Instagram every time — a cached "yes" was long enough
+to follow, take the link and unfollow — and when it comes back a plain "no",
+the link that account already holds is revoked: the edit token rotates, so the
+DM they kept and the cookie their browser kept both stop opening it. The
+invitation itself survives; follow again, ask again, and a fresh link to the
+same website comes back. A check Instagram simply won't answer never revokes
+anything.
+
+The gate applies everywhere a link is issued — reel replies, DM rules, and the
+flow — and the account-wide "Followers only" switch is what decides. A reel or
+rule can be stricter; none can be looser. That switch is on by default,
+including before anyone opens the settings form: a rule with its own switch
+unticked used to be all it took to hand links to non-followers, and DM rules
+had no check at all.
+
 The reason the gate lives on the tap rather than on the comment is that
 Instagram will only resolve follower status for someone it has a conversation
 with. A first-time commenter comes back unresolved, which is why the plain
@@ -310,6 +326,14 @@ database provider.
 - RSVP submission is intentionally open (no auth) since guests don't have
   accounts — it's rate-limited by nothing right now; add rate limiting
   before exposing a high-traffic invitation publicly.
+- Sessions last until the user signs out. Auth.js issues a signed JWT, so
+  the cookie still carries an expiry — a year, pushed forward again on the
+  first visit a day or more after the last one — but nobody in regular use
+  reaches it. The cost of a long-lived token is a stale claim inside it, so
+  the two things that revoke access are re-read from the user record instead
+  of trusted from the session: deactivation on every dashboard and admin page
+  load, and the ADMIN role in the admin layout and in `requireAdmin` before
+  any admin action runs.
 - `src/lib/db.ts` constructs the Prisma client lazily behind a Proxy rather
   than eagerly at module scope. Constructing eagerly used to crash the
   *entire* build the moment `DATABASE_URL` was missing — Next's build-time
