@@ -5,6 +5,7 @@ import {
   buildFollowStep,
   buildLinkStep,
   buildOpenerStep,
+  buildPublishedStep,
   decodeFlowPayload,
   encodeFlowPayload,
   matchFlowTextReply,
@@ -98,20 +99,16 @@ describe("buildFollowStep", () => {
 });
 
 describe("buildLinkStep", () => {
-  it("fills the link into the message and the button", () => {
+  it("sends the editor link as one plain message", () => {
     const step = buildLinkStep(settings, {
       link: "https://example.com/e/tok",
       username: "asha",
     });
 
     expect(step.text).toContain("https://example.com/e/tok");
-    expect(step.buttons).toEqual([
-      {
-        type: "url",
-        title: settings.linkButtonLabel,
-        url: "https://example.com/e/tok",
-      },
-    ]);
+    // No buttons on purpose: a link button turns the message into a card,
+    // and a card splits into two bubbles past 80 characters.
+    expect(step.buttons).toEqual([]);
   });
 
   it("sends the already-claimed wording to someone who has a link", () => {
@@ -122,6 +119,26 @@ describe("buildLinkStep", () => {
 
     expect(step.text).toContain("already have");
     expect(step.text).toContain("https://example.com/e/tok");
+  });
+});
+
+describe("buildPublishedStep", () => {
+  it("sends the public invitation, in one message", () => {
+    const step = buildPublishedStep(settings, {
+      link: "https://example.com/invite/asha-rohan",
+      username: "asha",
+    });
+
+    expect(step.text).toContain("https://example.com/invite/asha-rohan");
+    expect(step.buttons).toEqual([]);
+  });
+
+  it("is about the invitation being live, not about claiming a link", () => {
+    // The two messages arrive at different moments and must not read the
+    // same: this one lands when the couple press Publish.
+    expect(buildPublishedStep(settings, { link: "x" }).text).not.toBe(
+      buildLinkStep(settings, { link: "x" }).text,
+    );
   });
 });
 
@@ -136,7 +153,7 @@ describe("toPlainText", () => {
     expect(plain.startsWith(settings.followMessage)).toBe(true);
   });
 
-  it("leaves a step with nothing to type alone", () => {
+  it("leaves a step with no buttons alone", () => {
     const step = buildLinkStep(settings, { link: "https://example.com/e/tok" });
     expect(toPlainText(step)).toBe(step.text);
   });

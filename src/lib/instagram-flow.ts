@@ -45,8 +45,9 @@ export type FlowSettings = {
   profileUrl: string | null;
   profileButtonLabel: string;
   linkMessage: string;
-  linkButtonLabel: string;
   duplicateMessage: string;
+  notifyOnPublish: boolean;
+  publishedMessage: string;
 };
 
 /**
@@ -67,10 +68,12 @@ export const DEFAULT_FLOW_SETTINGS: FlowSettings = {
   profileUrl: null,
   profileButtonLabel: "Visit profile",
   linkMessage:
-    "Here's your free wedding invitation website 💍 Open it, add your names and photos, and share it with your guests:\n{{link}}",
-  linkButtonLabel: "Open my invite",
+    "Here's your free wedding invitation 💍 Open it, add your names, photos and functions, and publish it when it's ready:\n{{link}}",
   duplicateMessage:
     "You already have your invitation — same link, still yours to edit:\n{{link}}",
+  notifyOnPublish: true,
+  publishedMessage:
+    "Your invitation is live 🎉 This is the link to share with your family and friends:\n{{link}}",
 };
 
 // Namespaced so a payload of ours is never confused with one from anything
@@ -164,24 +167,50 @@ export function buildFollowStep(
   };
 }
 
-/** Step 3 — the link itself, once the gate is passed. */
+/**
+ * Step 3 — the editor link, once the gate is passed.
+ *
+ * One message, no buttons, and both of those are deliberate. A link button
+ * makes Instagram render the message as a card, and a card's text is capped
+ * at 80 characters, so anything longer is split into two bubbles — a wall of
+ * text followed by a lone button. For a message whose whole content *is* a
+ * link people are going to tap or copy, one plain bubble reads better than
+ * two.
+ *
+ * What it sends is the editor, not the invitation: at this point there is no
+ * published page to send. The public link follows later, on the tap of
+ * Publish (see buildPublishedStep).
+ */
 export function buildLinkStep(
   settings: FlowSettings,
   vars: { link: string; username?: string | null; alreadyClaimed?: boolean },
 ): FlowStep {
-  const text = renderInstagramTemplate(
-    vars.alreadyClaimed ? settings.duplicateMessage : settings.linkMessage,
-    { link: vars.link, username: vars.username ?? "" },
-  );
-
   return {
-    text,
-    // The link is in the text too, so a button that can't be built (no link
-    // yet, no label) costs nothing.
-    buttons:
-      vars.link && settings.linkButtonLabel.trim()
-        ? [{ type: "url", title: settings.linkButtonLabel, url: vars.link }]
-        : [],
+    text: renderInstagramTemplate(
+      vars.alreadyClaimed ? settings.duplicateMessage : settings.linkMessage,
+      { link: vars.link, username: vars.username ?? "" },
+    ),
+    buttons: [],
+  };
+}
+
+/**
+ * Step 4 — the invitation itself, sent when they publish it.
+ *
+ * The one message the flow doesn't send in reply to anything: it is triggered
+ * by the couple hitting Publish, minutes or days after the conversation went
+ * quiet. Same single-bubble reasoning as above.
+ */
+export function buildPublishedStep(
+  settings: FlowSettings,
+  vars: { link: string; username?: string | null },
+): FlowStep {
+  return {
+    text: renderInstagramTemplate(settings.publishedMessage, {
+      link: vars.link,
+      username: vars.username ?? "",
+    }),
+    buttons: [],
   };
 }
 

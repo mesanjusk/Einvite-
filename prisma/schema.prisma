@@ -689,12 +689,16 @@ model InstagramAutomation {
 // most one invitation — which is what makes "one website, one PDF, one video
 // per Instagram user" enforceable at all.
 model InstagramLink {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  igUserId      String   @unique
-  username      String?
-  invitationId  String   @unique @db.ObjectId
-  editTokenHash String   @unique
-  createdAt     DateTime @default(now())
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  igUserId            String    @unique
+  username            String?
+  invitationId        String    @unique @db.ObjectId
+  editTokenHash       String    @unique
+  createdAt           DateTime  @default(now())
+  // When the "your invitation is live" DM went out. Set once: publishing is
+  // something people do repeatedly while tweaking, and each edit re-publish
+  // should not be another message.
+  publishedNotifiedAt DateTime?
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
 
@@ -949,11 +953,23 @@ model InstagramFlowSettings {
   // What that screen says. Blank uses DEFAULT_PAUSED_MESSAGE.
   pausedMessage   String?
 
-  // Step 3 — the payoff. Supports {{link}} and {{username}}.
+  // Step 3 — the payoff: the edit link, so they can build the invitation.
+  // Sent as one plain message. It carries no button on purpose — a link
+  // button forces Instagram's card format, and a card can't hold more than
+  // 80 characters of text, so anything longer arrives as two bubbles.
+  // Supports {{link}} and {{username}}.
   linkMessage      String
-  linkButtonLabel  String
   // Sent instead of linkMessage when this account already claimed a link.
+  // The same edit link again, so they can pick up where they left off.
   duplicateMessage String
+
+  // Step 4 — the card itself, sent when they publish it rather than when
+  // they claim the link. Until an invitation is published there is no public
+  // page to send, so the link that goes out on a tap is the editor and this
+  // is the one guests can open. Missing reads as on. Supports {{link}}
+  // (the public invitation) and {{username}}.
+  notifyOnPublish  Boolean?
+  publishedMessage String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
