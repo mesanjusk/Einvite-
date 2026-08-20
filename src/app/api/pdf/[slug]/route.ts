@@ -7,6 +7,7 @@ import {
   type PdfThemeRow,
 } from "@/lib/pdf/invitation-pdf";
 import { celebrantNames, eventCategoryFor } from "@/lib/event-categories";
+import { resolveInvitationVisibility } from "@/lib/instagram-invitation-visibility";
 
 // Fetching and embedding photos needs Node's runtime, not the edge one.
 export const runtime = "nodejs";
@@ -37,6 +38,20 @@ export async function GET(
   });
   if (!invitation || invitation.status !== "PUBLISHED") {
     return NextResponse.json({ error: "Invitation not found." }, { status: 404 });
+  }
+
+  // The printable card is circulation too — it gets forwarded further than
+  // the link does — so it waits on the same follow the public page does.
+  const visibility = await resolveInvitationVisibility(invitation.id);
+  if (visibility.decision === "PAUSED") {
+    return NextResponse.json(
+      {
+        error:
+          "This invitation is paused. Follow the Instagram account it was created through to download it.",
+        profileUrl: visibility.profileUrl,
+      },
+      { status: 403 },
+    );
   }
 
   // `?design=<theme-slug>` prints the same invitation in another design from

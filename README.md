@@ -275,14 +275,26 @@ copy:
    with an "Open my invite" button. One invitation per Instagram account, so
    a returning tapper is handed the same website back.
 
-Following is a condition of *having* the link, not only of being sent it. The
-follow check is asked of Instagram every time — a cached "yes" was long enough
-to follow, take the link and unfollow — and when it comes back a plain "no",
-the link that account already holds is revoked: the edit token rotates, so the
-DM they kept and the cookie their browser kept both stop opening it. The
-invitation itself survives; follow again, ask again, and a fresh link to the
-same website comes back. A check Instagram simply won't answer never revokes
-anything.
+The follow check is asked of Instagram every time a link is issued — a cached
+"yes" was long enough to follow, take the link and unfollow.
+
+**Building is free; circulation is what following buys.** Whoever gets a link
+can build their whole invitation with no restrictions — a half-finished website
+nobody can share is worth nothing to anyone. What the follow keeps alive is the
+public page they send to their family: an invitation claimed through Instagram
+shows a follow-first screen to its guests whenever its owner isn't following,
+and comes straight back the moment they are. Nothing is deleted, editing never
+stops working, and the "I've followed — check again" button on that screen
+re-asks Instagram rather than waiting for a cache to lapse.
+
+That gate is the mirror image of the one on issuing a link. Issuing fails
+*closed* on an unresolved check, because a stranger who can't be resolved is
+who it exists to stop. Publication fails *open* on the same answer: taking a
+wedding invitation off the internet in front of its guests over an API hiccup
+is the outcome worth engineering against, and by then the owner has a real
+conversation with the account and resolves reliably. A "no" is re-checked
+within a minute; a "yes" is trusted for fifteen, so a public page costs at most
+one API call per owner per quarter hour however many guests open it.
 
 The gate applies everywhere a link is issued — reel replies, DM rules, and the
 flow — and the account-wide "Followers only" switch is what decides. A reel or

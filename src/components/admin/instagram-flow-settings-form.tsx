@@ -30,6 +30,8 @@ export type FlowSettingsRecord = {
   stillNotFollowingMessage: string;
   profileUrl: string | null;
   profileButtonLabel: string;
+  gateInvitations: boolean;
+  pausedMessage: string | null;
   linkMessage: string;
   linkButtonLabel: string;
   duplicateMessage: string;
@@ -41,7 +43,12 @@ export type FlowSettingsRecord = {
 function defaultValues(
   settings?: FlowSettingsRecord | null,
 ): InstagramFlowSettingsFormValues {
-  const base = settings ?? { ...DEFAULT_FLOW_SETTINGS, isActive: true };
+  const base = settings ?? {
+    ...DEFAULT_FLOW_SETTINGS,
+    isActive: true,
+    gateInvitations: true,
+    pausedMessage: null,
+  };
   return {
     isActive: base.isActive,
     openerMessage: base.openerMessage,
@@ -52,6 +59,8 @@ function defaultValues(
     stillNotFollowingMessage: base.stillNotFollowingMessage,
     profileUrl: base.profileUrl ?? "",
     profileButtonLabel: base.profileButtonLabel,
+    gateInvitations: base.gateInvitations,
+    pausedMessage: base.pausedMessage ?? "",
     linkMessage: base.linkMessage,
     linkButtonLabel: base.linkButtonLabel,
     duplicateMessage: base.duplicateMessage,
@@ -251,6 +260,40 @@ export function InstagramFlowSettingsForm({
             <Textarea rows={2} {...form.register("duplicateMessage")} />
             <FieldError message={errors.duplicateMessage?.message} />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="grid gap-4 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-medium">4 · Live only while they follow</p>
+              <p className="text-muted-foreground text-xs">
+                Building an invitation is never gated — that is the offer. This gates{" "}
+                <em>circulation</em>: an invitation claimed through Instagram shows a
+                follow-first screen to its guests whenever its owner isn&apos;t
+                following, and comes straight back when they are. Their work, photos and
+                RSVPs are untouched throughout.
+              </p>
+            </div>
+            <Switch
+              checked={Boolean(form.watch("gateInvitations"))}
+              onCheckedChange={(v) => form.setValue("gateInvitations", v)}
+            />
+          </div>
+
+          {form.watch("gateInvitations") && (
+            <div className="grid gap-1.5">
+              <Label>What the paused invitation says</Label>
+              <Textarea rows={3} {...form.register("pausedMessage")} />
+              <p className="text-muted-foreground text-xs">
+                Read by the couple&apos;s guests as often as by the couple, so it works
+                best as an explanation rather than a telling-off. Blank uses the
+                built-in wording. The &ldquo;Follow&rdquo; button underneath uses the
+                profile link above.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
