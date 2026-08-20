@@ -28,22 +28,19 @@ export function isInstagramSendConfigured() {
   return Boolean(process.env.IG_ACCESS_TOKEN);
 }
 
-export async function sendInstagramMessage(
-  recipient: InstagramRecipient,
-  text: string,
-): Promise<{ delivered: boolean; devMode: boolean }> {
-  if (!isInstagramSendConfigured()) {
-    console.log(`[instagram:dev-mode] to=${JSON.stringify(recipient)}\n${text}`);
-    return { delivered: false, devMode: true };
-  }
+export type InstagramSendResult = { delivered: boolean; devMode: boolean };
 
+async function postMessage(
+  recipient: InstagramRecipient,
+  message: Record<string, unknown>,
+): Promise<InstagramSendResult> {
   const response = await fetch("https://graph.instagram.com/v21.0/me/messages", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.IG_ACCESS_TOKEN}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ recipient, message: { text } }),
+    body: JSON.stringify({ recipient, message }),
   });
 
   if (!response.ok) {
@@ -53,6 +50,110 @@ export async function sendInstagramMessage(
   }
 
   return { delivered: true, devMode: false };
+}
+
+export async function sendInstagramMessage(
+  recipient: InstagramRecipient,
+  text: string,
+): Promise<InstagramSendResult> {
+  if (!isInstagramSendConfigured()) {
+    console.log(`[instagram:dev-mode] to=${JSON.stringify(recipient)}\n${text}`);
+    return { delivered: false, devMode: true };
+  }
+
+  return postMessage(recipient, { text });
+}
+
+/**
+ * A tappable button under a message.
+ *
+ * `postback` is a button we handle ourselves: tapping it sends us `payload`
+ * and echoes `title` back into the thread as if the person had typed it.
+ * `url` just opens a link and tells us nothing, so it is only ever used for
+ * somewhere we don't need to react to — the profile, or the invite itself.
+ */
+export type InstagramButton =
+  | { type: "postback"; title: string; payload: string }
+  | { type: "url"; title: string; url: string };
+
+// Instagram's own caps: a quick reply title, a generic template's title, and
+// the number of buttons one template element may carry.
+const QUICK_REPLY_TITLE_LIMIT = 20;
+const TEMPLATE_TITLE_LIMIT = 80;
+const TEMPLATE_BUTTON_LIMIT = 3;
+// The card's own title when the message is too long to *be* the title. Only
+// ever seen right under the full text, which is sent as its own message.
+const TEMPLATE_PROMPT = "Tap below 👇";
+
+/**
+ * A message with buttons under it.
+ *
+ * Two shapes, because Instagram gives buttons two different homes and
+ * neither does both jobs:
+ *
+ * - Quick replies ride along with an ordinary text message, so the wording
+ *   can be as long as it likes, and a tap comes back to us as a message with
+ *   a payload. They cannot open a link.
+ * - A generic template can carry link buttons, but its title is capped at 80
+ *   characters, so a longer message is sent first in its own bubble and the
+ *   card underneath carries only the buttons.
+ *
+ * So: link buttons mean a template, everything else stays a quick reply.
+ */
+export async function sendInstagramButtons(
+  recipient: InstagramRecipient,
+  text: string,
+  buttons: InstagramButton[],
+): Promise<InstagramSendResult> {
+  if (buttons.length === 0) return sendInstagramMessage(recipient, text);
+
+  if (!isInstagramSendConfigured()) {
+    const labels = buttons.map((b) => `[${b.title}]`).join(" ");
+    console.log(
+      `[instagram:dev-mode] to=${JSON.stringify(recipient)}\n${text}\n${labels}`,
+    );
+    return { delivered: false, devMode: true };
+  }
+
+  if (buttons.every((button) => button.type === "postback")) {
+    return postMessage(recipient, {
+      text,
+      quick_replies: buttons.map((button) => ({
+        content_type: "text",
+        title: button.title.slice(0, QUICK_REPLY_TITLE_LIMIT),
+        payload: button.payload,
+      })),
+    });
+  }
+
+  const fitsAsTitle = text.length <= TEMPLATE_TITLE_LIMIT;
+  if (!fitsAsTitle) {
+    const preface = await sendInstagramMessage(recipient, text);
+    // Sending the card after a message that never arrived would leave bare
+    // buttons with nothing explaining them, so the failure stops here.
+    if (!preface.delivered) return preface;
+  }
+
+  return postMessage(recipient, {
+    attachment: {
+      type: "template",
+      payload: {
+        template_type: "generic",
+        elements: [
+          {
+            title: fitsAsTitle ? text : TEMPLATE_PROMPT,
+            buttons: buttons
+              .slice(0, TEMPLATE_BUTTON_LIMIT)
+              .map((button) =>
+                button.type === "url"
+                  ? { type: "web_url", url: button.url, title: button.title }
+                  : { type: "postback", title: button.title, payload: button.payload },
+              ),
+          },
+        ],
+      },
+    },
+  });
 }
 
 /**

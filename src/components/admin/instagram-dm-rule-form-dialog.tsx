@@ -43,6 +43,7 @@ type DmRuleRecord = {
   replyMessage: string;
   issueLink: boolean;
   duplicateMessage: string | null;
+  startFlow: boolean;
   priority: number;
   isActive: boolean;
 };
@@ -63,6 +64,7 @@ function defaultValues(rule?: DmRuleRecord): InstagramDmRuleFormValues {
     replyMessage: rule?.replyMessage ?? "",
     issueLink: rule?.issueLink ?? false,
     duplicateMessage: rule?.duplicateMessage ?? "",
+    startFlow: rule?.startFlow ?? false,
     priority: rule?.priority ?? 0,
     isActive: rule?.isActive ?? true,
   };
@@ -91,6 +93,7 @@ export function InstagramDmRuleFormDialog({
 
   const matchType = form.watch("matchType") ?? "CONTAINS";
   const issueLink = form.watch("issueLink");
+  const startFlow = form.watch("startFlow");
 
   async function onSubmit(values: InstagramDmRuleFormInput) {
     setLoading(true);
@@ -176,8 +179,29 @@ export function InstagramDmRuleFormDialog({
             </div>
           )}
 
+          <div className="grid gap-3 rounded-lg border p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label>Start the button flow</Label>
+                <p className="text-muted-foreground text-xs">
+                  Answers with the tappable opener instead of the reply below, so a
+                  keyword DM runs the same follow-then-link flow a reel does. Its
+                  wording lives in the Button flow tab.
+                </p>
+              </div>
+              <Switch
+                checked={startFlow}
+                onCheckedChange={(v) => form.setValue("startFlow", v)}
+              />
+            </div>
+          </div>
+
           <div className="grid gap-1.5">
-            <Label>Reply message</Label>
+            <Label>
+              {startFlow
+                ? "Reply message (unused while the flow is on)"
+                : "Reply message"}
+            </Label>
             <Textarea rows={3} {...form.register("replyMessage")} />
             <p className="text-muted-foreground text-xs">
               {issueLink ? "{{link}} {{username}}" : "{{username}}"}
@@ -189,31 +213,33 @@ export function InstagramDmRuleFormDialog({
             )}
           </div>
 
-          <div className="grid gap-3 rounded-lg border p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <Label>Send an invite link</Label>
-                <p className="text-muted-foreground text-xs">
-                  Creates the sender&apos;s invitation, the same one comment replies
-                  issue.
-                </p>
+          {!startFlow && (
+            <div className="grid gap-3 rounded-lg border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label>Send an invite link</Label>
+                  <p className="text-muted-foreground text-xs">
+                    Creates the sender&apos;s invitation, the same one comment replies
+                    issue.
+                  </p>
+                </div>
+                <Switch
+                  checked={issueLink}
+                  onCheckedChange={(v) => form.setValue("issueLink", v)}
+                />
               </div>
-              <Switch
-                checked={issueLink}
-                onCheckedChange={(v) => form.setValue("issueLink", v)}
-              />
-            </div>
 
-            {issueLink && (
-              <div className="grid gap-1.5">
-                <Label>Reply if they already have a link (optional)</Label>
-                <Textarea rows={2} {...form.register("duplicateMessage")} />
-                <p className="text-muted-foreground text-xs">
-                  Left blank, returning senders get the reply above with a fresh link.
-                </p>
-              </div>
-            )}
-          </div>
+              {issueLink && (
+                <div className="grid gap-1.5">
+                  <Label>Reply if they already have a link (optional)</Label>
+                  <Textarea rows={2} {...form.register("duplicateMessage")} />
+                  <p className="text-muted-foreground text-xs">
+                    Left blank, returning senders get the reply above with a fresh link.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="grid gap-1.5">
             <Label>Priority</Label>

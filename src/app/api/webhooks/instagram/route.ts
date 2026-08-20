@@ -8,8 +8,21 @@ import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import {
   fetchInstagramFollowStatus,
   renderInstagramTemplate,
+  sendInstagramButtons,
   sendInstagramMessage,
 } from "@/lib/instagram";
+import {
+  DEFAULT_FLOW_SETTINGS,
+  buildFollowStep,
+  buildLinkStep,
+  buildOpenerStep,
+  decodeFlowPayload,
+  matchFlowTextReply,
+  toPlainText,
+  type FlowSettings,
+  type FlowStep,
+  type FlowTap,
+} from "@/lib/instagram-flow";
 import { deleteInstagramUserData } from "@/lib/instagram-data-deletion";
 import { selectDmRule } from "@/lib/instagram-dm-rules";
 import { decideFollowGate } from "@/lib/instagram-follow-gate";
@@ -152,6 +165,84 @@ async function resolveFollowStatus(
   return isFollower;
 }
 
+/**
+ * The button flow's wording, the stored row falling back to the defaults
+ * field by field so a half-filled settings row can't leave a step blank.
+ *
+ * `isActive` false is the account-wide off switch: every reel and rule that
+ * opts into the flow goes back to plain replies without anyone having to
+ * un-tick them one at a time.
+ */
+async function loadFlowSettings(): Promise<{
+  settings: FlowSettings;
+  isActive: boolean;
+}> {
+  const row = await db.instagramFlowSettings.findUnique({ where: { key: "default" } });
+  if (!row) return { settings: DEFAULT_FLOW_SETTINGS, isActive: true };
+
+  return {
+    isActive: row.isActive,
+    settings: {
+      openerMessage: row.openerMessage || DEFAULT_FLOW_SETTINGS.openerMessage,
+      openerButtonLabel:
+        row.openerButtonLabel || DEFAULT_FLOW_SETTINGS.openerButtonLabel,
+      requireFollow: row.requireFollow,
+      followMessage: row.followMessage || DEFAULT_FLOW_SETTINGS.followMessage,
+      followButtonLabel:
+        row.followButtonLabel || DEFAULT_FLOW_SETTINGS.followButtonLabel,
+      stillNotFollowingMessage:
+        row.stillNotFollowingMessage || DEFAULT_FLOW_SETTINGS.stillNotFollowingMessage,
+      profileUrl: row.profileUrl,
+      profileButtonLabel:
+        row.profileButtonLabel || DEFAULT_FLOW_SETTINGS.profileButtonLabel,
+      linkMessage: row.linkMessage || DEFAULT_FLOW_SETTINGS.linkMessage,
+      linkButtonLabel: row.linkButtonLabel || DEFAULT_FLOW_SETTINGS.linkButtonLabel,
+      duplicateMessage: row.duplicateMessage || DEFAULT_FLOW_SETTINGS.duplicateMessage,
+    },
+  };
+}
+
+/**
+ * Sends one step, and falls back to text if the buttons don't land.
+ *
+ * Buttons aren't accepted on every surface — a private reply to a comment in
+ * particular is a thread Instagram is fussier about — and a rejected send
+ * would otherwise leave someone holding a message with no way onward. The
+ * fallback spells the buttons out as words to reply with, which
+ * `matchFlowTextReply` then reads as taps.
+ */
+async function sendFlowStep(
+  recipient: { comment_id: string } | { id: string },
+  step: FlowStep,
+) {
+  const result = await sendInstagramButtons(recipient, step.text, step.buttons);
+  if (result.delivered || result.devMode) return result;
+
+  return sendInstagramMessage(recipient, toPlainText(step));
+}
+
+async function setFlowState(
+  igUserId: string,
+  step: "AWAITING_TAP" | "AWAITING_FOLLOW" | "COMPLETED",
+  vars: { username?: string; automationId?: string | null },
+) {
+  // A step never carries an automation of its own once the flow has left the
+  // comment behind, so an absent id keeps whichever reel started this rather
+  // than blanking the attribution.
+  const automation = vars.automationId ? { automationId: vars.automationId } : {};
+  await db.instagramFlowState.upsert({
+    where: { igUserId },
+    create: { igUserId, step, username: vars.username, ...automation },
+    update: { step, username: vars.username, ...automation },
+  });
+}
+
+// Payload ids are ours, but a malformed one would still reach Mongo as a
+// query and throw on a non-ObjectId string.
+function isObjectId(value: string | undefined): value is string {
+  return typeof value === "string" && /^[0-9a-f]{24}$/i.test(value);
+}
+
 async function handleCommentChange(
   change: {
     field?: string;
@@ -227,6 +318,41 @@ async function handleCommentChange(
         },
       });
       return;
+    }
+
+    // The button flow takes over from here: instead of handing the link back
+    // in the private reply, the reel answers with a tappable opener and the
+    // link is issued in DMs once the follow check passes on a tap. Its own
+    // gate replaces the one below — checking at comment time is exactly what
+    // this flow exists to stop (see instagram-flow).
+    if (automation.useButtonFlow && igUserId) {
+      const { settings, isActive: flowActive } = await loadFlowSettings();
+
+      if (flowActive) {
+        const step = buildOpenerStep(settings, {
+          username,
+          automationId: automation.id,
+        });
+        const { delivered } = await sendFlowStep({ comment_id: commentId }, step);
+
+        if (delivered) {
+          await setFlowState(igUserId, "AWAITING_TAP", {
+            username,
+            automationId: automation.id,
+          });
+        }
+
+        await db.instagramCommentLog.create({
+          data: {
+            ...logBase,
+            automationId: automation.id,
+            outcome: delivered ? "FLOW_STARTED" : "SEND_FAILED",
+            replyText: step.text,
+            error: delivered ? null : "Send API rejected the flow opener",
+          },
+        });
+        return;
+      }
     }
 
     // Optional follow gate. Fails *closed* (see decideFollowGate): a status
@@ -355,19 +481,148 @@ async function knownUsernameFor(igUserId: string): Promise<string | undefined> {
   return profile?.username ?? link?.username ?? undefined;
 }
 
-async function handleMessagingEvent(event: {
-  sender?: { id?: string };
-  message?: { mid?: string; is_echo?: boolean; text?: string };
+/**
+ * A tap on one of the flow's buttons.
+ *
+ * Both taps run the same gate, because both are asking the same question —
+ * "can this person have the link yet?" — and the answer can change between
+ * them, which is the entire point of the second one. The check is live here
+ * rather than at comment time: the tap itself is a message, so Instagram has
+ * a conversation to resolve `is_user_follow_business` against.
+ */
+async function handleFlowTap({
+  senderId,
+  username,
+  tap,
+  automationId,
+  sourceId,
+  logBase,
+}: {
+  senderId: string;
+  username?: string;
+  tap: FlowTap;
+  automationId?: string;
+  // The message id of the tap, recorded as what drove the claim in place of
+  // the comment id an ordinary lead carries.
+  sourceId?: string;
+  logBase: {
+    messageId?: string;
+    igUserId: string;
+    username?: string;
+    messageText: string;
+  };
 }) {
-  const senderId = event.sender?.id;
-  // Only genuine inbound text messages get a reply. The same messaging array
-  // also carries read receipts, message edits, reactions, and echoes of our
-  // own sends — replying to those is both wrong and rejected by Meta with
-  // "This message is sent outside of allowed window".
-  if (!senderId || event.message?.is_echo || !event.message?.text) return;
+  const { settings, isActive } = await loadFlowSettings();
 
-  const text = event.message.text;
-  const messageId = event.message.mid;
+  // Switched off between the opener and the tap: nothing to say that the
+  // admin hasn't already decided to stop saying.
+  if (!isActive) {
+    await db.instagramMessageLog.create({
+      data: { ...logBase, outcome: "NO_RULE_MATCHED" },
+    });
+    return;
+  }
+
+  const isFollower = settings.requireFollow
+    ? await resolveFollowStatus(senderId, username)
+    : true;
+  const decision = decideFollowGate({
+    requireFollow: settings.requireFollow,
+    isFollower,
+  });
+
+  if (decision !== "ALLOW") {
+    // The retry wording is for someone who has already told us they follow
+    // and been contradicted — same buttons, since tapping again is still the
+    // way through once Instagram catches up.
+    const step = buildFollowStep(settings, {
+      username,
+      automationId,
+      retry: tap === "FOLLOWING",
+    });
+    const { delivered } = await sendFlowStep({ id: senderId }, step);
+
+    if (delivered) {
+      await setFlowState(senderId, "AWAITING_FOLLOW", { username, automationId });
+    }
+
+    await db.instagramMessageLog.create({
+      data: {
+        ...logBase,
+        outcome: delivered
+          ? tap === "FOLLOWING"
+            ? "FLOW_STILL_NOT_FOLLOWING"
+            : "FLOW_FOLLOW_PROMPTED"
+          : "SEND_FAILED",
+        replyText: step.text,
+        error: delivered ? null : "Send API rejected the follow prompt",
+      },
+    });
+    return;
+  }
+
+  const { link, alreadyClaimed } = await issueInvitationLink(senderId, username);
+  const step = buildLinkStep(settings, { link, username, alreadyClaimed });
+  const { delivered } = await sendFlowStep({ id: senderId }, step);
+
+  if (delivered) {
+    // The reel that started the flow still gets the credit, three taps later.
+    // It may have been deleted in between, so its existence is checked rather
+    // than assumed — a lead row pointing at nothing would break the cascade.
+    if (isObjectId(automationId)) {
+      const automation = await db.instagramAutomation.findUnique({
+        where: { id: automationId },
+        select: { id: true },
+      });
+      if (automation) {
+        await db.instagramLead.upsert({
+          where: {
+            igUserId_automationId: { igUserId: senderId, automationId: automation.id },
+          },
+          create: {
+            igUserId: senderId,
+            automationId: automation.id,
+            commentId: sourceId ?? "",
+            link,
+          },
+          update: { link },
+        });
+      }
+    }
+
+    await setFlowState(senderId, "COMPLETED", { username, automationId });
+  }
+
+  await db.instagramMessageLog.create({
+    data: {
+      ...logBase,
+      outcome: delivered ? "FLOW_LINK_SENT" : "SEND_FAILED",
+      replyText: step.text,
+      error: delivered ? null : "Send API rejected the flow link",
+    },
+  });
+}
+
+async function handleMessagingEvent(event: MessagingEvent) {
+  const senderId = event.sender?.id;
+  // Echoes of our own sends are never a reply to us — answering one is both
+  // wrong and rejected by Meta with "This message is sent outside of allowed
+  // window".
+  if (!senderId || event.message?.is_echo) return;
+
+  // A tap arrives one of two ways: a quick reply comes back as a message
+  // carrying its payload alongside the title it echoed into the thread, and a
+  // template button comes back as a postback with no message at all. Either
+  // way the payload is what says which button it was.
+  const payload = event.message?.quick_reply?.payload ?? event.postback?.payload;
+  // The postback's title is what the person sees themselves tap, so it reads
+  // as their message in the log.
+  const text = event.message?.text ?? event.postback?.title ?? "";
+  const messageId = event.message?.mid ?? event.postback?.mid;
+
+  // Everything else in the messaging array — read receipts, reactions,
+  // message edits — carries neither, and is not something to answer.
+  if (!text && !payload) return;
 
   try {
     // Meta re-delivers a webhook it thinks we missed. The message log doubles
@@ -383,6 +638,21 @@ async function handleMessagingEvent(event: {
 
     const username = await knownUsernameFor(senderId);
     const logBase = { messageId, igUserId: senderId, username, messageText: text };
+
+    // A tap is answered by the flow, whatever the DM rules say — the button
+    // was ours and its payload names the step it belongs to.
+    const tapped = decodeFlowPayload(payload);
+    if (tapped) {
+      await handleFlowTap({
+        senderId,
+        username,
+        tap: tapped.tap,
+        automationId: tapped.automationId,
+        sourceId: messageId,
+        logBase,
+      });
+      return;
+    }
 
     // /data-deletion tells people they can DM "DELETE" to have their data
     // erased, so that word has to actually erase it rather than fall through
@@ -418,6 +688,29 @@ async function handleMessagingEvent(event: {
       return;
     }
 
+    // Someone mid-flow who types the button's words instead of tapping it
+    // means the same thing, and gets the same answer. Only mid-flow: outside
+    // one, "I'm following" is just a message for the rules to handle.
+    const flowState = await db.instagramFlowState.findUnique({
+      where: { igUserId: senderId },
+    });
+    if (flowState && flowState.step !== "COMPLETED") {
+      const { settings, isActive } = await loadFlowSettings();
+      const typedTap = isActive ? matchFlowTextReply(text, settings) : null;
+
+      if (typedTap) {
+        await handleFlowTap({
+          senderId,
+          username,
+          tap: typedTap,
+          automationId: flowState.automationId ?? undefined,
+          sourceId: messageId,
+          logBase,
+        });
+        return;
+      }
+    }
+
     // DM replies are opt-in per rule, the same way comment replies are opt-in
     // per reel. A message nothing matches is recorded for the dashboard and
     // left for a human — the account no longer answers every DM with one
@@ -430,6 +723,31 @@ async function handleMessagingEvent(event: {
         data: { ...logBase, outcome: "NO_RULE_MATCHED" },
       });
       return;
+    }
+
+    // A rule can start the flow instead of answering: the keyword gets the
+    // same opener a reel comment does, so "DM me FREE" and "comment FREE"
+    // lead to the same three taps rather than two different experiences.
+    if (rule.startFlow) {
+      const { settings, isActive } = await loadFlowSettings();
+
+      if (isActive) {
+        const step = buildOpenerStep(settings, { username });
+        const { delivered } = await sendFlowStep({ id: senderId }, step);
+
+        if (delivered) await setFlowState(senderId, "AWAITING_TAP", { username });
+
+        await db.instagramMessageLog.create({
+          data: {
+            ...logBase,
+            ruleId: rule.id,
+            outcome: delivered ? "FLOW_STARTED" : "SEND_FAILED",
+            replyText: step.text,
+            error: delivered ? null : "Send API rejected the flow opener",
+          },
+        });
+        return;
+      }
     }
 
     // Only a rule that issues a link touches the invitation tables; a plain
@@ -469,14 +787,26 @@ async function handleMessagingEvent(event: {
   }
 }
 
+/**
+ * One entry in a messaging webhook. `postback` is the flow's other half:
+ * a template button reports itself here rather than as a message.
+ */
+type MessagingEvent = {
+  sender?: { id?: string };
+  message?: {
+    mid?: string;
+    is_echo?: boolean;
+    text?: string;
+    quick_reply?: { payload?: string };
+  };
+  postback?: { mid?: string; title?: string; payload?: string };
+};
+
 async function processWebhookPayload(payload: {
   entry?: Array<{
     id?: string;
     changes?: Array<{ field?: string; value?: Record<string, unknown> }>;
-    messaging?: Array<{
-      sender?: { id?: string };
-      message?: { mid?: string; is_echo?: boolean; text?: string };
-    }>;
+    messaging?: MessagingEvent[];
   }>;
 }) {
   for (const entry of payload.entry ?? []) {

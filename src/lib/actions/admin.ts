@@ -16,12 +16,14 @@ import {
   videoTemplateFormSchema,
   instagramAutomationFormSchema,
   instagramDmRuleFormSchema,
+  instagramFlowSettingsFormSchema,
   themeColorwayFormSchema,
   type ThemeFormInput,
   type MusicTrackFormInput,
   type VideoTemplateFormInput,
   type InstagramAutomationFormInput,
   type InstagramDmRuleFormInput,
+  type InstagramFlowSettingsFormInput,
   type ThemeColorwayFormInput,
 } from "@/lib/validations/admin";
 import {
@@ -91,7 +93,8 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     },
   });
 
-  const adminPath = data.type === "PDF" ? "/admin/library/pdf-themes" : "/admin/library/themes";
+  const adminPath =
+    data.type === "PDF" ? "/admin/library/pdf-themes" : "/admin/library/themes";
   revalidatePath(adminPath);
   revalidatePath("/dashboard/invitations/templates");
   revalidatePath("/dashboard/invitations/new");
@@ -158,7 +161,9 @@ export async function deleteThemeAction(themeId: string): Promise<ActionResult> 
   await db.template.deleteMany({ where: { themeId } });
   await db.theme.delete({ where: { id: themeId } });
 
-  revalidatePath(theme.type === "PDF" ? "/admin/library/pdf-themes" : "/admin/library/themes");
+  revalidatePath(
+    theme.type === "PDF" ? "/admin/library/pdf-themes" : "/admin/library/themes",
+  );
   return { success: true, data: undefined };
 }
 
@@ -445,6 +450,7 @@ export async function upsertInstagramAutomationAction(
     duplicateMessage: data.duplicateMessage,
     requireFollow: data.requireFollow,
     notFollowingMessage: data.notFollowingMessage || null,
+    useButtonFlow: data.useButtonFlow,
     isActive: data.isActive,
   };
 
@@ -510,6 +516,7 @@ export async function upsertInstagramDmRuleAction(
     replyMessage: data.replyMessage,
     issueLink: data.issueLink,
     duplicateMessage: data.duplicateMessage?.trim() || null,
+    startFlow: data.startFlow,
     priority: data.priority,
     isActive: data.isActive,
   };
@@ -544,6 +551,51 @@ export async function deleteInstagramDmRuleAction(
   if (!session) return { success: false, error: "Admin access required." };
 
   await db.instagramDmRule.delete({ where: { id: ruleId } });
+
+  revalidatePath("/admin/instagram");
+  return { success: true, data: undefined };
+}
+
+/**
+ * The button flow's wording, saved as the single row every reel and rule
+ * shares. Upserted on `key` rather than an id, which is what keeps it one
+ * row however many times the form is submitted.
+ */
+export async function saveInstagramFlowSettingsAction(
+  input: InstagramFlowSettingsFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = instagramFlowSettingsFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const data = parsed.data;
+
+  const fields = {
+    isActive: data.isActive,
+    openerMessage: data.openerMessage,
+    openerButtonLabel: data.openerButtonLabel,
+    requireFollow: data.requireFollow,
+    followMessage: data.followMessage,
+    followButtonLabel: data.followButtonLabel,
+    stillNotFollowingMessage: data.stillNotFollowingMessage,
+    profileUrl: data.profileUrl?.trim() || null,
+    profileButtonLabel: data.profileButtonLabel,
+    linkMessage: data.linkMessage,
+    linkButtonLabel: data.linkButtonLabel,
+    duplicateMessage: data.duplicateMessage,
+  };
+
+  await db.instagramFlowSettings.upsert({
+    where: { key: "default" },
+    create: { key: "default", ...fields },
+    update: fields,
+  });
 
   revalidatePath("/admin/instagram");
   return { success: true, data: undefined };
