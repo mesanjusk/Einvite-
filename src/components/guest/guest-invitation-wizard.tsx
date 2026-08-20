@@ -50,6 +50,7 @@ import { GuestPhotosStep, type GuestMediaItem } from "./guest-photos-step";
 import { MusicPicker } from "./music-picker";
 import { PublishDialog } from "./publish-dialog";
 import { RELIGIONS, ceremonyNamesFor } from "@/lib/culture-presets";
+import { celebrantNames, eventCategoryFor, DEFAULT_EVENT_CATEGORY } from "@/lib/event-categories";
 
 type Colorway = {
   slug: string;
@@ -70,10 +71,23 @@ type Theme = {
 
 type MusicTrack = { id: string; title: string; artist: string | null; mood: string | null; url: string };
 
-const STEPS = ["Culture", "Couple", "Events", "Family", "Design", "Photos", "Review"] as const;
-const STEP_ICONS = [Landmark, Heart, CalendarDays, Users, Palette, Images, PartyPopper] as const;
+// Steps are keyed, not numbered, because the list itself changes per event
+// category: the Culture step only exists for a wedding, where the tradition
+// picked decides which ceremonies get pre-filled.
+const STEP_DEFS = {
+  culture: { label: "Culture", icon: Landmark },
+  names: { label: "Names", icon: Heart },
+  events: { label: "Events", icon: CalendarDays },
+  family: { label: "Family", icon: Users },
+  design: { label: "Design", icon: Palette },
+  photos: { label: "Photos", icon: Images },
+  review: { label: "Review", icon: PartyPopper },
+} as const;
 
-const PHOTOS_STEP = 5;
+type StepKey = keyof typeof STEP_DEFS;
+
+const WEDDING_STEPS: StepKey[] = ["culture", "names", "events", "family", "design", "photos", "review"];
+const OTHER_STEPS: StepKey[] = WEDDING_STEPS.filter((key) => key !== "culture");
 
 const CATEGORY_TABS = [
   { value: "all", label: "All" },
@@ -83,12 +97,12 @@ const CATEGORY_TABS = [
   { value: "minimal", label: "Minimal" },
 ] as const;
 
-const STEP_FIELDS: Record<number, (keyof InvitationWizardFormValues)[]> = {
-  0: ["religion", "caste"],
-  1: ["brideName", "groomName", "weddingDate"],
-  2: ["venueName", "venueAddress", "googleMapsUrl", "customMessage", "events"],
-  3: ["familyMembers"],
-  4: ["themeSlug", "musicTrackId"],
+const STEP_FIELDS: Partial<Record<StepKey, (keyof InvitationWizardFormValues)[]>> = {
+  culture: ["religion", "caste"],
+  names: ["brideName", "groomName", "weddingDate"],
+  events: ["venueName", "venueAddress", "googleMapsUrl", "customMessage", "events"],
+  family: ["familyMembers"],
+  design: ["themeSlug", "musicTrackId"],
 };
 
 const DRAFT_ID_STORAGE_KEY = "einvite-guest-draft-id";
@@ -97,6 +111,7 @@ const CREATOR_GENDER_STORAGE_KEY = "einvite-creator-gender";
 type CreatorGender = "bride" | "groom";
 
 export function GuestInvitationWizard({
+  eventCategory = DEFAULT_EVENT_CATEGORY,
   themes,
   musicTracks,
   existingInvitationId,
@@ -105,6 +120,8 @@ export function GuestInvitationWizard({
   isPublished = false,
   hasPhoneLink = false,
 }: {
+  /** Which celebration this invitation is for — decides the questions asked. */
+  eventCategory?: string;
   themes: Theme[];
   musicTracks: MusicTrack[];
   /** Editing an existing (possibly already-published) guest invitation instead of starting a fresh draft. */
@@ -116,6 +133,11 @@ export function GuestInvitationWizard({
   hasPhoneLink?: boolean;
 }) {
   const isEditMode = Boolean(existingInvitationId);
+  const category = eventCategoryFor(eventCategory);
+  const stepKeys = category.slug === "wedding" ? WEDDING_STEPS : OTHER_STEPS;
+  // "Who's creating this?" only makes sense where both name slots are a
+  // couple; a birthday's second slot is the host, not a partner.
+  const isCoupleEvent = !category.secondaryOptional;
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -132,7 +154,7 @@ export function GuestInvitationWizard({
   const [genderPromptOpen, setGenderPromptOpen] = useState(false);
 
   useEffect(() => {
-    if (isEditMode || typeof window === "undefined") return;
+    if (isEditMode || !isCoupleEvent || typeof window === "undefined") return;
     const stored = sessionStorage.getItem(CREATOR_GENDER_STORAGE_KEY);
     if (stored === "bride" || stored === "groom") {
       setCreatorGender(stored);
@@ -168,9 +190,18 @@ export function GuestInvitationWizard({
       themeSlug: themes[0]?.slug ?? "royal",
       musicTrackId: undefined,
       customMusicUrl: undefined,
-      events: [
-        { name: "Wedding", date: "", time: "", venueName: "", address: "", dressCode: "", tagline: "" },
-      ],
+      eventCategory: category.slug,
+      // The functions this celebration usually has, ready to edit — a
+      // birthday opens on "Cake Cutting", not on "Wedding".
+      events: category.defaultEvents.map((name) => ({
+        name,
+        date: "",
+        time: "",
+        venueName: "",
+        address: "",
+        dressCode: "",
+        tagline: "",
+      })),
       familyMembers: [],
       useAiCopy: true,
       ...initialValues,
@@ -178,6 +209,7 @@ export function GuestInvitationWizard({
   });
 
   const eventFields = useFieldArray({ control: form.control, name: "events" });
+  const currentStep = stepKeys[step];
 
   // Colourways of the currently selected design — a theme with only its own
   // palette has none to choose between, so the picker stays hidden.
@@ -264,18 +296,18 @@ export function GuestInvitationWizard({
   }
 
   async function goNext() {
-    if (step === PHOTOS_STEP) {
+    if (currentStep === "photos") {
       await ensurePhotos();
-      setStep((s) => Math.min(s + 1, STEPS.length - 1));
+      setStep((s) => Math.min(s + 1, stepKeys.length - 1));
       return;
     }
 
-    const fields = STEP_FIELDS[step];
+    const fields = STEP_FIELDS[currentStep];
     if (fields) {
       const valid = await form.trigger(fields);
       if (!valid) return;
     }
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setStep((s) => Math.min(s + 1, stepKeys.length - 1));
   }
 
   function goBack() {
@@ -362,16 +394,16 @@ export function GuestInvitationWizard({
           <motion.div
             className="bg-primary h-full"
             initial={false}
-            animate={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
+            animate={{ width: `${(step / (stepKeys.length - 1)) * 100}%` }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           />
         </div>
-        {STEPS.map((label, i) => {
-          const StepIcon = STEP_ICONS[i];
+        {stepKeys.map((key, i) => {
+          const { label, icon: StepIcon } = STEP_DEFS[key];
           const isDone = i < step;
           const isActive = i === step;
           return (
-            <div key={label} className="flex flex-1 flex-col items-center gap-1.5">
+            <div key={key} className="flex flex-1 flex-col items-center gap-1.5">
               <motion.div
                 animate={isActive ? { scale: [1, 1.12, 1] } : { scale: 1 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
@@ -417,7 +449,7 @@ export function GuestInvitationWizard({
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col gap-5"
             >
-            {step === 0 && (
+            {currentStep === "culture" && (
               <>
                 <Field label="Religion">
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -448,7 +480,7 @@ export function GuestInvitationWizard({
               </>
             )}
 
-            {step === 1 && (
+            {currentStep === "names" && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {(() => {
@@ -460,7 +492,7 @@ export function GuestInvitationWizard({
                             ? "Your name"
                             : creatorGender === "groom"
                               ? "Partner's name"
-                              : "Bride's name"
+                              : category.primaryNameLabel
                         }
                         error={form.formState.errors.brideName?.message}
                       >
@@ -475,7 +507,7 @@ export function GuestInvitationWizard({
                             ? "Your name"
                             : creatorGender === "bride"
                               ? "Partner's name"
-                              : "Groom's name"
+                              : category.secondaryNameLabel
                         }
                         error={form.formState.errors.groomName?.message}
                       >
@@ -487,13 +519,13 @@ export function GuestInvitationWizard({
                       : [brideField, groomField];
                   })()}
                 </div>
-                <Field label="Wedding date" error={form.formState.errors.weddingDate?.message}>
+                <Field label={category.dateLabel} error={form.formState.errors.weddingDate?.message}>
                   <Input type="date" {...form.register("weddingDate")} />
                 </Field>
               </>
             )}
 
-            {step === 2 && (
+            {currentStep === "events" && (
               <div className="flex flex-col gap-5">
                 <div className="grid gap-4 rounded-lg border p-4">
                   <p className="text-sm font-medium">Main venue</p>
@@ -518,7 +550,7 @@ export function GuestInvitationWizard({
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <p className="text-sm font-medium">Ceremonies</p>
+                  <p className="text-sm font-medium">{category.eventsLabel}</p>
                   {eventFields.fields.map((field, index) => {
                     const open = openDetails[index] ?? new Set<string>();
                     const extras = [
@@ -531,7 +563,7 @@ export function GuestInvitationWizard({
                     return (
                       <div key={field.id} className="grid gap-3 rounded-lg border p-4">
                         <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
-                          <Field label="Ceremony">
+                          <Field label="Name">
                             <Input {...form.register(`events.${index}.name` as const)} />
                           </Field>
                           <Field label="Date">
@@ -542,7 +574,7 @@ export function GuestInvitationWizard({
                               type="button"
                               variant="ghost"
                               size="icon"
-                              aria-label={`Remove ceremony ${index + 1}`}
+                              aria-label={`Remove entry ${index + 1}`}
                               onClick={() => eventFields.remove(index)}
                             >
                               <Trash2 className="text-destructive size-4" />
@@ -605,13 +637,13 @@ export function GuestInvitationWizard({
                     }
                   >
                     <Plus />
-                    Add ceremony
+                    Add to the {category.eventsLabel.toLowerCase()}
                   </Button>
                 </div>
               </div>
             )}
 
-            {step === 3 && (
+            {currentStep === "family" && (
               <div className="flex flex-col gap-3">
                 {relativeFields.fields.map((field, index) => (
                   <div key={field.id} className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
@@ -620,7 +652,7 @@ export function GuestInvitationWizard({
                     </Field>
                     <Field label="Relation">
                       <Input
-                        placeholder="Mother of the bride, Uncle…"
+                        placeholder={`${category.familyRelations[0]}, ${category.familyRelations[1]}…`}
                         {...form.register(`familyMembers.${index}.relation` as const)}
                       />
                     </Field>
@@ -646,7 +678,7 @@ export function GuestInvitationWizard({
               </div>
             )}
 
-            {step === 4 && (
+            {currentStep === "design" && (
               <>
                 <Field label="Theme">
                   <Tabs
@@ -792,11 +824,11 @@ export function GuestInvitationWizard({
               </>
             )}
 
-            {step === 5 && (
+            {currentStep === "photos" && (
               <GuestPhotosStep invitationId={invitationId} media={media} onMediaChange={setMedia} />
             )}
 
-            {step === 6 && (
+            {currentStep === "review" && (
               <>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <p className="flex items-center gap-2 text-sm font-medium">
@@ -810,11 +842,12 @@ export function GuestInvitationWizard({
                 </div>
 
                 <div className="text-muted-foreground grid gap-1 text-sm">
-                  <p>
-                    <strong>{form.watch("brideName")}</strong> &amp;{" "}
-                    <strong>{form.watch("groomName")}</strong>
+                  <p className="text-foreground font-medium">
+                    {celebrantNames(category, form.watch("brideName") ?? "", form.watch("groomName"))}
                   </p>
-                  <p>{form.watch("weddingDate")}</p>
+                  <p>
+                    {category.label} · {form.watch("weddingDate")}
+                  </p>
                   <p>{form.watch("venueName")}</p>
                   <p>{eventFields.fields.length} event(s)</p>
                   <p>Theme: {form.watch("themeSlug")}</p>
@@ -831,7 +864,7 @@ export function GuestInvitationWizard({
           <Button type="button" variant="outline" onClick={goBack} disabled={step === 0}>
             Back
           </Button>
-          {step < STEPS.length - 1 ? (
+          {step < stepKeys.length - 1 ? (
             <Button type="button" onClick={goNext}>
               Continue
             </Button>
@@ -858,7 +891,7 @@ export function GuestInvitationWizard({
         onPublished={() => sessionStorage.removeItem(DRAFT_ID_STORAGE_KEY)}
       />
 
-      <Dialog open={genderPromptOpen} onOpenChange={setGenderPromptOpen}>
+      <Dialog open={genderPromptOpen && isCoupleEvent} onOpenChange={setGenderPromptOpen}>
         <DialogContent
           showCloseButton={false}
           className="text-center sm:max-w-sm"

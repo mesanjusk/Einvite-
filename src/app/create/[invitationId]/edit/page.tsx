@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { GuestInvitationWizard } from "@/components/guest/guest-invitation-wizard";
+import { eventCategoryFor } from "@/lib/event-categories";
 
 export const metadata: Metadata = {
   title: "Edit Your Invitation",
@@ -33,10 +34,17 @@ export default async function EditGuestInvitationPage({
       })
     : null;
 
+  const category = eventCategoryFor(invitation.eventCategory);
+  // Designs for this celebration, plus whatever design the invitation is
+  // already on — so a saved choice never vanishes from the picker.
+  const themeFilter = invitation.themeId
+    ? { OR: [{ eventCategory: category.slug }, { id: invitation.themeId }] }
+    : { eventCategory: category.slug };
+
   const [themes, musicTracks, events, familyMembers, media] = await Promise.all([
     db.theme
       .findMany({
-        where: { type: "WEBSITE" },
+        where: { type: "WEBSITE", ...themeFilter },
         orderBy: { sortOrder: "asc" },
         include: { colorways: { orderBy: { sortOrder: "asc" } } },
       }),
@@ -56,6 +64,7 @@ export default async function EditGuestInvitationPage({
 
       <div className="mx-auto w-full max-w-2xl">
         <GuestInvitationWizard
+          eventCategory={category.slug}
           existingInvitationId={invitation.id}
           isPublished={invitation.status === "PUBLISHED"}
           hasPhoneLink={Boolean(invitation.phoneLink)}
@@ -75,6 +84,7 @@ export default async function EditGuestInvitationPage({
           musicTracks={musicTracks.map((m) => ({ id: m.id, title: m.title, artist: m.artist, mood: m.mood, url: m.url }))}
           initialMedia={media.map((m) => ({ id: m.id, url: m.url, isAuto: m.isAuto }))}
           initialValues={{
+            eventCategory: category.slug,
             brideName: invitation.brideName,
             bridePhoto: invitation.bridePhoto ?? undefined,
             groomName: invitation.groomName,

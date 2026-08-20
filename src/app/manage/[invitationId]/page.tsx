@@ -43,7 +43,7 @@ export default async function ManageGuestInvitationPage({
     );
   }
 
-  const [media, videoTemplates, videos, pdfThemes, pdfTheme] = await Promise.all([
+  const [media, videoTemplates, videos, pdfThemes, pdfTheme, websiteTheme] = await Promise.all([
     db.media.count({ where: { invitationId } }),
     db.videoTemplate.findMany({ orderBy: { sortOrder: "asc" } }),
     db.invitationVideo.findMany({
@@ -54,6 +54,9 @@ export default async function ManageGuestInvitationPage({
     db.theme.findMany({ where: { type: "PDF" }, orderBy: { sortOrder: "asc" } }),
     invitation.pdfThemeId
       ? db.theme.findUnique({ where: { id: invitation.pdfThemeId }, select: { slug: true } })
+      : null,
+    invitation.themeId
+      ? db.theme.findUnique({ where: { id: invitation.themeId }, select: { name: true } })
       : null,
   ]);
   const appUrl = getAppUrl();
@@ -144,9 +147,12 @@ export default async function ManageGuestInvitationPage({
                 id: t.id,
                 slug: t.slug,
                 name: t.name,
+                description: t.description,
                 colorPalette: t.colorPalette as { primary: string; accent: string; background: string },
               }))}
               currentSlug={pdfTheme?.slug ?? null}
+              previewSlug={invitation.status === "PUBLISHED" ? invitation.slug : null}
+              websiteThemeName={websiteTheme?.name ?? null}
             />
           </div>
           <PdfExtraTextForm invitationId={invitation.id} initialText={invitation.pdfExtraText ?? ""} />

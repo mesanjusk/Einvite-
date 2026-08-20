@@ -65,6 +65,7 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     revealMode: data.revealMode,
     revealVideoUrl: data.revealVideoUrl,
     category: data.category,
+    eventCategory: data.eventCategory,
     isPremium: data.isPremium,
     sortOrder: data.sortOrder,
     colorPalette: data.colorPalette,

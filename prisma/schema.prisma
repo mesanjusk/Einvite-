@@ -143,6 +143,14 @@ model Theme {
   description    String?
   previewImage   String?
   category       String    @default("classic") // "traditional" | "modern" | "fusion" | "minimal" | "classic"
+  // Which celebration this design is written for — "wedding", "birthday",
+  // "housewarming"... See src/lib/event-categories.ts. A theme only ever
+  // shows up in the picker for its own category.
+  eventCategory  String    @default("wedding")
+  // Default copy this design ships with (headline, invitation letter, thank
+  // you...), used when the couple asks for no AI copy. Shape: the
+  // EventCategoryContent type. Null falls back to the category's own copy.
+  content        Json?
   colorPalette   Json // { primary, secondary, accent, background, foreground }
   fontPairing    Json // { display, body, script }
   decorAssets    Json? // preset decoration config (petals, sparkles, motifs...)
@@ -291,6 +299,11 @@ model Invitation {
   slug   String           @unique
   status InvitationStatus @default(DRAFT)
 
+  // Which kind of celebration this is — "wedding", "birthday", "naming"...
+  // Decides what the two name slots below mean, what copy is written, and
+  // what the PDF's cover says. See src/lib/event-categories.ts.
+  eventCategory String @default("wedding")
+
   // Guest-flow ownership. `draftSecretHash` authorizes edits to an
   // unpublished guest draft (its raw value lives only in an httpOnly
   // cookie on the creator's browser). Once the owner verifies a WhatsApp
@@ -298,7 +311,10 @@ model Invitation {
   draftSecretHash String?
   isDemo          Boolean @default(false)
 
-  // Couple
+  // The two name slots. For a wedding they're the couple; for a birthday
+  // they're the birthday star and whoever is hosting; for a housewarming
+  // the family name and the host. `eventCategory` decides which, and how
+  // they're joined when printed.
   brideName  String
   bridePhoto String?
   groomName  String

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
 import {
+  CATEGORY_THEMES,
   DEMO_INVITATIONS,
   MUSIC_TRACKS,
   PDF_THEMES,
@@ -11,29 +12,16 @@ import {
   THEME_COLORWAYS,
 } from "./seed-data";
 import { pickStockPhotos } from "./media/stock-photos";
-import { newPdfPlaceholder, type PdfTemplatePage } from "./validations/pdf-template";
-
-// A simple starter layout so "Elegant Print" is usable out of the box —
-// admins can redesign it entirely from /admin/library/pdf-themes/[id].
-const DEFAULT_PDF_PAGES: PdfTemplatePage[] = [
-  {
-    id: "page-1",
-    backgroundColor: "#ffffff",
-    size: "A4",
-    placeholders: [
-      { ...newPdfPlaceholder("STATIC"), id: "ph-1", staticText: "You're Invited", x: 10, y: 15, width: 80, fontSize: 28, align: "center", bold: true },
-      { ...newPdfPlaceholder("coupleNames"), id: "ph-2", x: 10, y: 30, width: 80, fontSize: 32, align: "center", bold: true },
-      { ...newPdfPlaceholder("weddingDate"), id: "ph-3", x: 10, y: 45, width: 80, fontSize: 18, align: "center" },
-      { ...newPdfPlaceholder("venueName"), id: "ph-4", x: 10, y: 52, width: 80, fontSize: 16, align: "center" },
-      { ...newPdfPlaceholder("customMessage"), id: "ph-5", x: 15, y: 65, width: 70, fontSize: 12, align: "center" },
-    ],
-  },
-];
 
 export async function runSeed(db: PrismaClient) {
   const themeBySlug = new Map<string, string>();
 
-  for (const theme of THEMES) {
+  // Wedding designs and the designs for every other celebration are seeded
+  // the same way — they differ only in `eventCategory` and the default copy
+  // the category ones carry.
+  const websiteThemes = [...THEMES, ...CATEGORY_THEMES];
+
+  for (const theme of websiteThemes) {
     // Seeded themes carry a stock thumbnail so the catalogue and home page
     // show photos out of the box; an admin-uploaded one is never overwritten.
     const existing = await db.theme.findUnique({
@@ -70,6 +58,11 @@ export async function runSeed(db: PrismaClient) {
       update: theme,
       create: theme,
     });
+    // Deliberately created without `pages`: a print design with no hand-drawn
+    // template is rendered from the invitation's own data and photos, which is
+    // what these layouts are for. An admin who draws one from
+    // /admin/library/pdf-themes/[id] takes over from there, and a template
+    // drawn earlier is never overwritten by re-seeding.
     await db.template.upsert({
       where: { slug: `${theme.slug}-classic` },
       update: { name: `${theme.name} Classic`, themeId: record.id },
@@ -78,7 +71,6 @@ export async function runSeed(db: PrismaClient) {
         slug: `${theme.slug}-classic`,
         themeId: record.id,
         sectionOrder: [],
-        pages: DEFAULT_PDF_PAGES,
       },
     });
   }
@@ -91,7 +83,7 @@ export async function runSeed(db: PrismaClient) {
     });
   }
 
-  for (const theme of THEMES) {
+  for (const theme of websiteThemes) {
     const themeId = themeBySlug.get(theme.slug);
     if (!themeId) continue;
 
@@ -131,6 +123,7 @@ export async function runSeed(db: PrismaClient) {
     const invitation = await db.invitation.upsert({
       where: { slug: demo.slug },
       update: {
+        eventCategory: demo.eventCategory,
         brideName: demo.brideName,
         groomName: demo.groomName,
         weddingDate: new Date(demo.weddingDate),
@@ -145,6 +138,7 @@ export async function runSeed(db: PrismaClient) {
       },
       create: {
         slug: demo.slug,
+        eventCategory: demo.eventCategory,
         brideName: demo.brideName,
         groomName: demo.groomName,
         weddingDate: new Date(demo.weddingDate),
@@ -184,8 +178,8 @@ export async function runSeed(db: PrismaClient) {
   }
 
   return {
-    themes: THEMES.length,
-    templates: THEMES.length,
+    themes: websiteThemes.length,
+    templates: websiteThemes.length,
     pdfThemes: PDF_THEMES.length,
     videoTemplates: VIDEO_TEMPLATES.length,
     musicTracks: MUSIC_TRACKS.length,

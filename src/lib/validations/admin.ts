@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AUTO_VIDEO_MODEL } from "@/lib/ai/gemini-video";
+import { DEFAULT_EVENT_CATEGORY, EVENT_CATEGORY_SLUGS } from "@/lib/event-categories";
 
 export const colorPaletteSchema = z.object({
   primary: z.string().min(1),
@@ -53,6 +54,9 @@ export const themeFormSchema = z.object({
   revealMode: z.enum(["ANIMATION", "VIDEO"]).default("ANIMATION"),
   revealVideoUrl: z.string().optional(),
   category: z.enum(THEME_CATEGORIES).default("classic"),
+  // Which celebration the design is for. PDF themes are print layouts shared
+  // by every celebration, so this only steers the WEBSITE picker.
+  eventCategory: z.enum(EVENT_CATEGORY_SLUGS).default(DEFAULT_EVENT_CATEGORY),
   isPremium: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,

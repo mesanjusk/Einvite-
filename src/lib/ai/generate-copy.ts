@@ -1,3 +1,10 @@
+import {
+  celebrantNames,
+  eventCategoryFor,
+  fillContent,
+  type EventCategoryContent,
+} from "@/lib/event-categories";
+
 export type InvitationCopyInput = {
   brideName: string;
   groomName: string;
@@ -5,6 +12,10 @@ export type InvitationCopyInput = {
   venueName?: string;
   language?: string;
   customMessage?: string;
+  /** Which celebration this is — decides the voice and the vocabulary. */
+  eventCategory?: string;
+  /** The chosen design's own copy, used as the template fallback when set. */
+  themeContent?: Partial<EventCategoryContent> | null;
 };
 
 export type InvitationCopy = {
@@ -18,26 +29,31 @@ export type InvitationCopy = {
   source: "anthropic" | "openai" | "template";
 };
 
-const SYSTEM_PROMPT = `You are a luxury wedding invitation copywriter. Given a couple's
-details, write warm, elegant, concise copy for their wedding website. Respond with ONLY
-a JSON object matching this exact shape, no markdown fences, no commentary:
+function buildSystemPrompt(input: InvitationCopyInput) {
+  const category = eventCategoryFor(input.eventCategory);
+  return `You are an invitation copywriter. Given the hosts' details, write warm,
+elegant, concise copy for a ${category.label.toLowerCase()} invitation website. Respond with
+ONLY a JSON object matching this exact shape, no markdown fences, no commentary:
 {
-  "heroHeadline": string (max 8 words, e.g. "We're Getting Married"),
+  "heroHeadline": string (max 8 words, e.g. "${category.content.heroHeadline}"),
   "heroSubline": string (one sentence invitation line),
   "invitationLetter": string (2-3 sentence formal invitation paragraph),
-  "storyHeadline": string (max 4 words, for a photo/story section, e.g. "Forever Us"),
-  "hashtags": string[] (3 wedding hashtags combining both names, no # symbol),
+  "storyHeadline": string (max 4 words, for a photo section, e.g. "${category.content.storyHeadline}"),
+  "hashtags": string[] (3 hashtags built from the names, no # symbol),
   "seoTitle": string (under 60 chars),
   "seoDescription": string (under 155 chars)
 }`;
+}
 
 function buildUserPrompt(input: InvitationCopyInput) {
-  return `Bride: ${input.brideName}
-Groom: ${input.groomName}
-Wedding date: ${input.weddingDateDisplay}
+  const category = eventCategoryFor(input.eventCategory);
+  return `Occasion: ${category.label}
+${category.primaryNameLabel}: ${input.brideName}
+${category.secondaryNameLabel}: ${input.groomName || "not specified"}
+${category.dateLabel}: ${input.weddingDateDisplay}
 Venue: ${input.venueName ?? "not specified"}
 Language: ${input.language ?? "English"}
-Extra notes from the couple: ${input.customMessage ?? "none"}`;
+Extra notes from the hosts: ${input.customMessage ?? "none"}`;
 }
 
 function parseJsonResponse(text: string): Omit<InvitationCopy, "source"> | null {
@@ -67,7 +83,7 @@ async function generateWithAnthropic(
     body: JSON.stringify({
       model: "claude-sonnet-4-5",
       max_tokens: 600,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(input),
       messages: [{ role: "user", content: buildUserPrompt(input) }],
     }),
   });
@@ -101,7 +117,7 @@ async function generateWithOpenAI(
       model: "gpt-4o-mini",
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt(input) },
         { role: "user", content: buildUserPrompt(input) },
       ],
     }),
@@ -122,27 +138,28 @@ async function generateWithOpenAI(
 
 /**
  * Deterministic, non-AI fallback so the wizard always produces usable copy
- * even with no provider key configured. Clearly tagged `source: "template"`
- * so the UI can be honest about what actually generated it.
+ * even with no provider key configured. It reads from the chosen design's own
+ * copy where it has some, and from the event category's otherwise — which is
+ * why a birthday never falls back to a wedding letter. Clearly tagged
+ * `source: "template"` so the UI can be honest about what generated it.
  */
 function generateTemplateCopy(input: InvitationCopyInput): InvitationCopy {
-  const names = `${input.brideName} & ${input.groomName}`;
+  const category = eventCategoryFor(input.eventCategory);
+  const content: EventCategoryContent = { ...category.content, ...(input.themeContent ?? {}) };
+  const names = celebrantNames(category, input.brideName, input.groomName);
+  const values = { names, date: input.weddingDateDisplay, venue: input.venueName };
+  const nameSlug = `${input.brideName}${input.groomName}`.replace(/[^a-zA-Z0-9]+/g, "");
+
   return {
-    heroHeadline: "We're Getting Married",
-    heroSubline: `Join us as we celebrate our wedding — ${input.weddingDateDisplay}`,
-    invitationLetter: `Together with our families, we joyfully invite you to celebrate our wedding. ${
-      input.venueName ? `We can't wait to see you at ${input.venueName}. ` : ""
-    }Your presence would mean the world to us as we begin this new chapter.`,
-    storyHeadline: "Forever Us",
-    hashtags: [
-      `${input.brideName}${input.groomName}`.replace(/\s+/g, ""),
-      `${input.brideName}Weds${input.groomName}`.replace(/\s+/g, ""),
-      "OurWedding",
-    ],
-    seoTitle: `${names} — Wedding ${new Date().getFullYear()}`,
-    seoDescription: `Join us as we celebrate the wedding of ${names}. ${input.weddingDateDisplay}${
+    heroHeadline: content.heroHeadline,
+    heroSubline: fillContent(content.heroSubline, values),
+    invitationLetter: fillContent(content.invitationLetter, values),
+    storyHeadline: content.storyHeadline,
+    hashtags: [nameSlug, `${nameSlug}${content.hashtagSuffix}`, `Our${content.hashtagSuffix}`],
+    seoTitle: `${names} — ${category.label} ${new Date().getFullYear()}`,
+    seoDescription: `${fillContent(content.heroSubline, values)}${
       input.venueName ? ` · ${input.venueName}` : ""
-    }`,
+    }`.slice(0, 155),
     source: "template",
   };
 }

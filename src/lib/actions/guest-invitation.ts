@@ -10,10 +10,11 @@ import { generateInvitationCopy } from "@/lib/ai/generate-copy";
 import {
   invitationWizardSchema,
   publishGuestInvitationSchema,
-  type InvitationWizardInput,
+  type InvitationWizardFormValues,
 } from "@/lib/validations/invitation";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import type { ActionResult } from "@/lib/actions/auth";
+import type { EventCategoryContent } from "@/lib/event-categories";
 import { normalizePhone } from "@/lib/phone";
 import { generateToken, hashToken } from "@/lib/otp";
 import { sendWhatsAppText, editLinkMessage } from "@/lib/whatsapp";
@@ -69,7 +70,7 @@ export async function createDraftInvitationAction(): Promise<
 
 export async function updateGuestInvitationAction(
   invitationId: string,
-  input: InvitationWizardInput,
+  input: InvitationWizardFormValues,
 ): Promise<ActionResult<{ invitationId: string; slug: string }>> {
   const invitation = await loadInvitation(invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
@@ -102,7 +103,7 @@ export async function updateGuestInvitationAction(
   }
 
   const slug = invitation.slug.startsWith("draft-")
-    ? await uniqueSlug(`${data.brideName}-${data.groomName}`)
+    ? await uniqueSlug([data.brideName, data.groomName].filter(Boolean).join("-"))
     : invitation.slug;
 
   const weddingDate = new Date(data.weddingDate);
@@ -121,6 +122,8 @@ export async function updateGuestInvitationAction(
       weddingDateDisplay,
       venueName: data.venueName,
       customMessage: data.customMessage,
+      eventCategory: data.eventCategory,
+      themeContent: theme.content as Partial<EventCategoryContent> | null,
     });
     aiGeneratedCopy = copy;
     aiGenerated = copy.source !== "template";
@@ -130,6 +133,7 @@ export async function updateGuestInvitationAction(
     where: { id: invitationId },
     data: {
       slug,
+      eventCategory: data.eventCategory,
       brideName: data.brideName,
       bridePhoto: data.bridePhoto,
       groomName: data.groomName,

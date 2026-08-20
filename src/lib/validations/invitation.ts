@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { DEFAULT_EVENT_CATEGORY, eventCategoryFor } from "@/lib/event-categories";
+
 export const eventSchema = z.object({
   name: z.string().min(1, "Event name is required"),
   date: z.string().min(1, "Date is required"),
@@ -27,26 +29,42 @@ export const relativeSchema = z.object({
   name: z.string(),
 });
 
-export const invitationWizardSchema = z.object({
-  brideName: z.string().min(1, "Bride's name is required"),
-  bridePhoto: z.string().optional(),
-  groomName: z.string().min(1, "Groom's name is required"),
-  groomPhoto: z.string().optional(),
-  weddingDate: z.string().min(1, "Wedding date is required"),
-  venueName: z.string().optional(),
-  venueAddress: z.string().optional(),
-  googleMapsUrl: z.url().optional().or(z.literal("")),
-  customMessage: z.string().optional(),
-  religion: z.string().optional(),
-  caste: z.string().optional(),
-  themeSlug: z.string().min(1, "Choose a theme"),
-  colorwaySlug: z.string().optional(),
-  musicTrackId: z.string().optional(),
-  customMusicUrl: z.string().optional(),
-  events: z.array(eventSchema).default([]),
-  familyMembers: z.array(relativeSchema).default([]),
-  useAiCopy: z.boolean().default(true),
-});
+// The two name slots mean different things per event category (a wedding's
+// couple, a birthday's star and host), so the second one is only required
+// where the category says both are needed — checked in the refinement below
+// rather than by a fixed `min(1)`.
+export const invitationWizardSchema = z
+  .object({
+    eventCategory: z.string().default(DEFAULT_EVENT_CATEGORY),
+    brideName: z.string().min(1, "This name is required"),
+    bridePhoto: z.string().optional(),
+    groomName: z.string().default(""),
+    groomPhoto: z.string().optional(),
+    weddingDate: z.string().min(1, "A date is required"),
+    venueName: z.string().optional(),
+    venueAddress: z.string().optional(),
+    googleMapsUrl: z.url().optional().or(z.literal("")),
+    customMessage: z.string().optional(),
+    religion: z.string().optional(),
+    caste: z.string().optional(),
+    themeSlug: z.string().min(1, "Choose a theme"),
+    colorwaySlug: z.string().optional(),
+    musicTrackId: z.string().optional(),
+    customMusicUrl: z.string().optional(),
+    events: z.array(eventSchema).default([]),
+    familyMembers: z.array(relativeSchema).default([]),
+    useAiCopy: z.boolean().default(true),
+  })
+  .superRefine((data, ctx) => {
+    const category = eventCategoryFor(data.eventCategory);
+    if (!category.secondaryOptional && !data.groomName.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["groomName"],
+        message: `${category.secondaryNameLabel} is required`,
+      });
+    }
+  });
 
 export type InvitationWizardInput = z.infer<typeof invitationWizardSchema>;
 export type InvitationWizardFormValues = z.input<typeof invitationWizardSchema>;

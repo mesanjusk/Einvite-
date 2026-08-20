@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
+import { eventCategoryFor } from "@/lib/event-categories";
 import { ThemeFormDialog } from "@/components/admin/theme-form-dialog";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteThemeAction, deleteThemeColorwayAction } from "@/lib/actions/admin";
@@ -53,6 +54,9 @@ export default async function AdminThemesPage() {
                     <p className="text-muted-foreground text-xs capitalize">
                       {theme.slug} · {theme.category}
                     </p>
+                    <p className="text-muted-foreground text-xs">
+                      {eventCategoryFor(theme.eventCategory).label}
+                    </p>
                   </div>
                   <div className="flex items-center gap-1">
                     {theme.isPremium && <Badge variant="gold">Premium</Badge>}
@@ -66,6 +70,7 @@ export default async function AdminThemesPage() {
                         revealMode: theme.revealMode,
                         revealVideoUrl: theme.revealVideoUrl,
                         category: theme.category,
+                        eventCategory: theme.eventCategory,
                         isPremium: theme.isPremium,
                         sortOrder: theme.sortOrder,
                         colorPalette: theme.colorPalette as never,

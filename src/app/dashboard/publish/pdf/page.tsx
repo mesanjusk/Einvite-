@@ -47,7 +47,7 @@ export default async function PublishPdfPage({
     : invitations[0].id;
   const invitation = await db.invitation.findUnique({
     where: { id: selectedId },
-    include: { pdfTheme: true },
+    include: { pdfTheme: true, theme: true },
   });
   if (!invitation) return null;
 
@@ -60,6 +60,10 @@ export default async function PublishPdfPage({
       <Card>
         <CardHeader>
           <CardTitle>PDF theme</CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Every design prints on its own — names, date, schedule, and your photos are laid
+            out for you. Pick a print style, or keep the website design.
+          </p>
         </CardHeader>
         <CardContent>
           <PdfThemePicker
@@ -68,9 +72,12 @@ export default async function PublishPdfPage({
               id: t.id,
               slug: t.slug,
               name: t.name,
+              description: t.description,
               colorPalette: t.colorPalette as { primary: string; accent: string; background: string },
             }))}
             currentSlug={invitation.pdfTheme?.slug ?? null}
+            previewSlug={invitation.status === "PUBLISHED" ? invitation.slug : null}
+            websiteThemeName={invitation.theme?.name ?? null}
           />
         </CardContent>
       </Card>
