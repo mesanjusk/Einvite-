@@ -13,10 +13,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const dbUser = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { isActive: true },
+    select: { isActive: true, role: true },
   });
   if (dbUser?.isActive === false) {
     redirect("/sign-in?deactivated=1");
+  }
+  // A session lasts until it is signed out of, so the role stamped into it
+  // can be a year old. Admin is re-read from the record here — the same query
+  // that already checks deactivation — so a demotion takes hold on the next
+  // page load rather than on their next sign-in.
+  if (dbUser?.role !== "ADMIN") {
+    redirect("/dashboard");
   }
 
   return (

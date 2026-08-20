@@ -63,6 +63,16 @@ if (process.env.RESEND_API_KEY) {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    // Signed in until you sign out. The session is a signed JWT, so *some*
+    // expiry has to be stamped on it — a year is the practical stand-in for
+    // never, and `updateAge` re-issues the cookie on the first visit a day or
+    // more after the last one, which pushes that year out again. An account
+    // in any kind of regular use therefore never reaches it; the default 30
+    // days used to sign people out over a quiet month.
+    maxAge: 60 * 60 * 24 * 365,
+    updateAge: 60 * 60 * 24,
+  },
   providers,
 });

@@ -310,6 +310,14 @@ database provider.
 - RSVP submission is intentionally open (no auth) since guests don't have
   accounts — it's rate-limited by nothing right now; add rate limiting
   before exposing a high-traffic invitation publicly.
+- Sessions last until the user signs out. Auth.js issues a signed JWT, so
+  the cookie still carries an expiry — a year, pushed forward again on the
+  first visit a day or more after the last one — but nobody in regular use
+  reaches it. The cost of a long-lived token is a stale claim inside it, so
+  the two things that revoke access are re-read from the user record instead
+  of trusted from the session: deactivation on every dashboard and admin page
+  load, and the ADMIN role in the admin layout and in `requireAdmin` before
+  any admin action runs.
 - `src/lib/db.ts` constructs the Prisma client lazily behind a Proxy rather
   than eagerly at module scope. Constructing eagerly used to crash the
   *entire* build the moment `DATABASE_URL` was missing — Next's build-time
