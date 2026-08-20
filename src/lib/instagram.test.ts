@@ -4,6 +4,7 @@ import {
   fetchInstagramFollowStatus,
   isInstagramSendConfigured,
   renderInstagramTemplate,
+  sendInstagramButtons,
   sendInstagramMessage,
 } from "./instagram";
 
@@ -74,6 +75,101 @@ describe("sendInstagramMessage", () => {
       delivered: false,
       devMode: false,
     });
+  });
+});
+
+describe("sendInstagramButtons", () => {
+  it("sends tappable buttons as quick replies, so long text survives", async () => {
+    vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
+    const fetchMock = stubFetch({});
+    const text = "x".repeat(200);
+
+    await sendInstagramButtons({ id: "u1" }, text, [
+      { type: "postback", title: "Send me the link", payload: "ig_flow:CTA" },
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).message).toEqual({
+      text,
+      quick_replies: [
+        { content_type: "text", title: "Send me the link", payload: "ig_flow:CTA" },
+      ],
+    });
+  });
+
+  it("truncates a quick reply title Instagram would cut off anyway", async () => {
+    vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
+    const fetchMock = stubFetch({});
+
+    await sendInstagramButtons({ id: "u1" }, "hi", [
+      { type: "postback", title: "a".repeat(30), payload: "p" },
+    ]);
+
+    const { quick_replies } = JSON.parse(fetchMock.mock.calls[0][1].body).message;
+    expect(quick_replies[0].title).toHaveLength(20);
+  });
+
+  it("switches to a template when a button opens a link", async () => {
+    vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
+    const fetchMock = stubFetch({});
+
+    await sendInstagramButtons({ id: "u1" }, "Follow first", [
+      { type: "url", title: "Visit profile", url: "https://instagram.com/x" },
+      { type: "postback", title: "I'm following", payload: "ig_flow:FOLLOWING" },
+    ]);
+
+    // Short enough to be the card's own title, so no separate message.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const element = JSON.parse(fetchMock.mock.calls[0][1].body).message.attachment
+      .payload.elements[0];
+    expect(element.title).toBe("Follow first");
+    expect(element.buttons).toEqual([
+      { type: "web_url", url: "https://instagram.com/x", title: "Visit profile" },
+      { type: "postback", title: "I'm following", payload: "ig_flow:FOLLOWING" },
+    ]);
+  });
+
+  it("sends long text on its own when it can't fit in a card title", async () => {
+    vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
+    const fetchMock = stubFetch({});
+    const text = "y".repeat(120);
+
+    await sendInstagramButtons({ id: "u1" }, text, [
+      { type: "url", title: "Open my invite", url: "https://example.com/e/tok" },
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).message).toEqual({ text });
+    const element = JSON.parse(fetchMock.mock.calls[1][1].body).message.attachment
+      .payload.elements[0];
+    expect(element.title).not.toBe("");
+    expect(element.buttons).toHaveLength(1);
+  });
+
+  it("doesn't leave bare buttons behind when the text send fails", async () => {
+    vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
+    const fetchMock = stubFetch({ ok: false, status: 400 });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await sendInstagramButtons({ id: "u1" }, "z".repeat(120), [
+      { type: "url", title: "Open my invite", url: "https://example.com/e/tok" },
+    ]);
+
+    expect(result.delivered).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs instead of sending when no token is configured", async () => {
+    vi.stubEnv("IG_ACCESS_TOKEN", "");
+    const fetchMock = stubFetch({});
+    vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const result = await sendInstagramButtons({ id: "u1" }, "hi", [
+      { type: "postback", title: "Tap", payload: "p" },
+    ]);
+
+    expect(result).toEqual({ delivered: false, devMode: true });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

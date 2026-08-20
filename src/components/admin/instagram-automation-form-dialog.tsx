@@ -42,6 +42,7 @@ type AutomationRecord = {
   duplicateMessage: string;
   requireFollow: boolean;
   notFollowingMessage: string | null;
+  useButtonFlow: boolean;
   isActive: boolean;
 };
 
@@ -61,6 +62,7 @@ function defaultValues(automation?: AutomationRecord): InstagramAutomationFormVa
     notFollowingMessage:
       automation?.notFollowingMessage ??
       "Please make sure you're following us, then comment again to get your free invite link!",
+    useButtonFlow: automation?.useButtonFlow ?? false,
     isActive: automation?.isActive ?? true,
   };
 }
@@ -89,6 +91,8 @@ export function InstagramAutomationFormDialog({
       ...(presetMediaId ? { mediaId: presetMediaId } : {}),
     },
   });
+
+  const useButtonFlow = form.watch("useButtonFlow");
 
   // Confirms the pasted ID is the reel the admin has in mind, and fills in
   // the name and link from the post itself so neither has to be typed.
@@ -235,8 +239,29 @@ export function InstagramAutomationFormDialog({
             )}
           </div>
 
+          <div className="grid gap-3 rounded-lg border p-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Label>Button flow</Label>
+                <p className="text-muted-foreground text-xs">
+                  Reply with a tappable button instead of the link, and hand the link
+                  over in DMs once they&apos;ve followed. The wording lives in the
+                  Button flow tab, shared by every reel that uses it.
+                </p>
+              </div>
+              <Switch
+                checked={form.watch("useButtonFlow")}
+                onCheckedChange={(v) => form.setValue("useButtonFlow", v)}
+              />
+            </div>
+          </div>
+
           <div className="grid gap-1.5">
-            <Label>Reply message</Label>
+            <Label>
+              {useButtonFlow
+                ? "Reply message (unused while the flow is on)"
+                : "Reply message"}
+            </Label>
             <Textarea rows={3} {...form.register("replyMessage")} />
             <p className="text-muted-foreground text-xs">{"{{link}} {{username}}"}</p>
             {form.formState.errors.replyMessage && (
@@ -260,6 +285,11 @@ export function InstagramAutomationFormDialog({
             <div className="flex items-center justify-between">
               <div>
                 <Label>Followers only</Label>
+                {useButtonFlow && (
+                  <p className="text-muted-foreground text-xs">
+                    The flow runs its own follow gate, on the tap — this one is skipped.
+                  </p>
+                )}
               </div>
               <Switch
                 checked={form.watch("requireFollow")}
@@ -272,10 +302,9 @@ export function InstagramAutomationFormDialog({
                 <Label>Reply for non-followers</Label>
                 <Textarea rows={2} {...form.register("notFollowingMessage")} />
                 <p className="text-muted-foreground text-xs">
-                  Sent to anyone we can&apos;t confirm is a follower — Instagram
-                  often can&apos;t resolve someone who has never messaged you, and
-                  this reply opens that conversation, so their next comment
-                  checks out properly.
+                  Sent to anyone we can&apos;t confirm is a follower — Instagram often
+                  can&apos;t resolve someone who has never messaged you, and this reply
+                  opens that conversation, so their next comment checks out properly.
                 </p>
               </div>
             )}

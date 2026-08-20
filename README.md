@@ -255,6 +255,39 @@ on the page come from the invitation's own category. Add `?design=<slug>`
 to the PDF URL to render the same invitation in another design without
 saving anything, which is what the "Preview PDF" links do.
 
+## Instagram button flow
+
+Comment the keyword → tap a button → follow → get the link, all in DMs.
+Configured at `/admin/instagram` under **Button flow**, and switched on per
+reel ("Button flow" on a reel automation) or per keyword ("Start button flow"
+on a DM rule).
+
+What each step sends is one shared set of wording, so a new reel needs no new
+copy:
+
+1. **Opener.** The private reply to the comment carries a single button and no
+   link — "Tap the button below and I'll send your free wedding invitation
+   website 👇".
+2. **Follow gate.** The tap is checked against `is_user_follow_business`.
+   Anything but a confirmed follow answers with "Visit profile" (the URL from
+   the settings) plus "I'm following ✅", which re-runs the check.
+3. **Link.** Once the check passes, the invitation link is issued and sent
+   with an "Open my invite" button. One invitation per Instagram account, so
+   a returning tapper is handed the same website back.
+
+The reason the gate lives on the tap rather than on the comment is that
+Instagram will only resolve follower status for someone it has a conversation
+with. A first-time commenter comes back unresolved, which is why the plain
+comment automation has to fail closed and ask people to comment twice; a tap
+*is* a message, so by step 2 the answer is real. Someone who types the
+button's words instead of tapping is understood the same way, which also
+covers threads where Instagram declines to render the buttons.
+
+Buttons ride on quick replies when they only need to be tapped, and on a
+generic template when one of them opens a link — Instagram gives those two
+different homes, and only the second can carry a URL. Where everyone has got
+to is visible in the same tab, as counts per step.
+
 ## Testing
 
 ```bash

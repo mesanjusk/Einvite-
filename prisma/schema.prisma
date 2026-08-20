@@ -657,6 +657,10 @@ model InstagramAutomation {
   // everyone. They're asked to follow and comment again instead.
   requireFollow       Boolean @default(false)
   notFollowingMessage String?
+  // Reply with the tappable opener from InstagramFlowSettings instead of the
+  // link itself, so the link is only issued after the follow is confirmed on
+  // a tap. The plain reply above is still what a non-flow reel sends.
+  useButtonFlow       Boolean @default(false)
   isActive            Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -718,6 +722,9 @@ enum InstagramCommentOutcome {
   // link back. Distinct from NOT_FOLLOWING so an admin can see whether the
   // gate is turning people away on real answers or on unresolved checks.
   FOLLOW_UNVERIFIED
+  // The button flow's opener was sent; the link is delivered later, in DMs,
+  // once they tap through the follow gate.
+  FLOW_STARTED
   SEND_FAILED
 }
 
@@ -800,6 +807,10 @@ model InstagramDmRule {
   // Sent instead of replyMessage when this sender already has a link.
   duplicateMessage String?
 
+  // Answer with the button flow's opener rather than replyMessage, so a
+  // keyword DM runs the same tap-through-the-follow-gate flow a reel does.
+  startFlow Boolean @default(false)
+
   // Higher wins. Rules are compared in priority order and the first match
   // replies, so a specific keyword can be placed above a catch-all.
   priority Int     @default(0)
@@ -816,6 +827,12 @@ model InstagramDmRule {
 enum InstagramDmOutcome {
   REPLY_SENT
   DUPLICATE_REPLY_SENT
+  // Button flow steps. Every tap is an inbound message, so the flow's
+  // progress is readable in the DM log alongside ordinary replies.
+  FLOW_STARTED
+  FLOW_FOLLOW_PROMPTED
+  FLOW_STILL_NOT_FOLLOWING
+  FLOW_LINK_SENT
   // Nothing matched, so nothing was sent — the quiet default.
   NO_RULE_MATCHED
   DATA_DELETED
@@ -847,4 +864,89 @@ model InstagramMessageLog {
   // Read on every inbound message to spot a webhook Meta re-delivered.
   @@index([messageId])
   @@map("instagram_message_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Instagram button flow
+// ---------------------------------------------------------------------------
+
+// The tap-through flow a reel comment or a keyword DM can start: an opener
+// with a button, a follow gate with "Visit profile" / "I'm following", and
+// the invite link only once the follow check comes back positive.
+//
+// One row for the whole account rather than a copy per reel: the wording is
+// about *us* — our profile, our website, our link — so an admin edits it
+// once and every reel that opts in with `useButtonFlow` uses it. `key` is
+// unique and always "default", which is what makes the singleton a
+// constraint rather than a convention.
+//
+// Every field has a code-side default (DEFAULT_FLOW_SETTINGS), so switching
+// a reel to the flow works before anyone opens this form.
+model InstagramFlowSettings {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId
+  key String @unique @default("default")
+
+  // Off switches the whole flow back to plain text replies, without having
+  // to un-tick every reel.
+  isActive Boolean @default(true)
+
+  // Step 1 — the opener, sent as the private reply to the comment.
+  openerMessage     String
+  openerButtonLabel String
+
+  // Step 2 — the follow gate, sent when the check doesn't come back positive.
+  // The check runs on the *tap*, not on the comment: tapping sends us a
+  // message, which is exactly what lets Instagram resolve
+  // is_user_follow_business for someone who has never messaged us.
+  requireFollow            Boolean @default(true)
+  followMessage            String
+  followButtonLabel        String
+  // Sent when they tap "I'm following" but the check still says otherwise.
+  stillNotFollowingMessage String
+  // The "Visit profile" button. Blank drops the button — the flow still
+  // works, people just have to find the profile themselves.
+  profileUrl               String?
+  profileButtonLabel       String
+
+  // Step 3 — the payoff. Supports {{link}} and {{username}}.
+  linkMessage      String
+  linkButtonLabel  String
+  // Sent instead of linkMessage when this account already claimed a link.
+  duplicateMessage String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("instagram_flow_settings")
+}
+
+enum InstagramFlowStep {
+  // Opener sent; waiting for the first tap.
+  AWAITING_TAP
+  // Follow gate sent; waiting for "I'm following".
+  AWAITING_FOLLOW
+  // Link delivered.
+  COMPLETED
+}
+
+// Where one Instagram account has got to in the button flow. The taps
+// themselves carry their own payload, so this is not what routes them — it
+// is what lets someone who *types* "I'm following" instead of tapping be
+// understood, and what shows an admin how many people are sitting at the
+// follow gate rather than through it.
+model InstagramFlowState {
+  id       String            @id @default(auto()) @map("_id") @db.ObjectId
+  igUserId String            @unique
+  step     InstagramFlowStep
+  username String?
+  // The reel whose comment started the flow, so the link claimed three taps
+  // later still attributes to it. Not a relation: the flow outlives the
+  // automation being edited or deleted, and a dangling id here only costs
+  // the attribution, which is checked before it is used.
+  automationId String? @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("instagram_flow_states")
 }

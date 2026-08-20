@@ -110,27 +110,33 @@ export const videoTemplateFormSchema = z.object({
 export type VideoTemplateFormInput = z.infer<typeof videoTemplateFormSchema>;
 export type VideoTemplateFormValues = z.input<typeof videoTemplateFormSchema>;
 
-export const instagramAutomationFormSchema = z.object({
-  id: z.string().optional(),
-  mediaId: z
-    .string()
-    .min(1, "Instagram media ID is required")
-    .regex(/^\d+$/, "Media IDs are numeric — copy it from the dashboard's comment log"),
-  label: z.string().min(1, "Give the reel a name you'll recognise"),
-  permalink: z.string().optional(),
-  triggerWord: z.string().min(1, "Trigger word is required"),
-  replyMessage: z
-    .string()
-    .min(1, "Reply message is required")
-    .refine(
-      (v) => v.includes("{{link}}"),
-      "Include {{link}} so the invite link is sent",
-    ),
-  duplicateMessage: z.string().min(1, "Duplicate reply is required"),
-  requireFollow: z.boolean().default(false),
-  notFollowingMessage: z.string().optional(),
-  isActive: z.boolean().default(true),
-});
+export const instagramAutomationFormSchema = z
+  .object({
+    id: z.string().optional(),
+    mediaId: z
+      .string()
+      .min(1, "Instagram media ID is required")
+      .regex(
+        /^\d+$/,
+        "Media IDs are numeric — copy it from the dashboard's comment log",
+      ),
+    label: z.string().min(1, "Give the reel a name you'll recognise"),
+    permalink: z.string().optional(),
+    triggerWord: z.string().min(1, "Trigger word is required"),
+    replyMessage: z.string().min(1, "Reply message is required"),
+    duplicateMessage: z.string().min(1, "Duplicate reply is required"),
+    requireFollow: z.boolean().default(false),
+    notFollowingMessage: z.string().optional(),
+    useButtonFlow: z.boolean().default(false),
+    isActive: z.boolean().default(true),
+  })
+  // The plain reply has to carry {{link}} or it promises a link it never
+  // sends. The button flow's reply is only the opener — the link comes later,
+  // from the flow's own wording — so requiring it there would be wrong.
+  .refine((v) => v.useButtonFlow || v.replyMessage.includes("{{link}}"), {
+    message: "Include {{link}} so the invite link is sent",
+    path: ["replyMessage"],
+  });
 
 export type InstagramAutomationFormInput = z.infer<
   typeof instagramAutomationFormSchema
@@ -152,9 +158,12 @@ export const instagramDmRuleFormSchema = z
     label: z.string().min(1, "Give the rule a name you'll recognise"),
     matchType: z.enum(INSTAGRAM_DM_MATCH_TYPES).default("CONTAINS"),
     keyword: z.string().optional(),
-    replyMessage: z.string().min(1, "Reply message is required"),
+    // Required unless the rule only starts the button flow, which brings its
+    // own wording — see the refinements below.
+    replyMessage: z.string().default(""),
     issueLink: z.boolean().default(false),
     duplicateMessage: z.string().optional(),
+    startFlow: z.boolean().default(false),
     priority: z.coerce.number().int().default(0),
     isActive: z.boolean().default(true),
   })
@@ -165,13 +174,68 @@ export const instagramDmRuleFormSchema = z
     message: "Keyword is required unless the rule replies to every message",
     path: ["keyword"],
   })
-  .refine((v) => !v.issueLink || v.replyMessage.includes("{{link}}"), {
+  .refine((v) => v.startFlow || v.replyMessage.trim().length > 0, {
+    message: "Reply message is required",
+    path: ["replyMessage"],
+  })
+  .refine((v) => v.startFlow || !v.issueLink || v.replyMessage.includes("{{link}}"), {
     message: "Include {{link}} so the invite link is sent",
     path: ["replyMessage"],
   });
 
 export type InstagramDmRuleFormInput = z.infer<typeof instagramDmRuleFormSchema>;
 export type InstagramDmRuleFormValues = z.input<typeof instagramDmRuleFormSchema>;
+
+// Instagram truncates a quick reply title past 20 characters, so a label that
+// doesn't fit is cut off in the DM rather than rejected — better to say so in
+// the form than to ship a button reading "I'm following ✅" as "I'm followin".
+const flowButtonLabel = (field: string) =>
+  z
+    .string()
+    .min(1, `${field} is required`)
+    .max(20, `${field} must be 20 characters or fewer — Instagram cuts it off`);
+
+export const instagramFlowSettingsFormSchema = z.object({
+  isActive: z.boolean().default(true),
+  openerMessage: z.string().min(1, "Opening message is required"),
+  openerButtonLabel: flowButtonLabel("Opening button"),
+  requireFollow: z.boolean().default(true),
+  followMessage: z.string().min(1, "Follow-first message is required"),
+  followButtonLabel: flowButtonLabel("Follow-confirmed button"),
+  stillNotFollowingMessage: z
+    .string()
+    .min(1, "Message for a failed follow check is required"),
+  profileUrl: z
+    .string()
+    .trim()
+    .refine((v) => !v || /^https?:\/\//.test(v), {
+      message: "Profile link must start with http:// or https://",
+    })
+    .optional(),
+  profileButtonLabel: flowButtonLabel("Profile button"),
+  linkMessage: z
+    .string()
+    .min(1, "Link message is required")
+    .refine(
+      (v) => v.includes("{{link}}"),
+      "Include {{link}} so the invite link is sent",
+    ),
+  linkButtonLabel: flowButtonLabel("Link button"),
+  duplicateMessage: z
+    .string()
+    .min(1, "Message for someone who already claimed is required")
+    .refine(
+      (v) => v.includes("{{link}}"),
+      "Include {{link}} so their existing link is sent",
+    ),
+});
+
+export type InstagramFlowSettingsFormInput = z.infer<
+  typeof instagramFlowSettingsFormSchema
+>;
+export type InstagramFlowSettingsFormValues = z.input<
+  typeof instagramFlowSettingsFormSchema
+>;
 
 export const themeColorwayFormSchema = z.object({
   id: z.string().optional(),

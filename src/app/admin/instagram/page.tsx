@@ -11,6 +11,7 @@ import { InstagramAutomationToggle } from "@/components/admin/instagram-automati
 import { InstagramDmRuleFormDialog } from "@/components/admin/instagram-dm-rule-form-dialog";
 import { InstagramDmRuleToggle } from "@/components/admin/instagram-dm-rule-toggle";
 import { InstagramMediaCard } from "@/components/admin/instagram-media-card";
+import { InstagramFlowSettingsForm } from "@/components/admin/instagram-flow-settings-form";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import {
   deleteInstagramAutomationAction,
@@ -34,6 +35,7 @@ const OUTCOME_LABELS: Record<
   AUTOMATION_INACTIVE: { label: "Paused", variant: "outline" },
   NOT_FOLLOWING: { label: "Asked to follow", variant: "secondary" },
   FOLLOW_UNVERIFIED: { label: "Follow unverified", variant: "secondary" },
+  FLOW_STARTED: { label: "Button flow started", variant: "default" },
   SEND_FAILED: { label: "Send failed", variant: "destructive" },
 };
 
@@ -44,6 +46,10 @@ const DM_OUTCOME_LABELS: Record<
   REPLY_SENT: { label: "Reply sent", variant: "default" },
   DUPLICATE_REPLY_SENT: { label: "Already had a link", variant: "secondary" },
   NO_RULE_MATCHED: { label: "Left for you", variant: "outline" },
+  FLOW_STARTED: { label: "Button flow started", variant: "default" },
+  FLOW_FOLLOW_PROMPTED: { label: "Asked to follow", variant: "secondary" },
+  FLOW_STILL_NOT_FOLLOWING: { label: "Follow still unconfirmed", variant: "secondary" },
+  FLOW_LINK_SENT: { label: "Link sent", variant: "default" },
   DATA_DELETED: { label: "Data deleted", variant: "secondary" },
   DATA_DELETE_FAILED: { label: "Delete failed", variant: "destructive" },
   SEND_FAILED: { label: "Send failed", variant: "destructive" },
@@ -56,7 +62,7 @@ const DM_MATCH_LABELS: Record<string, string> = {
   ANY: "any message",
 };
 
-// The page is five views over the same account rather than one long scroll.
+// The page is six views over the same account rather than one long scroll.
 // Which one is showing lives in the URL, so only the active view's data — and
 // in particular only its Instagram API lookups — is fetched per request.
 const TABS = [
@@ -64,6 +70,7 @@ const TABS = [
   { id: "reels", label: "Unautomated reels" },
   { id: "posts", label: "Recent posts" },
   { id: "dms", label: "Direct message replies" },
+  { id: "flow", label: "Button flow" },
   { id: "comments", label: "Recent comments" },
 ] as const;
 
@@ -167,6 +174,7 @@ export default async function AdminInstagramPage({
         <RecentPostsPanel automatedMediaIds={automatedMediaIds} />
       )}
       {activeTab === "dms" && <DirectMessagesPanel />}
+      {activeTab === "flow" && <ButtonFlowPanel />}
       {activeTab === "comments" && <RecentCommentsPanel />}
     </div>
   );
@@ -236,6 +244,7 @@ function AutomationsPanel({
                       duplicateMessage: automation.duplicateMessage,
                       requireFollow: automation.requireFollow,
                       notFollowingMessage: automation.notFollowingMessage,
+                      useButtonFlow: automation.useButtonFlow,
                       isActive: automation.isActive,
                     }}
                   />
@@ -252,7 +261,10 @@ function AutomationsPanel({
                   {automation.isActive ? "Active" : "Paused"}
                 </Badge>
                 <Badge variant="secondary">Trigger: {automation.triggerWord}</Badge>
-                {automation.requireFollow && (
+                {automation.useButtonFlow && (
+                  <Badge variant="secondary">Button flow</Badge>
+                )}
+                {automation.requireFollow && !automation.useButtonFlow && (
                   <Badge variant="outline">Followers only</Badge>
                 )}
               </div>
@@ -438,7 +450,10 @@ async function DirectMessagesPanel() {
                       <Badge variant={rule.isActive ? "default" : "outline"}>
                         {rule.isActive ? "Active" : "Paused"}
                       </Badge>
-                      {rule.issueLink && (
+                      {rule.startFlow && (
+                        <Badge variant="secondary">Starts button flow</Badge>
+                      )}
+                      {rule.issueLink && !rule.startFlow && (
                         <Badge variant="secondary">Sends invite link</Badge>
                       )}
                       {rule.matchType === "ANY" && (
@@ -457,6 +472,7 @@ async function DirectMessagesPanel() {
                         replyMessage: rule.replyMessage,
                         issueLink: rule.issueLink,
                         duplicateMessage: rule.duplicateMessage,
+                        startFlow: rule.startFlow,
                         priority: rule.priority,
                         isActive: rule.isActive,
                       }}
@@ -540,6 +556,91 @@ async function DirectMessagesPanel() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/**
+ * The button flow: what it says, and who is standing where in it.
+ *
+ * The counts are the point of the panel as much as the form — a pile of
+ * people sitting at "waiting to follow" is the flow working, while a pile at
+ * "waiting to tap" usually means the opener isn't landing.
+ */
+async function ButtonFlowPanel() {
+  const [settings, awaitingTap, awaitingFollow, completed, flowAutomations, flowRules] =
+    await Promise.all([
+      db.instagramFlowSettings.findUnique({ where: { key: "default" } }),
+      db.instagramFlowState.count({ where: { step: "AWAITING_TAP" } }),
+      db.instagramFlowState.count({ where: { step: "AWAITING_FOLLOW" } }),
+      db.instagramFlowState.count({ where: { step: "COMPLETED" } }),
+      db.instagramAutomation.findMany({
+        where: { useButtonFlow: true },
+        select: { id: true, label: true, triggerWord: true, isActive: true },
+      }),
+      db.instagramDmRule.findMany({
+        where: { startFlow: true },
+        select: { id: true, label: true, keyword: true, isActive: true },
+      }),
+    ]);
+
+  const steps = [
+    { label: "Waiting to tap", count: awaitingTap },
+    { label: "Waiting to follow", count: awaitingFollow },
+    { label: "Link delivered", count: completed },
+  ];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Card>
+        <CardContent className="flex flex-col gap-3 py-4">
+          <div>
+            <p className="font-medium">Who is where</p>
+            <p className="text-muted-foreground text-xs">
+              Comment the keyword → tap the button → follow → get the link. Reels opt in
+              with &ldquo;Button flow&rdquo;; DM rules with &ldquo;Start button
+              flow&rdquo;.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            {steps.map((step) => (
+              <div key={step.label} className="rounded-lg border p-3">
+                <p className="text-2xl font-semibold">{step.count}</p>
+                <p className="text-muted-foreground text-xs">{step.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {flowAutomations.length === 0 && flowRules.length === 0 ? (
+              <p className="text-muted-foreground text-xs">
+                Nothing uses the flow yet — turn it on for a reel automation or a DM
+                rule and the wording below is what it will send.
+              </p>
+            ) : (
+              <>
+                {flowAutomations.map((automation) => (
+                  <Badge
+                    key={automation.id}
+                    variant={automation.isActive ? "default" : "outline"}
+                  >
+                    Reel: {automation.label} · {automation.triggerWord}
+                  </Badge>
+                ))}
+                {flowRules.map((rule) => (
+                  <Badge key={rule.id} variant={rule.isActive ? "default" : "outline"}>
+                    DM: {rule.label}
+                    {rule.keyword && ` · ${rule.keyword}`}
+                  </Badge>
+                ))}
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <InstagramFlowSettingsForm settings={settings} />
     </div>
   );
 }

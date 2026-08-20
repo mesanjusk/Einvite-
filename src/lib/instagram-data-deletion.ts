@@ -19,6 +19,7 @@ export type InstagramDeletionSummary = {
   profilesDeleted: number;
   commentLogsDeleted: number;
   messageLogsDeleted: number;
+  flowStatesDeleted: number;
 };
 
 export async function deleteInstagramUserData(
@@ -46,7 +47,7 @@ export async function deleteInstagramUserData(
   const strayLinks = await db.instagramLink.deleteMany({ where: { igUserId } });
   linksDeleted += strayLinks.count;
 
-  const [leads, profiles, commentLogs, messageLogs] = await Promise.all([
+  const [leads, profiles, commentLogs, messageLogs, flowStates] = await Promise.all([
     db.instagramLead.deleteMany({ where: { igUserId } }),
     db.instagramProfile.deleteMany({ where: { igUserId } }),
     db.instagramCommentLog.deleteMany({ where: { igUserId } }),
@@ -54,6 +55,9 @@ export async function deleteInstagramUserData(
     // rest. A "DELETE" DM logs its own row after this runs, on purpose: that
     // row records the request, not the erased history.
     db.instagramMessageLog.deleteMany({ where: { igUserId } }),
+    // Where they had got to in the button flow. Erasing it means a returning
+    // user starts the flow from the opener, which is what "fresh" promises.
+    db.instagramFlowState.deleteMany({ where: { igUserId } }),
   ]);
 
   return {
@@ -63,5 +67,6 @@ export async function deleteInstagramUserData(
     profilesDeleted: profiles.count,
     commentLogsDeleted: commentLogs.count,
     messageLogsDeleted: messageLogs.count,
+    flowStatesDeleted: flowStates.count,
   };
 }
