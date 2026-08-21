@@ -127,14 +127,16 @@ export async function sendInstagramButtons(
   }
 
   const fitsAsTitle = text.length <= TEMPLATE_TITLE_LIMIT;
+  let prefaceSent = false;
   if (!fitsAsTitle) {
     const preface = await sendInstagramMessage(recipient, text);
     // Sending the card after a message that never arrived would leave bare
     // buttons with nothing explaining them, so the failure stops here.
     if (!preface.delivered) return preface;
+    prefaceSent = true;
   }
 
-  return postMessage(recipient, {
+  const card = await postMessage(recipient, {
     attachment: {
       type: "template",
       payload: {
@@ -154,6 +156,20 @@ export async function sendInstagramButtons(
       },
     },
   });
+
+  // A card that Instagram rejects — Generic Templates are unreliable on IG
+  // DMs, and a `web_url` button is a common trigger — must never look like
+  // "nothing was sent". The caller's fallback for an undelivered result is to
+  // resend the same text in plain form, and the text already went out as the
+  // preface: doing that again would hand the person the identical message
+  // twice, word for word. So once the preface has landed, the card's own
+  // fate no longer decides the verdict — only whether the buttons made it.
+  if (!card.delivered && prefaceSent) {
+    console.error("Instagram button card rejected after its preface text sent");
+    return { delivered: true, devMode: false };
+  }
+
+  return card;
 }
 
 /**

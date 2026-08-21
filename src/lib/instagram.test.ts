@@ -159,6 +159,45 @@ describe("sendInstagramButtons", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("never lets a rejected card put the text back out a second time", async () => {
+    // This is the bug behind a real production incident: the text landed
+    // fine, Instagram then rejected the button card (Generic Templates are
+    // unreliable on IG DMs), and the caller's undelivered-result fallback
+    // resent the identical text — the recipient got the same message twice,
+    // word for word. Once the text is out, the card's own fate must never
+    // make this report "nothing was sent".
+    vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, text: async () => "" })
+      .mockResolvedValueOnce({ ok: false, status: 400, text: async () => "rejected" });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await sendInstagramButtons({ id: "u1" }, "z".repeat(120), [
+      { type: "url", title: "Open my invite", url: "https://example.com/e/tok" },
+    ]);
+
+    expect(result).toEqual({ delivered: true, devMode: false });
+    // Exactly the preface plus one rejected card attempt — nothing retried.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("still reports failure when the card fails and no preface was ever sent", async () => {
+    // Short text fits as the card's own title, so there is no preface — the
+    // card is the only thing attempted, and its failure is a real failure.
+    vi.stubEnv("IG_ACCESS_TOKEN", "IGAAtoken");
+    const fetchMock = stubFetch({ ok: false, status: 400 });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await sendInstagramButtons({ id: "u1" }, "short", [
+      { type: "url", title: "Open my invite", url: "https://example.com/e/tok" },
+    ]);
+
+    expect(result.delivered).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("logs instead of sending when no token is configured", async () => {
     vi.stubEnv("IG_ACCESS_TOKEN", "");
     const fetchMock = stubFetch({});
