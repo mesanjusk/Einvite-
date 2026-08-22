@@ -54,6 +54,9 @@ const UNIQUE_CONSTRAINTS = [
   { collection: "deployments", keys: ["invitationId"] },
   { collection: "guests", keys: ["inviteToken"] },
   { collection: "rsvps", keys: ["guestId"] },
+  { collection: "vendors", keys: ["slug"] },
+  { collection: "employees", keys: ["slug"] },
+  { collection: "employees", keys: ["userId"] },
 ];
 
 // Identifiers worth keeping out of a build log even though it is not public.

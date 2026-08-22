@@ -394,6 +394,7 @@ model Invitation {
   phoneLink       PhoneLink?
   instagramLink   InstagramLink?
   videos          InvitationVideo[]
+  orderItems      OrderItem[]
 
   @@index([userId])
   @@map("invitations")
@@ -1059,4 +1060,138 @@ model EventCategoryConfig {
   updatedAt DateTime @updatedAt
 
   @@map("event_category_configs")
+}
+
+// ---------------------------------------------------------------------------
+// Books: vendors, staff, and the priced order lines the admin reports read
+// ---------------------------------------------------------------------------
+
+// An outside supplier a job is bought from — the press that prints the cards,
+// the studio that shoots the pre-wedding film, the courier that ships them.
+// Kept as its own record rather than a free-text string on the order line so
+// "vendor wise" can total a supplier across a year of jobs even after someone
+// changes how they spell the name.
+model Vendor {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  // Stable handle used by the reports and the CSV export, so a rename never
+  // splits one supplier into two rows.
+  slug     String  @unique
+  // Free text on purpose: what a studio buys from outside changes faster than
+  // an enum can be redeployed. "printing", "photography", "video", "courier".
+  category String?
+
+  contactName String?
+  phone       String?
+  email       String?
+  notes       String?
+  // Retired suppliers stay on the books: their past jobs are still part of
+  // last year's profit. Off only takes them out of the pickers.
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@map("vendors")
+}
+
+// Someone who works the orders — a designer, a sales person, a support agent.
+// Deliberately separate from `User`: most of the team never signs into the
+// app, and the ones who do should not have to hold a login before their work
+// can be credited to them. `userId` links the two where both exist.
+model Employee {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  slug   String  @unique
+  userId String? @unique @db.ObjectId
+
+  // "designer", "sales", "support" — free text for the same reason a
+  // vendor's category is.
+  role     String?
+  phone    String?
+  email    String?
+  notes    String?
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@map("employees")
+}
+
+// What kind of thing was sold. THEME/PDF_THEME/VIDEO_TEMPLATE/MUSIC line up
+// with the catalogue an admin already curates, so an item-wise report can
+// name the exact design that earned the money; the rest cover work that has
+// no catalogue row (a print run, a delivery, a bespoke service).
+enum OrderItemKind {
+  THEME
+  PDF_THEME
+  VIDEO_TEMPLATE
+  MUSIC
+  PRINT
+  SERVICE
+  ADDON
+  OTHER
+}
+
+// One priced line of one order. This is the single fact table behind every
+// admin report: item wise groups it by `itemKey`, order wise by
+// `invitationId`, vendor wise by `vendorId`, employee wise by `employeeId`,
+// and daily/weekly/monthly by `occurredAt`. Profit is revenue minus cost on
+// the same row, so no report has to join two sources to subtract them.
+//
+// Money is stored in minor units (paise for INR, cents for USD) as integers.
+// Floating-point rupees drift once you sum a few thousand of them, and a
+// report whose total disagrees with the sum of its own rows is worse than no
+// report.
+model OrderItem {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // The order. An invitation is the unit a studio actually bills for, so it
+  // is what "order wise" counts.
+  invitationId String        @db.ObjectId
+  kind         OrderItemKind @default(SERVICE)
+
+  // How the item-wise report groups. For a catalogue kind this is the
+  // catalogue record's id; for everything else it is a slug the admin types
+  // once and reuses ("premium-card-print"). `itemName` is only the label —
+  // renaming an item never moves its history to a new row.
+  itemKey  String
+  itemName String
+
+  quantity  Int    @default(1)
+  // Charged to the couple, per unit, in minor units.
+  unitPrice Int    @default(0)
+  // Paid out for it, per unit, in minor units. Zero is a real answer — work
+  // done in-house costs nothing outside — so it is not nullable.
+  unitCost  Int    @default(0)
+  currency  String @default("INR")
+
+  vendorId   String? @db.ObjectId
+  employeeId String? @db.ObjectId
+
+  // The business date the line belongs to, which is not always the date the
+  // row was typed in: a job booked on the 31st and entered on the 2nd belongs
+  // to the month it was booked. Every period bucket reads this, never
+  // `createdAt`.
+  occurredAt DateTime @default(now())
+  note       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  vendor     Vendor?    @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  employee   Employee?  @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  @@index([invitationId])
+  @@index([occurredAt])
+  @@index([vendorId])
+  @@index([employeeId])
+  @@index([itemKey])
+  @@map("order_items")
 }
