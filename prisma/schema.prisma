@@ -28,6 +28,15 @@ model User {
   image         String?
   password      String? // set for credentials sign-up; null for OAuth-only users
   role          UserRole  @default(USER)
+
+  // Which group this account belongs to, as a name out of the `usergroups`
+  // collection — "Admin User", "Office Design", "Vendor". This, not `role`,
+  // is what decides admin access; see `user-groups.ts`. Optional because
+  // accounts created before groups existed have none, and because the group
+  // may live under a differently-named field on records written by the older
+  // app — the resolver reads those too.
+  userGroup     String?
+  userGroupUuid String?
   // Optional (not defaulted) so existing Mongo documents without this field
   // still read fine — treat missing/null as active everywhere it's read.
   isActive      Boolean?
@@ -1194,4 +1203,25 @@ model OrderItem {
   @@index([employeeId])
   @@index([itemKey])
   @@map("order_items")
+}
+
+// ---------------------------------------------------------------------------
+// User groups
+// ---------------------------------------------------------------------------
+
+// The existing `usergroups` collection, as written by the older Mongoose app —
+// "Admin User", "Office Design", "Vendor" and the rest. Mapped rather than
+// re-created so both apps read one list: renaming a group there renames it
+// here, and nobody has to keep two copies of the same eight rows in step.
+//
+// Deliberately carries no unique constraints. It is not this schema's
+// collection to constrain, and `prisma db push` builds every index in one
+// batch — a single duplicate row here would abort the push and leave the
+// indexes this app *does* rely on uncreated. Reads use `findFirst`.
+model UserGroup {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  uuid String @map("User_group_uuid")
+  name String @map("User_group")
+
+  @@map("usergroups")
 }

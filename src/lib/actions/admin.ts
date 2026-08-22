@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
+import { getAdmin } from "@/lib/admin-guard";
+import { isAdminGroup } from "@/lib/user-groups";
 import { db } from "@/lib/db";
 import { deleteImage, isCloudinaryConfigured } from "@/lib/media/cloudinary";
 import { fetchInstagramMedia, type InstagramMedia } from "@/lib/instagram";
@@ -17,7 +19,7 @@ import type { ActionResult } from "@/lib/actions/auth";
 import {
   themeFormSchema,
   musicTrackFormSchema,
-  updateUserRoleSchema,
+  updateUserGroupSchema,
   videoTemplateFormSchema,
   instagramAutomationFormSchema,
   instagramDmRuleFormSchema,
@@ -43,29 +45,14 @@ import {
 /**
  * The session, only if it still belongs to an active admin.
  *
- * The role is re-read from the record rather than taken from the session:
- * sessions last until they are signed out of, so a token minted before a
- * demotion would otherwise keep admin rights indefinitely. One indexed
- * lookup per admin action is a fair price for a revocation that actually
- * revokes.
+ * Delegates the decision to `getAdmin()`, which reads the caller's user group
+ * from their record on every call — see `admin-guard.ts` for why the role in
+ * the session is not consulted. The session itself is still returned, because
+ * several actions below need the signed-in user's own id.
  */
 async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
-    return null;
-  }
-
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true, isActive: true },
-  });
-  // isActive is optional on the model: documents predating it read as null
-  // and are active, so only an explicit false locks someone out.
-  if (user?.role !== "ADMIN" || user.isActive === false) {
-    return null;
-  }
-
-  return session;
+  if (!(await getAdmin())) return null;
+  return auth();
 }
 
 export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionResult> {
@@ -268,25 +255,56 @@ export async function deleteMusicTrackAction(trackId: string): Promise<ActionRes
   return { success: true, data: undefined };
 }
 
-export async function updateUserRoleAction(input: {
+/**
+ * Puts an account in a user group — and, since groups are what grant admin,
+ * this is how somebody is made an admin.
+ *
+ * The legacy `role` column is written to match. Two fields meaning the same
+ * thing is a liability, but the alternative is worse while both exist: the
+ * role is what lands in the session token, what the older app reads, and what
+ * `admin-guard.ts` still honours as a fallback, so leaving it stale would let
+ * a demoted account keep admin through the fallback it is supposed to be
+ * retiring. Writing both keeps them from disagreeing.
+ *
+ * Removing your own admin is refused, the same as demoting yourself was. It
+ * is the one change no other admin can undo for you if you are the last one.
+ */
+export async function updateUserGroupAction(input: {
   userId: string;
-  role: "USER" | "ADMIN";
+  group: string;
 }): Promise<ActionResult> {
   const session = await requireAdmin();
   if (!session) return { success: false, error: "Admin access required." };
 
-  const parsed = updateUserRoleSchema.safeParse(input);
+  const parsed = updateUserGroupSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { userId, group } = parsed.data;
+
+  const grantsAdmin = isAdminGroup(group);
+  if (userId === session.user.id && !grantsAdmin) {
+    return { success: false, error: "You can't remove your own admin access." };
   }
 
-  if (parsed.data.userId === session.user.id && parsed.data.role === "USER") {
-    return { success: false, error: "You can't demote yourself." };
-  }
+  // Look the group up so its uuid can be stored alongside the name. A group
+  // that is not in the collection is still accepted — the name is what
+  // decides access, and refusing it would make this screen unusable against a
+  // database whose `usergroups` rows have not been imported yet.
+  const match = group
+    ? await db.userGroup.findFirst({ where: { name: group }, select: { uuid: true } })
+    : null;
 
   await db.user.update({
-    where: { id: parsed.data.userId },
-    data: { role: parsed.data.role },
+    where: { id: userId },
+    data: {
+      userGroup: group || null,
+      userGroupUuid: match?.uuid ?? null,
+      role: grantsAdmin ? "ADMIN" : "USER",
+    },
   });
 
   revalidatePath("/admin/users");
