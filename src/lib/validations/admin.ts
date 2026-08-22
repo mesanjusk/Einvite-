@@ -82,9 +82,12 @@ export const musicTrackFormSchema = z.object({
 export type MusicTrackFormInput = z.infer<typeof musicTrackFormSchema>;
 export type MusicTrackFormValues = z.input<typeof musicTrackFormSchema>;
 
-export const updateUserRoleSchema = z.object({
-  userId: z.string(),
-  role: z.enum(["USER", "ADMIN"]),
+// A group is picked from the `usergroups` collection, so the name is free
+// text here rather than an enum — the list is data, and adding a group there
+// must not need a redeploy. An empty string clears the group.
+export const updateUserGroupSchema = z.object({
+  userId: z.string().min(1),
+  group: z.string().trim().max(120),
 });
 
 export const VIDEO_ASPECT_RATIOS = ["9:16", "16:9", "1:1"] as const;

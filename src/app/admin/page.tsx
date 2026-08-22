@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Users, LayoutTemplate, ClipboardCheck, CreditCard } from "lucide-react";
 
 import { db } from "@/lib/db";
+import { isAdminGroup } from "@/lib/user-groups";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,14 @@ export default async function AdminOverviewPage() {
       db.user.findMany({
         orderBy: { createdAt: "desc" },
         take: 8,
-        select: { id: true, name: true, email: true, role: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          userGroup: true,
+          createdAt: true,
+        },
       }),
     ]);
 
@@ -89,8 +97,14 @@ export default async function AdminOverviewPage() {
                   <td className="px-4 py-3">{user.name}</td>
                   <td className="text-muted-foreground px-4 py-3">{user.email}</td>
                   <td className="px-4 py-3">
-                    <Badge variant={user.role === "ADMIN" ? "gold" : "secondary"}>
-                      {user.role}
+                    {/* The group is what grants access, so it is what the
+                        column shows. An account with none falls back to the
+                        old role field, which still grants admin until every
+                        account has been moved across. */}
+                    <Badge
+                      variant={isAdminGroup(user.userGroup) ? "gold" : "secondary"}
+                    >
+                      {user.userGroup ?? user.role}
                     </Badge>
                   </td>
                   <td className="text-muted-foreground px-4 py-3">

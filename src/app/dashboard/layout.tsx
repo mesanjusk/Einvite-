@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getAccessProfile } from "@/lib/admin-guard";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
@@ -16,15 +16,16 @@ export default async function DashboardLayout({
     redirect("/sign-in?callbackUrl=/dashboard");
   }
 
-  const dbUser = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { isActive: true },
-  });
-  if (dbUser?.isActive === false) {
+  // One read answers both questions this layout asks — is the account still
+  // switched on, and does its user group make it an admin. Deriving the
+  // second from `session.user.role` would show the Admin link based on a
+  // token written at sign-in, which can be a year behind the record.
+  const profile = await getAccessProfile();
+  if (profile && !profile.isActive) {
     redirect("/sign-in?deactivated=1");
   }
 
-  const isAdmin = session.user.role === "ADMIN";
+  const isAdmin = profile?.isAdmin ?? false;
 
   return (
     <div className="flex min-h-svh">
