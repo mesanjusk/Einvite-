@@ -10,6 +10,7 @@ import {
   Library,
   UserCog,
   MessageCircleReply,
+  BarChart3,
 } from "lucide-react";
 
 export type NavItem = {
@@ -47,6 +48,9 @@ export const adminNav: NavItem[] = [
   // Website themes, PDF themes, video templates and music are one job:
   // curating what couples pick from.
   { title: "Content Library", href: "/admin/library/themes", icon: Library, match: "/admin/library" },
+  // Item, order, vendor, employee, profit and performance are one job —
+  // reading the business — so they are one entry with tabs inside it.
+  { title: "Reports", href: "/admin/reports", icon: BarChart3, match: "/admin/reports" },
   { title: "Instagram", href: "/admin/instagram", icon: MessageCircleReply },
   { title: "Users", href: "/admin/users", icon: UserCog },
 ];

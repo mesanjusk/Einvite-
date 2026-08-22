@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { adminDeleteMediaAction } from "@/lib/actions/admin";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { RegenerateEditLinkButton } from "@/components/admin/regenerate-edit-link-button";
+import { OrderLinesCard } from "@/components/admin/reports/order-lines-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -58,6 +59,10 @@ export default async function AdminInvitationDetailPage({
           {invitation.customMusicUrl && " · custom music uploaded"}
         </p>
       </div>
+
+      {/* What this job was billed for. Entered here, read by every admin
+          report — see components/admin/reports/order-lines-card.tsx. */}
+      <OrderLinesCard invitationId={invitation.id} />
 
       {!invitation.user && (
         <Card>
