@@ -18,13 +18,17 @@ export default async function DashboardLayout({
 
   const dbUser = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { isActive: true },
+    select: { isActive: true, role: true },
   });
   if (dbUser?.isActive === false) {
     redirect("/sign-in?deactivated=1");
   }
 
-  const isAdmin = session.user.role === "ADMIN";
+  // Read from the record, not from `session.user.role`. The role is written
+  // into the session only at sign-in and sessions last a year, so an account
+  // just promoted to ADMIN would otherwise be an admin everywhere except in
+  // the one place that shows them the link.
+  const isAdmin = dbUser?.role === "ADMIN";
 
   return (
     <div className="flex min-h-svh">

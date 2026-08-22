@@ -4,20 +4,30 @@ import { db } from "@/lib/db";
 /**
  * The one place that answers "is the caller an admin, right now?".
  *
- * The role is re-read from the record rather than trusted from the session.
- * Sessions here last a year (see `auth.ts`), so a token minted before a
- * demotion would otherwise keep admin rights for as long as the browser keeps
- * the cookie. One indexed lookup per admin request is a fair price for a
- * revocation that actually revokes.
+ * The session supplies only *who* is asking. Whether they are an admin comes
+ * from their record, every time — the role stamped into the session is not
+ * consulted at all.
  *
- * Deactivation counts as "not an admin" too: an account switched off should
- * lose the reports the same moment it loses everything else.
+ * That is deliberate in both directions, and getting only one of them right
+ * is what made this worth centralising. Sessions here last a year (see
+ * `auth.ts`) and the role is written into the token only at sign-in
+ * (`auth.config.ts`), so a token outlives any change to the record:
+ *
+ *   - Demotion: a token minted while they were an admin would keep admin
+ *     rights until the cookie expired.
+ *   - Promotion: an account switched to ADMIN in the database stays locked
+ *     out until it signs out and back in — which looks exactly like the
+ *     change never took.
+ *
+ * One indexed lookup per admin request buys both. Deactivation counts as
+ * "not an admin" too: an account switched off loses the reports the same
+ * moment it loses everything else.
  */
 export type AdminIdentity = { id: string; email: string; name: string | null };
 
 export async function getAdmin(): Promise<AdminIdentity | null> {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") return null;
+  if (!session?.user?.id) return null;
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },

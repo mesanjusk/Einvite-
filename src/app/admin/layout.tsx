@@ -1,28 +1,23 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getAdmin } from "@/lib/admin-guard";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    redirect("/dashboard");
+  if (!session?.user) {
+    redirect("/sign-in?callbackUrl=/admin");
   }
 
-  const dbUser = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { isActive: true, role: true },
-  });
-  if (dbUser?.isActive === false) {
-    redirect("/sign-in?deactivated=1");
-  }
-  // A session lasts until it is signed out of, so the role stamped into it
-  // can be a year old. Admin is re-read from the record here — the same query
-  // that already checks deactivation — so a demotion takes hold on the next
-  // page load rather than on their next sign-in.
-  if (dbUser?.role !== "ADMIN") {
+  // Admin-ness is decided by the record, never by the role stamped into the
+  // session — see `admin-guard.ts`. A session lasts a year here, so a token
+  // is stale about a promotion just as easily as about a demotion, and an
+  // account switched to ADMIN in the database has to work on the next page
+  // load rather than only after a sign-out.
+  const admin = await getAdmin();
+  if (!admin) {
     redirect("/dashboard");
   }
 
