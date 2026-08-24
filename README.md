@@ -145,6 +145,8 @@ src/app/dashboard/            The studio: wizard, templates, media, AI
                                theme editor, deploy, settings, billing
 src/app/admin/                Platform-wide overview (admin-only)
 src/app/invite/[slug]/        The public invitation page + dynamic OG image
+src/app/design/[id]/          The live editor — the same invitation, edited
+                               by tapping it (see below)
 src/app/api/                  AI generation, Stripe, Cloudinary upload,
                                RSVP export, analytics tracking, custom domains
 src/components/ui/            Hand-built Shadcn-style primitives (Radix + cva)
@@ -153,7 +155,9 @@ src/components/animation/     Reusable Framer Motion primitives: fade/slide/
                                petals/sparkles/scroll-progress
 src/components/invite/        The theme rendering engine — envelope, hero,
                                countdown, timeline, gallery, venue, RSVP,
-                               thank-you, all driven by CSS custom properties
+                               thank-you — plus live/ and editable.tsx, which
+                               make those same sections tap-to-edit — all
+                               driven by CSS custom properties
                                (--inv-primary, --inv-accent, …) so any theme
                                reskins every section without new components
 src/lib/                      auth.ts, db.ts, ai/, email/, media/, stripe.ts,
@@ -207,6 +211,52 @@ Built and verified in this pass, in the order the original spec asked for:
     See below.
 18. **PDF generation** — every design prints, with the invitation's own
     data and photos. See below.
+19. **Live editing** — `/design/[invitationId]`: the invitation itself is
+    the editor. See below.
+
+## Live editing (`/design/[invitationId]`)
+
+Someone who is sent an invitation and wants one like it taps **Make this
+invitation mine** at the bottom of it. That copies the *design* — theme,
+colourway, section layout, gallery reveal style, library track, and the
+ceremony names — never the other couple's names, dates, venue, relatives or
+photos, and lands them in the live editor with stock photos in place, so
+they start from a finished invitation rather than an empty page.
+
+The editor renders `InviteExperience` — the same components, animations and
+order guests scroll through — wrapped in an edit context:
+
+```
+src/components/invite/edit-context.tsx   The channel between a section and
+                                          the editor. `useInviteEdit()`
+                                          returns null on the public page,
+                                          so every section renders exactly
+                                          what it always did.
+src/components/invite/editable.tsx       EditableText (tap → caret in
+                                          place), EditableDate (the OS date
+                                          picker over the printed date),
+                                          the dashed chips.
+src/components/invite/live/              The shell: toolbar, and the
+                                          design / photos / music sheets.
+src/lib/actions/live-invitation.ts       One small patch per tap, on an
+                                          allow-list of fields
+                                          (`src/lib/validations/live-invitation.ts`).
+```
+
+Names, the invitation letter, ceremonies (name, date, time, venue, dress
+code, tagline — add and remove them too), the venue, the parents' line and
+the photo headline are edited by tapping them. Photos, music and design have
+their own sheets, opened from the invitation: tapping a photo opens the photo
+sheet on that photo, the speaker button opens the music sheet. Every edit
+saves on its own, optimistically; a rejected write puts the old value back
+and says so. **Preview** turns the edit chrome off to show exactly what
+guests see.
+
+Access is the same check every other edit surface uses
+(`authorizeInvitationAccess`): the signed-in owner, or a browser holding the
+guest flow's draft/owner cookie. The wizard at `/create` is still there for
+anyone who would rather answer questions in order, and the two edit the same
+record interchangeably.
 
 ## Event categories
 

@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useInviteEdit } from "./edit-context";
 
 export function RsvpSection({
   invitationId,
@@ -37,6 +38,7 @@ export function RsvpSection({
   guestName?: string | null;
 }) {
   const { t } = useLocale();
+  const edit = useInviteEdit();
   const [submitted, setSubmitted] = useState(false);
 
   const form = useForm<RsvpSubmissionFormValues, unknown, RsvpSubmissionInput>({
@@ -55,6 +57,12 @@ export function RsvpSection({
   });
 
   async function onSubmit(values: RsvpSubmissionInput) {
+    // The couple editing their own invitation would otherwise reply to it,
+    // and their guest list would open with a reply from themselves.
+    if (edit?.active) {
+      toast.message("This is how your guests will reply — their answers reach you.");
+      return;
+    }
     const result = await submitRsvpAction(values);
     if (!result.success) {
       toast.error(result.error);

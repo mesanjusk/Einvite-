@@ -10,6 +10,8 @@ import { useCountdown } from "@/hooks/use-countdown";
 import { fadeUp } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { ScratchCard } from "./scratch-card";
+import { useInviteEdit } from "./edit-context";
+import { EditableDate } from "./editable";
 
 const SCRATCH_PARTS = ["month", "day", "year"] as const;
 type ScratchPart = (typeof SCRATCH_PARTS)[number];
@@ -22,6 +24,7 @@ export function CountdownSection({
   quote?: string;
 }) {
   const { t, locale } = useLocale();
+  const edit = useInviteEdit();
   const values = useCountdown(weddingDate);
   const [scratched, setScratched] = useState<Record<ScratchPart, boolean>>({
     month: false,
@@ -40,6 +43,9 @@ export function CountdownSection({
     year: weddingDate.toLocaleDateString(locale, { year: "numeric" }),
   };
   const allScratched = SCRATCH_PARTS.every((part) => scratched[part]);
+  // The date is what someone came here to change; hiding it behind a scratch
+  // card they'd have to rub off after every edit is a game, not an editor.
+  const revealed = allScratched || Boolean(edit?.active);
 
   const UNITS = [
     { key: "days", label: t.days },
@@ -67,7 +73,7 @@ export function CountdownSection({
           {allScratched && <ConfettiBurst />}
 
           <AnimatePresence mode="wait">
-            {!allScratched ? (
+            {!revealed ? (
               <motion.div
                 key="scratch"
                 exit={{ opacity: 0 }}
@@ -142,7 +148,9 @@ export function CountdownSection({
                   {t.theWedding}
                 </h2>
                 <p className="mb-7 text-sm tracking-[0.2em]" style={{ color: "var(--inv-accent)" }}>
-                  {dateDisplay}
+                  <EditableDate target={{ kind: "invitation" }} value={weddingDate}>
+                    {dateDisplay}
+                  </EditableDate>
                 </p>
 
                 <div className="flex justify-center gap-3.5">

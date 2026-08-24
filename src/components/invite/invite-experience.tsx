@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { ScrollProgress } from "@/components/animation/scroll-progress";
+import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { LocaleProvider } from "@/lib/i18n/locale-context";
 import { EnvelopeSection } from "./envelope-section";
 import { HeroSection } from "./hero-section";
@@ -16,6 +16,8 @@ import { RsvpSection } from "./rsvp-section";
 import { ThankYouSection } from "./thank-you-section";
 import { MusicPlayer } from "./music-player";
 import { LanguageToggle } from "./language-toggle";
+import { useInviteEdit } from "./edit-context";
+import { EditChip } from "./editable";
 import type { InviteData } from "./types";
 
 type SectionConfigEntry = {
@@ -33,6 +35,7 @@ export function InviteExperience({
   skipEnvelope = false,
   initialGuestName = null,
   guestId = null,
+  showRemixCta = false,
 }: {
   invite: InviteData;
   sectionConfig: SectionConfigEntry[];
@@ -41,7 +44,13 @@ export function InviteExperience({
   /** Resolved server-side from a personalized `?to=<token>` link. */
   initialGuestName?: string | null;
   guestId?: string | null;
+  /**
+   * Whether to offer a visitor their own invitation built on this design.
+   * Off inside the editor and for the couple looking at their own page.
+   */
+  showRemixCta?: boolean;
 }) {
+  const edit = useInviteEdit();
   const [inviteOpen, setInviteOpen] = useState(skipEnvelope);
   const [guestName] = useState<string | null>(initialGuestName);
   const [shareUrl, setShareUrl] = useState(`/invite/${invite.slug}`);
@@ -75,7 +84,11 @@ export function InviteExperience({
     <LocaleProvider>
       <ScrollProgress />
       <LanguageToggle />
-      <MusicPlayer musicUrl={invite.musicUrl} active={inviteOpen} />
+      <MusicPlayer
+        key={invite.musicUrl ?? "no-music"}
+        musicUrl={invite.musicUrl}
+        active={inviteOpen}
+      />
 
       <AnimatePresence>
         {!skipEnvelope && !inviteOpen && (
@@ -98,6 +111,20 @@ export function InviteExperience({
                   <CountdownSection key={section.id} weddingDate={invite.weddingDate} />
                 );
               case "TIMELINE":
+                // With no ceremonies yet there is nothing to tap, so the
+                // editor shows the one thing that starts the list.
+                if (invite.events.length === 0 && edit?.active) {
+                  return (
+                    <section
+                      key={section.id}
+                      className="flex min-h-[40svh] flex-col items-center justify-center gap-3 px-6 text-center"
+                      style={{ background: "var(--inv-background)" }}
+                    >
+                      <p className="text-sm opacity-70">No functions on the invitation yet.</p>
+                      <EditChip onClick={() => edit.addEvent()}>+ Add a function</EditChip>
+                    </section>
+                  );
+                }
                 return invite.events.map((event, i) => (
                   <TimelineSection
                     key={event.id}
@@ -118,11 +145,13 @@ export function InviteExperience({
                   />
                 );
               case "VENUE":
-                return invite.venueName ? (
+                // Same reason as the ceremonies above: a venue nobody has
+                // typed yet still needs its place on the page to type it in.
+                return invite.venueName || edit?.active ? (
                   <VenueSection
                     key={section.id}
                     invitationId={invite.id}
-                    venueName={invite.venueName}
+                    venueName={invite.venueName ?? ""}
                     venueAddress={invite.venueAddress}
                     googleMapsUrl={invite.googleMapsUrl}
                   />
@@ -153,20 +182,20 @@ export function InviteExperience({
         </main>
       )}
 
-      {inviteOpen && invite.isDemo && (
+      {inviteOpen && showRemixCta && (
         <motion.div
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
           className="no-print fixed inset-x-0 bottom-4 z-40 flex justify-center px-4"
         >
-          <Link
-            href={invite.themeSlug ? `/create?theme=${invite.themeSlug}` : "/create"}
+          <StartLiveInvitationButton
+            fromSlug={invite.slug}
             className="pill-button shadow-lg"
             style={{ background: "var(--inv-accent)", color: "var(--inv-primary)" }}
           >
-            Create your own like this
-          </Link>
+            Make this invitation mine
+          </StartLiveInvitationButton>
         </motion.div>
       )}
     </LocaleProvider>

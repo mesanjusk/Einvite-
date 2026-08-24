@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
-import { buildInviteThemeStyle } from "@/lib/theme-css-vars";
+import {
+  buildInviteThemeStyle,
+  type ThemeColorPalette,
+  type ThemeFontPairing,
+} from "@/lib/theme-css-vars";
 import type { InviteData } from "@/components/invite/types";
 
 const INVITATION_INCLUDE = {
@@ -33,6 +37,22 @@ const DEFAULT_FONTS = {
   script: "Great Vibes",
 };
 
+/**
+ * The invitation's CSS custom properties, with the studio defaults filled in
+ * for anything the theme (or a colourway override) doesn't set. Shared by the
+ * public render path and the live editor, which re-styles the page in place
+ * when someone switches design.
+ */
+export function resolveInviteThemeStyle(
+  palette: unknown,
+  fonts: unknown,
+): React.CSSProperties {
+  return buildInviteThemeStyle(
+    (palette as ThemeColorPalette | null) ?? DEFAULT_PALETTE,
+    (fonts as ThemeFontPairing | null) ?? DEFAULT_FONTS,
+  );
+}
+
 export function getInvitationBySlug(slug: string) {
   return db.invitation.findUnique({ where: { slug }, include: INVITATION_INCLUDE });
 }
@@ -62,14 +82,10 @@ type InvitationWithRelations = NonNullable<
 >;
 
 export function toInviteRenderData(invitation: InvitationWithRelations) {
-  const palette = (invitation.colorPalette ?? invitation.theme?.colorPalette) as
-    | typeof DEFAULT_PALETTE
-    | undefined;
-  const fonts = (invitation.fontPairing ?? invitation.theme?.fontPairing) as
-    | typeof DEFAULT_FONTS
-    | undefined;
-
-  const themeStyle = buildInviteThemeStyle(palette ?? DEFAULT_PALETTE, fonts ?? DEFAULT_FONTS);
+  const themeStyle = resolveInviteThemeStyle(
+    invitation.colorPalette ?? invitation.theme?.colorPalette,
+    invitation.fontPairing ?? invitation.theme?.fontPairing,
+  );
 
   const inviteData: InviteData = {
     id: invitation.id,

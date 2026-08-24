@@ -4,6 +4,8 @@ import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { fadeUp } from "@/lib/animation-variants";
 import { trackInviteEvent } from "@/lib/analytics-client";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { useInviteEdit } from "./edit-context";
+import { EditableText } from "./editable";
 
 export function VenueSection({
   invitationId,
@@ -17,6 +19,7 @@ export function VenueSection({
   googleMapsUrl: string | null;
 }) {
   const { t } = useLocale();
+  const edit = useInviteEdit();
   return (
     <section
       className="relative flex min-h-[70svh] items-center justify-center px-6 py-12 text-center"
@@ -33,13 +36,34 @@ export function VenueSection({
             className="mt-1.5 mb-3 text-4xl"
             style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
           >
-            {venueName}
+            <EditableText
+              target={{ kind: "invitation", field: "venueName" }}
+              value={venueName}
+              placeholder="Where is it?"
+            />
           </h2>
         </Reveal>
-        {venueAddress && (
+        {(venueAddress || edit?.active) && (
           <Reveal variants={fadeUp}>
             <p className="mb-6 text-sm opacity-75" style={{ fontFamily: "var(--inv-font-body)" }}>
-              {venueAddress}
+              <EditableText
+                target={{ kind: "invitation", field: "venueAddress" }}
+                value={venueAddress ?? ""}
+                placeholder="Add the full address"
+                multiline
+              />
+            </p>
+          </Reveal>
+        )}
+        {edit?.active && (
+          <Reveal variants={fadeUp}>
+            <p className="mb-6 text-xs opacity-70" style={{ fontFamily: "var(--inv-font-body)" }}>
+              📍{" "}
+              <EditableText
+                target={{ kind: "invitation", field: "googleMapsUrl" }}
+                value={googleMapsUrl ?? ""}
+                placeholder="Paste a Google Maps link"
+              />
             </p>
           </Reveal>
         )}

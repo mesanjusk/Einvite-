@@ -21,6 +21,12 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file");
   const invitationId = formData.get("invitationId");
+  // Which slot the photo is for. The gallery's photos are Media rows; the
+  // two portrait slots are fields on the invitation, so they upload through
+  // here but are stored there — otherwise a portrait would also turn up in
+  // the gallery, where the live editor already shows it as the cover.
+  const slotRaw = formData.get("slot");
+  const slot = slotRaw === "bride" || slotRaw === "groom" ? slotRaw : "gallery";
 
   if (!(file instanceof File) || typeof invitationId !== "string") {
     return NextResponse.json({ error: "file and invitationId are required" }, { status: 400 });
@@ -38,7 +44,7 @@ export async function POST(request: Request) {
   }
 
   const existingCount = await db.media.count({ where: { invitationId } });
-  if (existingCount >= MAX_PHOTOS_PER_INVITATION) {
+  if (slot === "gallery" && existingCount >= MAX_PHOTOS_PER_INVITATION) {
     return NextResponse.json({ error: "Photo limit reached for this invitation." }, { status: 400 });
   }
 
@@ -46,6 +52,14 @@ export async function POST(request: Request) {
   const uploaded = await uploadImageBuffer(buffer, {
     folder: `wedding-studio/${invitation.userId ?? invitation.id}`,
   });
+
+  if (slot !== "gallery") {
+    await db.invitation.update({
+      where: { id: invitationId },
+      data: slot === "bride" ? { bridePhoto: uploaded.url } : { groomPhoto: uploaded.url },
+    });
+    return NextResponse.json({ url: uploaded.url, slot });
+  }
 
   const media = await db.media.create({
     data: {

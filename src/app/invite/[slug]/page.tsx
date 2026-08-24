@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { getAppUrl } from "@/lib/app-url";
 import {
   getInvitationBySlug,
@@ -68,7 +69,14 @@ export default async function InvitePage({
   if (!invitation) notFound();
 
   const session = await auth();
-  const isOwner = session?.user?.id === invitation.userId;
+  // Who this invitation belongs to. An account is one way; the guest flow's
+  // couples own theirs through a cookie instead, and they must count too —
+  // otherwise they can't look at their own unpublished invitation, and get
+  // offered a copy of it once it is published.
+  const isOwner = Boolean(
+    (session?.user && invitation.userId === session.user.id) ||
+      (await authorizeInvitationAccess(invitation.id)),
+  );
   if (invitation.status !== "PUBLISHED" && !isOwner) notFound();
 
   // An invitation claimed through Instagram circulates while its owner
@@ -120,6 +128,10 @@ export default async function InvitePage({
         sectionConfig={sectionConfig}
         initialGuestName={guest?.name ?? null}
         guestId={guest?.id ?? null}
+        // Anyone who was sent this invitation — not the couple who made it —
+        // can start their own on the same design, and edit it on the page
+        // rather than in a form.
+        showRemixCta={!isOwner}
       />
     </div>
   );

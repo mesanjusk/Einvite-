@@ -149,6 +149,83 @@
     cursor: pointer;
     text-align: center;
   }
+
+  /* ---------------------------------------------------------------------
+     Live editor affordances. These only ever apply inside the editor —
+     the public invitation renders the same components without them, so
+     nothing here can leak into what guests see.
+     --------------------------------------------------------------------- */
+
+  .inv-editable {
+    display: inline-block;
+    position: relative;
+    cursor: text;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, var(--inv-accent) 45%, transparent);
+    background: color-mix(in srgb, var(--inv-accent) 7%, transparent);
+    padding: 0 6px;
+    margin: 0 -2px;
+    transition:
+      box-shadow 0.15s ease,
+      background 0.15s ease;
+    /* A tap on a heading should open the caret, never select the word. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .inv-editable:hover,
+  .inv-editable:focus-visible {
+    box-shadow: inset 0 0 0 1.5px var(--inv-accent);
+    background: color-mix(in srgb, var(--inv-accent) 14%, transparent);
+    outline: none;
+  }
+
+  .inv-editable[data-editing="true"] {
+    /* An emptied field still has to be a caret someone can see and tap. */
+    min-width: 2ch;
+    box-shadow: inset 0 0 0 1.5px var(--inv-accent);
+    background: color-mix(in srgb, var(--inv-background) 88%, white 12%);
+    -webkit-user-select: text;
+    user-select: text;
+    cursor: text;
+  }
+
+  .inv-editable-empty {
+    opacity: 0.55;
+    font-style: italic;
+  }
+
+  /* The tappable strip a section shows for things that aren't text —
+     "Change photos", "Add a ceremony", "Change music". */
+  .inv-edit-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px dashed color-mix(in srgb, var(--inv-accent) 60%, transparent);
+    background: color-mix(in srgb, var(--inv-background) 82%, white 18%);
+    color: var(--inv-primary);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .inv-edit-chip:active {
+    transform: scale(0.97);
+  }
+
+  /* The invitation's own floating controls (language, music) sit above every
+     section by design. While an editor sheet is open they would sit above
+     that too, so they step out of the way until it closes. */
+  .inv-sheet-open .inv-float {
+    display: none;
+  }
 }
 
 @keyframes petal-fall {

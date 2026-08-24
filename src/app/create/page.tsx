@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { SiteLogo } from "@/components/brand/site-logo";
 import { GuestInvitationWizard } from "@/components/guest/guest-invitation-wizard";
+import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 import { DEFAULT_EVENT_CATEGORY, eventCategoryFor } from "@/lib/event-categories";
 import { loadEventCategory } from "@/lib/event-category-loader";
@@ -66,7 +67,28 @@ export default async function CreateInvitationPage({
         </p>
       </div>
 
+      {/* The way in that people actually want: a finished invitation on
+          screen, edited by tapping it. The wizard below stays for anyone who
+          would rather answer questions in order. */}
+      <div className="mx-auto w-full max-w-2xl rounded-2xl border bg-white/70 p-5 text-center shadow-sm">
+        <h2 className="font-display text-xl">Design it live</h2>
+        <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
+          Open a ready-made {category.label.toLowerCase()} invitation and tap anything on
+          it — names, dates, photos, music — to make it yours.
+        </p>
+        <StartLiveInvitationButton
+          category={category.slug}
+          themeSlug={initialThemeSlug}
+          className="bg-primary text-primary-foreground mt-4 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium shadow-sm"
+        >
+          Start editing live
+        </StartLiveInvitationButton>
+      </div>
+
       <div className="mx-auto w-full max-w-2xl">
+        <p className="text-muted-foreground mb-3 text-center text-xs tracking-[0.2em] uppercase">
+          Or fill in the details step by step
+        </p>
         <GuestInvitationWizard
           eventCategory={category.slug}
           categoryConfig={categoryConfig}
