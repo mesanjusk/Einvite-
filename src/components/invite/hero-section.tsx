@@ -7,6 +7,8 @@ import { fadeUp } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
 import type { Translations } from "@/lib/i18n/dictionary";
 import { celebrantNames, eventCategoryFor, fillContent } from "@/lib/event-categories";
+import { useInviteEdit } from "./edit-context";
+import { EditableText } from "./editable";
 import type { InviteData, InviteFamilyMember } from "./types";
 
 function CornerBracket({ style }: { style: React.CSSProperties }) {
@@ -26,6 +28,57 @@ function parentsLine(members: InviteFamilyMember[], side: "BRIDE" | "GROOM", t: 
   return `${prefix} ${parents.map((p) => p.name).join(" & ")}`;
 }
 
+function parentName(
+  members: InviteFamilyMember[],
+  side: "BRIDE" | "GROOM",
+  relation: string,
+) {
+  return (
+    members.find(
+      (member) =>
+        member.side === side &&
+        member.relation.trim().toLowerCase() === relation.toLowerCase(),
+    )?.name ?? ""
+  );
+}
+
+/**
+ * The "daughter of …" line, as two tappable slots per side. Guests only ever
+ * see the names that were filled in; here both slots are always present, so
+ * a couple who skipped their parents in the wizard can add them by tapping
+ * the line where they will print.
+ */
+function ParentsEditor({
+  members,
+  side,
+  prefix,
+  labels,
+}: {
+  members: InviteFamilyMember[];
+  side: "BRIDE" | "GROOM";
+  prefix: string;
+  labels: string;
+}) {
+  return (
+    <p>
+      <span className="text-[11px] tracking-[0.2em] uppercase opacity-70">{labels}</span>
+      <br />
+      {prefix}{" "}
+      <EditableText
+        target={{ kind: "family", side, relation: "Father" }}
+        value={parentName(members, side, "Father")}
+        placeholder="Father's name"
+      />{" "}
+      &amp;{" "}
+      <EditableText
+        target={{ kind: "family", side, relation: "Mother" }}
+        value={parentName(members, side, "Mother")}
+        placeholder="Mother's name"
+      />
+    </p>
+  );
+}
+
 export function HeroSection({
   invite,
   guestName,
@@ -34,6 +87,7 @@ export function HeroSection({
   guestName?: string | null;
 }) {
   const { t } = useLocale();
+  const edit = useInviteEdit();
   const category = eventCategoryFor(invite.eventCategory);
   const secondName = invite.groomName.trim();
   // The translated default is written for a wedding; anything else falls back
@@ -54,6 +108,9 @@ export function HeroSection({
         }));
   const brideLine = parentsLine(invite.familyMembers, "BRIDE", t);
   const groomLine = parentsLine(invite.familyMembers, "GROOM", t);
+  // An empty second name is simply absent from a guest's invitation; in the
+  // editor it has to be there to be tapped, or there is no way to fill it in.
+  const showSecondName = Boolean(secondName) || Boolean(edit?.active);
 
   return (
     <section
@@ -109,17 +166,30 @@ export function HeroSection({
               className="mb-5 text-[15px] leading-relaxed"
               style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", color: "var(--inv-foreground)", opacity: 0.75 }}
             >
-              {heroSubline}
+              <EditableText
+                target={{ kind: "copy", field: "invitationLetter" }}
+                value={invite.copy?.invitationLetter ?? heroSubline}
+                placeholder="Write your invitation line"
+                multiline
+              >
+                {heroSubline}
+              </EditableText>
             </p>
           </Reveal>
 
           <Reveal variants={fadeUp}>
             <h1 className="text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
-              <ShimmerText>{invite.brideName}</ShimmerText>
+              <EditableText
+                target={{ kind: "invitation", field: "brideName" }}
+                value={invite.brideName}
+                placeholder={category.primaryNameLabel}
+              >
+                <ShimmerText>{invite.brideName}</ShimmerText>
+              </EditableText>
             </h1>
           </Reveal>
 
-          {secondName && (
+          {showSecondName && (
             <>
               <Reveal variants={fadeUp}>
                 <div className="my-2.5 flex items-center justify-center gap-3.5">
@@ -133,20 +203,48 @@ export function HeroSection({
 
               <Reveal variants={fadeUp}>
                 <h1 className="mb-5 text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
-                  <ShimmerText>{secondName}</ShimmerText>
+                  <EditableText
+                    target={{ kind: "invitation", field: "groomName" }}
+                    value={secondName}
+                    placeholder={category.secondaryNameLabel}
+                  >
+                    <ShimmerText>{secondName}</ShimmerText>
+                  </EditableText>
                 </h1>
               </Reveal>
             </>
           )}
 
-          {(brideLine || groomLine) && (
+          {edit?.active ? (
             <Reveal variants={fadeUp}>
-              <p className="text-sm opacity-75" style={{ fontFamily: "var(--inv-font-body)" }}>
-                {brideLine}
-                {brideLine && groomLine && <br />}
-                {groomLine}
-              </p>
+              <div
+                className="flex flex-col gap-1.5 text-sm opacity-75"
+                style={{ fontFamily: "var(--inv-font-body)" }}
+              >
+                <ParentsEditor
+                  members={invite.familyMembers}
+                  side="BRIDE"
+                  prefix={t.daughterOf}
+                  labels={category.familyLabels.bride}
+                />
+                <ParentsEditor
+                  members={invite.familyMembers}
+                  side="GROOM"
+                  prefix={t.sonOf}
+                  labels={category.familyLabels.groom}
+                />
+              </div>
             </Reveal>
+          ) : (
+            (brideLine || groomLine) && (
+              <Reveal variants={fadeUp}>
+                <p className="text-sm opacity-75" style={{ fontFamily: "var(--inv-font-body)" }}>
+                  {brideLine}
+                  {brideLine && groomLine && <br />}
+                  {groomLine}
+                </p>
+              </Reveal>
+            )
           )}
         </div>
       </RevealGroup>

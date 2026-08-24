@@ -136,7 +136,12 @@ export default async function ManageGuestInvitationPage({
             {media} photo(s) in your gallery
           </p>
           <Button asChild>
-            <Link href={`/create/${invitation.id}/edit`}>Edit invitation</Link>
+            <Link href={`/design/${invitation.id}`}>Edit invitation</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href={`/create/${invitation.id}/edit`}>
+              Prefer a step-by-step form?
+            </Link>
           </Button>
         </CardContent>
       </Card>

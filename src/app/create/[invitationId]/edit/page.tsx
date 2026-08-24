@@ -65,6 +65,15 @@ export default async function EditGuestInvitationPage({
         <SiteLogo size="lg" />
       </Link>
 
+      <div className="mx-auto w-full max-w-2xl text-center">
+        <Link
+          href={`/design/${invitation.id}`}
+          className="text-primary text-sm underline underline-offset-4"
+        >
+          Edit on the invitation itself instead →
+        </Link>
+      </div>
+
       <div className="mx-auto w-full max-w-2xl">
         <GuestInvitationWizard
           eventCategory={category.slug}

@@ -9,6 +9,8 @@ import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
 import { fadeUp, scaleIn, rotateIn, blurReveal } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { useInviteEdit } from "./edit-context";
+import { EditableText, EditPanelChip } from "./editable";
 import type { InviteMedia } from "./types";
 
 const ANIMATION_MAP: Record<string, Variants> = {
@@ -46,18 +48,27 @@ export function GallerySection({
   animation?: string;
 }) {
   const { t } = useLocale();
+  const edit = useInviteEdit();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const stackItems: InviteMedia[] = coverPhoto
     ? [{ id: "cover", url: coverPhoto, caption: null }, ...media]
     : media;
-  if (stackItems.length === 0) return null;
+  // An invitation with no photos yet still needs its photo section in the
+  // editor — that empty pile is where photos get added.
+  if (stackItems.length === 0 && !edit?.active) return null;
 
   const visibleItems = stackItems.slice(0, STACK_LIMIT);
   const overflowCount = stackItems.length - visibleItems.length;
   const variants = ANIMATION_MAP[animation] ?? fadeUp;
 
   function openAt(index: number) {
+    // In the editor a tap on a photo means "change this one", not "look at
+    // it bigger" — the photo sheet opens scrolled to the one tapped.
+    if (edit?.active) {
+      edit.openPanel("photos", stackItems[index]?.id);
+      return;
+    }
     setActiveIndex(index);
   }
 
@@ -92,9 +103,21 @@ export function GallerySection({
             className="mt-1.5 mb-3 text-[48px]"
             style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
           >
-            {storyHeadline}
+            <EditableText
+              target={{ kind: "copy", field: "storyHeadline" }}
+              value={storyHeadline}
+              placeholder="Name this photo section"
+            />
           </h2>
         </Reveal>
+
+        {edit?.active && (
+          <Reveal variants={fadeUp} className="mb-5 flex justify-center">
+            <EditPanelChip panel="photos">
+              {stackItems.length > 0 ? "Change photos" : "Add your photos"}
+            </EditPanelChip>
+          </Reveal>
+        )}
 
         {/* A tossed pile of polaroids: each one scroll-reveals stacked on the last, with a bounce on tap. */}
         <div className="mx-auto flex w-[78%] max-w-[280px] flex-col items-center">
