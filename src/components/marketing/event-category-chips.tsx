@@ -7,9 +7,9 @@ const circle =
   "flex size-16 items-center justify-center rounded-full border transition-transform sm:size-18";
 
 /**
- * Every celebration the studio has designs for. Each chip opens the wizard
- * already set to that category, so the questions, the ceremony list, and
- * the copy match what's being celebrated.
+ * Every celebration the studio has designs for. Choosing a category now opens
+ * the template browser first, so visitors see and preview real designs before
+ * they create anything. The live editor starts only after a design is chosen.
  */
 export function EventCategoryChips({ activeSlug }: { activeSlug?: string }) {
   return (
@@ -21,7 +21,7 @@ export function EventCategoryChips({ activeSlug }: { activeSlug?: string }) {
         return (
           <Link
             key={category.slug}
-            href={`/create?category=${category.slug}`}
+            href={`/themes?category=${category.slug}`}
             className="group focus-visible:ring-primary flex flex-col items-center gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             <span
