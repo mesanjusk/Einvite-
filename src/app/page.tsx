@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { SITE_NAME } from "@/config/site";
 import { SiteLogo } from "@/components/brand/site-logo";
+import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { HeroCarousel } from "@/components/marketing/hero-carousel";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 import { SiteFooter } from "@/components/marketing/site-footer";
@@ -15,7 +16,7 @@ import {
 
 const TITLE = `${SITE_NAME} — Premium Digital Invitations`;
 const DESCRIPTION =
-  "Create premium animated invitation websites with beautiful themes, event details, RSVP, photos and instant sharing.";
+  "Browse premium invitation designs, preview them live, then edit your chosen invitation directly on screen.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -53,7 +54,7 @@ export default async function Home() {
       eyebrow: "Live invitation",
       title: `${demo.brideName} & ${demo.groomName}`,
       href: `/invite/${demo.slug}`,
-      cta: "View invitation",
+      cta: "Preview live",
       primary: palette?.primary ?? "#651d33",
       accent: palette?.accent ?? "#d8b16c",
       background: palette?.background ?? "#fff9f0",
@@ -71,12 +72,17 @@ export default async function Home() {
           name: theme.name,
           slug: theme.slug,
           category: theme.category,
+          eventCategory: theme.eventCategory,
           isPremium: theme.isPremium,
           previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
           colorPalette: theme.colorPalette as Palette,
           demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
         }))
-      : FALLBACK_THEMES.map((theme) => ({ ...theme, demoSlug: null as string | null }));
+      : FALLBACK_THEMES.map((theme) => ({
+          ...theme,
+          eventCategory: "wedding",
+          demoSlug: null as string | null,
+        }));
 
   return (
     <div className="min-h-svh bg-[#fffdf9] text-[#342a27]">
@@ -90,8 +96,8 @@ export default async function Home() {
             <Link href="/themes" className="transition hover:text-[#651d33]">
               Templates
             </Link>
-            <Link href="/create" className="transition hover:text-[#651d33]">
-              Create
+            <Link href="/#categories" className="transition hover:text-[#651d33]">
+              Categories
             </Link>
             <Link href="/dashboard" className="transition hover:text-[#651d33]">
               My invitations
@@ -100,16 +106,16 @@ export default async function Home() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/themes"
+              href="/dashboard"
               className="hidden rounded-full border border-[#ddcfc2] px-4 py-2 text-xs font-semibold text-[#651d33] transition hover:border-[#651d33]/40 sm:inline-flex"
             >
-              Browse designs
+              My invitations
             </Link>
             <Link
-              href="/create"
+              href="/themes"
               className="rounded-full bg-[#651d33] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#54172a]"
             >
-              Get started
+              Choose a design
             </Link>
           </div>
         </div>
@@ -120,20 +126,24 @@ export default async function Home() {
 
         <section className="border-b border-[#eee4db] bg-white">
           <div className="mx-auto grid max-w-6xl grid-cols-3 divide-x divide-[#eee4db] px-4 py-5 sm:px-8">
-            <FeatureStat value="Beautiful" label="mobile-first designs" />
-            <FeatureStat value="Interactive" label="events, RSVP & gallery" />
-            <FeatureStat value="Instant" label="shareable invitation link" />
+            <FeatureStat value="Choose" label="category & design first" />
+            <FeatureStat value="Preview" label="see the invitation live" />
+            <FeatureStat value="Edit" label="tap the invitation itself" />
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 lg:px-10">
+        <section id="categories" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 sm:px-8 lg:px-10">
           <div className="mb-5 text-center">
             <p className="text-[10px] font-semibold tracking-[0.24em] text-[#9a6c48] uppercase">
-              Find your style
+              Step 1 · Choose your celebration
             </p>
             <h2 className="font-display mt-2 text-3xl text-[#5d2032] sm:text-4xl">
-              Invitations for every celebration
+              What are you creating an invitation for?
             </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[#7b665d]">
+              Pick a category to see only the matching designs. You will choose and preview
+              the template before any invitation is created.
+            </p>
           </div>
           <div className="rounded-3xl border border-[#eadfd3] bg-[#fff9f0] p-4 sm:p-5">
             <EventCategoryChips />
@@ -144,7 +154,7 @@ export default async function Home() {
           <div className="mb-7 flex items-end justify-between gap-4">
             <div>
               <p className="text-[10px] font-semibold tracking-[0.24em] text-[#9a6c48] uppercase">
-                Curated collection
+                Step 2 · Preview a design
               </p>
               <h2 className="font-display mt-1 text-3xl text-[#5d2032] sm:text-4xl">
                 Popular invitation themes
@@ -207,22 +217,18 @@ export default async function Home() {
                         href={`/invite/${theme.demoSlug}`}
                         className="rounded-full border border-[#d8c8bc] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-[#651d33] uppercase transition hover:border-[#651d33]/50 hover:bg-[#fff9f0] sm:text-xs"
                       >
-                        See live preview
+                        Live preview
                       </Link>
-                    ) : (
-                      <Link
-                        href={`/create?theme=${theme.slug}`}
-                        className="rounded-full border border-[#d8c8bc] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-[#651d33] uppercase transition hover:border-[#651d33]/50 hover:bg-[#fff9f0] sm:text-xs"
-                      >
-                        Preview design
-                      </Link>
-                    )}
-                    <Link
-                      href={`/create?theme=${theme.slug}`}
-                      className="rounded-full bg-[#651d33] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-white uppercase transition hover:bg-[#54172a] sm:text-xs"
+                    ) : null}
+
+                    <StartLiveInvitationButton
+                      fromSlug={theme.demoSlug ?? undefined}
+                      category={theme.eventCategory}
+                      themeSlug={theme.slug}
+                      className="w-full rounded-full bg-[#651d33] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-white uppercase transition hover:bg-[#54172a] sm:text-xs"
                     >
-                      Use this theme
-                    </Link>
+                      {theme.demoSlug ? "Edit this design" : "Preview & edit"}
+                    </StartLiveInvitationButton>
                   </div>
                 </div>
               </article>
@@ -234,21 +240,21 @@ export default async function Home() {
           <div className="mx-auto grid max-w-6xl items-center gap-7 px-5 py-12 text-white sm:px-8 md:grid-cols-[1fr_auto] lg:px-10">
             <div>
               <p className="text-[10px] font-semibold tracking-[0.24em] text-[#e6c98e] uppercase">
-                Your story, beautifully presented
+                Choose first, edit second
               </p>
               <h2 className="font-display mt-2 max-w-2xl text-3xl leading-tight sm:text-4xl">
-                Turn your celebration into an invitation guests remember.
+                Never fill a form before you know which invitation you want.
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-white/70">
-                Start with a theme, personalize every important detail and publish a polished
-                mobile invitation link when you are ready.
+                Browse the collection, open a real live preview, then make that design yours
+                and edit names, dates, photos, events and music directly on the invitation.
               </p>
             </div>
             <Link
-              href="/create"
+              href="/themes"
               className="inline-flex rounded-full bg-[#e1bd72] px-7 py-3 text-sm font-bold text-[#4c1627] shadow-lg transition hover:-translate-y-0.5 hover:bg-[#efcc82]"
             >
-              Create invitation →
+              Browse templates →
             </Link>
           </div>
         </section>
