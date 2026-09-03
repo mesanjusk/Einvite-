@@ -2,35 +2,34 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
+import { SITE_NAME } from "@/config/site";
 import { SiteLogo } from "@/components/brand/site-logo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { SiteFooter } from "@/components/marketing/site-footer";
 import { categoryIcon } from "@/components/marketing/category-icon";
 import {
   EVENT_CATEGORIES,
   eventCategoryFor,
   isEventCategorySlug,
 } from "@/lib/event-categories";
+import { fallbackThumbnailFor } from "@/lib/marketing-fallbacks";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Themes",
+  title: "Invitation Templates",
   description:
-    "Browse every invitation theme — weddings, birthdays, housewarmings and more — preview a live demo, and create your own.",
+    "Explore premium digital invitation templates, preview live invitations and start customizing your own design.",
 };
 
 export default async function PublicThemesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; q?: string }>;
 }) {
-  const { category: categoryParam } = await searchParams;
-  // No category in the URL means "show everything"; an unknown one is
-  // treated the same way rather than silently becoming a wedding.
+  const { category: categoryParam, q: rawQuery } = await searchParams;
   const activeSlug = isEventCategorySlug(categoryParam) ? categoryParam : null;
+  const query = rawQuery?.trim().toLowerCase() ?? "";
 
-  const [themes, demos] = await Promise.all([
+  const [allThemes, demos] = await Promise.all([
     db.theme
       .findMany({
         where: {
@@ -48,100 +47,205 @@ export default async function PublicThemesPage({
       .catch(() => []),
   ]);
 
-  const demoSlugByThemeId = new Map(demos.map((d) => [d.themeId, d.slug]));
+  const themes = query
+    ? allThemes.filter((theme) =>
+        [theme.name, theme.description ?? "", theme.category, theme.eventCategory]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
+      )
+    : allThemes;
+
+  const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-12">
-      <div>
-        <Link href="/" className="inline-block">
-          <SiteLogo size="md" />
-        </Link>
-        <h1 className="font-display mt-4 text-2xl">Themes</h1>
-        <p className="text-muted-foreground text-sm">
-          Every celebration has its own designs and its own words. Preview a live demo,
-          then create your own with the same theme.
-        </p>
-      </div>
-
-      <nav className="flex flex-wrap gap-2">
-        <FilterChip href="/themes" label="All" active={activeSlug === null} />
-        {EVENT_CATEGORIES.map((category) => {
-          const Icon = categoryIcon(category.icon);
-          return (
-            <FilterChip
-              key={category.slug}
-              href={`/themes?category=${category.slug}`}
-              label={category.label}
-              active={activeSlug === category.slug}
-              icon={<Icon className="size-3.5" strokeWidth={1.75} />}
-            />
-          );
-        })}
-      </nav>
-
-      {themes.length === 0 ? (
-        <p className="text-muted-foreground py-12 text-center text-sm">
-          No designs here yet — an admin can add one from Manage Themes.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {themes.map((theme) => {
-            const palette = theme.colorPalette as {
-              primary: string;
-              accent: string;
-              background: string;
-            };
-            const themeCategory = eventCategoryFor(theme.eventCategory);
-            const demoSlug = demoSlugByThemeId.get(theme.id);
-            return (
-              <Card key={theme.id} className="overflow-hidden py-0">
-                <div
-                  className="flex h-28 items-end p-4"
-                  style={{
-                    background: `linear-gradient(135deg, ${palette.primary}, ${palette.accent})`,
-                  }}
-                >
-                  <span
-                    className="rounded-full px-3 py-1 text-xs font-medium"
-                    style={{ background: palette.background, color: palette.primary }}
-                  >
-                    {themeCategory.label}
-                  </span>
-                </div>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="font-display">{theme.name}</CardTitle>
-                    {theme.isPremium && <Badge variant="gold">Premium</Badge>}
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3 pb-6">
-                  <p className="text-muted-foreground text-sm">{theme.description}</p>
-                  <div className="flex gap-2">
-                    {demoSlug && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a
-                          href={`/invite/${demoSlug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          View demo
-                        </a>
-                      </Button>
-                    )}
-                    <Button size="sm" asChild>
-                      <Link
-                        href={`/create?category=${themeCategory.slug}&theme=${theme.slug}`}
-                      >
-                        Use this theme
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+    <div className="min-h-svh bg-[#fffdf9] text-[#342a27]">
+      <header className="sticky top-0 z-50 border-b border-[#eadfd3] bg-[#fffdf9]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8 lg:px-10">
+          <Link href="/" aria-label={`${SITE_NAME} home`}>
+            <SiteLogo size="md" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="hidden rounded-full border border-[#ddcfc2] px-4 py-2 text-xs font-semibold text-[#651d33] transition hover:border-[#651d33]/40 sm:inline-flex"
+            >
+              My invitations
+            </Link>
+            <Link
+              href="/create"
+              className="rounded-full bg-[#651d33] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#54172a]"
+            >
+              Create now
+            </Link>
+          </div>
         </div>
-      )}
+      </header>
+
+      <main>
+        <section className="border-b border-[#eadfd3] bg-[#fff9f0]">
+          <div className="mx-auto max-w-6xl px-5 py-10 text-center sm:px-8 sm:py-14 lg:px-10">
+            <p className="text-[10px] font-semibold tracking-[0.24em] text-[#9a6c48] uppercase">
+              Curated digital invitations
+            </p>
+            <h1 className="font-display mx-auto mt-2 max-w-3xl text-4xl leading-tight text-[#5d2032] text-balance sm:text-5xl">
+              Explore our invitation templates
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[#7b665d] sm:text-base">
+              Choose a design that fits your celebration, open a live preview, then make it
+              yours with your own names, events, photos and story.
+            </p>
+
+            <div className="mx-auto mt-7 max-w-2xl rounded-3xl border border-[#e2d5c8] bg-white p-3 shadow-[0_12px_40px_rgba(93,32,50,0.05)]">
+              <p className="mb-3 text-[10px] font-bold tracking-[0.18em] text-[#8d7166] uppercase">
+                Select invitation type
+              </p>
+              <nav className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <FilterChip href="/themes" label="All designs" active={activeSlug === null} />
+                {EVENT_CATEGORIES.map((category) => {
+                  const Icon = categoryIcon(category.icon);
+                  return (
+                    <FilterChip
+                      key={category.slug}
+                      href={`/themes?category=${category.slug}`}
+                      label={category.label}
+                      active={activeSlug === category.slug}
+                      icon={<Icon className="size-3.5" strokeWidth={1.75} />}
+                    />
+                  );
+                })}
+              </nav>
+            </div>
+
+            <form className="mx-auto mt-4 flex max-w-2xl gap-2" action="/themes" method="get">
+              {activeSlug && <input type="hidden" name="category" value={activeSlug} />}
+              <input
+                type="search"
+                name="q"
+                defaultValue={rawQuery ?? ""}
+                placeholder="Search templates by style or name..."
+                className="min-w-0 flex-1 rounded-full border border-[#e2d5c8] bg-white px-5 py-3 text-sm text-[#4a3a34] outline-none transition placeholder:text-[#ad9a91] focus:border-[#8b4557] focus:ring-2 focus:ring-[#8b4557]/10"
+              />
+              <button
+                type="submit"
+                className="rounded-full bg-[#651d33] px-5 py-3 text-xs font-bold text-white transition hover:bg-[#54172a]"
+              >
+                Search
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <span className="rounded-full border border-[#e5d8cc] bg-white px-3 py-1.5 text-[10px] font-semibold tracking-wide text-[#785f56] uppercase">
+              {themes.length} {themes.length === 1 ? "template" : "templates"}
+            </span>
+            <span className="text-[10px] font-semibold tracking-wide text-[#9b877e] uppercase">
+              Curated collection
+            </span>
+          </div>
+
+          {themes.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-[#dccdc1] bg-[#fff9f0] px-6 py-16 text-center">
+              <p className="font-display text-2xl text-[#5d2032]">No matching designs yet</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#7c685f]">
+                Try another category or search term. New themes added by the admin will appear
+                here automatically.
+              </p>
+              <Link
+                href="/themes"
+                className="mt-5 inline-flex rounded-full bg-[#651d33] px-5 py-2.5 text-xs font-bold text-white"
+              >
+                Show all templates
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+              {themes.map((theme) => {
+                const palette = theme.colorPalette as {
+                  primary: string;
+                  accent: string;
+                  background: string;
+                };
+                const themeCategory = eventCategoryFor(theme.eventCategory);
+                const demoSlug = demoSlugByThemeId.get(theme.id);
+                const image = theme.previewImage ?? fallbackThumbnailFor(theme.slug);
+
+                return (
+                  <article
+                    key={theme.id}
+                    className="group overflow-hidden rounded-2xl border border-[#eadfd3] bg-white shadow-[0_10px_35px_rgba(93,32,50,0.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(93,32,50,0.11)]"
+                  >
+                    <div
+                      className="relative aspect-[3/4] overflow-hidden"
+                      style={{
+                        background: `linear-gradient(145deg, ${palette.background}, ${palette.accent})`,
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={image}
+                        alt={`${theme.name} invitation template preview`}
+                        className="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-[1.035]"
+                      />
+                      <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
+                        <span className="rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-bold tracking-wide text-[#651d33] uppercase shadow-sm backdrop-blur">
+                          {theme.isPremium ? "Premium" : "Popular"}
+                        </span>
+                        <span className="rounded-full bg-black/35 px-2 py-1 text-[9px] font-semibold text-white backdrop-blur">
+                          {themeCategory.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 sm:p-4">
+                      <h2 className="truncate font-display text-base text-[#4e2630] sm:text-lg">
+                        {theme.name}
+                      </h2>
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <span className="truncate text-[10px] text-[#8b756c] capitalize sm:text-xs">
+                          {theme.category}
+                        </span>
+                        <span className="shrink-0 text-[10px] font-semibold text-[#651d33] sm:text-xs">
+                          {theme.isPremium ? "Premium" : "Included"}
+                        </span>
+                      </div>
+
+                      {theme.description && (
+                        <p className="mt-2 hidden line-clamp-2 text-xs leading-5 text-[#8a746b] sm:block">
+                          {theme.description}
+                        </p>
+                      )}
+
+                      <div className="mt-3 grid gap-2">
+                        {demoSlug && (
+                          <a
+                            href={`/invite/${demoSlug}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-full border border-[#d8c8bc] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-[#651d33] uppercase transition hover:border-[#651d33]/50 hover:bg-[#fff9f0] sm:text-xs"
+                          >
+                            See live preview
+                          </a>
+                        )}
+                        <Link
+                          href={`/create?category=${themeCategory.slug}&theme=${theme.slug}`}
+                          className="rounded-full bg-[#651d33] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-white uppercase transition hover:bg-[#54172a] sm:text-xs"
+                        >
+                          Use this theme
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }
@@ -161,10 +265,10 @@ function FilterChip({
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+        "flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[10px] font-bold tracking-wide uppercase transition-colors sm:text-xs",
         active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "hover:border-primary/60",
+          ? "border-[#651d33] bg-[#651d33] text-white"
+          : "border-[#e2d5c8] bg-[#fffdf9] text-[#6f5a52] hover:border-[#8b4557]/50 hover:text-[#651d33]",
       )}
     >
       {icon}
