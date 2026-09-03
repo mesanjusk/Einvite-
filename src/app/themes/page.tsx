@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { SITE_NAME } from "@/config/site";
 import { SiteLogo } from "@/components/brand/site-logo";
+import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { categoryIcon } from "@/components/marketing/category-icon";
 import {
@@ -17,7 +18,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Invitation Templates",
   description:
-    "Explore premium digital invitation templates, preview live invitations and start customizing your own design.",
+    "Choose a celebration, preview invitation templates live, then edit your selected design directly on screen.",
 };
 
 export default async function PublicThemesPage({
@@ -49,7 +50,7 @@ export default async function PublicThemesPage({
 
   const themes = query
     ? allThemes.filter((theme) =>
-        [theme.name, theme.description ?? "", theme.category, theme.eventCategory]
+        [theme.name, theme.slug, theme.description ?? "", theme.category, theme.eventCategory]
           .join(" ")
           .toLowerCase()
           .includes(query),
@@ -72,12 +73,12 @@ export default async function PublicThemesPage({
             >
               My invitations
             </Link>
-            <Link
-              href="/create"
+            <a
+              href="#templates"
               className="rounded-full bg-[#651d33] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#54172a]"
             >
-              Create now
-            </Link>
+              Choose design
+            </a>
           </div>
         </div>
       </header>
@@ -86,14 +87,14 @@ export default async function PublicThemesPage({
         <section className="border-b border-[#eadfd3] bg-[#fff9f0]">
           <div className="mx-auto max-w-6xl px-5 py-10 text-center sm:px-8 sm:py-14 lg:px-10">
             <p className="text-[10px] font-semibold tracking-[0.24em] text-[#9a6c48] uppercase">
-              Curated digital invitations
+              Step 1 · Choose your celebration
             </p>
             <h1 className="font-display mx-auto mt-2 max-w-3xl text-4xl leading-tight text-[#5d2032] text-balance sm:text-5xl">
-              Explore our invitation templates
+              Choose a design before you start editing
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[#7b665d] sm:text-base">
-              Choose a design that fits your celebration, open a live preview, then make it
-              yours with your own names, events, photos and story.
+              Select the invitation type, browse matching templates, preview a real invitation,
+              then edit that design live. No step-by-step form comes first.
             </p>
 
             <div className="mx-auto mt-7 max-w-2xl rounded-3xl border border-[#e2d5c8] bg-white p-3 shadow-[0_12px_40px_rgba(93,32,50,0.05)]">
@@ -136,13 +137,18 @@ export default async function PublicThemesPage({
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+        <section id="templates" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
           <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.18em] text-[#9a6c48] uppercase">
+                Step 2 · Preview and choose
+              </p>
+              <p className="mt-1 text-sm font-semibold text-[#5d2032]">
+                {themes.length} {themes.length === 1 ? "design" : "designs"} available
+              </p>
+            </div>
             <span className="rounded-full border border-[#e5d8cc] bg-white px-3 py-1.5 text-[10px] font-semibold tracking-wide text-[#785f56] uppercase">
-              {themes.length} {themes.length === 1 ? "template" : "templates"}
-            </span>
-            <span className="text-[10px] font-semibold tracking-wide text-[#9b877e] uppercase">
-              Curated collection
+              Live editable
             </span>
           </div>
 
@@ -219,22 +225,25 @@ export default async function PublicThemesPage({
                       )}
 
                       <div className="mt-3 grid gap-2">
-                        {demoSlug && (
+                        {demoSlug ? (
                           <a
                             href={`/invite/${demoSlug}`}
                             target="_blank"
                             rel="noreferrer"
                             className="rounded-full border border-[#d8c8bc] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-[#651d33] uppercase transition hover:border-[#651d33]/50 hover:bg-[#fff9f0] sm:text-xs"
                           >
-                            See live preview
+                            Live preview
                           </a>
-                        )}
-                        <Link
-                          href={`/create?category=${themeCategory.slug}&theme=${theme.slug}`}
-                          className="rounded-full bg-[#651d33] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-white uppercase transition hover:bg-[#54172a] sm:text-xs"
+                        ) : null}
+
+                        <StartLiveInvitationButton
+                          fromSlug={demoSlug}
+                          category={themeCategory.slug}
+                          themeSlug={theme.slug}
+                          className="w-full rounded-full bg-[#651d33] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-white uppercase transition hover:bg-[#54172a] sm:text-xs"
                         >
-                          Use this theme
-                        </Link>
+                          {demoSlug ? "Edit this design" : "Preview & edit"}
+                        </StartLiveInvitationButton>
                       </div>
                     </div>
                   </article>
