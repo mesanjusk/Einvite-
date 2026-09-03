@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -69,21 +70,12 @@ export default async function InvitePage({
   if (!invitation) notFound();
 
   const session = await auth();
-  // Who this invitation belongs to. An account is one way; the guest flow's
-  // couples own theirs through a cookie instead, and they must count too —
-  // otherwise they can't look at their own unpublished invitation, and get
-  // offered a copy of it once it is published.
   const isOwner = Boolean(
     (session?.user && invitation.userId === session.user.id) ||
       (await authorizeInvitationAccess(invitation.id)),
   );
   if (invitation.status !== "PUBLISHED" && !isOwner) notFound();
 
-  // An invitation claimed through Instagram circulates while its owner
-  // follows the account. Building it was never gated — this is, because
-  // sending it to a hundred relatives is the part the offer is paid for
-  // with. Everything is still here; the screen below says so and offers the
-  // one thing that brings it back.
   const visibility = await resolveInvitationVisibility(invitation.id);
   if (visibility.decision === "PAUSED") {
     return (
@@ -117,22 +109,48 @@ export default async function InvitePage({
   });
 
   const { inviteData, themeStyle, sectionConfig } = toInviteRenderData(invitation);
+  const showDemoChrome = invitation.isDemo && !isOwner;
 
   return (
-    <div
-      className="relative mx-auto max-w-[430px] overflow-x-hidden"
-      style={{ ...themeStyle, fontFamily: "var(--inv-font-body)" }}
-    >
-      <InviteExperience
-        invite={inviteData}
-        sectionConfig={sectionConfig}
-        initialGuestName={guest?.name ?? null}
-        guestId={guest?.id ?? null}
-        // Anyone who was sent this invitation — not the couple who made it —
-        // can start their own on the same design, and edit it on the page
-        // rather than in a form.
-        showRemixCta={!isOwner}
-      />
+    <div className={showDemoChrome ? "min-h-svh bg-[#12070a]" : undefined}>
+      {showDemoChrome && (
+        <div className="sticky top-0 z-[70] mx-auto flex h-14 max-w-[430px] items-center gap-3 border-b border-white/10 bg-[#3c0b19]/95 px-3 text-white shadow-lg backdrop-blur-xl">
+          <Link
+            href="/themes"
+            aria-label="Back to templates"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 bg-white/5 text-lg transition hover:bg-white/10"
+          >
+            ‹
+          </Link>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[10px] font-semibold tracking-[0.16em] text-[#e9c777] uppercase">
+              Live template preview
+            </p>
+            <p className="truncate text-xs font-semibold text-white/95">
+              {invitation.brideName} & {invitation.groomName}
+            </p>
+          </div>
+          <Link
+            href="/create"
+            className="shrink-0 rounded-full bg-[#e5b84f] px-4 py-2 text-[10px] font-extrabold tracking-wide text-[#4b1425] uppercase shadow-sm transition hover:bg-[#f1c866]"
+          >
+            Use design
+          </Link>
+        </div>
+      )}
+
+      <div
+        className="relative mx-auto max-w-[430px] overflow-x-hidden"
+        style={{ ...themeStyle, fontFamily: "var(--inv-font-body)" }}
+      >
+        <InviteExperience
+          invite={inviteData}
+          sectionConfig={sectionConfig}
+          initialGuestName={guest?.name ?? null}
+          guestId={guest?.id ?? null}
+          showRemixCta={!isOwner}
+        />
+      </div>
     </div>
   );
 }
