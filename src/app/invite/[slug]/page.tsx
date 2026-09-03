@@ -12,6 +12,7 @@ import {
   getGuestByToken,
   toInviteRenderData,
 } from "@/lib/get-invite-data";
+import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { InviteExperience } from "@/components/invite/invite-experience";
 import { InvitationPaused } from "@/components/invite/invitation-paused";
 import { resolveInvitationVisibility } from "@/lib/instagram-invitation-visibility";
@@ -116,7 +117,7 @@ export default async function InvitePage({
       {showDemoChrome && (
         <div className="sticky top-0 z-[70] mx-auto flex h-14 max-w-[430px] items-center gap-3 border-b border-white/10 bg-[#3c0b19]/95 px-3 text-white shadow-lg backdrop-blur-xl">
           <Link
-            href="/themes"
+            href={`/themes?category=${invitation.eventCategory}`}
             aria-label="Back to templates"
             className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 bg-white/5 text-lg transition hover:bg-white/10"
           >
@@ -130,12 +131,12 @@ export default async function InvitePage({
               {invitation.brideName} & {invitation.groomName}
             </p>
           </div>
-          <Link
-            href="/create"
+          <StartLiveInvitationButton
+            fromSlug={invitation.slug}
             className="shrink-0 rounded-full bg-[#e5b84f] px-4 py-2 text-[10px] font-extrabold tracking-wide text-[#4b1425] uppercase shadow-sm transition hover:bg-[#f1c866]"
           >
-            Use design
-          </Link>
+            Edit this design
+          </StartLiveInvitationButton>
         </div>
       )}
 
