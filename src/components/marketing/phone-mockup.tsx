@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-/** A simple CSS phone frame used to showcase invitation previews on the homepage. */
+/** Slim CSS phone frame for marketplace invitation previews. */
 export function PhoneMockup({
   children,
   className,
@@ -13,13 +13,12 @@ export function PhoneMockup({
   return (
     <div
       className={cn(
-        "relative mx-auto aspect-[9/19] w-full max-w-[260px] rounded-[2.2rem] border-[6px] border-neutral-900 bg-neutral-900 shadow-2xl",
+        "relative mx-auto aspect-[9/18.8] w-full max-w-[260px] rounded-[1.55rem] border-[3px] border-[#2d2929] bg-[#2d2929] shadow-xl",
         className,
       )}
     >
-      <div className="absolute top-0 left-1/2 z-10 h-5 w-28 -translate-x-1/2 rounded-b-xl bg-neutral-900" />
-      <div className="relative size-full overflow-hidden rounded-[1.7rem] bg-white">{children}</div>
-      <div className="absolute bottom-1.5 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-neutral-700" />
+      <div className="absolute left-1/2 top-1.5 z-30 size-1.5 -translate-x-1/2 rounded-full bg-[#151313] ring-1 ring-white/25" />
+      <div className="relative size-full overflow-hidden rounded-[1.35rem] bg-white">{children}</div>
     </div>
   );
 }
