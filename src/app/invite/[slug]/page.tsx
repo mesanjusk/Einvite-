@@ -113,29 +113,31 @@ export default async function InvitePage({
   const showDemoChrome = invitation.isDemo && !isOwner;
 
   return (
-    <div className={showDemoChrome ? "min-h-svh bg-[#12070a]" : undefined}>
+    <div className={showDemoChrome ? "min-h-svh bg-[#16070c]" : undefined}>
       {showDemoChrome && (
-        <div className="sticky top-0 z-[70] mx-auto flex h-14 max-w-[430px] items-center gap-3 border-b border-white/10 bg-[#3c0b19]/95 px-3 text-white shadow-lg backdrop-blur-xl">
+        <div className="sticky top-0 z-[70] mx-auto flex h-12 max-w-[430px] items-center gap-2 border-b border-white/10 bg-[#4b0c20]/97 px-2.5 text-white shadow-lg backdrop-blur-xl">
           <Link
             href={`/themes?category=${invitation.eventCategory}`}
             aria-label="Back to templates"
-            className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 bg-white/5 text-lg transition hover:bg-white/10"
+            className="grid size-8 shrink-0 place-items-center rounded-full border border-white/15 bg-white/5 text-lg transition hover:bg-white/10"
           >
             ‹
           </Link>
+
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[10px] font-semibold tracking-[0.16em] text-[#e9c777] uppercase">
-              Live template preview
+            <p className="truncate font-display text-[12px] leading-none text-white">
+              {invitation.theme?.name ?? "Invitation preview"}
             </p>
-            <p className="truncate text-xs font-semibold text-white/95">
-              {invitation.brideName} & {invitation.groomName}
+            <p className="mt-1 truncate text-[8px] font-bold tracking-[0.12em] text-[#e9c982] uppercase">
+              {invitation.theme?.isPremium ? "Premium design" : "Included design"}
             </p>
           </div>
+
           <StartLiveInvitationButton
             fromSlug={invitation.slug}
-            className="shrink-0 rounded-full bg-[#e5b84f] px-4 py-2 text-[10px] font-extrabold tracking-wide text-[#4b1425] uppercase shadow-sm transition hover:bg-[#f1c866]"
+            className="shrink-0 rounded-full bg-[#e9bd53] px-3.5 py-2 text-[9px] font-extrabold tracking-[0.08em] text-[#4c1425] uppercase shadow-sm transition hover:bg-[#f2ca6b]"
           >
-            Edit this design
+            Edit now
           </StartLiveInvitationButton>
         </div>
       )}
@@ -149,7 +151,7 @@ export default async function InvitePage({
           sectionConfig={sectionConfig}
           initialGuestName={guest?.name ?? null}
           guestId={guest?.id ?? null}
-          showRemixCta={!isOwner}
+          showRemixCta={!isOwner && !invitation.isDemo}
         />
       </div>
     </div>
