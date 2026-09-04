@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
 import { SITE_NAME } from "@/config/site";
-import { SiteLogo } from "@/components/brand/site-logo";
-import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
+import { PublicMarketplaceHeader } from "@/components/marketing/public-marketplace-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
+import { TemplateMarketplaceCard } from "@/components/marketing/template-marketplace-card";
 import { categoryIcon } from "@/components/marketing/category-icon";
 import {
   EVENT_CATEGORIES,
@@ -21,16 +21,36 @@ export const metadata: Metadata = {
     "Choose a celebration, preview invitation templates live, then edit your selected design directly on screen.",
 };
 
+type SortMode = "popular" | "newest" | "premium" | "name";
+
 export default async function PublicThemesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    q?: string;
+    style?: string;
+    sort?: string;
+    tier?: string;
+  }>;
 }) {
-  const { category: categoryParam, q: rawQuery } = await searchParams;
+  const {
+    category: categoryParam,
+    q: rawQuery,
+    style: rawStyle,
+    sort: rawSort,
+    tier: rawTier,
+  } = await searchParams;
+
   const activeSlug = isEventCategorySlug(categoryParam) ? categoryParam : null;
   const query = rawQuery?.trim().toLowerCase() ?? "";
+  const sort: SortMode =
+    rawSort === "newest" || rawSort === "premium" || rawSort === "name"
+      ? rawSort
+      : "popular";
+  const tier = rawTier === "premium" ? "premium" : "all";
 
-  const [allThemes, demos] = await Promise.all([
+  const [baseThemes, demos] = await Promise.all([
     db.theme
       .findMany({
         where: {
@@ -48,207 +68,206 @@ export default async function PublicThemesPage({
       .catch(() => []),
   ]);
 
-  const themes = query
-    ? allThemes.filter((theme) =>
-        [theme.name, theme.slug, theme.description ?? "", theme.category, theme.eventCategory]
-          .join(" ")
-          .toLowerCase()
-          .includes(query),
-      )
-    : allThemes;
+  const styleOptions = [...new Set(baseThemes.map((theme) => theme.category).filter(Boolean))];
+  const activeStyle = rawStyle && styleOptions.includes(rawStyle) ? rawStyle : null;
+
+  let themes = baseThemes.filter((theme) => {
+    if (tier === "premium" && !theme.isPremium) return false;
+    if (activeStyle && theme.category !== activeStyle) return false;
+    if (!query) return true;
+    return [theme.name, theme.slug, theme.description ?? "", theme.category, theme.eventCategory]
+      .join(" ")
+      .toLowerCase()
+      .includes(query);
+  });
+
+  themes = [...themes].sort((a, b) => {
+    if (sort === "newest") return b.createdAt.getTime() - a.createdAt.getTime();
+    if (sort === "premium") {
+      const premiumDiff = Number(b.isPremium) - Number(a.isPremium);
+      return premiumDiff || a.sortOrder - b.sortOrder;
+    }
+    if (sort === "name") return a.name.localeCompare(b.name);
+    return a.sortOrder - b.sortOrder;
+  });
 
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
+  const headingCategory = activeSlug ? eventCategoryFor(activeSlug).label : null;
+
+  const hrefFor = (changes: Record<string, string | null | undefined>) => {
+    const params = new URLSearchParams();
+    if (activeSlug) params.set("category", activeSlug);
+    if (rawQuery) params.set("q", rawQuery);
+    if (activeStyle) params.set("style", activeStyle);
+    if (sort !== "popular") params.set("sort", sort);
+    if (tier !== "all") params.set("tier", tier);
+
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+
+    const suffix = params.toString();
+    return suffix ? `/themes?${suffix}` : "/themes";
+  };
 
   return (
-    <div className="min-h-svh bg-[#fffdf9] text-[#342a27]">
-      <header className="sticky top-0 z-50 border-b border-[#eadfd3] bg-[#fffdf9]/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8 lg:px-10">
-          <Link href="/" aria-label={`${SITE_NAME} home`}>
-            <SiteLogo size="md" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard"
-              className="hidden rounded-full border border-[#ddcfc2] px-4 py-2 text-xs font-semibold text-[#651d33] transition hover:border-[#651d33]/40 sm:inline-flex"
-            >
-              My invitations
-            </Link>
-            <a
-              href="#templates"
-              className="rounded-full bg-[#651d33] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#54172a]"
-            >
-              Choose design
-            </a>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-svh bg-[#fffdf8] text-[#3f302d]">
+      <PublicMarketplaceHeader />
 
       <main>
-        <section className="border-b border-[#eadfd3] bg-[#fff9f0]">
-          <div className="mx-auto max-w-6xl px-5 py-10 text-center sm:px-8 sm:py-14 lg:px-10">
-            <p className="text-[10px] font-semibold tracking-[0.24em] text-[#9a6c48] uppercase">
-              Step 1 · Choose your celebration
-            </p>
-            <h1 className="font-display mx-auto mt-2 max-w-3xl text-4xl leading-tight text-[#5d2032] text-balance sm:text-5xl">
-              Choose a design before you start editing
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[#7b665d] sm:text-base">
-              Select the invitation type, browse matching templates, preview a real invitation,
-              then edit that design live. No step-by-step form comes first.
-            </p>
+        <section className="relative overflow-hidden border-b border-[#eee5dc] bg-[#fffaf2]">
+          <div className="pointer-events-none absolute -left-20 top-6 size-52 rounded-full bg-[#f5d9cb]/45 blur-3xl" />
+          <div className="pointer-events-none absolute -right-16 -top-10 size-56 rounded-full bg-[#f0dfad]/35 blur-3xl" />
 
-            <div className="mx-auto mt-7 max-w-2xl rounded-3xl border border-[#e2d5c8] bg-white p-3 shadow-[0_12px_40px_rgba(93,32,50,0.05)]">
-              <p className="mb-3 text-[10px] font-bold tracking-[0.18em] text-[#8d7166] uppercase">
-                Select invitation type
-              </p>
-              <nav className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <FilterChip href="/themes" label="All designs" active={activeSlug === null} />
-                {EVENT_CATEGORIES.map((category) => {
-                  const Icon = categoryIcon(category.icon);
-                  return (
-                    <FilterChip
-                      key={category.slug}
-                      href={`/themes?category=${category.slug}`}
-                      label={category.label}
-                      active={activeSlug === category.slug}
-                      icon={<Icon className="size-3.5" strokeWidth={1.75} />}
-                    />
-                  );
-                })}
-              </nav>
+          <div className="relative mx-auto max-w-4xl px-4 pb-6 pt-8 text-center sm:px-8 sm:pb-9 sm:pt-11">
+            <p className="text-[9px] font-extrabold tracking-[0.24em] text-[#9b755e] uppercase sm:text-[10px]">
+              Curated digital invitations
+            </p>
+            <h1 className="font-display mx-auto mt-3 text-[2.2rem] leading-[0.98] text-[#592b35] sm:text-5xl">
+              Explore Our {headingCategory ? `${headingCategory} ` : ""}
+              <span className="italic text-[#7b2942]">Templates</span>
+            </h1>
+
+            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#8d756b] uppercase">
+              Select collection
+            </p>
+            <div className="mx-auto mt-2 grid max-w-md grid-cols-2 rounded-full border border-[#e7dcd2] bg-white p-1 shadow-sm">
+              <Link
+                href={hrefFor({ tier: null })}
+                className={cn(
+                  "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
+                  tier === "all"
+                    ? "bg-[#65172e] text-white shadow-sm"
+                    : "text-[#8b756d] hover:text-[#65172e]",
+                )}
+              >
+                All designs
+              </Link>
+              <Link
+                href={hrefFor({ tier: "premium" })}
+                className={cn(
+                  "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
+                  tier === "premium"
+                    ? "bg-[#65172e] text-white shadow-sm"
+                    : "text-[#8b756d] hover:text-[#65172e]",
+                )}
+              >
+                Premium designs
+              </Link>
             </div>
 
-            <form className="mx-auto mt-4 flex max-w-2xl gap-2" action="/themes" method="get">
+            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#8d756b] uppercase">
+              Celebration
+            </p>
+            <nav className="mx-auto mt-2 flex max-w-3xl gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <FilterChip href={hrefFor({ category: null, style: null })} label="All" active={activeSlug === null} />
+              {EVENT_CATEGORIES.map((category) => {
+                const Icon = categoryIcon(category.icon);
+                return (
+                  <FilterChip
+                    key={category.slug}
+                    href={hrefFor({ category: category.slug, style: null })}
+                    label={category.label}
+                    active={activeSlug === category.slug}
+                    icon={<Icon className="size-3.5" strokeWidth={1.7} />}
+                  />
+                );
+              })}
+            </nav>
+
+            <form
+              className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-full border border-[#eadfd5] bg-white px-4 py-1.5 shadow-[0_10px_35px_rgba(92,51,55,0.05)]"
+              action="/themes"
+              method="get"
+            >
               {activeSlug && <input type="hidden" name="category" value={activeSlug} />}
+              {activeStyle && <input type="hidden" name="style" value={activeStyle} />}
+              {sort !== "popular" && <input type="hidden" name="sort" value={sort} />}
+              {tier !== "all" && <input type="hidden" name="tier" value={tier} />}
+              <span className="text-[#b09b91]" aria-hidden="true">
+                ⌕
+              </span>
               <input
                 type="search"
                 name="q"
                 defaultValue={rawQuery ?? ""}
                 placeholder="Search templates by style or name..."
-                className="min-w-0 flex-1 rounded-full border border-[#e2d5c8] bg-white px-5 py-3 text-sm text-[#4a3a34] outline-none transition placeholder:text-[#ad9a91] focus:border-[#8b4557] focus:ring-2 focus:ring-[#8b4557]/10"
+                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-[#4f403b] outline-none placeholder:text-[#b4a39a] sm:text-sm"
               />
               <button
                 type="submit"
-                className="rounded-full bg-[#651d33] px-5 py-3 text-xs font-bold text-white transition hover:bg-[#54172a]"
+                className="rounded-full bg-[#65172e] px-4 py-2 text-[9px] font-extrabold tracking-[0.12em] text-white uppercase sm:text-[10px]"
               >
                 Search
               </button>
             </form>
+
+            {styleOptions.length > 0 && (
+              <nav className="mx-auto mt-4 flex max-w-3xl gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <StyleChip href={hrefFor({ style: null })} label="All styles" active={!activeStyle} />
+                {styleOptions.map((style) => (
+                  <StyleChip
+                    key={style}
+                    href={hrefFor({ style })}
+                    label={style}
+                    active={activeStyle === style}
+                  />
+                ))}
+              </nav>
+            )}
           </div>
         </section>
 
-        <section id="templates" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-semibold tracking-[0.18em] text-[#9a6c48] uppercase">
-                Step 2 · Preview and choose
-              </p>
-              <p className="mt-1 text-sm font-semibold text-[#5d2032]">
-                {themes.length} {themes.length === 1 ? "design" : "designs"} available
-              </p>
-            </div>
-            <span className="rounded-full border border-[#e5d8cc] bg-white px-3 py-1.5 text-[10px] font-semibold tracking-wide text-[#785f56] uppercase">
-              Live editable
+        <section className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-9 lg:px-10">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <span className="rounded-full border border-[#e6dbd1] bg-white px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#80675e] uppercase shadow-sm sm:text-[10px]">
+              {themes.length} {themes.length === 1 ? "template" : "templates"}
             </span>
+
+            <details className="group relative">
+              <summary className="cursor-pointer list-none rounded-full border border-[#e6dbd1] bg-white px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#80675e] uppercase shadow-sm [&::-webkit-details-marker]:hidden sm:text-[10px]">
+                Sort: {sortLabel(sort)} ▾
+              </summary>
+              <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-2xl border border-[#eadfd5] bg-white p-1.5 text-left shadow-[0_18px_45px_rgba(94,45,54,0.16)]">
+                <SortLink href={hrefFor({ sort: null })} label="Popular" active={sort === "popular"} />
+                <SortLink href={hrefFor({ sort: "newest" })} label="Newest" active={sort === "newest"} />
+                <SortLink href={hrefFor({ sort: "premium" })} label="Premium first" active={sort === "premium"} />
+                <SortLink href={hrefFor({ sort: "name" })} label="Name A–Z" active={sort === "name"} />
+              </div>
+            </details>
           </div>
 
           {themes.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-[#dccdc1] bg-[#fff9f0] px-6 py-16 text-center">
               <p className="font-display text-2xl text-[#5d2032]">No matching designs yet</p>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#7c685f]">
-                Try another category or search term. New themes added by the admin will appear
-                here automatically.
+                Try another celebration, style or search term.
               </p>
               <Link
                 href="/themes"
-                className="mt-5 inline-flex rounded-full bg-[#651d33] px-5 py-2.5 text-xs font-bold text-white"
+                className="mt-5 inline-flex rounded-full bg-[#65172e] px-5 py-2.5 text-[10px] font-extrabold tracking-wide text-white uppercase"
               >
                 Show all templates
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
-              {themes.map((theme) => {
-                const palette = theme.colorPalette as {
-                  primary: string;
-                  accent: string;
-                  background: string;
-                };
-                const themeCategory = eventCategoryFor(theme.eventCategory);
-                const demoSlug = demoSlugByThemeId.get(theme.id);
-                const image = theme.previewImage ?? fallbackThumbnailFor(theme.slug);
-
-                return (
-                  <article
-                    key={theme.id}
-                    className="group overflow-hidden rounded-2xl border border-[#eadfd3] bg-white shadow-[0_10px_35px_rgba(93,32,50,0.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(93,32,50,0.11)]"
-                  >
-                    <div
-                      className="relative aspect-[3/4] overflow-hidden"
-                      style={{
-                        background: `linear-gradient(145deg, ${palette.background}, ${palette.accent})`,
-                      }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={image}
-                        alt={`${theme.name} invitation template preview`}
-                        className="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-[1.035]"
-                      />
-                      <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
-                        <span className="rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-bold tracking-wide text-[#651d33] uppercase shadow-sm backdrop-blur">
-                          {theme.isPremium ? "Premium" : "Popular"}
-                        </span>
-                        <span className="rounded-full bg-black/35 px-2 py-1 text-[9px] font-semibold text-white backdrop-blur">
-                          {themeCategory.label}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-3 sm:p-4">
-                      <h2 className="truncate font-display text-base text-[#4e2630] sm:text-lg">
-                        {theme.name}
-                      </h2>
-                      <div className="mt-1 flex items-center justify-between gap-2">
-                        <span className="truncate text-[10px] text-[#8b756c] capitalize sm:text-xs">
-                          {theme.category}
-                        </span>
-                        <span className="shrink-0 text-[10px] font-semibold text-[#651d33] sm:text-xs">
-                          {theme.isPremium ? "Premium" : "Included"}
-                        </span>
-                      </div>
-
-                      {theme.description && (
-                        <p className="mt-2 hidden line-clamp-2 text-xs leading-5 text-[#8a746b] sm:block">
-                          {theme.description}
-                        </p>
-                      )}
-
-                      <div className="mt-3 grid gap-2">
-                        {demoSlug ? (
-                          <a
-                            href={`/invite/${demoSlug}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="rounded-full border border-[#d8c8bc] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-[#651d33] uppercase transition hover:border-[#651d33]/50 hover:bg-[#fff9f0] sm:text-xs"
-                          >
-                            Live preview
-                          </a>
-                        ) : null}
-
-                        <StartLiveInvitationButton
-                          fromSlug={demoSlug}
-                          category={themeCategory.slug}
-                          themeSlug={theme.slug}
-                          className="w-full rounded-full bg-[#651d33] px-3 py-2 text-center text-[10px] font-bold tracking-wide text-white uppercase transition hover:bg-[#54172a] sm:text-xs"
-                        >
-                          {demoSlug ? "Edit this design" : "Preview & edit"}
-                        </StartLiveInvitationButton>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-6 sm:gap-y-9 md:grid-cols-3 lg:grid-cols-4">
+              {themes.map((theme) => (
+                <TemplateMarketplaceCard
+                  key={theme.id}
+                  theme={{
+                    id: theme.id,
+                    name: theme.name,
+                    slug: theme.slug,
+                    category: theme.category,
+                    eventCategory: theme.eventCategory,
+                    isPremium: theme.isPremium,
+                    previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
+                    demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+                  }}
+                />
+              ))}
             </div>
           )}
         </section>
@@ -257,6 +276,13 @@ export default async function PublicThemesPage({
       <SiteFooter />
     </div>
   );
+}
+
+function sortLabel(sort: SortMode) {
+  if (sort === "newest") return "Newest";
+  if (sort === "premium") return "Premium";
+  if (sort === "name") return "Name";
+  return "Popular";
 }
 
 function FilterChip({
@@ -274,13 +300,41 @@ function FilterChip({
     <Link
       href={href}
       className={cn(
-        "flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[10px] font-bold tracking-wide uppercase transition-colors sm:text-xs",
+        "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
         active
-          ? "border-[#651d33] bg-[#651d33] text-white"
-          : "border-[#e2d5c8] bg-[#fffdf9] text-[#6f5a52] hover:border-[#8b4557]/50 hover:text-[#651d33]",
+          ? "border-[#65172e] bg-[#65172e] text-white"
+          : "border-[#e6dbd1] bg-white text-[#7d655d] hover:border-[#a57380] hover:text-[#65172e]",
       )}
     >
       {icon}
+      {label}
+    </Link>
+  );
+}
+
+function StyleChip({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "shrink-0 rounded-full px-3.5 py-2 text-[9px] font-extrabold tracking-wide capitalize transition sm:text-[10px]",
+        active ? "bg-[#65172e] text-white" : "bg-[#f6ede5] text-[#7d655d] hover:text-[#65172e]",
+      )}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function SortLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "block rounded-xl px-3 py-2 text-[10px] font-bold transition",
+        active ? "bg-[#fff3e8] text-[#65172e]" : "text-[#745f57] hover:bg-[#fff7ef]",
+      )}
+    >
       {label}
     </Link>
   );
