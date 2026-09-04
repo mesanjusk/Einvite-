@@ -6,14 +6,12 @@ import { toast } from "sonner";
 
 import { startLiveInvitationAction } from "@/lib/actions/live-invitation";
 import { cn } from "@/lib/utils";
+import { WeddingLoadingScreen } from "@/components/guest/wedding-loading-screen";
 
 /**
- * "Make this one mine."
- *
- * Someone who was sent an invitation and wants one like it gets a copy of
- * its *design* and lands straight in the live editor, on a complete
- * invitation they change by tapping it — not on a form asking them to
- * describe the wedding they can already see on screen.
+ * Starts a private draft from the design the visitor chose. The loading
+ * screen appears on the very first click, before the server action finishes,
+ * so the experience never falls back to a disabled button and a blank wait.
  */
 export function StartLiveInvitationButton({
   fromSlug,
@@ -23,7 +21,6 @@ export function StartLiveInvitationButton({
   className,
   style,
 }: {
-  /** The invitation this was started from — its design travels, its details don't. */
   fromSlug?: string;
   category?: string;
   themeSlug?: string;
@@ -35,6 +32,8 @@ export function StartLiveInvitationButton({
   const [isPending, startTransition] = useTransition();
 
   function start() {
+    if (isPending) return;
+
     startTransition(async () => {
       const result = await startLiveInvitationAction({ fromSlug, category, themeSlug });
       if (!result.success) {
@@ -46,14 +45,18 @@ export function StartLiveInvitationButton({
   }
 
   return (
-    <button
-      type="button"
-      onClick={start}
-      disabled={isPending}
-      className={cn(className, isPending && "opacity-70")}
-      style={style}
-    >
-      {isPending ? "Opening your invitation…" : children}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={start}
+        disabled={isPending}
+        aria-busy={isPending}
+        className={cn(className, isPending && "cursor-wait")}
+        style={style}
+      >
+        {children}
+      </button>
+      {isPending && <WeddingLoadingScreen message="Opening your selected wedding design" />}
+    </>
   );
 }
