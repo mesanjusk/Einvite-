@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { AUTO_VIDEO_MODEL } from "@/lib/ai/gemini-video";
 import { DEFAULT_EVENT_CATEGORY, EVENT_CATEGORY_SLUGS } from "@/lib/event-categories";
+import { CUSTOM_EXPERIENCE_KEYS } from "@/invitation-templates/experience-key";
 
 export const colorPaletteSchema = z.object({
   primary: z.string().min(1),
@@ -53,6 +54,8 @@ export const themeFormSchema = z.object({
   previewImage: z.string().optional(),
   revealMode: z.enum(["ANIMATION", "VIDEO"]).default("ANIMATION"),
   revealVideoUrl: z.string().optional(),
+  renderEngine: z.enum(["GENERIC", "CUSTOM"]).default("GENERIC"),
+  customExperienceKey: z.enum(CUSTOM_EXPERIENCE_KEYS).optional().or(z.literal("")),
   category: z.enum(THEME_CATEGORIES).default("classic"),
   // Which celebration the design is for. PDF themes are print layouts shared
   // by every celebration, so this only steers the WEBSITE picker.
@@ -64,7 +67,13 @@ export const themeFormSchema = z.object({
   sectionOrder: z
     .array(z.enum(SECTION_TYPES))
     .min(1, "At least one section is required"),
-});
+}).refine(
+  (value) => value.renderEngine !== "CUSTOM" || Boolean(value.customExperienceKey),
+  {
+    message: "Choose a custom experience when using the custom renderer",
+    path: ["customExperienceKey"],
+  },
+);
 
 export type ThemeFormInput = z.infer<typeof themeFormSchema>;
 export type ThemeFormValues = z.input<typeof themeFormSchema>;
