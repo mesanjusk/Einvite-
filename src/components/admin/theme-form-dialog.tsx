@@ -43,8 +43,8 @@ type ThemeRecord = {
   previewImage: string | null;
   revealMode: string;
   revealVideoUrl: string | null;
-  renderEngine: string | null;
-  customExperienceKey: string | null;
+  renderEngine?: string | null;
+  customExperienceKey?: string | null;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
   fontPairing: { display: string; body: string; script: string };
   sectionOrder: string[];
