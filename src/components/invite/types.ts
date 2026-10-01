@@ -57,4 +57,6 @@ export type InviteData = {
   isDemo: boolean;
   themeSlug: string | null;
   revealVideoUrl: string | null;
+  revealVideoWebmUrl: string | null;
+  revealVideoPosterUrl: string | null;
 };
