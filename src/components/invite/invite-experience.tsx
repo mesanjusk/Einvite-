@@ -151,6 +151,8 @@ export function InviteExperience({
           <EnvelopeSection
             initials={initials}
             videoUrl={invite.revealVideoUrl}
+            videoWebmUrl={invite.revealVideoWebmUrl}
+            posterUrl={invite.revealVideoPosterUrl}
             onComplete={() => setInviteOpen(true)}
           />
         )}
