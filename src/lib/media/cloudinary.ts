@@ -133,26 +133,32 @@ export async function uploadIntroVideoBuffer(
     uploadStream.end(buffer);
   });
 
-  const common = [
-    { start_offset: 0, end_offset: 5 },
-    { width: 540, height: 960, crop: "fill", gravity: "auto" },
-    { fps: 24 },
-    { audio_codec: "none" },
-    { quality: "auto:eco" },
-  ];
-
   const mp4Url = cloudinary.url(uploaded.publicId, {
     resource_type: "video",
     secure: true,
     format: "mp4",
-    transformation: [...common, { video_codec: "h264" }],
+    transformation: [
+      { start_offset: 0, end_offset: 5 },
+      { width: 540, height: 960, crop: "fill", gravity: "auto" },
+      { fps: 24 },
+      { audio_codec: "none" },
+      { quality: "auto:eco" },
+      { video_codec: "h264" },
+    ],
   });
 
   const webmUrl = cloudinary.url(uploaded.publicId, {
     resource_type: "video",
     secure: true,
     format: "webm",
-    transformation: [...common, { video_codec: "vp9" }],
+    transformation: [
+      { start_offset: 0, end_offset: 5 },
+      { width: 540, height: 960, crop: "fill", gravity: "auto" },
+      { fps: 24 },
+      { audio_codec: "none" },
+      { quality: "auto:eco" },
+      { video_codec: "vp9" },
+    ],
   });
 
   const posterUrl = cloudinary.url(uploaded.publicId, {
