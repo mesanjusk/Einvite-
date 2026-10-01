@@ -5,6 +5,7 @@ import {
   type ThemeFontPairing,
 } from "@/lib/theme-css-vars";
 import type { InviteData } from "@/components/invite/types";
+import { resolveCustomExperienceKey } from "@/invitation-templates/experience-key";
 
 const INVITATION_INCLUDE = {
   theme: true,
@@ -108,6 +109,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     media: invitation.media,
     isDemo: invitation.isDemo,
     themeSlug: invitation.theme?.slug ?? null,
+    customExperienceKey: resolveCustomExperienceKey(invitation.theme),
     revealVideoUrl:
       invitation.introVideoMp4Url ??
       (invitation.theme?.revealMode === "VIDEO" ? (invitation.theme?.revealVideoUrl ?? null) : null),
