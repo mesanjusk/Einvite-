@@ -16,6 +16,7 @@ import {
 import { GALLERY_ANIMATIONS } from "@/lib/validations/live-invitation";
 import type { SectionConfigEntry } from "@/lib/get-invite-data";
 import type { EditorTheme } from "./types";
+import { IntroVideoUploader } from "./intro-video-uploader";
 
 const SECTION_LABELS: Record<string, string> = {
   HERO: "Names & invitation",
@@ -40,6 +41,9 @@ export function DesignSheet({
   activeColorwaySlug,
   galleryAnimation,
   sections,
+  invitationId,
+  introVideo,
+  onIntroVideoChange,
   onThemeChange,
   onColorwayChange,
   onGalleryAnimationChange,
@@ -52,6 +56,17 @@ export function DesignSheet({
   activeColorwaySlug: string | null;
   galleryAnimation: string;
   sections: SectionConfigEntry[];
+  invitationId: string;
+  introVideo: {
+    mp4Url: string | null;
+    webmUrl: string | null;
+    posterUrl: string | null;
+  };
+  onIntroVideoChange: (value: {
+    mp4Url: string | null;
+    webmUrl: string | null;
+    posterUrl: string | null;
+  }) => void;
   onThemeChange: (slug: string) => void;
   onColorwayChange: (slug: string | null) => void;
   onGalleryAnimationChange: (value: string) => void;
@@ -142,6 +157,15 @@ export function DesignSheet({
               </div>
             </section>
           )}
+
+          <section className="flex flex-col gap-2">
+            <Label>Opening</Label>
+            <IntroVideoUploader
+              invitationId={invitationId}
+              value={introVideo}
+              onChange={onIntroVideoChange}
+            />
+          </section>
 
           <section className="flex flex-col gap-2">
             <Label>How photos appear</Label>

@@ -102,6 +102,80 @@ export async function uploadVideoBuffer(
   });
 }
 
+export async function uploadIntroVideoBuffer(
+  buffer: Buffer,
+  options: { folder: string },
+) {
+  ensureConfigured();
+
+  const uploaded = await new Promise<{
+    publicId: string;
+    width: number;
+    height: number;
+  }>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: options.folder,
+        resource_type: "video",
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error("Cloudinary upload failed"));
+          return;
+        }
+        resolve({
+          publicId: result.public_id,
+          width: result.width,
+          height: result.height,
+        });
+      },
+    );
+    uploadStream.end(buffer);
+  });
+
+  const common = [
+    { start_offset: 0, end_offset: 5 },
+    { width: 540, height: 960, crop: "fill", gravity: "auto" },
+    { fps: 24 },
+    { audio_codec: "none" },
+    { quality: "auto:eco" },
+  ];
+
+  const mp4Url = cloudinary.url(uploaded.publicId, {
+    resource_type: "video",
+    secure: true,
+    format: "mp4",
+    transformation: [...common, { video_codec: "h264" }],
+  });
+
+  const webmUrl = cloudinary.url(uploaded.publicId, {
+    resource_type: "video",
+    secure: true,
+    format: "webm",
+    transformation: [...common, { video_codec: "vp9" }],
+  });
+
+  const posterUrl = cloudinary.url(uploaded.publicId, {
+    resource_type: "video",
+    secure: true,
+    format: "webp",
+    transformation: [
+      { start_offset: 0.2 },
+      { width: 540, height: 960, crop: "fill", gravity: "auto" },
+      { quality: "auto:eco" },
+    ],
+  });
+
+  return {
+    publicId: uploaded.publicId,
+    width: uploaded.width,
+    height: uploaded.height,
+    mp4Url,
+    webmUrl,
+    posterUrl,
+  };
+}
+
 export async function uploadAudioBuffer(
   buffer: Buffer,
   options: { folder: string },

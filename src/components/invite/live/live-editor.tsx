@@ -576,6 +576,19 @@ export function LiveEditor({
     ).then((data) => data && applyPatchResult(data));
   }
 
+  function handleIntroVideoChange(value: {
+    mp4Url: string | null;
+    webmUrl: string | null;
+    posterUrl: string | null;
+  }) {
+    setInvite((current) => ({
+      ...current,
+      revealVideoUrl: value.mp4Url,
+      revealVideoWebmUrl: value.webmUrl,
+      revealVideoPosterUrl: value.posterUrl,
+    }));
+  }
+
   function handleGalleryAnimation(value: string) {
     const previous = invite.galleryAnimation;
     setInvite((current) => ({ ...current, galleryAnimation: value }));
@@ -765,6 +778,13 @@ export function LiveEditor({
         activeColorwaySlug={colorwaySlug}
         galleryAnimation={invite.galleryAnimation}
         sections={sections}
+        invitationId={invitationId}
+        introVideo={{
+          mp4Url: invite.revealVideoUrl,
+          webmUrl: invite.revealVideoWebmUrl,
+          posterUrl: invite.revealVideoPosterUrl,
+        }}
+        onIntroVideoChange={handleIntroVideoChange}
         onThemeChange={handleThemeChange}
         onColorwayChange={handleColorwayChange}
         onGalleryAnimationChange={handleGalleryAnimation}

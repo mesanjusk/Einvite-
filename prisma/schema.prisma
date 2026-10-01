@@ -369,6 +369,12 @@ model Invitation {
   colorPalette     Json? // resolved palette: colourway, or a manual override
   musicTrackId     String? @db.ObjectId
   customMusicUrl   String? // couple's own uploaded audio — takes priority over musicTrackId when set
+  // Optional per-invitation opening clip played after "Tap to reveal".
+  // Public pages use optimized 5-second derivatives, never the raw upload.
+  introVideoPublicId  String?
+  introVideoMp4Url    String?
+  introVideoWebmUrl   String?
+  introVideoPosterUrl String?
   galleryAnimation String  @default("fade") // "fade" | "slide" | "zoom" | "flip" | "blur" — gallery photo reveal style
   sectionConfig    Json // [{ id, type, visible, locked, order }] — drives the drag-drop builder
 

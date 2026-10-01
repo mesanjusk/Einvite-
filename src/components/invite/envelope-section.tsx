@@ -69,12 +69,15 @@ function Flourish({ style }: { style: React.CSSProperties }) {
 export function EnvelopeSection({
   initials,
   videoUrl,
+  videoWebmUrl,
+  posterUrl,
   onComplete,
 }: {
   initials: string;
-  /** Optional short muted clip (theme-level) layered over the coded burst
-   * once it's preloaded — never blocks the reveal if it isn't ready in time. */
+  /** Optional short muted clip layered over the coded burst once preloaded. */
   videoUrl?: string | null;
+  videoWebmUrl?: string | null;
+  posterUrl?: string | null;
   onComplete: () => void;
 }) {
   const [opened, setOpened] = useState(false);
@@ -83,16 +86,16 @@ export function EnvelopeSection({
   const { t } = useLocale();
 
   useEffect(() => {
-    if (!videoUrl) return;
+    if (!videoUrl && !videoWebmUrl) return;
     videoRef.current?.load();
-  }, [videoUrl]);
+  }, [videoUrl, videoWebmUrl]);
 
   function handleTap() {
     if (opened) return;
     setOpened(true);
 
     const video = videoRef.current;
-    const videoLikelyReady = Boolean(videoUrl && video && video.readyState >= 3);
+    const videoLikelyReady = Boolean((videoUrl || videoWebmUrl) && video && video.readyState >= 3);
 
     if (!videoLikelyReady) {
       setTimeout(onComplete, OPEN_DURATION_MS);
@@ -322,19 +325,22 @@ export function EnvelopeSection({
         ✦
       </motion.p>
 
-      {videoUrl && (
+      {(videoUrl || videoWebmUrl) && (
         <motion.video
           ref={videoRef}
-          src={videoUrl}
           muted
           playsInline
           preload="auto"
+          poster={posterUrl ?? undefined}
           className="absolute inset-0 size-full object-cover"
           initial={{ opacity: 0 }}
           animate={{ opacity: showVideo ? 1 : 0 }}
           transition={{ duration: 0.4 }}
           style={{ pointerEvents: "none" }}
-        />
+        >
+          {videoWebmUrl && <source src={videoWebmUrl} type="video/webm" />}
+          {videoUrl && <source src={videoUrl} type="video/mp4" />}
+        </motion.video>
       )}
     </motion.div>
   );

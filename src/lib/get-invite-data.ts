@@ -109,7 +109,10 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     isDemo: invitation.isDemo,
     themeSlug: invitation.theme?.slug ?? null,
     revealVideoUrl:
-      invitation.theme?.revealMode === "VIDEO" ? (invitation.theme?.revealVideoUrl ?? null) : null,
+      invitation.introVideoMp4Url ??
+      (invitation.theme?.revealMode === "VIDEO" ? (invitation.theme?.revealVideoUrl ?? null) : null),
+    revealVideoWebmUrl: invitation.introVideoWebmUrl ?? null,
+    revealVideoPosterUrl: invitation.introVideoPosterUrl ?? null,
   };
 
   const sectionConfig = (invitation.sectionConfig as SectionConfigEntry[] | null) ?? [];
