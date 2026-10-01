@@ -43,6 +43,8 @@ type ThemeRecord = {
   previewImage: string | null;
   revealMode: string;
   revealVideoUrl: string | null;
+  renderEngine: string | null;
+  customExperienceKey: string | null;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
   fontPairing: { display: string; body: string; script: string };
   sectionOrder: string[];
@@ -68,6 +70,9 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
     previewImage: theme?.previewImage ?? "",
     revealMode: (theme?.revealMode as ThemeFormValues["revealMode"]) ?? "ANIMATION",
     revealVideoUrl: theme?.revealVideoUrl ?? "",
+    renderEngine: (theme?.renderEngine as ThemeFormValues["renderEngine"]) ?? "GENERIC",
+    customExperienceKey:
+      (theme?.customExperienceKey as ThemeFormValues["customExperienceKey"]) ?? "",
     category: (theme?.category as ThemeFormValues["category"]) ?? "classic",
     eventCategory: (theme?.eventCategory as ThemeFormValues["eventCategory"]) ?? "wedding",
     isPremium: theme?.isPremium ?? false,
@@ -288,6 +293,62 @@ export function ThemeFormDialog({
                     support.
                   </p>
                 </div>
+              )}
+            </div>
+          )}
+
+          {type === "WEBSITE" && (
+            <div className="grid gap-1.5">
+              <Label>Experience renderer</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    form.setValue("renderEngine", "GENERIC");
+                    form.setValue("customExperienceKey", "");
+                  }}
+                  className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("renderEngine") === "GENERIC" ? "border-primary bg-primary/5" : ""}`}
+                >
+                  <span className="font-medium">Standard</span>
+                  <p className="text-muted-foreground text-xs">
+                    Uses the shared invitation sections.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    form.setValue("renderEngine", "CUSTOM");
+                    if (!form.getValues("customExperienceKey")) {
+                      form.setValue("customExperienceKey", "royal-story");
+                    }
+                  }}
+                  className={`rounded-md border px-3 py-2 text-left text-sm ${form.watch("renderEngine") === "CUSTOM" ? "border-primary bg-primary/5" : ""}`}
+                >
+                  <span className="font-medium">Custom experience</span>
+                  <p className="text-muted-foreground text-xs">
+                    Dedicated layout, motion and interactions for this design.
+                  </p>
+                </button>
+              </div>
+              {form.watch("renderEngine") === "CUSTOM" && (
+                <select
+                  className="border-input mt-2 h-9 rounded-md border bg-transparent px-2 text-sm"
+                  value={form.watch("customExperienceKey") || ""}
+                  onChange={(event) =>
+                    form.setValue(
+                      "customExperienceKey",
+                      event.target.value as ThemeFormValues["customExperienceKey"],
+                    )
+                  }
+                >
+                  <option value="">Choose custom experience</option>
+                  <option value="royal-story">Royal Story — wax, scratch, story cards</option>
+                </select>
+              )}
+              {form.formState.errors.customExperienceKey && (
+                <p className="text-destructive text-xs">
+                  {form.formState.errors.customExperienceKey.message}
+                </p>
               )}
             </div>
           )}
