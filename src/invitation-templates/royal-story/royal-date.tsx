@@ -49,16 +49,13 @@ function ScratchDate({ invite }: { invite: InviteData }) {
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
     context.save();
     context.globalCompositeOperation = "destination-out";
     context.beginPath();
     context.arc(
-      (event.clientX - rect.left) * scaleX,
-      (event.clientY - rect.top) * scaleY,
-      28 * Math.max(scaleX, scaleY),
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+      28,
       0,
       Math.PI * 2,
     );
