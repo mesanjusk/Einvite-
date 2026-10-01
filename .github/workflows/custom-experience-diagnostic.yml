@@ -18,3 +18,5 @@ jobs:
       - run: npx prisma generate
       - run: npx tsc --noEmit
       - run: npx vitest run --exclude src/lib/actions/invitation.integration.test.ts
+      - name: Reproduce Vercel Next build
+        run: npx next build --turbopack
