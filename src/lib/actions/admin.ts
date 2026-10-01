@@ -82,6 +82,11 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     previewImage: data.previewImage,
     revealMode: data.revealMode,
     revealVideoUrl: data.revealVideoUrl,
+    renderEngine: data.type === "WEBSITE" ? data.renderEngine : "GENERIC",
+    customExperienceKey:
+      data.type === "WEBSITE" && data.renderEngine === "CUSTOM"
+        ? data.customExperienceKey || null
+        : null,
     category: data.category,
     eventCategory: data.eventCategory,
     isPremium: data.isPremium,

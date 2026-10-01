@@ -22,6 +22,7 @@ import {
   type LiveEventPatch,
 } from "@/lib/validations/live-invitation";
 import type { ActionResult } from "@/lib/actions/auth";
+import { resolveCustomExperienceKey } from "@/invitation-templates/experience-key";
 
 /**
  * The live editor's save path. Where the wizard collects a whole form and
@@ -43,6 +44,7 @@ type PatchResult = {
   musicUrl: string | null;
   themeStyle: Record<string, string>;
   themeSlug: string | null;
+  customExperienceKey: string | null;
 };
 
 export async function patchInvitationAction(
@@ -173,6 +175,7 @@ export async function patchInvitationAction(
         saved.fontPairing ?? saved.theme?.fontPairing,
       ) as Record<string, string>,
       themeSlug: saved.theme?.slug ?? null,
+      customExperienceKey: resolveCustomExperienceKey(saved.theme),
     },
   };
 }

@@ -48,6 +48,8 @@ export const THEMES = [
     fontPairing: { display: "Playfair Display", body: "Cormorant Garamond", script: "Great Vibes" },
     decorAssets: { petals: true, sparkles: true, motif: "flourish" },
     eventCategory: "wedding",
+    renderEngine: "CUSTOM",
+    customExperienceKey: "royal-story",
     isPremium: false,
     sortOrder: 0,
   },

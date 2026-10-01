@@ -171,6 +171,10 @@ model Theme {
   // in time, so the reveal never blocks on the network). WEBSITE themes only.
   revealMode     String    @default("ANIMATION") // "ANIMATION" | "VIDEO"
   revealVideoUrl String?
+  // Rendering engine for the website theme. Null preserves legacy records:
+  // the renderer may map a known slug to a built-in custom experience.
+  renderEngine        String? // "GENERIC" | "CUSTOM"
+  customExperienceKey String?
 
   templates      Template[]
   colorways      ThemeColorway[]
