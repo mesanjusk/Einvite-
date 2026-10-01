@@ -781,8 +781,8 @@ export function LiveEditor({
         invitationId={invitationId}
         introVideo={{
           mp4Url: invite.revealVideoUrl,
-          webmUrl: invite.revealVideoWebmUrl,
-          posterUrl: invite.revealVideoPosterUrl,
+          webmUrl: invite.revealVideoWebmUrl ?? null,
+          posterUrl: invite.revealVideoPosterUrl ?? null,
         }}
         onIntroVideoChange={handleIntroVideoChange}
         onThemeChange={handleThemeChange}
