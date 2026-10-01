@@ -23,6 +23,10 @@ import {
 } from "./edit-context";
 import { EditChip } from "./editable";
 import type { InviteData } from "./types";
+import {
+  CustomInviteExperience,
+  isRegisteredCustomExperience,
+} from "@/invitation-templates/registry";
 
 type SectionConfigEntry = {
   id: string;
@@ -116,6 +120,20 @@ export function InviteExperience({
       setShareUrl(`${window.location.origin}/invite/${invite.slug}`);
     }
   }, [invite.slug]);
+
+  if (isRegisteredCustomExperience(invite.customExperienceKey)) {
+    return (
+      <CustomInviteExperience
+        invite={invite}
+        sectionConfig={sectionConfig}
+        skipEnvelope={skipEnvelope}
+        initialGuestName={initialGuestName}
+        guestId={guestId}
+        showRemixCta={showRemixCta}
+        guidedActiveSectionId={guidedActiveSectionId}
+      />
+    );
+  }
 
   const visibleSections = [...sectionConfig]
     .filter((s) => s.visible)
