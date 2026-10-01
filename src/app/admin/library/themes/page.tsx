@@ -59,6 +59,9 @@ export default async function AdminThemesPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
+                    {theme.renderEngine === "CUSTOM" && (
+                      <Badge variant="secondary">Custom</Badge>
+                    )}
                     {theme.isPremium && <Badge variant="gold">Premium</Badge>}
                     <ThemeFormDialog
                       theme={{
@@ -69,6 +72,8 @@ export default async function AdminThemesPage() {
                         previewImage: theme.previewImage,
                         revealMode: theme.revealMode,
                         revealVideoUrl: theme.revealVideoUrl,
+                        renderEngine: theme.renderEngine,
+                        customExperienceKey: theme.customExperienceKey,
                         category: theme.category,
                         eventCategory: theme.eventCategory,
                         isPremium: theme.isPremium,
