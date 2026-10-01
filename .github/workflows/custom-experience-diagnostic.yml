@@ -1,8 +1,6 @@
 name: Custom Experience Diagnostic
 on:
-  push:
-    branches:
-      - feat/custom-invitation-experiences
+  pull_request:
 
 jobs:
   validate:
