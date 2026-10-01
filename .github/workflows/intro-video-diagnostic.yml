@@ -1,8 +1,6 @@
 name: Intro Video Build Diagnostic
 on:
-  push:
-    branches:
-      - fix/intro-video-build
+  pull_request:
 
 jobs:
   typecheck:
