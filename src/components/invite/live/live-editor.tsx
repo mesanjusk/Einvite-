@@ -545,9 +545,14 @@ export function LiveEditor({
   function applyPatchResult(data: {
     themeStyle: Record<string, string>;
     musicUrl: string | null;
+    customExperienceKey: string | null;
   }) {
     setThemeStyle(data.themeStyle as CSSProperties);
-    setInvite((current) => ({ ...current, musicUrl: data.musicUrl }));
+    setInvite((current) => ({
+      ...current,
+      musicUrl: data.musicUrl,
+      customExperienceKey: data.customExperienceKey,
+    }));
   }
 
   function handleThemeChange(slug: string) {
