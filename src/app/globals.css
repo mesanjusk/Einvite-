@@ -6,27 +6,27 @@
 :root {
   --radius: 0.75rem;
 
-  /* Studio brand palette (dashboard chrome) — soft pastel rose/peach/mint */
-  --background: oklch(0.985 0.008 320);
-  --foreground: oklch(0.34 0.045 320);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.34 0.045 320);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.34 0.045 320);
+  /* Celebration palette — jewel rose, saffron, peacock and warm ivory. */
+  --background: oklch(0.985 0.018 86);
+  --foreground: oklch(0.29 0.055 20);
+  --card: oklch(0.995 0.012 86);
+  --card-foreground: oklch(0.29 0.055 20);
+  --popover: oklch(0.995 0.012 86);
+  --popover-foreground: oklch(0.29 0.055 20);
 
-  --primary: oklch(0.6 0.1 340); /* pastel rose */
-  --primary-foreground: oklch(0.99 0.005 340);
-  --secondary: oklch(0.94 0.025 200); /* pastel sky */
-  --secondary-foreground: oklch(0.34 0.05 240);
-  --muted: oklch(0.96 0.015 320);
-  --muted-foreground: oklch(0.54 0.03 320);
-  --accent: oklch(0.87 0.075 85); /* pastel peach */
-  --accent-foreground: oklch(0.34 0.06 60);
-  --destructive: oklch(0.68 0.15 25); /* pastel coral */
+  --primary: oklch(0.49 0.18 18);
+  --primary-foreground: oklch(0.99 0.01 86);
+  --secondary: oklch(0.9 0.09 84);
+  --secondary-foreground: oklch(0.32 0.08 47);
+  --muted: oklch(0.96 0.035 83);
+  --muted-foreground: oklch(0.5 0.045 35);
+  --accent: oklch(0.76 0.16 74);
+  --accent-foreground: oklch(0.28 0.07 42);
+  --destructive: oklch(0.64 0.2 28);
 
-  --border: oklch(0.91 0.02 320);
-  --input: oklch(0.91 0.02 320);
-  --ring: oklch(0.72 0.08 340);
+  --border: oklch(0.87 0.055 74);
+  --input: oklch(0.89 0.045 75);
+  --ring: oklch(0.63 0.18 24);
 
   --chart-1: oklch(0.75 0.12 340);
   --chart-2: oklch(0.75 0.09 200);
@@ -131,6 +131,106 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 12% 0%, rgba(255, 180, 82, 0.12), transparent 24rem),
+      radial-gradient(circle at 95% 8%, rgba(183, 33, 73, 0.11), transparent 26rem);
+  }
+}
+
+@layer components {
+  .wedding-shell {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255, 179, 71, 0.24), transparent 24rem),
+      radial-gradient(circle at 90% 14%, rgba(190, 24, 93, 0.2), transparent 28rem),
+      linear-gradient(180deg, #fff9ec 0%, #fff5ea 45%, #fffaf4 100%);
+  }
+
+  .wedding-pattern {
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(190, 24, 93, 0.13) 0 2px, transparent 2.6px),
+      radial-gradient(circle at 70% 70%, rgba(225, 150, 34, 0.13) 0 2px, transparent 2.6px);
+    background-size: 42px 42px, 56px 56px;
+  }
+
+  .wedding-orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(6px);
+    opacity: 0.72;
+    animation: wedding-float 7s ease-in-out infinite;
+  }
+
+  .wedding-orb:nth-child(2) {
+    animation-delay: -2.2s;
+  }
+
+  .wedding-orb:nth-child(3) {
+    animation-delay: -4.1s;
+  }
+
+  .wedding-glass {
+    border: 1px solid rgba(255, 236, 207, 0.75);
+    background: rgba(255, 252, 247, 0.78);
+    box-shadow:
+      0 24px 70px rgba(94, 24, 51, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(18px);
+  }
+
+  .wedding-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(207, 151, 68, 0.35);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(255, 247, 231, 0.95));
+    box-shadow:
+      0 18px 45px rgba(105, 31, 52, 0.10),
+      0 2px 0 rgba(255, 255, 255, 0.85) inset;
+  }
+
+  .wedding-card::after {
+    content: "";
+    position: absolute;
+    inset: -45% auto auto -25%;
+    width: 65%;
+    height: 180%;
+    transform: rotate(22deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+    animation: wedding-shine 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .wedding-cta {
+    background: linear-gradient(135deg, #8f1537, #c02656 52%, #ef8f24);
+    color: white;
+    box-shadow: 0 14px 32px rgba(151, 28, 65, 0.28);
+  }
+
+  .wedding-cta:hover {
+    transform: translateY(-2px) scale(1.015);
+    box-shadow: 0 18px 38px rgba(151, 28, 65, 0.34);
+  }
+
+  .wedding-gold {
+    background: linear-gradient(135deg, #f3c463, #e89c25 55%, #cf6b1f);
+    color: #4b2115;
+  }
+
+  .wedding-title {
+    background: linear-gradient(110deg, #7d1735 0%, #c1265b 45%, #e8992f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .wedding-badge {
+    border: 1px solid rgba(226, 162, 59, 0.35);
+    background: rgba(255, 246, 222, 0.9);
+    color: #8e3d1c;
+    box-shadow: 0 8px 24px rgba(139, 65, 25, 0.08);
   }
 }
 
@@ -271,4 +371,21 @@
     height: auto !important;
     overflow: visible !important;
   }
+}
+
+
+@keyframes wedding-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -18px, 0) scale(1.04); }
+}
+
+@keyframes wedding-shine {
+  0%, 72%, 100% { transform: translateX(-140%) rotate(22deg); opacity: 0; }
+  82% { opacity: 0.7; }
+  94% { transform: translateX(290%) rotate(22deg); opacity: 0; }
+}
+
+@keyframes wedding-pulse {
+  0%, 100% { transform: scale(1); opacity: .7; }
+  50% { transform: scale(1.18); opacity: 1; }
 }
