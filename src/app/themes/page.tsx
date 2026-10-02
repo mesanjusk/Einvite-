@@ -6,6 +6,7 @@ import { SITE_NAME } from "@/config/site";
 import { PublicMarketplaceHeader } from "@/components/marketing/public-marketplace-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { TemplateMarketplaceCard } from "@/components/marketing/template-marketplace-card";
+import { MobileTemplateSpotlight } from "@/components/marketing/animated-invitation-showcase";
 import { categoryIcon } from "@/components/marketing/category-icon";
 import {
   EVENT_CATEGORIES,
@@ -92,6 +93,12 @@ export default async function PublicThemesPage({
   });
 
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
+  const mobilePreviewThemes = themes.slice(0, 5).map((theme) => ({
+    id: theme.id,
+    name: theme.name,
+    previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
+    demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+  }));
   const headingCategory = activeSlug ? eventCategoryFor(activeSlug).label : null;
 
   const hrefFor = (changes: Record<string, string | null | undefined>) => {
@@ -129,6 +136,10 @@ export default async function PublicThemesPage({
               Explore Our {headingCategory ? `${headingCategory} ` : ""}
               <span className="italic text-[#7b2942]">Templates</span>
             </h1>
+
+            <div className="mx-auto mt-6 max-w-[430px] text-left">
+              <MobileTemplateSpotlight themes={mobilePreviewThemes} />
+            </div>
 
             <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#8d756b] uppercase">
               Select collection
