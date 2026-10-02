@@ -7,6 +7,7 @@ import { PublicMarketplaceHeader } from "@/components/marketing/public-marketpla
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { TemplateMarketplaceCard } from "@/components/marketing/template-marketplace-card";
 import { MobileTemplateSpotlight } from "@/components/marketing/animated-invitation-showcase";
+import { WeddingAmbientEffects } from "@/components/marketing/wedding-ambient-effects";
 import { categoryIcon } from "@/components/marketing/category-icon";
 import {
   EVENT_CATEGORIES,
@@ -125,6 +126,7 @@ export default async function PublicThemesPage({
       <main>
         <section className="relative overflow-hidden border-b border-[#efc879]/35 bg-white/35">
           <div className="wedding-pattern pointer-events-none absolute inset-0 opacity-35" />
+          <WeddingAmbientEffects variant="browser" />
           <div className="wedding-orb -left-20 top-6 size-52 bg-[#f1a32e]/28" />
           <div className="wedding-orb -right-16 -top-10 size-56 bg-[#d9326a]/22" />
 
