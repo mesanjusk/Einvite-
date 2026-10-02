@@ -64,7 +64,7 @@ export function WeddingAmbientEffects({
       data-music-active={musicActive ? "true" : "false"}
       className={cn(
         "wedding-ambient pointer-events-none overflow-hidden",
-        variant === "viewer" ? "fixed inset-0 z-[6]" : "absolute inset-0 z-[1]",
+        variant === "viewer" ? "fixed inset-0 z-20" : "absolute inset-0 z-[1]",
         className,
       )}
     >
