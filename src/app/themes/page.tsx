@@ -18,9 +18,9 @@ import { fallbackThumbnailFor } from "@/lib/marketing-fallbacks";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Invitation Templates",
+  title: `Royal Invitation Designs · ${SITE_NAME}`,
   description:
-    "Choose a celebration, preview invitation templates live, then edit your selected design directly on screen.",
+    "Explore premium animated wedding invitation designs by SK Digital, preview them live, and personalize your chosen experience.",
 };
 
 type SortMode = "popular" | "newest" | "premium" | "name";
@@ -120,40 +120,42 @@ export default async function PublicThemesPage({
   };
 
   return (
-    <div className="wedding-shell min-h-svh text-[#4d2530]">
+    <div className="min-h-svh bg-[#f8f1e4] text-[#2f2a25]">
       <PublicMarketplaceHeader />
 
       <main>
-        <section className="relative overflow-hidden border-b border-[#efc879]/35 bg-white/35">
-          <div className="wedding-pattern pointer-events-none absolute inset-0 opacity-35" />
-          <WeddingAmbientEffects variant="browser" />
-          <div className="wedding-orb -left-20 top-6 size-52 bg-[#f1a32e]/28" />
-          <div className="wedding-orb -right-16 -top-10 size-56 bg-[#d9326a]/22" />
+        <section className="royal-hero relative overflow-hidden border-b border-[#c8a45e]/20">
+          <div className="royal-dust pointer-events-none absolute inset-0 opacity-55" />
+          <WeddingAmbientEffects variant="browser" className="opacity-30" />
+          <div className="royal-orbit royal-orbit-a" />
+          <div className="royal-orbit royal-orbit-b" />
+          <div className="royal-corner royal-corner-tl" />
+          <div className="royal-corner royal-corner-br" />
 
           <div className="relative mx-auto max-w-4xl px-4 pb-6 pt-8 text-center sm:px-8 sm:pb-9 sm:pt-11">
-            <p className="font-script text-3xl text-[#d07b1f] sm:text-4xl">
-              Pick the celebration
+            <p className="royal-kicker text-[9px] font-bold">
+              SK Digital signature collection
             </p>
-            <h1 className="font-display wedding-title mx-auto mt-1 text-[2.45rem] leading-[0.95] sm:text-5xl">
-              Explore Our {headingCategory ? `${headingCategory} ` : ""}
-              <span className="italic text-[#7b2942]">Templates</span>
+            <h1 className="font-display royal-title-light mx-auto mt-2 text-[2.45rem] leading-[0.95] sm:text-5xl">
+              Explore {headingCategory ? `${headingCategory} ` : ""}
+              <span className="italic">invitation designs</span>
             </h1>
 
             <div className="mx-auto mt-6 max-w-[430px] text-left">
               <MobileTemplateSpotlight themes={mobilePreviewThemes} />
             </div>
 
-            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#8d756b] uppercase">
+            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#c9b690] uppercase">
               Select collection
             </p>
-            <div className="wedding-glass mx-auto mt-2 grid max-w-md grid-cols-2 rounded-full p-1.5">
+            <div className="royal-glass-dark mx-auto mt-2 grid max-w-md grid-cols-2 rounded-full p-1.5">
               <Link
                 href={hrefFor({ tier: null })}
                 className={cn(
                   "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
                   tier === "all"
-                    ? "wedding-cta text-white"
-                    : "text-[#8b756d] hover:text-[#65172e]",
+                    ? "royal-gold-button text-[#211d18]"
+                    : "text-[#d7c7a6] hover:text-[#f0d48f]",
                 )}
               >
                 All designs
@@ -163,8 +165,8 @@ export default async function PublicThemesPage({
                 className={cn(
                   "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
                   tier === "premium"
-                    ? "wedding-cta text-white"
-                    : "text-[#8b756d] hover:text-[#65172e]",
+                    ? "royal-gold-button text-[#211d18]"
+                    : "text-[#d7c7a6] hover:text-[#f0d48f]",
                 )}
               >
                 Premium designs
@@ -191,7 +193,7 @@ export default async function PublicThemesPage({
             </nav>
 
             <form
-              className="wedding-glass mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-full px-4 py-1.5"
+              className="royal-glass-dark mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-full px-4 py-1.5"
               action="/themes"
               method="get"
             >
@@ -207,11 +209,11 @@ export default async function PublicThemesPage({
                 name="q"
                 defaultValue={rawQuery ?? ""}
                 placeholder="Search templates by style or name..."
-                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-[#4f403b] outline-none placeholder:text-[#b4a39a] sm:text-sm"
+                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-[#efe2c7] outline-none placeholder:text-[#aa9a7d] sm:text-sm"
               />
               <button
                 type="submit"
-                className="wedding-cta rounded-full px-4 py-2 text-[9px] font-extrabold tracking-[0.12em] text-white uppercase sm:text-[10px]"
+                className="royal-gold-button rounded-full px-4 py-2 text-[9px] font-extrabold tracking-[0.12em] uppercase sm:text-[10px]"
               >
                 Search
               </button>
@@ -233,17 +235,17 @@ export default async function PublicThemesPage({
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-10 lg:px-10">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <span className="rounded-full border border-[#e6dbd1] bg-white px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#80675e] uppercase shadow-sm sm:text-[10px]">
+        <section className="royal-section relative mx-auto max-w-none px-4 py-8 sm:px-8 sm:py-10 lg:px-10">
+          <div className="relative mx-auto mb-5 flex max-w-7xl items-center justify-between gap-3">
+            <span className="rounded-full border border-[#c7a15a]/30 bg-[#fffaf0]/80 px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#675538] uppercase shadow-sm sm:text-[10px]">
               {themes.length} {themes.length === 1 ? "template" : "templates"}
             </span>
 
             <details className="group relative">
-              <summary className="cursor-pointer list-none rounded-full border border-[#e6dbd1] bg-white px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#80675e] uppercase shadow-sm [&::-webkit-details-marker]:hidden sm:text-[10px]">
+              <summary className="cursor-pointer list-none rounded-full border border-[#c7a15a]/30 bg-[#fffaf0]/85 px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#675538] uppercase shadow-sm [&::-webkit-details-marker]:hidden sm:text-[10px]">
                 Sort: {sortLabel(sort)} ▾
               </summary>
-              <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-2xl border border-[#eadfd5] bg-white p-1.5 text-left shadow-[0_18px_45px_rgba(94,45,54,0.16)]">
+              <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-2xl border border-[#c7a15a]/28 bg-[#fffaf0] p-1.5 text-left shadow-[0_18px_45px_rgba(50,40,27,0.15)]">
                 <SortLink href={hrefFor({ sort: null })} label="Popular" active={sort === "popular"} />
                 <SortLink href={hrefFor({ sort: "newest" })} label="Newest" active={sort === "newest"} />
                 <SortLink href={hrefFor({ sort: "premium" })} label="Premium first" active={sort === "premium"} />
@@ -252,15 +254,16 @@ export default async function PublicThemesPage({
             </details>
           </div>
 
+          <div className="relative mx-auto max-w-7xl">
           {themes.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-[#dccdc1] bg-[#fff9f0] px-6 py-16 text-center">
-              <p className="font-display text-2xl text-[#5d2032]">No matching designs yet</p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#7c685f]">
+            <div className="rounded-3xl border border-dashed border-[#c9aa6c]/40 bg-[#fffaf0] px-6 py-16 text-center">
+              <p className="font-display text-2xl text-[#342c24]">No matching designs yet</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#756348]">
                 Try another celebration, style or search term.
               </p>
               <Link
                 href="/themes"
-                className="mt-5 inline-flex rounded-full bg-[#65172e] px-5 py-2.5 text-[10px] font-extrabold tracking-wide text-white uppercase"
+                className="mt-5 inline-flex rounded-full royal-gold-button px-5 py-2.5 text-[10px] font-extrabold tracking-wide uppercase"
               >
                 Show all templates
               </Link>
@@ -284,6 +287,7 @@ export default async function PublicThemesPage({
               ))}
             </div>
           )}
+          </div>
         </section>
       </main>
 
@@ -316,8 +320,8 @@ function FilterChip({
       className={cn(
         "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
         active
-          ? "border-transparent bg-gradient-to-r from-[#8f1537] via-[#c2265b] to-[#e9892f] text-white"
-          : "border-[#efcf94]/55 bg-white/78 text-[#7d4d42] hover:bg-[#fff0c5] hover:text-[#8f1537]",
+          ? "border-[#e0c17e]/30 bg-gradient-to-r from-[#d3ae64] via-[#e6ca8b] to-[#9e7738] text-[#221e19] shadow-sm"
+          : "border-[#d3b474]/28 bg-white/[0.05] text-[#dfcfad] hover:border-[#d3b474]/46 hover:bg-[#d3b474]/10 hover:text-[#f1dcaa]",
       )}
     >
       {icon}
@@ -333,8 +337,8 @@ function StyleChip({ href, label, active }: { href: string; label: string; activ
       className={cn(
         "shrink-0 rounded-full px-3.5 py-2 text-[9px] font-extrabold tracking-wide capitalize transition sm:text-[10px]",
         active
-          ? "bg-gradient-to-r from-[#8f1537] to-[#df7b28] text-white shadow-sm"
-          : "bg-[#fff0cc]/75 text-[#7d4d42] hover:text-[#8f1537]",
+          ? "bg-gradient-to-r from-[#d3ae64] to-[#9c7132] text-[#211d18] shadow-sm"
+          : "bg-white/[0.06] text-[#d8c8a7] hover:bg-[#d2ae68]/10 hover:text-[#f0d58f]",
       )}
     >
       {label}
@@ -348,7 +352,9 @@ function SortLink({ href, label, active }: { href: string; label: string; active
       href={href}
       className={cn(
         "block rounded-xl px-3 py-2 text-[10px] font-bold transition",
-        active ? "bg-[#fff3e8] text-[#65172e]" : "text-[#745f57] hover:bg-[#fff7ef]",
+        active
+          ? "bg-[#efe0bd] text-[#3b3021]"
+          : "text-[#6f6048] hover:bg-[#f7edd8]",
       )}
     >
       {label}
