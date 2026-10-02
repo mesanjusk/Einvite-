@@ -20,8 +20,10 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
     <article className="group min-w-0">
       <div className="relative">
         <div className="absolute -inset-2 rounded-[2rem] bg-[linear-gradient(135deg,#f6bf52,#d52c63,#7f1d53)] opacity-0 blur-lg transition duration-500 group-hover:opacity-25" />
-        <div className="wedding-card relative rounded-[1.8rem] p-2 transition duration-300 group-hover:-translate-y-1.5 sm:p-2.5">
-          <PhoneMockup className="max-w-none shadow-none">
+        <div className="wedding-card template-preview-stage relative rounded-[1.8rem] p-2 transition duration-300 group-hover:-translate-y-1.5 sm:p-2.5">
+          <span className="wedding-petal wedding-petal-a pointer-events-none left-2 top-4 z-30 hidden sm:block" />
+          <span className="wedding-sparkle pointer-events-none right-3 top-4 z-30 hidden sm:block">✦</span>
+          <PhoneMockup className="template-phone-lift max-w-none shadow-none">
             {theme.previewImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -34,6 +36,7 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
             )}
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#3b0817]/65 to-transparent" />
+            <div className="template-shimmer" />
 
             {theme.demoSlug && (
               <Link
