@@ -9,6 +9,7 @@ import { PublicMarketplaceHeader } from "@/components/marketing/public-marketpla
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { TemplateMarketplaceCard } from "@/components/marketing/template-marketplace-card";
 import { AnimatedInvitationShowcase } from "@/components/marketing/animated-invitation-showcase";
+import { WeddingAmbientEffects } from "@/components/marketing/wedding-ambient-effects";
 import { FALLBACK_THEMES, fallbackThumbnailFor } from "@/lib/marketing-fallbacks";
 
 const TITLE = `${SITE_NAME} — Wedding Invitations That Feel Alive`;
@@ -70,6 +71,7 @@ export default async function Home() {
       <main>
         <section className="relative min-h-[78svh] overflow-hidden">
           <div className="wedding-pattern pointer-events-none absolute inset-0 opacity-45" />
+          <WeddingAmbientEffects variant="browser" />
           <div className="wedding-orb left-[4%] top-[10%] size-44 bg-[#f3a92f]/35" />
           <div className="wedding-orb right-[8%] top-[16%] size-56 bg-[#d92f68]/26" />
           <div className="wedding-orb bottom-[8%] left-[36%] size-36 bg-[#0f9b8a]/18" />

@@ -21,6 +21,9 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
       <div className="relative">
         <div className="absolute -inset-2 rounded-[2rem] bg-[linear-gradient(135deg,#f6bf52,#d52c63,#7f1d53)] opacity-0 blur-lg transition duration-500 group-hover:opacity-25" />
         <div className="wedding-card template-preview-stage relative rounded-[1.8rem] p-2 transition duration-300 group-hover:-translate-y-1.5 sm:p-2.5">
+          <span className="template-mini-confetti template-mini-confetti-a" />
+          <span className="template-mini-confetti template-mini-confetti-b" />
+          <span className="template-mini-confetti template-mini-confetti-c" />
           <span className="wedding-petal wedding-petal-a pointer-events-none left-2 top-4 z-30 hidden sm:block" />
           <span className="wedding-sparkle pointer-events-none right-3 top-4 z-30 hidden sm:block">✦</span>
           <PhoneMockup className="template-phone-lift max-w-none shadow-none">

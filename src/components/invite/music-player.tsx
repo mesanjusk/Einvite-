@@ -13,13 +13,19 @@ export function MusicPlayer({ musicUrl, active }: { musicUrl: string | null; act
   const [isMuted, setIsMuted] = useState(false);
   const [started, setStarted] = useState(false);
   const [broken, setBroken] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (active && musicUrl && !started) {
       const audio = new Audio(musicUrl);
       audio.loop = true;
       audio.volume = 0.3;
-      audio.addEventListener("error", () => setBroken(true));
+      audio.addEventListener("error", () => {
+        setBroken(true);
+        setIsPlaying(false);
+      });
+      audio.addEventListener("play", () => setIsPlaying(true));
+      audio.addEventListener("pause", () => setIsPlaying(false));
       // Autoplay can be blocked by the browser even though this fires from a
       // tap (envelope open); that's not a broken file, so leave the button
       // up — the click handler below retries play() from a direct gesture.
@@ -30,7 +36,23 @@ export function MusicPlayer({ musicUrl, active }: { musicUrl: string | null; act
   }, [active, musicUrl, started]);
 
   useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("wedding-music-state", {
+        detail: {
+          playing: Boolean(active && musicUrl && isPlaying && !broken),
+          muted: isMuted,
+        },
+      }),
+    );
+  }, [active, musicUrl, isPlaying, isMuted, broken]);
+
+  useEffect(() => {
     return () => {
+      window.dispatchEvent(
+        new CustomEvent("wedding-music-state", {
+          detail: { playing: false, muted: true },
+        }),
+      );
       audioRef.current?.pause();
     };
   }, []);
