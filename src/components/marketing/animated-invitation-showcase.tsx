@@ -169,12 +169,12 @@ export function MobileTemplateSpotlight({
     <div className="md:hidden">
       <div className="mb-3 flex items-center justify-between px-1">
         <div>
-          <p className="font-display text-xl text-[#a77d3e]">See them move</p>
-          <p className="text-[9px] font-black tracking-[0.12em] text-[#6f5a3d] uppercase">
+          <p className="font-display text-xl text-[#d8b56d]">See them move</p>
+          <p className="text-[9px] font-black tracking-[0.12em] text-[#c8b795] uppercase">
             Swipe invitation previews
           </p>
         </div>
-        <Sparkles className="size-5 text-[#b18843]" />
+        <Sparkles className="size-5 text-[#e0c17b]" />
       </div>
 
       <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-5 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
