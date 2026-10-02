@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { ScrollProgress } from "@/components/animation/scroll-progress";
+import { WeddingAmbientEffects } from "@/components/marketing/wedding-ambient-effects";
 import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { LocaleProvider } from "@/lib/i18n/locale-context";
 import { EnvelopeSection } from "./envelope-section";
@@ -146,6 +147,18 @@ export function InviteExperience({
         active={inviteOpen}
       />
 
+      {inviteOpen && (
+        <WeddingAmbientEffects
+          variant="viewer"
+          reactToMusic
+          className={
+            skipEnvelope
+              ? "no-print absolute inset-x-0 top-0 h-[100svh]"
+              : "no-print"
+          }
+        />
+      )}
+
       <AnimatePresence>
         {!skipEnvelope && !inviteOpen && (
           <EnvelopeSection
@@ -159,7 +172,7 @@ export function InviteExperience({
       </AnimatePresence>
 
       {inviteOpen && (
-        <main>
+        <main className="relative z-[7]">
           {dedupedSections.map((section) => {
             switch (section.type) {
               case "HERO":
