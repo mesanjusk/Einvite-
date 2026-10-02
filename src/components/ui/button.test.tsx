@@ -36,6 +36,6 @@ describe("Button", () => {
 
   it("applies the gold variant class", () => {
     render(<Button variant="gold">Upgrade</Button>);
-    expect(screen.getByRole("button", { name: "Upgrade" }).className).toContain("bg-accent");
+    expect(screen.getByRole("button", { name: "Upgrade" }).className).toContain("wedding-gold");
   });
 });
