@@ -28,12 +28,13 @@ export default async function DashboardLayout({
   const isAdmin = profile?.isAdmin ?? false;
 
   return (
-    <div className="wedding-shell flex min-h-svh">
+    <div className="relative flex min-h-svh bg-[#f8f2e7]">
       <DashboardSidebar isAdmin={isAdmin} />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopbar user={session.user} isAdmin={isAdmin} />
-        <main className="relative flex-1 p-4 pb-20 lg:p-8">
-          <div className="wedding-pattern pointer-events-none absolute inset-0 opacity-[0.14]" />
+        <main className="relative flex-1 overflow-hidden p-4 pb-20 lg:p-8">
+          <div className="wedding-pattern pointer-events-none absolute inset-0 opacity-[0.10]" />
+          <div className="royal-dust pointer-events-none absolute inset-0 opacity-[0.10]" />
           <div className="relative z-[1]">{children}</div>
         </main>
       </div>
