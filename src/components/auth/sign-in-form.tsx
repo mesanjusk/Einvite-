@@ -56,11 +56,11 @@ export function SignInForm() {
   }
 
   return (
-    <Card className="wedding-glass w-full max-w-sm border-[#efc879]/45 bg-white/75">
+    <Card className="royal-auth-card w-full max-w-sm border-[#c9a35b]/28 bg-[#2a2723]/88 text-[#f4e8ce] shadow-[0_28px_80px_rgba(0,0,0,.38)] backdrop-blur-2xl">
       <CardHeader>
         <CardTitle className="text-center">
-          <span className="font-script block text-3xl font-normal text-[#d17f1f]">Welcome back</span>
-          <span className="font-display wedding-title mt-1 block text-2xl">Sign in</span>
+          <span className="font-script block text-3xl font-normal text-[#d2aa60]">Welcome back</span>
+          <span className="font-display royal-gold-text mt-1 block text-2xl">Sign in</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -99,7 +99,7 @@ export function SignInForm() {
         </Form>
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          <Link href="/sign-up" className="font-semibold text-[#9a1c49] underline decoration-[#e0a52e]/55 underline-offset-4">
+          <Link href="/sign-up" className="font-semibold text-[#e0bd76] underline decoration-[#c59c52]/55 underline-offset-4">
             Create an account
           </Link>
         </div>
