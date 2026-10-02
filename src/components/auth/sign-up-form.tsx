@@ -59,9 +59,12 @@ export function SignUpForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="wedding-glass w-full max-w-sm border-[#efc879]/45 bg-white/75">
       <CardHeader>
-        <CardTitle className="text-center text-xl">Create account</CardTitle>
+        <CardTitle className="text-center">
+          <span className="font-script block text-3xl font-normal text-[#d17f1f]">Start your celebration</span>
+          <span className="font-display wedding-title mt-1 block text-2xl">Create account</span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -112,7 +115,7 @@ export function SignUpForm() {
         </Form>
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          <Link href="/sign-in" className="text-primary underline underline-offset-4">
+          <Link href="/sign-in" className="font-semibold text-[#9a1c49] underline decoration-[#e0a52e]/55 underline-offset-4">
             Sign in instead
           </Link>
         </div>

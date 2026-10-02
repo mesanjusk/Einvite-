@@ -64,7 +64,7 @@ export function DashboardTopbar({
   const moreNavItems = dashboardNav.filter((item) => !BOTTOM_NAV_HREFS.has(item.href));
 
   return (
-    <header className="bg-background/80 sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b px-4 backdrop-blur">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-[#efc778]/35 bg-[#fff8eb]/78 px-4 backdrop-blur-2xl">
       <SiteLogo size="sm" className="lg:hidden" />
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -140,7 +140,7 @@ export function DashboardTopbar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-9 gap-2 px-2">
-              <Avatar className="size-7">
+              <Avatar className="size-8 ring-2 ring-[#efbd5a]/35">
                 <AvatarImage src={user.image ?? undefined} alt={user.name ?? "User"} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {initials}
