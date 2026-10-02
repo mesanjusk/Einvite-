@@ -1,33 +1,45 @@
 import Link from "next/link";
-import { Heart, Sparkles } from "lucide-react";
+import { Gem, Sparkles } from "lucide-react";
 
-import { SITE_NAME } from "@/config/site";
+import { SiteLogo } from "@/components/brand/site-logo";
+import { SITE_NAME, SITE_TAGLINE } from "@/config/site";
 import { LEGAL_BRAND_NAME } from "@/config/legal";
 
 export function SiteFooter() {
   return (
-    <footer className="relative overflow-hidden bg-[linear-gradient(135deg,#4a0e21,#7f1739_55%,#a74625)] px-6 py-10 text-center text-[#fff4dc]">
-      <div className="pointer-events-none absolute -left-12 -top-12 size-44 rounded-full border border-[#f7c768]/25" />
-      <div className="pointer-events-none absolute -right-16 bottom-[-60px] size-52 rounded-full border border-[#f7c768]/25" />
+    <footer className="royal-footer relative overflow-hidden border-t border-[#c9a35b]/25 bg-[#181715] px-6 py-12 text-center text-[#f6ecd6]">
+      <div className="royal-corner royal-corner-tl" />
+      <div className="royal-corner royal-corner-br" />
+      <div className="royal-dust pointer-events-none absolute inset-0 opacity-45" />
+
       <div className="relative mx-auto max-w-5xl">
-        <div className="flex items-center justify-center gap-2 text-[#f4c96f]">
-          <Sparkles className="size-4" />
-          <span className="font-script text-3xl">Made for celebrations</span>
-          <Heart className="size-4 fill-current" />
+        <div className="flex justify-center">
+          <SiteLogo size="lg" />
         </div>
 
-        <nav className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold text-[#f9e5c0]/85">
-          <Link href="/themes" className="transition hover:text-white">Designs</Link>
-          <Link href="/privacy" className="transition hover:text-white">Privacy</Link>
-          <Link href="/terms" className="transition hover:text-white">Terms</Link>
-          <Link href="/contact" className="transition hover:text-white">Contact</Link>
+        <div className="mt-5 flex items-center justify-center gap-2 text-[#d4af66]">
+          <Sparkles className="size-4" />
+          <span className="font-display text-xl tracking-[0.05em]">{SITE_TAGLINE}</span>
+          <Gem className="size-4" />
+        </div>
+
+        <nav className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold tracking-wide text-[#d8c6a4]/80">
+          <Link href="/themes" className="transition hover:text-[#f3d58f]">Designs</Link>
+          <Link href="/privacy" className="transition hover:text-[#f3d58f]">Privacy</Link>
+          <Link href="/terms" className="transition hover:text-[#f3d58f]">Terms</Link>
+          <Link href="/contact" className="transition hover:text-[#f3d58f]">Contact</Link>
         </nav>
 
-        <p className="mt-6 text-sm font-semibold text-white">
-          {SITE_NAME} · {LEGAL_BRAND_NAME}
+        <div className="royal-divider mx-auto mt-8 max-w-sm" />
+
+        <p className="mt-6 text-sm font-semibold tracking-[0.08em] text-[#f5dfb1] uppercase">
+          {SITE_NAME}
         </p>
-        <p className="mt-1 text-[10px] tracking-[0.14em] text-[#f6dbaa]/65 uppercase">
-          © {new Date().getFullYear()} · Love, colour & a little sparkle
+        <p className="mt-1 text-[9px] tracking-[0.12em] text-[#bba982]/65 uppercase">
+          {LEGAL_BRAND_NAME}
+        </p>
+        <p className="mt-2 text-[9px] tracking-[0.14em] text-[#a99878]/55 uppercase">
+          © {new Date().getFullYear()} · crafted for beautiful celebrations
         </p>
       </div>
     </footer>
