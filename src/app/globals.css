@@ -636,3 +636,236 @@
     animation: none !important;
   }
 }
+
+
+/* Lightweight wedding ambience: GPU-friendly transform/opacity only. */
+.wedding-ambient {
+  --ambient-glow-opacity: .42;
+  --ambient-sparkle-speed: 4.2s;
+  contain: layout paint style;
+}
+
+.wedding-ambient[data-ambient-variant="browser"] {
+  opacity: .72;
+}
+
+.wedding-ambient[data-ambient-variant="viewer"] {
+  opacity: .82;
+}
+
+.wedding-ambient-glow {
+  position: absolute;
+  width: min(44vw, 360px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  filter: blur(32px);
+  opacity: var(--ambient-glow-opacity);
+  will-change: transform, opacity;
+  animation: wedding-ambient-breathe 7.5s ease-in-out infinite;
+}
+
+.wedding-ambient-glow-a {
+  left: -10%;
+  top: 8%;
+  background: radial-gradient(circle, rgba(244, 165, 54, .34), transparent 68%);
+}
+
+.wedding-ambient-glow-b {
+  right: -12%;
+  bottom: 9%;
+  background: radial-gradient(circle, rgba(211, 39, 98, .28), transparent 68%);
+  animation-delay: -3.6s;
+}
+
+.wedding-ambient-petal {
+  position: absolute;
+  top: -10vh;
+  border-radius: 82% 18% 78% 22%;
+  background: linear-gradient(145deg, rgba(255,190,205,.92), rgba(199,39,91,.9));
+  box-shadow: 0 7px 18px rgba(143, 31, 72, .12);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: wedding-ambient-petal-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.wedding-ambient-petal:nth-of-type(even) {
+  background: linear-gradient(145deg, rgba(255,220,133,.95), rgba(227,139,38,.92));
+}
+
+.wedding-ambient-confetti {
+  position: absolute;
+  top: -8vh;
+  width: 5px;
+  height: 12px;
+  border-radius: 999px;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: wedding-ambient-confetti-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.wedding-ambient-confetti-1 {
+  background: #c72b5e;
+}
+
+.wedding-ambient-confetti-2 {
+  background: #e6a02f;
+}
+
+.wedding-ambient-confetti-3 {
+  background: #138577;
+}
+
+.wedding-ambient-sparkle {
+  position: absolute;
+  color: color-mix(in srgb, var(--inv-accent, #d88a1f) 72%, #f4a62d 28%);
+  font-size: 13px;
+  line-height: 1;
+  opacity: .3;
+  text-shadow: 0 5px 18px rgba(224, 150, 42, .24);
+  will-change: transform, opacity;
+  animation: wedding-ambient-sparkle var(--ambient-sparkle-speed) ease-in-out infinite;
+}
+
+.wedding-music-bloom {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 150px;
+  height: 150px;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity .8s ease;
+}
+
+.wedding-music-bloom span {
+  position: absolute;
+  inset: 25%;
+  border: 1px solid color-mix(in srgb, var(--inv-accent, #d89a32) 52%, transparent);
+  border-radius: 999px;
+  opacity: 0;
+}
+
+.wedding-ambient[data-music-active="true"] {
+  --ambient-glow-opacity: .56;
+  --ambient-sparkle-speed: 3.1s;
+}
+
+.wedding-ambient[data-music-active="true"] .wedding-ambient-glow {
+  animation-duration: 5.4s;
+}
+
+.wedding-ambient[data-music-active="true"] .wedding-music-bloom {
+  opacity: .55;
+}
+
+.wedding-ambient[data-music-active="true"] .wedding-music-bloom span {
+  animation: wedding-music-ring 2.8s ease-out infinite;
+}
+
+.wedding-ambient[data-music-active="true"] .wedding-music-bloom span:nth-child(2) {
+  animation-delay: -.9s;
+}
+
+.wedding-ambient[data-music-active="true"] .wedding-music-bloom span:nth-child(3) {
+  animation-delay: -1.8s;
+}
+
+@keyframes wedding-ambient-petal-fall {
+  0% {
+    transform: translate3d(0, -8vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% { opacity: .78; }
+  50% {
+    transform: translate3d(18px, 52vh, 0) rotate(175deg);
+    opacity: .72;
+  }
+  92% { opacity: .42; }
+  100% {
+    transform: translate3d(-14px, 112vh, 0) rotate(350deg);
+    opacity: 0;
+  }
+}
+
+@keyframes wedding-ambient-confetti-fall {
+  0% {
+    transform: translate3d(0, -8vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% { opacity: .72; }
+  48% {
+    transform: translate3d(-12px, 52vh, 0) rotate(210deg);
+    opacity: .62;
+  }
+  100% {
+    transform: translate3d(16px, 112vh, 0) rotate(430deg);
+    opacity: 0;
+  }
+}
+
+@keyframes wedding-ambient-sparkle {
+  0%, 100% {
+    transform: scale(.72) rotate(0deg);
+    opacity: .18;
+  }
+  48% {
+    transform: scale(1.18) rotate(18deg);
+    opacity: .9;
+  }
+}
+
+@keyframes wedding-ambient-breathe {
+  0%, 100% {
+    transform: scale(.94);
+    opacity: calc(var(--ambient-glow-opacity) * .72);
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: var(--ambient-glow-opacity);
+  }
+}
+
+@keyframes wedding-music-ring {
+  0% {
+    transform: scale(.55);
+    opacity: 0;
+  }
+  22% {
+    opacity: .5;
+  }
+  100% {
+    transform: scale(2.35);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .wedding-ambient-petal:nth-of-type(n+5),
+  .wedding-ambient-confetti:nth-of-type(n+4) {
+    display: none;
+  }
+
+  .wedding-ambient-glow {
+    filter: blur(26px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedding-ambient-glow,
+  .wedding-ambient-petal,
+  .wedding-ambient-confetti,
+  .wedding-ambient-sparkle,
+  .wedding-music-bloom span {
+    animation: none !important;
+  }
+
+  .wedding-ambient-petal,
+  .wedding-ambient-confetti,
+  .wedding-music-bloom {
+    display: none;
+  }
+}
