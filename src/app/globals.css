@@ -389,3 +389,250 @@
   0%, 100% { transform: scale(1); opacity: .7; }
   50% { transform: scale(1.18); opacity: 1; }
 }
+
+
+/* Invitation preview motion system ------------------------------------------------ */
+.wedding-mockup-primary {
+  animation: wedding-mockup-primary 5.8s ease-in-out infinite;
+  transform-origin: 50% 70%;
+  will-change: transform;
+}
+
+.wedding-mockup-side,
+.wedding-float-left,
+.wedding-float-right,
+.wedding-float-far-left,
+.wedding-float-far-right,
+.wedding-preview-snap {
+  will-change: transform;
+}
+
+.wedding-mockup-left {
+  animation: wedding-mockup-left 6.3s ease-in-out infinite;
+}
+
+.wedding-mockup-right {
+  animation: wedding-mockup-right 6.8s ease-in-out infinite;
+}
+
+.wedding-float-left {
+  animation: wedding-float-left 7.2s ease-in-out infinite;
+}
+
+.wedding-float-right {
+  animation: wedding-float-right 6.8s ease-in-out infinite;
+}
+
+.wedding-float-far-left {
+  animation: wedding-float-far-left 8.2s ease-in-out infinite;
+}
+
+.wedding-float-far-right {
+  animation: wedding-float-far-right 7.7s ease-in-out infinite;
+}
+
+.wedding-preview-snap {
+  animation: wedding-preview-snap 5.4s ease-in-out infinite;
+}
+
+.wedding-preview-halo {
+  animation: wedding-halo 7s ease-in-out infinite;
+}
+
+.wedding-preview-halo-delayed {
+  animation-delay: -3.2s;
+}
+
+.wedding-petal {
+  position: absolute;
+  z-index: 35;
+  width: 14px;
+  height: 22px;
+  border-radius: 80% 20% 80% 20%;
+  background: linear-gradient(145deg, #f7a5bb, #d52b63);
+  box-shadow: 0 6px 16px rgba(164, 37, 79, .16);
+  opacity: .82;
+  pointer-events: none;
+}
+
+.wedding-petal-a {
+  animation: wedding-petal-a 6.5s ease-in-out infinite;
+}
+
+.wedding-petal-b {
+  width: 11px;
+  height: 18px;
+  background: linear-gradient(145deg, #ffd77c, #e99028);
+  animation: wedding-petal-b 7.3s ease-in-out infinite;
+  animation-delay: -2.3s;
+}
+
+.wedding-petal-c {
+  width: 12px;
+  height: 19px;
+  background: linear-gradient(145deg, #f5a2ba, #b82052);
+  animation: wedding-petal-c 8s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+.wedding-sparkle {
+  position: absolute;
+  z-index: 38;
+  color: #d88a1f;
+  font-size: 18px;
+  line-height: 1;
+  text-shadow: 0 5px 14px rgba(216, 138, 31, .24);
+  animation: wedding-sparkle-pop 3.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.wedding-sparkle-delay {
+  color: #bd2858;
+  animation-delay: -1.8s;
+}
+
+.template-preview-stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.template-preview-stage::before {
+  content: "";
+  position: absolute;
+  inset: auto -25% -45% -25%;
+  height: 72%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(241, 176, 63, .18), transparent 68%);
+  pointer-events: none;
+}
+
+.template-preview-stage::after {
+  content: "✦";
+  position: absolute;
+  right: 10%;
+  top: 7%;
+  color: rgba(195, 38, 89, .5);
+  font-size: 18px;
+  animation: wedding-sparkle-pop 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.template-phone-lift {
+  transition:
+    transform .45s cubic-bezier(.22, 1, .36, 1),
+    filter .45s ease;
+}
+
+.group:hover .template-phone-lift {
+  transform: translateY(-6px) rotate(.8deg) scale(1.018);
+  filter: saturate(1.08);
+}
+
+.template-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.template-shimmer::after {
+  content: "";
+  position: absolute;
+  top: -25%;
+  left: -55%;
+  width: 34%;
+  height: 150%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  animation: wedding-preview-shimmer 5.8s ease-in-out infinite;
+}
+
+@keyframes wedding-mockup-primary {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  50% { transform: translateX(-50%) translateY(-10px) rotate(.7deg); }
+}
+
+@keyframes wedding-mockup-left {
+  0%, 100% { transform: rotate(-10deg) translateY(0); }
+  50% { transform: rotate(-7deg) translateY(-8px); }
+}
+
+@keyframes wedding-mockup-right {
+  0%, 100% { transform: rotate(10deg) translateY(0); }
+  50% { transform: rotate(7deg) translateY(-10px); }
+}
+
+@keyframes wedding-float-left {
+  0%, 100% { transform: rotate(-10deg) translateY(0); }
+  50% { transform: rotate(-7deg) translateY(-12px); }
+}
+
+@keyframes wedding-float-right {
+  0%, 100% { transform: rotate(9deg) translateY(0); }
+  50% { transform: rotate(6deg) translateY(-10px); }
+}
+
+@keyframes wedding-float-far-left {
+  0%, 100% { transform: rotate(-15deg) translateY(0) scale(.96); }
+  50% { transform: rotate(-11deg) translateY(-9px) scale(1); }
+}
+
+@keyframes wedding-float-far-right {
+  0%, 100% { transform: rotate(15deg) translateY(0) scale(.96); }
+  50% { transform: rotate(11deg) translateY(-11px) scale(1); }
+}
+
+@keyframes wedding-preview-snap {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(.4deg); }
+}
+
+@keyframes wedding-halo {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: .55; }
+  50% { transform: translate(-50%, -50%) scale(1.08); opacity: .9; }
+}
+
+@keyframes wedding-petal-a {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(18deg); }
+  50% { transform: translate3d(10px, 15px, 0) rotate(52deg); }
+}
+
+@keyframes wedding-petal-b {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-18deg); }
+  50% { transform: translate3d(-12px, 18px, 0) rotate(24deg); }
+}
+
+@keyframes wedding-petal-c {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(25deg); }
+  50% { transform: translate3d(12px, -12px, 0) rotate(65deg); }
+}
+
+@keyframes wedding-sparkle-pop {
+  0%, 100% { transform: scale(.72) rotate(0deg); opacity: .35; }
+  50% { transform: scale(1.2) rotate(22deg); opacity: 1; }
+}
+
+@keyframes wedding-preview-shimmer {
+  0%, 65%, 100% { transform: translateX(-10%) rotate(18deg); opacity: 0; }
+  76% { opacity: .65; }
+  90% { transform: translateX(470%) rotate(18deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedding-mockup-primary,
+  .wedding-mockup-left,
+  .wedding-mockup-right,
+  .wedding-float-left,
+  .wedding-float-right,
+  .wedding-float-far-left,
+  .wedding-float-far-right,
+  .wedding-preview-snap,
+  .wedding-preview-halo,
+  .wedding-petal,
+  .wedding-sparkle,
+  .template-shimmer::after {
+    animation: none !important;
+  }
+}
