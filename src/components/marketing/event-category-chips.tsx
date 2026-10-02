@@ -4,14 +4,14 @@ import { EVENT_CATEGORIES } from "@/lib/event-categories";
 import { categoryIcon } from "@/components/marketing/category-icon";
 
 const palette = [
-  "from-[#8f1537] to-[#c72c61] text-white",
-  "from-[#ee8b24] to-[#f2bd4f] text-[#542516]",
-  "from-[#0f766e] to-[#22a38b] text-white",
-  "from-[#7c2d92] to-[#bd3f8b] text-white",
-  "from-[#b45309] to-[#f59e0b] text-white",
-  "from-[#be123c] to-[#fb7185] text-white",
-  "from-[#166534] to-[#65a30d] text-white",
-  "from-[#6d28d9] to-[#a855f7] text-white",
+  "from-[#d6b36d] to-[#8f6a32] text-[#211d18]",
+  "from-[#5d3935] to-[#96645b] text-[#fff0d5]",
+  "from-[#40544a] to-[#70816f] text-[#fff0d5]",
+  "from-[#3d485d] to-[#72809a] text-[#fff0d5]",
+  "from-[#604a31] to-[#a77d43] text-[#fff0d5]",
+  "from-[#583c48] to-[#8a6272] text-[#fff0d5]",
+  "from-[#50563b] to-[#7e865d] text-[#fff0d5]",
+  "from-[#483d53] to-[#776487] text-[#fff0d5]",
 ];
 
 export function EventCategoryChips({ activeSlug }: { activeSlug?: string }) {
@@ -27,13 +27,13 @@ export function EventCategoryChips({ activeSlug }: { activeSlug?: string }) {
             key={category.slug}
             href={`/themes?category=${category.slug}`}
             className={[
-              "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-[10px] font-black tracking-wide uppercase shadow-sm transition duration-200 hover:-translate-y-0.5 sm:text-xs",
+              "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-[10px] font-bold tracking-wide uppercase shadow-sm transition duration-300 hover:-translate-y-0.5 sm:text-xs",
               isActive
-                ? `border-transparent bg-gradient-to-r ${tone} shadow-[0_10px_24px_rgba(111,35,53,.2)]`
-                : "border-[#efcf94]/55 bg-white/78 text-[#754038] backdrop-blur hover:bg-[#fff0c5]",
+                ? `border-[#ead193]/25 bg-gradient-to-r ${tone} shadow-[0_10px_24px_rgba(0,0,0,.18)]`
+                : "border-[#d2b16d]/28 bg-white/[0.055] text-[#dfd0b2] backdrop-blur hover:border-[#d2b16d]/48 hover:bg-[#d2b16d]/10 hover:text-[#f3dfb2]",
             ].join(" ")}
           >
-            <span className={isActive ? "" : "text-[#d17f1f]"}>
+            <span className={isActive ? "" : "text-[#d1ad66]"}>
               <Icon className="size-3.5" strokeWidth={1.9} />
             </span>
             {category.label}
