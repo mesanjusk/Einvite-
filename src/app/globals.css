@@ -6,27 +6,27 @@
 :root {
   --radius: 0.75rem;
 
-  /* Celebration palette — jewel rose, saffron, peacock and warm ivory. */
-  --background: oklch(0.985 0.018 86);
-  --foreground: oklch(0.29 0.055 20);
-  --card: oklch(0.995 0.012 86);
-  --card-foreground: oklch(0.29 0.055 20);
-  --popover: oklch(0.995 0.012 86);
-  --popover-foreground: oklch(0.29 0.055 20);
+  /* SK Digital royal palette — charcoal, antique gold, warm ivory, restrained wine. */
+  --background: oklch(0.975 0.018 82);
+  --foreground: oklch(0.255 0.018 55);
+  --card: oklch(0.992 0.012 82);
+  --card-foreground: oklch(0.255 0.018 55);
+  --popover: oklch(0.992 0.012 82);
+  --popover-foreground: oklch(0.255 0.018 55);
 
-  --primary: oklch(0.49 0.18 18);
-  --primary-foreground: oklch(0.99 0.01 86);
-  --secondary: oklch(0.9 0.09 84);
-  --secondary-foreground: oklch(0.32 0.08 47);
-  --muted: oklch(0.96 0.035 83);
-  --muted-foreground: oklch(0.5 0.045 35);
-  --accent: oklch(0.76 0.16 74);
-  --accent-foreground: oklch(0.28 0.07 42);
-  --destructive: oklch(0.64 0.2 28);
+  --primary: oklch(0.285 0.018 55);
+  --primary-foreground: oklch(0.94 0.055 82);
+  --secondary: oklch(0.91 0.055 82);
+  --secondary-foreground: oklch(0.32 0.035 60);
+  --muted: oklch(0.95 0.025 82);
+  --muted-foreground: oklch(0.49 0.025 58);
+  --accent: oklch(0.73 0.095 78);
+  --accent-foreground: oklch(0.25 0.03 52);
+  --destructive: oklch(0.58 0.17 24);
 
-  --border: oklch(0.87 0.055 74);
-  --input: oklch(0.89 0.045 75);
-  --ring: oklch(0.63 0.18 24);
+  --border: oklch(0.84 0.052 79);
+  --input: oklch(0.87 0.04 80);
+  --ring: oklch(0.68 0.09 77);
 
   --chart-1: oklch(0.75 0.12 340);
   --chart-2: oklch(0.75 0.09 200);
@@ -45,26 +45,26 @@
 }
 
 .dark {
-  --background: oklch(0.21 0.025 320);
-  --foreground: oklch(0.94 0.02 320);
-  --card: oklch(0.25 0.025 320);
-  --card-foreground: oklch(0.94 0.02 320);
-  --popover: oklch(0.25 0.025 320);
-  --popover-foreground: oklch(0.94 0.02 320);
+  --background: oklch(0.19 0.012 55);
+  --foreground: oklch(0.91 0.04 82);
+  --card: oklch(0.235 0.014 55);
+  --card-foreground: oklch(0.91 0.04 82);
+  --popover: oklch(0.235 0.014 55);
+  --popover-foreground: oklch(0.91 0.04 82);
 
-  --primary: oklch(0.72 0.1 340); /* pastel rose pops on dark */
-  --primary-foreground: oklch(0.2 0.03 320);
-  --secondary: oklch(0.31 0.03 320);
-  --secondary-foreground: oklch(0.94 0.02 320);
-  --muted: oklch(0.31 0.03 320);
-  --muted-foreground: oklch(0.72 0.02 320);
-  --accent: oklch(0.42 0.08 90);
-  --accent-foreground: oklch(0.94 0.02 320);
-  --destructive: oklch(0.68 0.16 22);
+  --primary: oklch(0.76 0.08 78);
+  --primary-foreground: oklch(0.2 0.014 55);
+  --secondary: oklch(0.3 0.02 58);
+  --secondary-foreground: oklch(0.91 0.04 82);
+  --muted: oklch(0.29 0.018 56);
+  --muted-foreground: oklch(0.69 0.035 78);
+  --accent: oklch(0.55 0.07 75);
+  --accent-foreground: oklch(0.94 0.04 82);
+  --destructive: oklch(0.64 0.15 24);
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 18%);
-  --ring: oklch(0.72 0.1 340);
+  --border: oklch(0.72 0.05 77 / 22%);
+  --input: oklch(0.75 0.05 77 / 22%);
+  --ring: oklch(0.73 0.08 77);
 
   --chart-1: oklch(0.75 0.12 340);
   --chart-2: oklch(0.7 0.11 200);
@@ -132,8 +132,8 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(circle at 12% 0%, rgba(255, 180, 82, 0.12), transparent 24rem),
-      radial-gradient(circle at 95% 8%, rgba(183, 33, 73, 0.11), transparent 26rem);
+      radial-gradient(circle at 12% 0%, rgba(199, 158, 83, 0.12), transparent 24rem),
+      radial-gradient(circle at 95% 8%, rgba(83, 48, 39, 0.08), transparent 26rem);
   }
 }
 
@@ -143,15 +143,15 @@
     isolation: isolate;
     overflow: hidden;
     background:
-      radial-gradient(circle at 10% 10%, rgba(255, 179, 71, 0.24), transparent 24rem),
-      radial-gradient(circle at 90% 14%, rgba(190, 24, 93, 0.2), transparent 28rem),
-      linear-gradient(180deg, #fff9ec 0%, #fff5ea 45%, #fffaf4 100%);
+      radial-gradient(circle at 10% 10%, rgba(204, 164, 91, 0.18), transparent 24rem),
+      radial-gradient(circle at 90% 14%, rgba(82, 48, 39, 0.08), transparent 28rem),
+      linear-gradient(180deg, #fbf5e9 0%, #f7efe1 48%, #fcf8ef 100%);
   }
 
   .wedding-pattern {
     background-image:
-      radial-gradient(circle at 20% 20%, rgba(190, 24, 93, 0.13) 0 2px, transparent 2.6px),
-      radial-gradient(circle at 70% 70%, rgba(225, 150, 34, 0.13) 0 2px, transparent 2.6px);
+      radial-gradient(circle at 20% 20%, rgba(173, 133, 68, 0.12) 0 1.5px, transparent 2.1px),
+      radial-gradient(circle at 70% 70%, rgba(72, 58, 45, 0.08) 0 1.5px, transparent 2.1px);
     background-size: 42px 42px, 56px 56px;
   }
 
@@ -172,23 +172,23 @@
   }
 
   .wedding-glass {
-    border: 1px solid rgba(255, 236, 207, 0.75);
-    background: rgba(255, 252, 247, 0.78);
+    border: 1px solid rgba(198, 157, 82, 0.34);
+    background: rgba(255, 250, 239, 0.82);
     box-shadow:
-      0 24px 70px rgba(94, 24, 51, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.75);
+      0 24px 70px rgba(53, 42, 30, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.78);
     backdrop-filter: blur(18px);
   }
 
   .wedding-card {
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(207, 151, 68, 0.35);
+    border: 1px solid rgba(193, 151, 74, 0.34);
     background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(255, 247, 231, 0.95));
+      linear-gradient(145deg, rgba(255, 253, 247, 0.98), rgba(246, 236, 215, 0.96));
     box-shadow:
-      0 18px 45px rgba(105, 31, 52, 0.10),
-      0 2px 0 rgba(255, 255, 255, 0.85) inset;
+      0 18px 45px rgba(55, 43, 29, 0.10),
+      0 2px 0 rgba(255, 255, 255, 0.82) inset;
   }
 
   .wedding-card::after {
@@ -204,33 +204,36 @@
   }
 
   .wedding-cta {
-    background: linear-gradient(135deg, #8f1537, #c02656 52%, #ef8f24);
-    color: white;
-    box-shadow: 0 14px 32px rgba(151, 28, 65, 0.28);
+    border: 1px solid rgba(230, 197, 128, 0.36);
+    background: linear-gradient(135deg, #211f1c, #3b3229 52%, #70572f);
+    color: #f4dfad;
+    box-shadow: 0 14px 34px rgba(44, 35, 25, 0.24);
   }
 
   .wedding-cta:hover {
     transform: translateY(-2px) scale(1.015);
-    box-shadow: 0 18px 38px rgba(151, 28, 65, 0.34);
+    box-shadow: 0 18px 42px rgba(63, 48, 29, 0.30);
   }
 
   .wedding-gold {
-    background: linear-gradient(135deg, #f3c463, #e89c25 55%, #cf6b1f);
-    color: #4b2115;
+    background: linear-gradient(135deg, #f0d58f, #c89d4e 55%, #8f692f);
+    color: #26211c;
   }
 
   .wedding-title {
-    background: linear-gradient(110deg, #7d1735 0%, #c1265b 45%, #e8992f 100%);
+    background: linear-gradient(110deg, #2d2823 0%, #6e5630 34%, #c69b4f 52%, #332d27 100%);
+    background-size: 220% 100%;
+    animation: royal-title-sweep 8s ease-in-out infinite;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .wedding-badge {
-    border: 1px solid rgba(226, 162, 59, 0.35);
-    background: rgba(255, 246, 222, 0.9);
-    color: #8e3d1c;
-    box-shadow: 0 8px 24px rgba(139, 65, 25, 0.08);
+    border: 1px solid rgba(205, 166, 91, 0.34);
+    background: rgba(245, 235, 212, 0.86);
+    color: #51432e;
+    box-shadow: 0 8px 24px rgba(63, 49, 29, 0.08);
   }
 }
 
@@ -449,7 +452,7 @@
   width: 14px;
   height: 22px;
   border-radius: 80% 20% 80% 20%;
-  background: linear-gradient(145deg, #f7a5bb, #d52b63);
+  background: linear-gradient(145deg, #e5c77e, #8a6233);
   box-shadow: 0 6px 16px rgba(164, 37, 79, .16);
   opacity: .82;
   pointer-events: none;
@@ -470,7 +473,7 @@
 .wedding-petal-c {
   width: 12px;
   height: 19px;
-  background: linear-gradient(145deg, #f5a2ba, #b82052);
+  background: linear-gradient(145deg, #8f4f51, #542d30);
   animation: wedding-petal-c 8s ease-in-out infinite;
   animation-delay: -4s;
 }
@@ -487,7 +490,7 @@
 }
 
 .wedding-sparkle-delay {
-  color: #bd2858;
+  color: #8f4d4f;
   animation-delay: -1.8s;
 }
 
@@ -673,7 +676,7 @@
 .wedding-ambient-glow-b {
   right: -12%;
   bottom: 9%;
-  background: radial-gradient(circle, rgba(211, 39, 98, .28), transparent 68%);
+  background: radial-gradient(circle, rgba(106, 67, 55, .20), transparent 68%);
   animation-delay: -3.6s;
 }
 
@@ -681,7 +684,7 @@
   position: absolute;
   top: -10vh;
   border-radius: 82% 18% 78% 22%;
-  background: linear-gradient(145deg, rgba(255,190,205,.92), rgba(199,39,91,.9));
+  background: linear-gradient(145deg, rgba(234,209,151,.94), rgba(154,112,55,.92));
   box-shadow: 0 7px 18px rgba(143, 31, 72, .12);
   opacity: 0;
   will-change: transform, opacity;
@@ -708,15 +711,15 @@
 }
 
 .wedding-ambient-confetti-1 {
-  background: #c72b5e;
+  background: #8c4d4f;
 }
 
 .wedding-ambient-confetti-2 {
-  background: #e6a02f;
+  background: #c69a4e;
 }
 
 .wedding-ambient-confetti-3 {
-  background: #138577;
+  background: #6d7351;
 }
 
 .wedding-ambient-sparkle {
@@ -886,14 +889,14 @@
 .template-mini-confetti-a {
   left: 10%;
   top: 16%;
-  background: #c82a5e;
+  background: #825052;
   rotate: 22deg;
 }
 
 .template-mini-confetti-b {
   right: 12%;
   top: 22%;
-  background: #e69b27;
+  background: #c59a4f;
   rotate: -18deg;
   animation-delay: -2.1s;
 }
@@ -901,7 +904,7 @@
 .template-mini-confetti-c {
   right: 20%;
   bottom: 12%;
-  background: #138577;
+  background: #6d7351;
   rotate: 35deg;
   animation-delay: -3.7s;
 }
@@ -923,6 +926,369 @@
 
 @media (prefers-reduced-motion: reduce) {
   .template-mini-confetti {
+    animation: none !important;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   SK Digital royal brand system — HTML/CSS motion, no heavy canvas effects.
+   -------------------------------------------------------------------------- */
+.royal-logo-frame {
+  border: 1px solid rgba(218, 181, 107, .46);
+  background: #292724;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.26),
+    0 0 0 1px rgba(255,255,255,.035) inset;
+  animation: royal-logo-breathe 6.8s ease-in-out infinite;
+}
+
+.royal-logo-glint {
+  position: absolute;
+  inset: -30% auto -30% -52%;
+  width: 28%;
+  transform: rotate(15deg);
+  background: linear-gradient(90deg, transparent, rgba(255,233,175,.6), transparent);
+  animation: royal-logo-glint 5.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.royal-wordmark {
+  color: #f0dfbd;
+  line-height: .98;
+  text-shadow: 0 4px 20px rgba(0,0,0,.22);
+}
+
+.royal-nav {
+  position: sticky;
+  isolation: isolate;
+}
+
+.royal-nav::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(226,190,116,.72), transparent);
+  background-size: 220% 100%;
+  animation: royal-border-flow 7s linear infinite;
+  pointer-events: none;
+}
+
+.royal-gold-button {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(246,219,157,.44);
+  background: linear-gradient(110deg, #9b7536 0%, #e0bd72 30%, #c49a4c 52%, #f1d99a 70%, #8d682f 100%);
+  background-size: 220% 100%;
+  color: #211d18;
+  box-shadow:
+    0 12px 30px rgba(176,133,57,.18),
+    inset 0 1px 0 rgba(255,255,255,.38);
+  animation: royal-gold-flow 8s ease-in-out infinite;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.royal-gold-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 18px 38px rgba(176,133,57,.24),
+    inset 0 1px 0 rgba(255,255,255,.44);
+}
+
+.royal-gold-button::after {
+  content: "";
+  position: absolute;
+  inset: -40% auto -40% -35%;
+  width: 22%;
+  transform: rotate(14deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  animation: royal-button-glint 5.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.royal-menu {
+  animation: royal-menu-in .28s ease-out both;
+}
+
+.royal-dust {
+  background-image:
+    radial-gradient(circle at 14% 23%, rgba(230,197,132,.45) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 73% 16%, rgba(230,197,132,.28) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 38% 76%, rgba(230,197,132,.24) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 88% 68%, rgba(230,197,132,.32) 0 1px, transparent 1.5px);
+  background-size: 88px 88px, 123px 123px, 147px 147px, 171px 171px;
+  animation: royal-dust-drift 28s linear infinite;
+}
+
+.royal-corner {
+  position: absolute;
+  z-index: 1;
+  width: 120px;
+  height: 120px;
+  opacity: .34;
+  pointer-events: none;
+}
+
+.royal-corner::before,
+.royal-corner::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(90deg, transparent, rgba(219,181,108,.85));
+}
+
+.royal-corner::before {
+  width: 100%;
+  height: 1px;
+  top: 0;
+  left: 0;
+}
+
+.royal-corner::after {
+  width: 1px;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(180deg, rgba(219,181,108,.85), transparent);
+}
+
+.royal-corner-tl {
+  left: 18px;
+  top: 18px;
+}
+
+.royal-corner-br {
+  right: 18px;
+  bottom: 18px;
+  transform: rotate(180deg);
+}
+
+.royal-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(218,179,104,.58), transparent);
+}
+
+.royal-orbit {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid rgba(210,171,97,.18);
+  pointer-events: none;
+  animation: royal-orbit-spin 22s linear infinite;
+}
+
+.royal-orbit::before,
+.royal-orbit::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  border: 1px solid rgba(210,171,97,.12);
+}
+
+.royal-orbit::before { inset: 12%; }
+.royal-orbit::after { inset: 28%; }
+
+.royal-orbit-a {
+  left: -120px;
+  top: -90px;
+  width: 360px;
+  height: 360px;
+}
+
+.royal-orbit-b {
+  right: -160px;
+  bottom: -130px;
+  width: 430px;
+  height: 430px;
+  animation-direction: reverse;
+  animation-duration: 30s;
+}
+
+.royal-orbit-sidebar {
+  right: -92px;
+  top: 34%;
+  width: 190px;
+  height: 190px;
+  animation-duration: 26s;
+}
+
+.royal-auth-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.royal-auth-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, rgba(224,189,117,.11), transparent 30%),
+    radial-gradient(circle at 85% 8%, rgba(201,164,90,.1), transparent 35%);
+  pointer-events: none;
+}
+
+.royal-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.royal-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -30%;
+  width: 25%;
+  transform: skewX(-16deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  animation: royal-panel-shine 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.royal-title-dark {
+  color: #2e2923;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
+
+.royal-title-light {
+  background: linear-gradient(110deg, #f7e9c7 0%, #d4ad63 28%, #f2d895 52%, #b78a42 76%, #f7e9c7 100%);
+  background-size: 230% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: royal-title-sweep 8s ease-in-out infinite;
+  text-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.royal-gold-text {
+  background: linear-gradient(110deg, #f3dfb3, #c89e51 45%, #f1d694 70%, #a77b38);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: royal-title-sweep 8s ease-in-out infinite;
+}
+
+.royal-hero {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(197,155,80,.15), transparent 30rem),
+    radial-gradient(circle at 86% 20%, rgba(105,64,55,.16), transparent 28rem),
+    linear-gradient(145deg, #191816 0%, #24211e 42%, #1b1917 100%);
+  color: #f2e4c7;
+}
+
+.royal-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 49.8%, rgba(220,181,104,.07) 50%, transparent 50.2%),
+    linear-gradient(0deg, transparent 49.8%, rgba(220,181,104,.045) 50%, transparent 50.2%);
+  background-size: 92px 92px;
+  opacity: .45;
+  pointer-events: none;
+}
+
+.royal-hero-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(18px);
+  opacity: .45;
+  animation: royal-hero-breathe 9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.royal-glass-dark {
+  border: 1px solid rgba(214,175,101,.26);
+  background: rgba(255,255,255,.05);
+  color: #ead9b9;
+  box-shadow: 0 16px 44px rgba(0,0,0,.22);
+  backdrop-filter: blur(18px);
+}
+
+.royal-kicker {
+  color: #d1ac67;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.royal-section {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(198,157,82,.12), transparent 24rem),
+    linear-gradient(180deg, #fbf6eb 0%, #f7efe1 100%);
+}
+
+@keyframes royal-logo-breathe {
+  0%, 100% { transform: translateY(0); box-shadow: 0 8px 24px rgba(0,0,0,.26), 0 0 0 1px rgba(255,255,255,.035) inset; }
+  50% { transform: translateY(-2px); box-shadow: 0 13px 30px rgba(0,0,0,.32), 0 0 0 1px rgba(229,195,126,.08) inset; }
+}
+
+@keyframes royal-logo-glint {
+  0%, 62%, 100% { transform: translateX(0) rotate(15deg); opacity: 0; }
+  72% { opacity: .75; }
+  88% { transform: translateX(420%) rotate(15deg); opacity: 0; }
+}
+
+@keyframes royal-border-flow {
+  from { background-position: 200% 0; }
+  to { background-position: -20% 0; }
+}
+
+@keyframes royal-gold-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes royal-button-glint {
+  0%, 68%, 100% { transform: translateX(0) rotate(14deg); opacity: 0; }
+  77% { opacity: .75; }
+  91% { transform: translateX(620%) rotate(14deg); opacity: 0; }
+}
+
+@keyframes royal-menu-in {
+  from { opacity: 0; transform: translateY(-8px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes royal-dust-drift {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 88px 44px, -123px 61px, 74px -147px, -85px 171px; }
+}
+
+@keyframes royal-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes royal-panel-shine {
+  0%, 72%, 100% { transform: translateX(0) skewX(-16deg); opacity: 0; }
+  82% { opacity: .75; }
+  95% { transform: translateX(520%) skewX(-16deg); opacity: 0; }
+}
+
+@keyframes royal-title-sweep {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes royal-hero-breathe {
+  0%, 100% { transform: scale(.92); opacity: .28; }
+  50% { transform: scale(1.08); opacity: .48; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .royal-logo-frame,
+  .royal-logo-glint,
+  .royal-nav::after,
+  .royal-gold-button,
+  .royal-gold-button::after,
+  .royal-dust,
+  .royal-orbit,
+  .royal-panel::after,
+  .royal-title-light,
+  .royal-gold-text,
+  .royal-hero-glow,
+  .wedding-title {
     animation: none !important;
   }
 }

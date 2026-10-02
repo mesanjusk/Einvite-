@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Great_Vibes, Cormorant_Garamond, EB_Garamond } from "next/font/google";
-import { SITE_NAME } from "@/config/site";
+import { SITE_DESCRIPTION, SITE_LOGO_PATH, SITE_NAME, SITE_URL } from "@/config/site";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -36,10 +36,6 @@ const ebGaramond = EB_Garamond({
   weight: ["400", "500"],
 });
 
-const SITE_URL = "https://invite.sanjusk.in";
-const SITE_DESCRIPTION =
-  "Generate premium, animated digital wedding invitation websites with AI — no code, no designer required.";
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -52,9 +48,15 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
-    images: ["/favicon.ico"],
+    images: [SITE_LOGO_PATH],
     type: "website",
   },
+  icons: {
+    icon: SITE_LOGO_PATH,
+    shortcut: SITE_LOGO_PATH,
+    apple: SITE_LOGO_PATH,
+  },
+  themeColor: "#211f1c",
 };
 
 export default function RootLayout({

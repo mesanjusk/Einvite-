@@ -1,4 +1,6 @@
-// Central brand name — swap this (and the icon in <SiteLogo>) once an
-// admin-configurable branding setting exists; every page pulls from here
-// so a future rename only touches one place.
-export const SITE_NAME = "E Invite";
+export const SITE_NAME = "SK Digital";
+export const SITE_URL = "https://invite.sanjusk.in";
+export const SITE_LOGO_PATH = "/brand/sk-digital-logo.webp";
+export const SITE_TAGLINE = "Royal invitations. Beautifully digital.";
+export const SITE_DESCRIPTION =
+  "Premium animated digital wedding invitations by SK Digital — crafted with elegant motion, music and personalized celebration details.";

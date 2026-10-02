@@ -10,16 +10,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "wedding-cta border border-white/20 text-white shadow-[0_10px_26px_rgba(143,21,55,.24)]",
+          "wedding-cta shadow-[0_10px_26px_rgba(52,41,28,.22)]",
         destructive:
           "bg-destructive text-white shadow-xs hover:opacity-90 focus-visible:ring-destructive/20",
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-gradient-to-r from-[#fff1bd] to-[#ffd9b5] text-[#7e2d20] shadow-sm hover:brightness-[1.03]",
+          "border border-[#c9a35b]/30 bg-gradient-to-r from-[#f8edcf] to-[#ead6a8] text-[#443722] shadow-sm hover:brightness-[1.02]",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        gold: "wedding-gold shadow-[0_10px_24px_rgba(219,137,32,.2)] hover:brightness-105",
+        gold: "wedding-gold shadow-[0_10px_24px_rgba(181,139,62,.18)] hover:brightness-105",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
