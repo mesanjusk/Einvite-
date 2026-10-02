@@ -8,6 +8,7 @@ import { EventCategoryChips } from "@/components/marketing/event-category-chips"
 import { PublicMarketplaceHeader } from "@/components/marketing/public-marketplace-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { TemplateMarketplaceCard } from "@/components/marketing/template-marketplace-card";
+import { AnimatedInvitationShowcase } from "@/components/marketing/animated-invitation-showcase";
 import { FALLBACK_THEMES, fallbackThumbnailFor } from "@/lib/marketing-fallbacks";
 
 const TITLE = `${SITE_NAME} — Wedding Invitations That Feel Alive`;
@@ -60,7 +61,7 @@ export default async function Home() {
           demoSlug: null as string | null,
         }));
 
-  const heroThemes = themeCards.slice(0, 3);
+  const heroThemes = themeCards.slice(0, 5);
 
   return (
     <div className="wedding-shell min-h-svh text-[#4d2530]">
@@ -73,82 +74,48 @@ export default async function Home() {
           <div className="wedding-orb right-[8%] top-[16%] size-56 bg-[#d92f68]/26" />
           <div className="wedding-orb bottom-[8%] left-[36%] size-36 bg-[#0f9b8a]/18" />
 
-          <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-5 py-12 sm:px-8 md:grid-cols-[0.9fr_1.1fr] md:py-16 lg:px-10 lg:py-20">
-            <div className="relative z-10 max-w-xl">
-              <div className="wedding-badge inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[10px] font-black tracking-[0.14em] uppercase">
+          <div className="relative mx-auto grid max-w-7xl items-center gap-4 px-4 pb-10 pt-8 sm:px-8 md:grid-cols-[0.9fr_1.1fr] md:gap-x-8 md:gap-y-4 md:py-16 lg:px-10 lg:py-20">
+            <div className="relative z-10 text-center md:col-start-1 md:row-start-1 md:max-w-xl md:text-left">
+              <div className="wedding-badge inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[9px] font-black tracking-[0.13em] uppercase sm:text-[10px]">
                 <Sparkles className="size-3.5" />
                 Made for big celebrations
               </div>
 
-              <p className="font-script mt-6 text-4xl text-[#d07b1f] sm:text-5xl">
+              <p className="font-script mt-4 text-4xl text-[#d07b1f] sm:mt-6 sm:text-5xl">
                 Shaadi starts here
               </p>
-              <h1 className="font-display wedding-title mt-2 text-[3.2rem] leading-[0.9] sm:text-6xl lg:text-7xl">
+              <h1 className="font-display wedding-title mx-auto mt-1 max-w-[360px] text-[2.8rem] leading-[0.9] sm:max-w-none sm:text-6xl md:mx-0 lg:text-7xl">
                 Invitations that feel alive.
               </h1>
-              <p className="mt-5 max-w-md text-sm leading-6 text-[#7c5454] sm:text-base">
+              <p className="mx-auto mt-4 max-w-[320px] text-[13px] leading-5 text-[#7c5454] sm:max-w-md sm:text-base sm:leading-6 md:mx-0">
                 Pick a vibe. Add your story. Send a celebration.
               </p>
+            </div>
 
-              <div className="mt-7 flex flex-wrap gap-3">
+            <div className="relative z-10 md:col-start-2 md:row-span-2 md:row-start-1">
+              <AnimatedInvitationShowcase themes={heroThemes} />
+            </div>
+
+            <div className="relative z-10 mt-1 md:col-start-1 md:row-start-2 md:mt-0 md:max-w-xl">
+              <div className="mx-auto grid max-w-[370px] grid-cols-2 gap-2.5 md:mx-0 md:flex md:max-w-none md:flex-wrap md:gap-3">
                 <Link
                   href="/themes"
-                  className="wedding-cta inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-xs font-black tracking-[0.08em] uppercase transition"
+                  className="wedding-cta inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-black tracking-[0.07em] uppercase transition sm:px-6 sm:text-xs"
                 >
                   Explore designs
                   <ArrowRight className="size-4" />
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="wedding-glass inline-flex items-center gap-2 rounded-full px-5 py-3.5 text-xs font-bold text-[#7b2b3c] transition hover:-translate-y-0.5"
+                  className="wedding-glass inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-bold text-[#7b2b3c] transition hover:-translate-y-0.5 sm:px-5 sm:text-xs"
                 >
                   <Heart className="size-4 fill-[#f2a2b1] text-[#b62350]" />
-                  My invitations
+                  My invites
                 </Link>
               </div>
 
-              <div className="mt-8 max-w-2xl">
+              <div className="mx-auto mt-5 max-w-[390px] md:mx-0 md:mt-7 md:max-w-2xl">
                 <EventCategoryChips />
-              </div>
-            </div>
-
-            <div className="relative mx-auto h-[470px] w-full max-w-[620px] sm:h-[550px]">
-              <div className="absolute left-1/2 top-1/2 size-[340px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#f0b754]/25 sm:size-[440px]" />
-              <div className="absolute left-1/2 top-1/2 size-[270px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#d63e6d]/20 sm:size-[360px]" />
-
-              {heroThemes.map((theme, index) => {
-                const placement = [
-                  "left-[4%] top-[18%] -rotate-[9deg] z-10",
-                  "left-1/2 top-[2%] -translate-x-1/2 z-30",
-                  "right-[4%] top-[22%] rotate-[9deg] z-20",
-                ][index];
-
-                return (
-                  <div
-                    key={theme.id}
-                    className={`absolute ${placement} w-[42%] max-w-[230px] rounded-[2rem] border-[6px] border-white bg-white p-1 shadow-[0_28px_70px_rgba(96,25,48,.24)] transition duration-500 hover:z-40 hover:-translate-y-3 hover:rotate-0`}
-                  >
-                    <div className="relative aspect-[9/16] overflow-hidden rounded-[1.55rem] bg-[#7d1735]">
-                      {theme.previewImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={theme.previewImage}
-                          alt=""
-                          className="absolute inset-0 size-full object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-[linear-gradient(160deg,#f4b84a,#d72e67,#6c1b54)]" />
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-3 pb-4 pt-14 text-white">
-                        <p className="font-display text-lg leading-tight">{theme.name}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className="absolute bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-[#fff6dd] px-4 py-2 text-[10px] font-black tracking-[0.12em] text-[#9a4920] uppercase shadow-lg">
-                ✦ Tap · animate · celebrate ✦
               </div>
             </div>
           </div>
