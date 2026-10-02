@@ -30,10 +30,10 @@ export function SidebarNav({
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
               isActive
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                ? "bg-gradient-to-r from-[#8f1537] via-[#c3275d] to-[#df7b28] text-white shadow-[0_10px_24px_rgba(143,21,55,.18)]"
+                : "text-[#6e3c42] hover:-translate-y-0.5 hover:bg-white/70 hover:text-[#8f1537] hover:shadow-sm",
             )}
           >
             <Icon className="size-4 shrink-0" />
