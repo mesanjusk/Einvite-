@@ -27,10 +27,10 @@ export default async function DashboardOverviewPage() {
   ]);
 
   const stats = [
-    { label: "Invites", value: invitations.length, icon: PlusCircle, tone: "from-[#8f1537] to-[#c52b60]" },
-    { label: "RSVPs", value: rsvpCount, icon: ClipboardCheck, tone: "from-[#e27b1d] to-[#f2b949]" },
-    { label: "Views", value: viewCount, icon: Eye, tone: "from-[#0f766e] to-[#22a38b]" },
-    { label: "Guests", value: "—", icon: Users, tone: "from-[#7c2d92] to-[#bd3f8b]" },
+    { label: "Invites", value: invitations.length, icon: PlusCircle, tone: "from-[#24211d] to-[#6d5632]" },
+    { label: "RSVPs", value: rsvpCount, icon: ClipboardCheck, tone: "from-[#9d7838] to-[#d7b66e]" },
+    { label: "Views", value: viewCount, icon: Eye, tone: "from-[#40554a] to-[#74836d]" },
+    { label: "Guests", value: "—", icon: Users, tone: "from-[#5c4248] to-[#8a646a]" },
   ];
 
   return (
@@ -50,10 +50,10 @@ export default async function DashboardOverviewPage() {
           <Card key={stat.label} className="overflow-hidden p-0">
             <CardContent className="relative flex items-center justify-between px-4 py-5 sm:px-5">
               <div className="relative z-10">
-                <p className="text-[9px] font-black tracking-[0.14em] text-[#8a645b] uppercase">
+                <p className="text-[9px] font-black tracking-[0.14em] text-[#806d50] uppercase">
                   {stat.label}
                 </p>
-                <p className="font-display mt-1 text-3xl text-[#5f2134]">{stat.value}</p>
+                <p className="font-display mt-1 text-3xl text-[#342d26]">{stat.value}</p>
               </div>
               <div className={`grid size-12 place-items-center rounded-2xl bg-gradient-to-br ${stat.tone} text-white shadow-lg`}>
                 <stat.icon className="size-5" strokeWidth={1.8} />
@@ -67,12 +67,12 @@ export default async function DashboardOverviewPage() {
       <section>
         <div className="mb-4 flex items-end justify-between gap-3 px-1">
           <div>
-            <p className="font-script text-3xl text-[#d17f1f]">Your celebrations</p>
-            <h2 className="font-display text-2xl text-[#632238]">Invitations</h2>
+            <p className="text-[9px] font-bold tracking-[0.2em] text-[#a37d3d] uppercase">Your celebrations</p>
+            <h2 className="font-display text-2xl text-[#342c25]">Invitations</h2>
           </div>
           <Link
             href="/dashboard/invitations"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-2 text-[10px] font-black tracking-wide text-[#8f1537] uppercase shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-2 text-[10px] font-black tracking-wide text-[#8a672f] uppercase shadow-sm"
           >
             View all <ArrowUpRight className="size-3.5" />
           </Link>
@@ -84,7 +84,7 @@ export default async function DashboardOverviewPage() {
               <div className="wedding-gold mx-auto grid size-16 place-items-center rounded-full shadow-lg">
                 <Sparkles className="size-7" />
               </div>
-              <p className="font-display mt-5 text-2xl text-[#642238]">Create your first invitation</p>
+              <p className="font-display mt-5 text-2xl text-[#342c25]">Create your first invitation</p>
               <Link
                 href="/dashboard/invitations/new"
                 className="wedding-cta mt-5 inline-flex rounded-full px-6 py-3 text-[10px] font-black uppercase"
@@ -101,15 +101,15 @@ export default async function DashboardOverviewPage() {
                   className={[
                     "h-2 bg-gradient-to-r",
                     index % 3 === 0
-                      ? "from-[#8f1537] via-[#c42b60] to-[#ed8a2b]"
+                      ? "from-[#26221e] via-[#8e6b32] to-[#d7b66e]"
                       : index % 3 === 1
-                        ? "from-[#0f766e] via-[#22a38b] to-[#f0b43e]"
-                        : "from-[#7c2d92] via-[#bd3f8b] to-[#f08b3d]",
+                        ? "from-[#40554a] via-[#73816d] to-[#c3a35d]"
+                        : "from-[#5b4147] via-[#866369] to-[#c7a45d]",
                   ].join(" ")}
                 />
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="font-display text-xl text-[#5d2134]">
+                    <CardTitle className="font-display text-xl text-[#342c25]">
                       {invitation.brideName} &amp; {invitation.groomName}
                     </CardTitle>
                     <Badge variant={invitation.status === "PUBLISHED" ? "gold" : "secondary"}>
@@ -118,12 +118,12 @@ export default async function DashboardOverviewPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex items-center justify-between pb-1">
-                  <span className="text-[10px] font-bold tracking-wide text-[#8b6b62] uppercase">
+                  <span className="text-[10px] font-bold tracking-wide text-[#75664e] uppercase">
                     {invitation._count.rsvps} RSVPs
                   </span>
                   <Link
                     href={`/dashboard/publish/sections?invitationId=${invitation.id}`}
-                    className="inline-flex items-center gap-1 text-xs font-black text-[#a21d4c]"
+                    className="inline-flex items-center gap-1 text-xs font-black text-[#997235]"
                   >
                     Edit <ArrowUpRight className="size-3.5" />
                   </Link>
