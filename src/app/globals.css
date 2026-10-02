@@ -821,7 +821,7 @@
 @keyframes wedding-ambient-breathe {
   0%, 100% {
     transform: scale(.94);
-    opacity: calc(var(--ambient-glow-opacity) * .72);
+    opacity: .3;
   }
   50% {
     transform: scale(1.08);
@@ -867,5 +867,62 @@
   .wedding-ambient-confetti,
   .wedding-music-bloom {
     display: none;
+  }
+}
+
+
+.template-mini-confetti {
+  position: absolute;
+  z-index: 28;
+  width: 5px;
+  height: 11px;
+  border-radius: 999px;
+  opacity: .28;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: template-mini-confetti 5.6s ease-in-out infinite;
+}
+
+.template-mini-confetti-a {
+  left: 10%;
+  top: 16%;
+  background: #c82a5e;
+  rotate: 22deg;
+}
+
+.template-mini-confetti-b {
+  right: 12%;
+  top: 22%;
+  background: #e69b27;
+  rotate: -18deg;
+  animation-delay: -2.1s;
+}
+
+.template-mini-confetti-c {
+  right: 20%;
+  bottom: 12%;
+  background: #138577;
+  rotate: 35deg;
+  animation-delay: -3.7s;
+}
+
+.group:hover .template-mini-confetti,
+.group:focus-within .template-mini-confetti {
+  opacity: .78;
+  animation-duration: 2.9s;
+}
+
+@keyframes template-mini-confetti {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(.82);
+  }
+  50% {
+    transform: translate3d(4px, -7px, 0) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-mini-confetti {
+    animation: none !important;
   }
 }
