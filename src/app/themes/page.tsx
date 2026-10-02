@@ -112,19 +112,20 @@ export default async function PublicThemesPage({
   };
 
   return (
-    <div className="min-h-svh bg-[#fffdf8] text-[#3f302d]">
+    <div className="wedding-shell min-h-svh text-[#4d2530]">
       <PublicMarketplaceHeader />
 
       <main>
-        <section className="relative overflow-hidden border-b border-[#eee5dc] bg-[#fffaf2]">
-          <div className="pointer-events-none absolute -left-20 top-6 size-52 rounded-full bg-[#f5d9cb]/45 blur-3xl" />
-          <div className="pointer-events-none absolute -right-16 -top-10 size-56 rounded-full bg-[#f0dfad]/35 blur-3xl" />
+        <section className="relative overflow-hidden border-b border-[#efc879]/35 bg-white/35">
+          <div className="wedding-pattern pointer-events-none absolute inset-0 opacity-35" />
+          <div className="wedding-orb -left-20 top-6 size-52 bg-[#f1a32e]/28" />
+          <div className="wedding-orb -right-16 -top-10 size-56 bg-[#d9326a]/22" />
 
           <div className="relative mx-auto max-w-4xl px-4 pb-6 pt-8 text-center sm:px-8 sm:pb-9 sm:pt-11">
-            <p className="text-[9px] font-extrabold tracking-[0.24em] text-[#9b755e] uppercase sm:text-[10px]">
-              Curated digital invitations
+            <p className="font-script text-3xl text-[#d07b1f] sm:text-4xl">
+              Pick the celebration
             </p>
-            <h1 className="font-display mx-auto mt-3 text-[2.2rem] leading-[0.98] text-[#592b35] sm:text-5xl">
+            <h1 className="font-display wedding-title mx-auto mt-1 text-[2.45rem] leading-[0.95] sm:text-5xl">
               Explore Our {headingCategory ? `${headingCategory} ` : ""}
               <span className="italic text-[#7b2942]">Templates</span>
             </h1>
@@ -132,13 +133,13 @@ export default async function PublicThemesPage({
             <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#8d756b] uppercase">
               Select collection
             </p>
-            <div className="mx-auto mt-2 grid max-w-md grid-cols-2 rounded-full border border-[#e7dcd2] bg-white p-1 shadow-sm">
+            <div className="wedding-glass mx-auto mt-2 grid max-w-md grid-cols-2 rounded-full p-1.5">
               <Link
                 href={hrefFor({ tier: null })}
                 className={cn(
                   "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
                   tier === "all"
-                    ? "bg-[#65172e] text-white shadow-sm"
+                    ? "wedding-cta text-white"
                     : "text-[#8b756d] hover:text-[#65172e]",
                 )}
               >
@@ -149,7 +150,7 @@ export default async function PublicThemesPage({
                 className={cn(
                   "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
                   tier === "premium"
-                    ? "bg-[#65172e] text-white shadow-sm"
+                    ? "wedding-cta text-white"
                     : "text-[#8b756d] hover:text-[#65172e]",
                 )}
               >
@@ -177,7 +178,7 @@ export default async function PublicThemesPage({
             </nav>
 
             <form
-              className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-full border border-[#eadfd5] bg-white px-4 py-1.5 shadow-[0_10px_35px_rgba(92,51,55,0.05)]"
+              className="wedding-glass mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-full px-4 py-1.5"
               action="/themes"
               method="get"
             >
@@ -197,7 +198,7 @@ export default async function PublicThemesPage({
               />
               <button
                 type="submit"
-                className="rounded-full bg-[#65172e] px-4 py-2 text-[9px] font-extrabold tracking-[0.12em] text-white uppercase sm:text-[10px]"
+                className="wedding-cta rounded-full px-4 py-2 text-[9px] font-extrabold tracking-[0.12em] text-white uppercase sm:text-[10px]"
               >
                 Search
               </button>
@@ -219,7 +220,7 @@ export default async function PublicThemesPage({
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-9 lg:px-10">
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-10 lg:px-10">
           <div className="mb-5 flex items-center justify-between gap-3">
             <span className="rounded-full border border-[#e6dbd1] bg-white px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#80675e] uppercase shadow-sm sm:text-[10px]">
               {themes.length} {themes.length === 1 ? "template" : "templates"}
@@ -302,8 +303,8 @@ function FilterChip({
       className={cn(
         "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
         active
-          ? "border-[#65172e] bg-[#65172e] text-white"
-          : "border-[#e6dbd1] bg-white text-[#7d655d] hover:border-[#a57380] hover:text-[#65172e]",
+          ? "border-transparent bg-gradient-to-r from-[#8f1537] via-[#c2265b] to-[#e9892f] text-white"
+          : "border-[#efcf94]/55 bg-white/78 text-[#7d4d42] hover:bg-[#fff0c5] hover:text-[#8f1537]",
       )}
     >
       {icon}
@@ -318,7 +319,9 @@ function StyleChip({ href, label, active }: { href: string; label: string; activ
       href={href}
       className={cn(
         "shrink-0 rounded-full px-3.5 py-2 text-[9px] font-extrabold tracking-wide capitalize transition sm:text-[10px]",
-        active ? "bg-[#65172e] text-white" : "bg-[#f6ede5] text-[#7d655d] hover:text-[#65172e]",
+        active
+          ? "bg-gradient-to-r from-[#8f1537] to-[#df7b28] text-white shadow-sm"
+          : "bg-[#fff0cc]/75 text-[#7d4d42] hover:text-[#8f1537]",
       )}
     >
       {label}
