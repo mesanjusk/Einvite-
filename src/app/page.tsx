@@ -1,9 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Heart, Sparkles, WandSparkles } from "lucide-react";
+import { ArrowRight, Gem, Sparkles, WandSparkles } from "lucide-react";
 
 import { db } from "@/lib/db";
-import { SITE_NAME } from "@/config/site";
+import {
+  SITE_DESCRIPTION,
+  SITE_LOGO_PATH,
+  SITE_NAME,
+  SITE_TAGLINE,
+} from "@/config/site";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 import { PublicMarketplaceHeader } from "@/components/marketing/public-marketplace-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
@@ -12,18 +17,16 @@ import { AnimatedInvitationShowcase } from "@/components/marketing/animated-invi
 import { WeddingAmbientEffects } from "@/components/marketing/wedding-ambient-effects";
 import { FALLBACK_THEMES, fallbackThumbnailFor } from "@/lib/marketing-fallbacks";
 
-const TITLE = `${SITE_NAME} — Wedding Invitations That Feel Alive`;
-const DESCRIPTION =
-  "Vibrant, animated digital invitations for weddings and celebrations.";
+const TITLE = `${SITE_NAME} — Royal Digital Wedding Invitations`;
 
 export const metadata: Metadata = {
   title: TITLE,
-  description: DESCRIPTION,
+  description: SITE_DESCRIPTION,
   openGraph: {
     title: TITLE,
-    description: DESCRIPTION,
+    description: SITE_DESCRIPTION,
     url: "/",
-    images: ["/favicon.ico"],
+    images: [SITE_LOGO_PATH],
     type: "website",
   },
 };
@@ -65,32 +68,35 @@ export default async function Home() {
   const heroThemes = themeCards.slice(0, 5);
 
   return (
-    <div className="wedding-shell min-h-svh text-[#4d2530]">
+    <div className="min-h-svh bg-[#f8f1e4] text-[#2f2a25]">
       <PublicMarketplaceHeader />
 
       <main>
-        <section className="relative min-h-[78svh] overflow-hidden">
-          <div className="wedding-pattern pointer-events-none absolute inset-0 opacity-45" />
-          <WeddingAmbientEffects variant="browser" />
-          <div className="wedding-orb left-[4%] top-[10%] size-44 bg-[#f3a92f]/35" />
-          <div className="wedding-orb right-[8%] top-[16%] size-56 bg-[#d92f68]/26" />
-          <div className="wedding-orb bottom-[8%] left-[36%] size-36 bg-[#0f9b8a]/18" />
+        <section className="royal-hero min-h-[78svh] overflow-hidden">
+          <div className="royal-dust pointer-events-none absolute inset-0 opacity-55" />
+          <WeddingAmbientEffects variant="browser" className="opacity-35" />
+          <div className="royal-orbit royal-orbit-a" />
+          <div className="royal-orbit royal-orbit-b" />
+          <div className="royal-corner royal-corner-tl" />
+          <div className="royal-corner royal-corner-br" />
+          <div className="royal-hero-glow left-[8%] top-[14%] size-56 bg-[#c89d4d]/24" />
+          <div className="royal-hero-glow right-[6%] top-[18%] size-64 bg-[#6e4338]/20 [animation-delay:-3s]" />
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-4 px-4 pb-10 pt-8 sm:px-8 md:grid-cols-[0.9fr_1.1fr] md:gap-x-8 md:gap-y-4 md:py-16 lg:px-10 lg:py-20">
             <div className="relative z-10 text-center md:col-start-1 md:row-start-1 md:max-w-xl md:text-left">
-              <div className="wedding-badge inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[9px] font-black tracking-[0.13em] uppercase sm:text-[10px]">
-                <Sparkles className="size-3.5" />
-                Made for big celebrations
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#d6af66]/30 bg-white/[0.045] px-3.5 py-2 text-[9px] font-bold tracking-[0.18em] text-[#d9b96f] uppercase shadow-[0_10px_30px_rgba(0,0,0,.14)] backdrop-blur sm:text-[10px]">
+                <Gem className="size-3.5" />
+                SK Digital Signature Invitations
               </div>
 
-              <p className="font-script mt-4 text-4xl text-[#d07b1f] sm:mt-6 sm:text-5xl">
-                Shaadi starts here
+              <p className="font-script mt-5 text-4xl text-[#d9b46a] sm:mt-6 sm:text-5xl">
+                Shaadi, styled with grace
               </p>
-              <h1 className="font-display wedding-title mx-auto mt-1 max-w-[360px] text-[2.8rem] leading-[0.9] sm:max-w-none sm:text-6xl md:mx-0 lg:text-7xl">
-                Invitations that feel alive.
+              <h1 className="font-display royal-title-light mx-auto mt-1 max-w-[380px] text-[2.75rem] leading-[0.92] sm:max-w-none sm:text-6xl md:mx-0 lg:text-7xl">
+                Royal invitations that feel alive.
               </h1>
-              <p className="mx-auto mt-4 max-w-[320px] text-[13px] leading-5 text-[#7c5454] sm:max-w-md sm:text-base sm:leading-6 md:mx-0">
-                Pick a vibe. Add your story. Send a celebration.
+              <p className="mx-auto mt-4 max-w-[330px] text-[13px] leading-6 text-[#d8c9ac]/78 sm:max-w-md sm:text-base md:mx-0">
+                Elegant motion, music and meaningful details—crafted into one beautiful invitation.
               </p>
             </div>
 
@@ -102,17 +108,17 @@ export default async function Home() {
               <div className="mx-auto grid max-w-[370px] grid-cols-2 gap-2.5 md:mx-0 md:flex md:max-w-none md:flex-wrap md:gap-3">
                 <Link
                   href="/themes"
-                  className="wedding-cta inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-black tracking-[0.07em] uppercase transition sm:px-6 sm:text-xs"
+                  className="royal-gold-button inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-black tracking-[0.08em] uppercase sm:px-6 sm:text-xs"
                 >
                   Explore designs
                   <ArrowRight className="size-4" />
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="wedding-glass inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-bold text-[#7b2b3c] transition hover:-translate-y-0.5 sm:px-5 sm:text-xs"
+                  className="royal-glass-dark inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-bold transition hover:-translate-y-0.5 hover:border-[#d5ad63]/45 sm:px-5 sm:text-xs"
                 >
-                  <Heart className="size-4 fill-[#f2a2b1] text-[#b62350]" />
-                  My invites
+                  <Sparkles className="size-4 text-[#d7b56f]" />
+                  My invitations
                 </Link>
               </div>
 
@@ -123,18 +129,21 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="relative border-y border-[#efc879]/35 bg-white/45">
-          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-8 lg:px-10">
+        <section className="royal-section relative border-y border-[#c5a15a]/22">
+          <div className="royal-dust pointer-events-none absolute inset-0 opacity-20" />
+          <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-8 lg:px-10">
             <div className="mb-7 flex items-end justify-between gap-4">
               <div>
-                <p className="font-script text-3xl text-[#d07b1f]">Pick your vibe</p>
-                <h2 className="font-display text-3xl text-[#681d35] sm:text-4xl">
-                  Made to feel special
+                <p className="text-[9px] font-bold tracking-[0.22em] text-[#a87f3e] uppercase">
+                  Signature collections
+                </p>
+                <h2 className="font-display royal-title-dark mt-1 text-3xl sm:text-4xl">
+                  Curated for every celebration
                 </h2>
               </div>
               <Link
                 href="/themes"
-                className="hidden items-center gap-1.5 rounded-full border border-[#dfb561]/45 bg-white/75 px-4 py-2 text-[10px] font-black tracking-wide text-[#8f1537] uppercase shadow-sm sm:inline-flex"
+                className="hidden items-center gap-1.5 rounded-full border border-[#bf9850]/35 bg-[#fffaf0]/78 px-4 py-2 text-[10px] font-black tracking-wide text-[#5d4a2c] uppercase shadow-sm transition hover:-translate-y-0.5 hover:border-[#b98d3e]/55 sm:inline-flex"
               >
                 All designs <ArrowRight className="size-3.5" />
               </Link>
@@ -149,7 +158,7 @@ export default async function Home() {
             <div className="mt-8 text-center sm:hidden">
               <Link
                 href="/themes"
-                className="wedding-cta inline-flex items-center gap-2 rounded-full px-6 py-3 text-[10px] font-black uppercase"
+                className="royal-gold-button inline-flex items-center gap-2 rounded-full px-6 py-3 text-[10px] font-black uppercase"
               >
                 See all designs <ArrowRight className="size-3.5" />
               </Link>
@@ -157,12 +166,21 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden px-5 py-12 sm:px-8 lg:px-10">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,#ffd98a33,transparent_55%)]" />
-          <div className="relative mx-auto grid max-w-5xl gap-4 sm:grid-cols-3">
-            <Moment icon={<Heart className="size-6" />} title="Choose" note="A vibe you love" />
-            <Moment icon={<WandSparkles className="size-6" />} title="Make it yours" note="Names, photos, moments" />
-            <Moment icon={<Sparkles className="size-6" />} title="Share" note="One beautiful link" />
+        <section className="relative overflow-hidden bg-[#211f1c] px-5 py-14 text-[#eadfc8] sm:px-8 lg:px-10">
+          <div className="royal-dust pointer-events-none absolute inset-0 opacity-35" />
+          <div className="royal-orbit royal-orbit-a opacity-50" />
+          <div className="relative mx-auto max-w-5xl">
+            <div className="mb-7 text-center">
+              <p className="royal-kicker text-[9px] font-bold">Simple to create</p>
+              <h2 className="font-display royal-title-light mt-2 text-3xl sm:text-4xl">
+                Your celebration, beautifully digital.
+              </h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Moment icon={<Gem className="size-6" />} title="Choose" note="A design with your vibe" />
+              <Moment icon={<WandSparkles className="size-6" />} title="Personalize" note="Names, photos, moments" />
+              <Moment icon={<Sparkles className="size-6" />} title="Share" note="One elegant invitation link" />
+            </div>
           </div>
         </section>
       </main>
@@ -182,12 +200,12 @@ function Moment({
   note: string;
 }) {
   return (
-    <div className="wedding-card rounded-[1.8rem] px-5 py-6 text-center">
-      <div className="wedding-gold mx-auto grid size-12 place-items-center rounded-full shadow-lg">
+    <div className="royal-glass-dark rounded-[1.8rem] px-5 py-6 text-center transition duration-300 hover:-translate-y-1">
+      <div className="wedding-gold mx-auto grid size-12 place-items-center rounded-full shadow-[0_12px_28px_rgba(190,148,68,.2)]">
         {icon}
       </div>
-      <p className="font-display mt-4 text-xl text-[#642236]">{title}</p>
-      <p className="mt-1 text-xs font-semibold text-[#8d655b]">{note}</p>
+      <p className="font-display mt-4 text-xl text-[#f2dfb8]">{title}</p>
+      <p className="mt-1 text-xs font-semibold text-[#cdbd9f]/72">{note}</p>
     </div>
   );
 }
