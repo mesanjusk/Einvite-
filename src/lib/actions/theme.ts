@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import type { ActionResult } from "@/lib/actions/auth";
+import { DEFAULT_SECTION_ORDER } from "@/lib/invitation-helpers";
+import { resolveThemeVariant, sectionConfigFromOrder } from "@/lib/theme-variant";
 
 const colorPaletteSchema = z.object({
   primary: z.string(),
@@ -27,6 +29,7 @@ const GALLERY_ANIMATIONS = ["fade", "slide", "zoom", "flip", "blur"] as const;
 const updateThemeSchema = z.object({
   invitationId: z.string(),
   themeSlug: z.string().optional(),
+  variantSlug: z.string().nullable().optional(),
   colorPalette: colorPaletteSchema.optional(),
   fontPairing: fontPairingSchema.optional(),
   musicTrackId: z.string().nullable().optional(),
@@ -52,12 +55,37 @@ export async function updateInvitationThemeAction(
     return { success: false, error: "Invitation not found." };
   }
 
-  let themeId: string | undefined;
-  if (parsed.data.themeSlug) {
-    const theme = await db.theme.findUnique({ where: { slug: parsed.data.themeSlug } });
-    if (!theme || theme.type !== "WEBSITE") return { success: false, error: "Unknown theme." };
-    themeId = theme.id;
+  let theme =
+    parsed.data.themeSlug
+      ? await db.theme.findUnique({ where: { slug: parsed.data.themeSlug } })
+      : invitation.themeId
+        ? await db.theme.findUnique({ where: { id: invitation.themeId } })
+        : null;
+
+  if (!theme || theme.type !== "WEBSITE") {
+    return { success: false, error: "Unknown theme." };
   }
+
+  const template = await db.template.findFirst({ where: { themeId: theme.id } });
+
+  let variant = null;
+  if (parsed.data.variantSlug) {
+    variant = await db.themeColorway.findUnique({
+      where: {
+        themeId_slug: {
+          themeId: theme.id,
+          slug: parsed.data.variantSlug,
+        },
+      },
+    });
+    if (!variant) return { success: false, error: "Unknown theme variant." };
+  }
+
+  const resolved = resolveThemeVariant(
+    theme,
+    variant,
+    (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER,
+  );
 
   if (parsed.data.musicTrackId) {
     const track = await db.musicTrack.findUnique({ where: { id: parsed.data.musicTrackId } });
@@ -67,16 +95,20 @@ export async function updateInvitationThemeAction(
   await db.invitation.update({
     where: { id: parsed.data.invitationId },
     data: {
-      ...(themeId ? { themeId } : {}),
-      ...(parsed.data.colorPalette ? { colorPalette: parsed.data.colorPalette } : {}),
-      ...(parsed.data.fontPairing ? { fontPairing: parsed.data.fontPairing } : {}),
-      ...(parsed.data.musicTrackId !== undefined
-        ? { musicTrackId: parsed.data.musicTrackId || null }
-        : {}),
+      themeId: theme.id,
+      templateId: template?.id ?? null,
+      colorwayId: variant?.id ?? null,
+      colorPalette: parsed.data.colorPalette ?? resolved.colorPalette,
+      fontPairing: parsed.data.fontPairing ?? resolved.fontPairing,
+      sectionConfig: sectionConfigFromOrder(resolved.sectionOrder),
+      musicTrackId:
+        parsed.data.musicTrackId !== undefined
+          ? parsed.data.musicTrackId || null
+          : resolved.musicTrackId,
       ...(parsed.data.customMusicUrl !== undefined
         ? { customMusicUrl: parsed.data.customMusicUrl || null }
         : {}),
-      ...(parsed.data.galleryAnimation ? { galleryAnimation: parsed.data.galleryAnimation } : {}),
+      galleryAnimation: parsed.data.galleryAnimation ?? resolved.galleryAnimation,
     },
   });
 
