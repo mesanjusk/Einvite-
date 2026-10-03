@@ -13,8 +13,8 @@ export type ThemeDecorConfig = {
   effectIntensity: EffectIntensity;
   heroStyle: HeroStyle;
   galleryStyle: GalleryStyle;
-  backgroundImageUrl?: string | null;
-  motifImageUrl?: string | null;
+  backgroundImageUrl?: string;
+  motifImageUrl?: string;
 };
 
 export const DEFAULT_THEME_DECOR: ThemeDecorConfig = {
@@ -22,8 +22,8 @@ export const DEFAULT_THEME_DECOR: ThemeDecorConfig = {
   effectIntensity: "medium",
   heroStyle: "classic",
   galleryStyle: "polaroid",
-  backgroundImageUrl: null,
-  motifImageUrl: null,
+  backgroundImageUrl: undefined,
+  motifImageUrl: undefined,
 };
 
 export function normalizeThemeDecor(input: unknown): ThemeDecorConfig {
@@ -45,11 +45,11 @@ export function normalizeThemeDecor(input: unknown): ThemeDecorConfig {
     backgroundImageUrl:
       typeof value.backgroundImageUrl === "string" && value.backgroundImageUrl.trim()
         ? value.backgroundImageUrl.trim()
-        : null,
+        : undefined,
     motifImageUrl:
       typeof value.motifImageUrl === "string" && value.motifImageUrl.trim()
         ? value.motifImageUrl.trim()
-        : null,
+        : undefined,
   };
 }
 
