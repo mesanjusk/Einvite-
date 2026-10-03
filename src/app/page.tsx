@@ -7,7 +7,6 @@ import {
   SITE_DESCRIPTION,
   SITE_LOGO_PATH,
   SITE_NAME,
-  SITE_TAGLINE,
 } from "@/config/site";
 import { EventCategoryChips } from "@/components/marketing/event-category-chips";
 import { PublicMarketplaceHeader } from "@/components/marketing/public-marketplace-header";
