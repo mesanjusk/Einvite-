@@ -10,6 +10,7 @@ import { INDIC_FONT_VARIABLE_CLASSES } from "@/lib/i18n/fonts";
 import { LiveEditor } from "@/components/invite/live/live-editor";
 import { EditorPolishStyles } from "@/components/invite/live/editor-polish-styles";
 import { Button } from "@/components/ui/button";
+import { normalizeThemeDecor } from "@/lib/theme-recipe";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +96,14 @@ export default async function DesignInvitationPage({
             slug: colorway.slug,
             name: colorway.name,
             colorPalette: colorway.colorPalette as { primary: string; accent: string },
+            previewImage: colorway.previewImage,
+            isPremium: colorway.isPremium,
+            effectPreset: normalizeThemeDecor(colorway.decorAssets ?? theme.decorAssets).effectPreset,
+            musicTrackId: colorway.musicTrackId,
+            galleryAnimation: colorway.galleryAnimation,
+            sectionCount: Array.isArray(colorway.sectionOrder)
+              ? colorway.sectionOrder.length
+              : null,
           })),
         }))}
         musicTracks={musicTracks.map((track) => ({
