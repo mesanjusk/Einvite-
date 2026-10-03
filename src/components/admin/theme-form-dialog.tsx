@@ -13,9 +13,17 @@ import {
   THEME_CATEGORIES,
   type ThemeFormInput,
   type ThemeFormValues,
+  THEME_GALLERY_ANIMATIONS,
 } from "@/lib/validations/admin";
 import { upsertThemeAction } from "@/lib/actions/admin";
 import { EVENT_CATEGORIES } from "@/lib/event-categories";
+import {
+  EFFECT_INTENSITIES,
+  EFFECT_PRESETS,
+  GALLERY_STYLES,
+  HERO_STYLES,
+  type ThemeDecorConfig,
+} from "@/lib/theme-recipe";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +53,9 @@ type ThemeRecord = {
   revealVideoUrl: string | null;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
   fontPairing: { display: string; body: string; script: string };
+  decorAssets: ThemeDecorConfig | null;
+  defaultMusicTrackId: string | null;
+  galleryAnimation: string;
   sectionOrder: string[];
 };
 
@@ -84,6 +95,17 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       body: "Cormorant Garamond",
       script: "Great Vibes",
     },
+    decorAssets: theme?.decorAssets ?? {
+      effectPreset: "mixed",
+      effectIntensity: "medium",
+      heroStyle: "classic",
+      galleryStyle: "polaroid",
+      backgroundImageUrl: "",
+      motifImageUrl: "",
+    },
+    defaultMusicTrackId: theme?.defaultMusicTrackId ?? null,
+    galleryAnimation:
+      (theme?.galleryAnimation as ThemeFormValues["galleryAnimation"]) ?? "fade",
     sectionOrder: (theme?.sectionOrder as ThemeFormValues["sectionOrder"]) ?? [
       "ENVELOPE",
       "HERO",
@@ -100,9 +122,11 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
 export function ThemeFormDialog({
   theme,
   type = "WEBSITE",
+  musicTracks = [],
 }: {
   theme?: ThemeRecord;
   type?: ThemeType;
+  musicTracks?: Array<{ id: string; title: string; mood: string | null }>;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -377,6 +401,144 @@ export function ThemeFormDialog({
               </div>
             ))}
           </div>
+
+          {type === "WEBSITE" && (
+            <div className="grid gap-4 rounded-2xl border p-4">
+              <div>
+                <Label className="text-sm font-semibold">Reusable design pieces</Label>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  These pieces can be borrowed by any variant without duplicating the theme.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Effects</Label>
+                  <select
+                    className="border-input h-9 rounded-md border bg-transparent px-2 text-sm capitalize"
+                    value={form.watch("decorAssets.effectPreset")}
+                    onChange={(e) =>
+                      form.setValue(
+                        "decorAssets.effectPreset",
+                        e.target.value as ThemeFormValues["decorAssets"]["effectPreset"],
+                      )
+                    }
+                  >
+                    {EFFECT_PRESETS.map((value) => (
+                      <option key={value} value={value} className="capitalize">{value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Effect intensity</Label>
+                  <select
+                    className="border-input h-9 rounded-md border bg-transparent px-2 text-sm capitalize"
+                    value={form.watch("decorAssets.effectIntensity")}
+                    onChange={(e) =>
+                      form.setValue(
+                        "decorAssets.effectIntensity",
+                        e.target.value as ThemeFormValues["decorAssets"]["effectIntensity"],
+                      )
+                    }
+                  >
+                    {EFFECT_INTENSITIES.map((value) => (
+                      <option key={value} value={value} className="capitalize">{value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Hero treatment</Label>
+                  <select
+                    className="border-input h-9 rounded-md border bg-transparent px-2 text-sm capitalize"
+                    value={form.watch("decorAssets.heroStyle")}
+                    onChange={(e) =>
+                      form.setValue(
+                        "decorAssets.heroStyle",
+                        e.target.value as ThemeFormValues["decorAssets"]["heroStyle"],
+                      )
+                    }
+                  >
+                    {HERO_STYLES.map((value) => (
+                      <option key={value} value={value} className="capitalize">{value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Gallery treatment</Label>
+                  <select
+                    className="border-input h-9 rounded-md border bg-transparent px-2 text-sm capitalize"
+                    value={form.watch("decorAssets.galleryStyle")}
+                    onChange={(e) =>
+                      form.setValue(
+                        "decorAssets.galleryStyle",
+                        e.target.value as ThemeFormValues["decorAssets"]["galleryStyle"],
+                      )
+                    }
+                  >
+                    {GALLERY_STYLES.map((value) => (
+                      <option key={value} value={value} className="capitalize">
+                        {value.replace("-", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Background image URL</Label>
+                  <Input
+                    placeholder="Optional shared background image"
+                    {...form.register("decorAssets.backgroundImageUrl")}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Motif / overlay image URL</Label>
+                  <Input
+                    placeholder="Optional reusable motif PNG/SVG"
+                    {...form.register("decorAssets.motifImageUrl")}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Default photo motion</Label>
+                  <select
+                    className="border-input h-9 rounded-md border bg-transparent px-2 text-sm capitalize"
+                    value={form.watch("galleryAnimation")}
+                    onChange={(e) =>
+                      form.setValue(
+                        "galleryAnimation",
+                        e.target.value as ThemeFormValues["galleryAnimation"],
+                      )
+                    }
+                  >
+                    {THEME_GALLERY_ANIMATIONS.map((value) => (
+                      <option key={value} value={value} className="capitalize">{value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Default music</Label>
+                  <select
+                    className="border-input h-9 rounded-md border bg-transparent px-2 text-sm"
+                    value={form.watch("defaultMusicTrackId") ?? ""}
+                    onChange={(e) =>
+                      form.setValue("defaultMusicTrackId", e.target.value || null)
+                    }
+                  >
+                    <option value="">No theme default</option>
+                    {musicTracks.map((track) => (
+                      <option key={track.id} value={track.id}>
+                        {track.title}{track.mood ? ` · ${track.mood}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <Label className="mb-2 block">Sections (default layout)</Label>
