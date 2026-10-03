@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { normalizeThemeDecor } from "@/lib/theme-recipe";
+import { resolveThemeVariant } from "@/lib/theme-variant";
 
 export const metadata: Metadata = { title: "Manage Themes" };
 
@@ -36,20 +37,42 @@ export default async function AdminThemesPage() {
     mood: track.mood,
   }));
 
-  const mixerSources: ThemeMixerSource[] = themes.map((theme) => ({
-    id: theme.id,
-    name: theme.name,
-    colorPalette: theme.colorPalette as ThemeMixerSource["colorPalette"],
-    fontPairing: theme.fontPairing as ThemeMixerSource["fontPairing"],
-    decorAssets: normalizeThemeDecor(theme.decorAssets),
-    revealMode: theme.revealMode,
-    revealVideoUrl: theme.revealVideoUrl,
-    defaultMusicTrackId: theme.defaultMusicTrackId,
-    galleryAnimation: theme.galleryAnimation,
-    sectionOrder:
-      (theme.templates[0]?.sectionOrder as string[] | undefined) ?? [],
-    previewImage: theme.previewImage,
-  }));
+  const mixerSources: ThemeMixerSource[] = themes.flatMap((theme) => {
+    const baseSections =
+      (theme.templates[0]?.sectionOrder as string[] | undefined) ?? [];
+    const baseSource: ThemeMixerSource = {
+      id: theme.id,
+      name: theme.name,
+      colorPalette: theme.colorPalette as ThemeMixerSource["colorPalette"],
+      fontPairing: theme.fontPairing as ThemeMixerSource["fontPairing"],
+      decorAssets: normalizeThemeDecor(theme.decorAssets),
+      revealMode: theme.revealMode,
+      revealVideoUrl: theme.revealVideoUrl,
+      defaultMusicTrackId: theme.defaultMusicTrackId,
+      galleryAnimation: theme.galleryAnimation,
+      sectionOrder: baseSections,
+      previewImage: theme.previewImage,
+    };
+
+    const variantSources = theme.colorways.map((variant) => {
+      const resolved = resolveThemeVariant(theme, variant, baseSections);
+      return {
+        id: `${theme.id}:${variant.id}`,
+        name: `${theme.name} · ${variant.name}`,
+        colorPalette: resolved.colorPalette as ThemeMixerSource["colorPalette"],
+        fontPairing: resolved.fontPairing as ThemeMixerSource["fontPairing"],
+        decorAssets: resolved.decorAssets,
+        revealMode: resolved.revealMode,
+        revealVideoUrl: resolved.revealVideoUrl,
+        defaultMusicTrackId: resolved.musicTrackId,
+        galleryAnimation: resolved.galleryAnimation,
+        sectionOrder: resolved.sectionOrder,
+        previewImage: resolved.previewImage,
+      } satisfies ThemeMixerSource;
+    });
+
+    return [baseSource, ...variantSources];
+  });
 
   return (
     <div className="flex flex-col gap-6">
