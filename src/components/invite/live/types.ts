@@ -4,6 +4,12 @@ export type EditorColorway = {
   slug: string;
   name: string;
   colorPalette: EditorPalette;
+  previewImage: string | null;
+  isPremium: boolean;
+  effectPreset: string;
+  musicTrackId: string | null;
+  galleryAnimation: string | null;
+  sectionCount: number | null;
 };
 
 export type EditorTheme = {
