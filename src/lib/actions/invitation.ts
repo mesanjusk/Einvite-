@@ -105,6 +105,7 @@ export async function createInvitationAction(
       templateId: template?.id,
       colorwayId: colorway?.id ?? null,
       colorPalette: colorway ? resolvedDesign.colorPalette : undefined,
+      fontPairing: colorway?.fontPairing ?? undefined,
       musicTrackId: data.musicTrackId || resolvedDesign.musicTrackId || null,
       customMusicUrl: data.customMusicUrl || null,
       galleryAnimation: resolvedDesign.galleryAnimation,
