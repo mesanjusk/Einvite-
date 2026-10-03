@@ -2,6 +2,12 @@ import { z } from "zod";
 
 import { AUTO_VIDEO_MODEL } from "@/lib/ai/gemini-video";
 import { DEFAULT_EVENT_CATEGORY, EVENT_CATEGORY_SLUGS } from "@/lib/event-categories";
+import {
+  EFFECT_INTENSITIES,
+  EFFECT_PRESETS,
+  GALLERY_STYLES,
+  HERO_STYLES,
+} from "@/lib/theme-recipe";
 
 export const colorPaletteSchema = z.object({
   primary: z.string().min(1),
@@ -40,6 +46,16 @@ export const THEME_CATEGORIES = [
 ] as const;
 
 export const THEME_TYPES = ["WEBSITE", "PDF"] as const;
+export const THEME_GALLERY_ANIMATIONS = ["fade", "slide", "zoom", "flip", "blur"] as const;
+
+export const themeDecorSchema = z.object({
+  effectPreset: z.enum(EFFECT_PRESETS).default("mixed"),
+  effectIntensity: z.enum(EFFECT_INTENSITIES).default("medium"),
+  heroStyle: z.enum(HERO_STYLES).default("classic"),
+  galleryStyle: z.enum(GALLERY_STYLES).default("polaroid"),
+  backgroundImageUrl: z.string().optional(),
+  motifImageUrl: z.string().optional(),
+});
 
 export const themeFormSchema = z.object({
   id: z.string().optional(),
@@ -61,6 +77,16 @@ export const themeFormSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,
   fontPairing: fontPairingSchema,
+  decorAssets: themeDecorSchema.default({
+    effectPreset: "mixed",
+    effectIntensity: "medium",
+    heroStyle: "classic",
+    galleryStyle: "polaroid",
+    backgroundImageUrl: "",
+    motifImageUrl: "",
+  }),
+  defaultMusicTrackId: z.string().nullable().optional(),
+  galleryAnimation: z.enum(THEME_GALLERY_ANIMATIONS).default("fade"),
   sectionOrder: z
     .array(z.enum(SECTION_TYPES))
     .min(1, "At least one section is required"),
@@ -260,6 +286,15 @@ export const themeColorwayFormSchema = z.object({
     .min(1, "Slug is required")
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
   colorPalette: colorPaletteSchema,
+  previewImage: z.string().optional(),
+  fontPairing: fontPairingSchema.optional(),
+  decorAssets: themeDecorSchema.optional(),
+  revealMode: z.enum(["ANIMATION", "VIDEO"]).optional(),
+  revealVideoUrl: z.string().optional(),
+  musicTrackId: z.string().nullable().optional(),
+  galleryAnimation: z.enum(THEME_GALLERY_ANIMATIONS).optional(),
+  sectionOrder: z.array(z.enum(SECTION_TYPES)).optional(),
+  isPremium: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
 });
 

@@ -1,3 +1,5 @@
+import type { ThemeDecorConfig } from "@/lib/theme-recipe";
+
 export type InviteEvent = {
   id: string;
   name: string;
@@ -56,6 +58,7 @@ export type InviteData = {
   media: InviteMedia[];
   isDemo: boolean;
   themeSlug: string | null;
+  designRecipe: ThemeDecorConfig;
   revealVideoUrl: string | null;
   revealVideoWebmUrl?: string | null;
   revealVideoPosterUrl?: string | null;

@@ -124,34 +124,65 @@ export function DesignSheet({
 
           {activeTheme && activeTheme.colorways.length > 0 && (
             <section className="flex flex-col gap-2">
-              <Label>Colours</Label>
-              <div className="flex flex-wrap gap-2">
+              <div>
+                <Label>Variants</Label>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Same base theme, reassembled with different colours, effects, music and motion.
+                </p>
+              </div>
+              <div className="grid gap-2">
                 <button
                   type="button"
                   onClick={() => onColorwayChange(null)}
                   className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs",
+                    "flex items-center gap-3 rounded-xl border p-3 text-left",
                     !activeColorwaySlug
                       ? "border-primary bg-primary/5"
                       : "hover:border-primary/50",
                   )}
                 >
-                  Original
+                  <Swatch palette={activeTheme.colorPalette} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">Base theme</span>
+                    <span className="text-muted-foreground block text-[11px]">
+                      Original recipe
+                    </span>
+                  </span>
+                  {!activeColorwaySlug && <Check className="text-primary size-4" />}
                 </button>
+
                 {activeTheme.colorways.map((colorway) => (
                   <button
                     key={colorway.slug}
                     type="button"
                     onClick={() => onColorwayChange(colorway.slug)}
                     className={cn(
-                      "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs",
+                      "flex items-center gap-3 rounded-xl border p-3 text-left",
                       colorway.slug === activeColorwaySlug
                         ? "border-primary bg-primary/5"
                         : "hover:border-primary/50",
                     )}
                   >
-                    <Swatch palette={colorway.colorPalette} small />
-                    {colorway.name}
+                    <Swatch palette={colorway.colorPalette} />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5 text-sm font-medium">
+                        <span className="truncate">{colorway.name}</span>
+                        {colorway.isPremium && (
+                          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">
+                            Premium
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-muted-foreground block truncate text-[10px] capitalize">
+                        {colorway.effectPreset}
+                        {colorway.galleryAnimation ? ` · ${colorway.galleryAnimation}` : ""}
+                        {colorway.musicTrackId ? " · music" : ""}
+                        {colorway.sectionCount ? ` · ${colorway.sectionCount} sections` : ""}
+                      </span>
+                    </span>
+                    {colorway.slug === activeColorwaySlug && (
+                      <Check className="text-primary size-4" />
+                    )}
                   </button>
                 ))}
               </div>

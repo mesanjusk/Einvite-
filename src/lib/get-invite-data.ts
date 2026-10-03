@@ -5,9 +5,11 @@ import {
   type ThemeFontPairing,
 } from "@/lib/theme-css-vars";
 import type { InviteData } from "@/components/invite/types";
+import { mergeThemeDecor } from "@/lib/theme-recipe";
 
 const INVITATION_INCLUDE = {
   theme: true,
+  colorway: true,
   pdfTheme: true,
   music: true,
   events: { orderBy: { order: "asc" as const } },
@@ -83,8 +85,16 @@ type InvitationWithRelations = NonNullable<
 
 export function toInviteRenderData(invitation: InvitationWithRelations) {
   const themeStyle = resolveInviteThemeStyle(
-    invitation.colorPalette ?? invitation.theme?.colorPalette,
-    invitation.fontPairing ?? invitation.theme?.fontPairing,
+    invitation.colorPalette ??
+      invitation.colorway?.colorPalette ??
+      invitation.theme?.colorPalette,
+    invitation.fontPairing ??
+      invitation.colorway?.fontPairing ??
+      invitation.theme?.fontPairing,
+  );
+  const designRecipe = mergeThemeDecor(
+    invitation.theme?.decorAssets,
+    invitation.colorway?.decorAssets,
   );
 
   const inviteData: InviteData = {
@@ -108,9 +118,14 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     media: invitation.media,
     isDemo: invitation.isDemo,
     themeSlug: invitation.theme?.slug ?? null,
+    designRecipe,
     revealVideoUrl:
       invitation.introVideoMp4Url ??
-      (invitation.theme?.revealMode === "VIDEO" ? (invitation.theme?.revealVideoUrl ?? null) : null),
+      (invitation.colorway?.revealMode === "VIDEO"
+        ? (invitation.colorway?.revealVideoUrl ?? null)
+        : invitation.theme?.revealMode === "VIDEO"
+          ? (invitation.theme?.revealVideoUrl ?? null)
+          : null),
     revealVideoWebmUrl: invitation.introVideoWebmUrl ?? null,
     revealVideoPosterUrl: invitation.introVideoPosterUrl ?? null,
   };

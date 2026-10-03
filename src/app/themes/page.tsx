@@ -60,6 +60,7 @@ export default async function PublicThemesPage({
           ...(activeSlug ? { eventCategory: activeSlug } : {}),
         },
         orderBy: { sortOrder: "asc" },
+        include: { colorways: { orderBy: { sortOrder: "asc" } } },
       })
       .catch(() => []),
     db.invitation
@@ -72,12 +73,57 @@ export default async function PublicThemesPage({
 
   const styleOptions = [...new Set(baseThemes.map((theme) => theme.category).filter(Boolean))];
   const activeStyle = rawStyle && styleOptions.includes(rawStyle) ? rawStyle : null;
+  const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
 
-  let themes = baseThemes.filter((theme) => {
+  let themes = baseThemes.flatMap((theme) => {
+    const base = {
+      id: theme.id,
+      name: theme.name,
+      slug: theme.slug,
+      category: theme.category,
+      eventCategory: theme.eventCategory,
+      isPremium: theme.isPremium,
+      previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
+      demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+      variantSlug: null as string | null,
+      baseThemeName: null as string | null,
+      createdAt: theme.createdAt,
+      sortOrder: theme.sortOrder * 1000,
+      description: theme.description ?? "",
+    };
+    const variants = theme.colorways.map((variant, index) => ({
+      id: `${theme.id}:${variant.id}`,
+      name: `${theme.name} · ${variant.name}`,
+      slug: theme.slug,
+      category: theme.category,
+      eventCategory: theme.eventCategory,
+      isPremium: theme.isPremium || variant.isPremium,
+      previewImage:
+        variant.previewImage ??
+        theme.previewImage ??
+        fallbackThumbnailFor(theme.slug),
+      demoSlug: null as string | null,
+      variantSlug: variant.slug,
+      baseThemeName: theme.name,
+      createdAt: variant.createdAt,
+      sortOrder: theme.sortOrder * 1000 + variant.sortOrder + index + 1,
+      description: `${theme.description ?? ""} ${variant.name}`,
+    }));
+    return [base, ...variants];
+  });
+
+  themes = themes.filter((theme) => {
     if (tier === "premium" && !theme.isPremium) return false;
     if (activeStyle && theme.category !== activeStyle) return false;
     if (!query) return true;
-    return [theme.name, theme.slug, theme.description ?? "", theme.category, theme.eventCategory]
+    return [
+      theme.name,
+      theme.slug,
+      theme.variantSlug ?? "",
+      theme.description,
+      theme.category,
+      theme.eventCategory,
+    ]
       .join(" ")
       .toLowerCase()
       .includes(query);
@@ -93,12 +139,11 @@ export default async function PublicThemesPage({
     return a.sortOrder - b.sortOrder;
   });
 
-  const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
   const mobilePreviewThemes = themes.slice(0, 5).map((theme) => ({
     id: theme.id,
     name: theme.name,
-    previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
-    demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+    previewImage: theme.previewImage,
+    demoSlug: theme.demoSlug,
   }));
   const headingCategory = activeSlug ? eventCategoryFor(activeSlug).label : null;
 
@@ -271,19 +316,7 @@ export default async function PublicThemesPage({
           ) : (
             <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-6 sm:gap-y-9 md:grid-cols-3 lg:grid-cols-4">
               {themes.map((theme) => (
-                <TemplateMarketplaceCard
-                  key={theme.id}
-                  theme={{
-                    id: theme.id,
-                    name: theme.name,
-                    slug: theme.slug,
-                    category: theme.category,
-                    eventCategory: theme.eventCategory,
-                    isPremium: theme.isPremium,
-                    previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
-                    demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
-                  }}
-                />
+                <TemplateMarketplaceCard key={theme.id} theme={theme} />
               ))}
             </div>
           )}

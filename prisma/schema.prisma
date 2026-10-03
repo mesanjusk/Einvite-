@@ -162,7 +162,9 @@ model Theme {
   content        Json?
   colorPalette   Json // { primary, secondary, accent, background, foreground }
   fontPairing    Json // { display, body, script }
-  decorAssets    Json? // preset decoration config (petals, sparkles, motifs...)
+  decorAssets    Json? // reusable design recipe: effects, background/motif images, hero/gallery style
+  defaultMusicTrackId String? @db.ObjectId // optional shared-library soundtrack for this base theme
+  galleryAnimation    String  @default("fade") // default photo reveal motion for this base theme
   isPremium      Boolean   @default(false)
   sortOrder      Int       @default(0)
   // Envelope-open moment: admin picks "ANIMATION" (coded burst only) or
@@ -190,11 +192,22 @@ model Theme {
 model ThemeColorway {
   id           String  @id @default(auto()) @map("_id") @db.ObjectId
   themeId      String  @db.ObjectId
-  name         String // "Maroon & Gold", "Emerald", "Blush"
+  name         String // legacy "colourway" name; now a lightweight reusable theme variant
   slug         String
-  colorPalette Json // { primary, secondary, accent, background, foreground }
+  colorPalette Json // required for backward compatibility and fast previews
   previewImage String?
-  sortOrder    Int     @default(0)
+
+  // Optional overrides. Missing values inherit from the base Theme, so a variant
+  // stores only what differs and can be created in bulk without duplicating a theme.
+  fontPairing       Json?
+  decorAssets       Json?
+  revealMode        String?
+  revealVideoUrl    String?
+  musicTrackId      String? @db.ObjectId
+  galleryAnimation  String?
+  sectionOrder      Json?
+  isPremium         Boolean @default(false)
+  sortOrder         Int     @default(0)
 
   theme       Theme        @relation(fields: [themeId], references: [id], onDelete: Cascade)
   invitations Invitation[]

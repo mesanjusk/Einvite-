@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/i18n/locale-context";
 import { useInviteEdit } from "./edit-context";
 import { EditableText, EditPanelChip } from "./editable";
 import type { InviteMedia } from "./types";
+import type { ThemeDecorConfig } from "@/lib/theme-recipe";
 
 const ANIMATION_MAP: Record<string, Variants> = {
   fade: fadeUp,
@@ -41,11 +42,13 @@ export function GallerySection({
   storyHeadline,
   coverPhoto,
   animation = "fade",
+  designRecipe,
 }: {
   media: InviteMedia[];
   storyHeadline: string;
   coverPhoto: string | null;
   animation?: string;
+  designRecipe: ThemeDecorConfig;
 }) {
   const { t } = useLocale();
   const edit = useInviteEdit();
@@ -61,6 +64,11 @@ export function GallerySection({
   const visibleItems = stackItems.slice(0, STACK_LIMIT);
   const overflowCount = stackItems.length - visibleItems.length;
   const variants = ANIMATION_MAP[animation] ?? fadeUp;
+  const showSectionPetals =
+    designRecipe.effectPreset === "mixed" || designRecipe.effectPreset === "petals";
+  const cleanGallery = designRecipe.galleryStyle === "clean";
+  const royalGallery = designRecipe.galleryStyle === "royal-stack";
+  const overlapMargin = cleanGallery ? "14px" : royalGallery ? "-46%" : "-58%";
 
   function openAt(index: number) {
     // In the editor a tap on a photo means "change this one", not "look at
@@ -90,7 +98,24 @@ export function GallerySection({
       className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-7 py-16 text-center"
       style={{ background: "var(--inv-background)" }}
     >
-      <PetalField count={12} seed={31} />
+      {designRecipe.motifImageUrl && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.09]"
+          style={{
+            backgroundImage: `url("${designRecipe.motifImageUrl.replace(/"/g, "%22")}")`,
+            backgroundRepeat: "repeat",
+            backgroundPosition: "center",
+            backgroundSize: "190px auto",
+          }}
+        />
+      )}
+      {showSectionPetals && (
+        <PetalField
+          count={designRecipe.effectIntensity === "low" ? 5 : designRecipe.effectIntensity === "high" ? 15 : 10}
+          seed={31}
+        />
+      )}
 
       <RevealGroup className="relative z-[2] w-full">
         <Reveal variants={fadeUp}>
@@ -130,23 +155,47 @@ export function GallerySection({
               // Each card overlaps the one before it (but not by too much — enough gap keeps
               // each card's scroll-into-view trigger point separate, so they reveal one at a
               // time rather than all firing together).
-              style={i === 0 ? undefined : { marginTop: "-58%" }}
+              style={i === 0 ? undefined : { marginTop: overlapMargin }}
             >
               <motion.button
                 type="button"
                 onClick={() => openAt(i)}
                 whileTap={{ scale: 0.94, rotate: 0 }}
                 whileHover={{ scale: 1.02 }}
-                animate={{ rotate: ROTATIONS[i % ROTATIONS.length] }}
+                animate={{
+                  rotate: cleanGallery
+                    ? 0
+                    : royalGallery
+                      ? ROTATIONS[i % ROTATIONS.length] * 0.55
+                      : ROTATIONS[i % ROTATIONS.length],
+                }}
                 style={{ zIndex: i, transformOrigin: "center" }}
-                className="relative block w-full cursor-pointer touch-manipulation rounded p-2.5 pb-7"
+                className={
+                  cleanGallery
+                    ? "relative block w-full cursor-pointer touch-manipulation rounded-2xl p-1.5"
+                    : royalGallery
+                      ? "relative block w-full cursor-pointer touch-manipulation rounded-2xl p-2.5 pb-6"
+                      : "relative block w-full cursor-pointer touch-manipulation rounded p-2.5 pb-7"
+                }
                 aria-label="View photo"
               >
                 <div
-                  className="pointer-events-none absolute inset-0 rounded"
-                  style={{ background: "#fff", boxShadow: "0 14px 30px rgba(0,0,0,0.22)" }}
+                  className={`pointer-events-none absolute inset-0 ${cleanGallery || royalGallery ? "rounded-2xl" : "rounded"}`}
+                  style={{
+                    background: royalGallery
+                      ? "color-mix(in srgb, var(--inv-background) 90%, white 10%)"
+                      : "#fff",
+                    border: royalGallery
+                      ? "1px solid color-mix(in srgb, var(--inv-accent) 42%, transparent)"
+                      : undefined,
+                    boxShadow: cleanGallery
+                      ? "0 12px 28px rgba(0,0,0,0.14)"
+                      : royalGallery
+                        ? "0 18px 36px rgba(0,0,0,0.2)"
+                        : "0 14px 30px rgba(0,0,0,0.22)",
+                  }}
                 />
-                <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
+                <div className={`relative aspect-[4/5] overflow-hidden ${cleanGallery || royalGallery ? "rounded-xl" : "rounded-sm"}`}>
                   {item.type === "VIDEO" ? (
                     <>
                       <video
@@ -173,13 +222,13 @@ export function GallerySection({
               variants={fadeUp}
               delay={visibleItems.length * 0.1}
               className="relative w-full"
-              style={{ marginTop: "-58%" }}
+              style={{ marginTop: overlapMargin }}
             >
               <button
                 type="button"
                 onClick={() => openAt(STACK_LIMIT)}
                 style={{ zIndex: visibleItems.length }}
-                className="relative flex aspect-[4/5] w-full items-center justify-center rounded p-2.5 text-sm font-medium"
+                className={`relative flex aspect-[4/5] w-full items-center justify-center p-2.5 text-sm font-medium ${cleanGallery || royalGallery ? "rounded-2xl" : "rounded"}`}
                 aria-label={`View ${overflowCount} more photos`}
               >
                 <div

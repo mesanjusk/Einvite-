@@ -545,13 +545,36 @@ export function LiveEditor({
   function applyPatchResult(data: {
     themeStyle: Record<string, string>;
     musicUrl: string | null;
+    musicTrackId: string | null;
+    customMusicUrl: string | null;
+    galleryAnimation: string;
+    sectionConfig: SectionConfigEntry[];
+    designRecipe: InviteData["designRecipe"];
+    revealVideoUrl: string | null;
   }) {
     setThemeStyle(data.themeStyle as CSSProperties);
-    setInvite((current) => ({ ...current, musicUrl: data.musicUrl }));
+    setMusicTrackId(data.musicTrackId);
+    setCustomMusicUrl(data.customMusicUrl);
+    setSections(data.sectionConfig);
+    setInvite((current) => ({
+      ...current,
+      musicUrl: data.musicUrl,
+      galleryAnimation: data.galleryAnimation,
+      designRecipe: data.designRecipe,
+      revealVideoUrl: data.revealVideoUrl,
+    }));
   }
 
   function handleThemeChange(slug: string) {
-    const previous = { themeSlug, colorwaySlug, themeStyle };
+    const previous = {
+      themeSlug,
+      colorwaySlug,
+      themeStyle,
+      invite,
+      sections,
+      musicTrackId,
+      customMusicUrl,
+    };
     setThemeSlug(slug);
     setColorwaySlug(null);
     void trackSave(
@@ -560,18 +583,33 @@ export function LiveEditor({
         setThemeSlug(previous.themeSlug);
         setColorwaySlug(previous.colorwaySlug);
         setThemeStyle(previous.themeStyle);
+        setInvite(previous.invite);
+        setSections(previous.sections);
+        setMusicTrackId(previous.musicTrackId);
+        setCustomMusicUrl(previous.customMusicUrl);
       },
     ).then((data) => data && applyPatchResult(data));
   }
 
   function handleColorwayChange(slug: string | null) {
-    const previous = { colorwaySlug, themeStyle };
+    const previous = {
+      colorwaySlug,
+      themeStyle,
+      invite,
+      sections,
+      musicTrackId,
+      customMusicUrl,
+    };
     setColorwaySlug(slug);
     void trackSave(
       () => patchInvitationAction(invitationId, { colorwaySlug: slug }),
       () => {
         setColorwaySlug(previous.colorwaySlug);
         setThemeStyle(previous.themeStyle);
+        setInvite(previous.invite);
+        setSections(previous.sections);
+        setMusicTrackId(previous.musicTrackId);
+        setCustomMusicUrl(previous.customMusicUrl);
       },
     ).then((data) => data && applyPatchResult(data));
   }

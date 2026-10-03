@@ -17,6 +17,7 @@ export function StartLiveInvitationButton({
   fromSlug,
   category,
   themeSlug,
+  variantSlug,
   children,
   className,
   style,
@@ -24,6 +25,7 @@ export function StartLiveInvitationButton({
   fromSlug?: string;
   category?: string;
   themeSlug?: string;
+  variantSlug?: string;
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -35,7 +37,12 @@ export function StartLiveInvitationButton({
     if (isPending) return;
 
     startTransition(async () => {
-      const result = await startLiveInvitationAction({ fromSlug, category, themeSlug });
+      const result = await startLiveInvitationAction({
+        fromSlug,
+        category,
+        themeSlug,
+        variantSlug,
+      });
       if (!result.success) {
         toast.error(result.error);
         return;

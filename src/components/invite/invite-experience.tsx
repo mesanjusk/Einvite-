@@ -151,6 +151,8 @@ export function InviteExperience({
         <WeddingAmbientEffects
           variant="viewer"
           reactToMusic
+          preset={invite.designRecipe.effectPreset}
+          intensity={invite.designRecipe.effectIntensity}
           className={
             skipEnvelope
               ? "no-print absolute inset-x-0 top-0 h-[100svh]"
@@ -254,6 +256,7 @@ export function InviteExperience({
                       storyHeadline={invite.copy?.storyHeadline ?? "Forever Us"}
                       coverPhoto={invite.bridePhoto ?? invite.groomPhoto}
                       animation={invite.galleryAnimation}
+                      designRecipe={invite.designRecipe}
                     />
                   </SectionScope>
                 );

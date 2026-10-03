@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { ThemeEditorForm } from "@/components/dashboard/theme-editor-form";
 import { Card, CardContent } from "@/components/ui/card";
+import { resolveThemeVariant } from "@/lib/theme-variant";
 
 export const metadata: Metadata = { title: "Publish — Theme" };
 
@@ -52,7 +53,14 @@ export default async function ThemeEditorPage({
       orderBy: { updatedAt: "desc" },
       select: { id: true, brideName: true, groomName: true },
     }),
-    db.theme.findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } }),
+    db.theme.findMany({
+      where: { type: "WEBSITE" },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        colorways: { orderBy: { sortOrder: "asc" } },
+        templates: true,
+      },
+    }),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }),
   ]);
 
@@ -75,7 +83,7 @@ export default async function ThemeEditorPage({
     : invitations[0].id;
   const invitation = await db.invitation.findUnique({
     where: { id: selectedId },
-    include: { theme: true },
+    include: { theme: true, colorway: true },
   });
   if (!invitation) return null;
 
@@ -104,8 +112,25 @@ export default async function ThemeEditorPage({
           slug: t.slug,
           name: t.name,
           category: t.category,
-          colorPalette: t.colorPalette as { primary: string; accent: string; background: string },
+          colorPalette: t.colorPalette as Palette,
           fontPairing: t.fontPairing as FontPairing,
+          variants: t.colorways.map((variant) => {
+            const resolved = resolveThemeVariant(
+              t,
+              variant,
+              (t.templates[0]?.sectionOrder as string[] | undefined) ?? [],
+            );
+            return {
+              slug: variant.slug,
+              name: variant.name,
+              isPremium: variant.isPremium || t.isPremium,
+              colorPalette: resolved.colorPalette as Palette,
+              fontPairing: resolved.fontPairing as FontPairing,
+              musicTrackId: resolved.musicTrackId,
+              galleryAnimation: resolved.galleryAnimation,
+              effectPreset: resolved.decorAssets.effectPreset,
+            };
+          }),
         }))}
         musicTracks={musicTracks.map((track) => ({
           id: track.id,
@@ -114,6 +139,7 @@ export default async function ThemeEditorPage({
           url: track.url,
         }))}
         currentThemeSlug={invitation.theme?.slug ?? themes[0]?.slug ?? "royal"}
+        currentVariantSlug={invitation.colorway?.slug ?? null}
         currentPalette={currentPalette}
         currentFonts={currentFonts}
         currentMusicTrackId={invitation.musicTrackId ?? null}
