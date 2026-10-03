@@ -55,7 +55,7 @@ export async function updateInvitationThemeAction(
     return { success: false, error: "Invitation not found." };
   }
 
-  let theme =
+  const theme =
     parsed.data.themeSlug
       ? await db.theme.findUnique({ where: { slug: parsed.data.themeSlug } })
       : invitation.themeId
