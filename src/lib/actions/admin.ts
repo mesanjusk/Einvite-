@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
 import { getAdmin } from "@/lib/admin-guard";
@@ -767,13 +768,13 @@ export async function upsertThemeColorwayAction(
     slug: data.slug,
     colorPalette: data.colorPalette,
     previewImage: data.previewImage || null,
-    fontPairing: data.fontPairing ?? undefined,
-    decorAssets: data.decorAssets ?? undefined,
+    fontPairing: data.fontPairing ?? Prisma.DbNull,
+    decorAssets: data.decorAssets ?? Prisma.DbNull,
     revealMode: data.revealMode || null,
     revealVideoUrl: data.revealVideoUrl || null,
     musicTrackId: data.musicTrackId || null,
     galleryAnimation: data.galleryAnimation || null,
-    sectionOrder: data.sectionOrder ?? undefined,
+    sectionOrder: data.sectionOrder ?? Prisma.DbNull,
     isPremium: data.isPremium,
     sortOrder: data.sortOrder,
   };
