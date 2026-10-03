@@ -13,13 +13,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
+type ThemeVariant = {
+  slug: string;
+  name: string;
+  isPremium: boolean;
+  colorPalette: Palette;
+  fontPairing: FontPairing;
+  musicTrackId: string | null;
+  galleryAnimation: string;
+  effectPreset: string;
+};
+
 type Theme = {
   id: string;
   slug: string;
   name: string;
   category: string;
-  colorPalette: { primary: string; accent: string; background: string };
-  fontPairing: { display: string; body: string; script: string };
+  colorPalette: Palette;
+  fontPairing: FontPairing;
+  variants: ThemeVariant[];
 };
 
 type Palette = {
@@ -76,6 +88,7 @@ export function ThemeEditorForm({
   brideName,
   groomName,
   currentThemeSlug,
+  currentVariantSlug,
   currentPalette,
   currentFonts,
   currentMusicTrackId,
@@ -88,6 +101,7 @@ export function ThemeEditorForm({
   brideName: string;
   groomName: string;
   currentThemeSlug: string;
+  currentVariantSlug: string | null;
   currentPalette: Palette;
   currentFonts: FontPairing;
   currentMusicTrackId: string | null;
@@ -96,6 +110,9 @@ export function ThemeEditorForm({
 }) {
   const [category, setCategory] = useState<(typeof CATEGORY_TABS)[number]["value"]>("all");
   const [selectedSlug, setSelectedSlug] = useState(currentThemeSlug);
+  const [selectedVariantSlug, setSelectedVariantSlug] = useState<string | null>(
+    currentVariantSlug,
+  );
   const [palette, setPalette] = useState(currentPalette);
   const [fonts, setFonts] = useState(currentFonts);
   const [musicTrackId, setMusicTrackId] = useState<string | null>(currentMusicTrackId);
@@ -120,13 +137,21 @@ export function ThemeEditorForm({
 
   function handleThemePick(theme: Theme) {
     setSelectedSlug(theme.slug);
-    setPalette((p) => ({
-      ...p,
-      primary: theme.colorPalette.primary,
-      accent: theme.colorPalette.accent,
-      background: theme.colorPalette.background,
-    }));
+    setSelectedVariantSlug(null);
+    setPalette(theme.colorPalette);
     setFonts(theme.fontPairing);
+  }
+
+  function handleVariantPick(theme: Theme, variant: ThemeVariant) {
+    setSelectedSlug(theme.slug);
+    setSelectedVariantSlug(variant.slug);
+    setPalette(variant.colorPalette);
+    setFonts(variant.fontPairing);
+    setMusicTrackId(variant.musicTrackId);
+    setCustomMusicUrl(null);
+    if (GALLERY_ANIMATIONS.some((item) => item.value === variant.galleryAnimation)) {
+      setGalleryAnimation(variant.galleryAnimation as GalleryAnimation);
+    }
   }
 
   function togglePreview(track: MusicTrack) {
@@ -170,6 +195,7 @@ export function ThemeEditorForm({
       const result = await updateInvitationThemeAction({
         invitationId,
         themeSlug: selectedSlug,
+        variantSlug: selectedVariantSlug,
         colorPalette: palette,
         fontPairing: fonts,
         musicTrackId: musicTrackId ?? null,
@@ -203,36 +229,81 @@ export function ThemeEditorForm({
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {visibleThemes.map((theme) => (
-              <button
-                key={theme.slug}
-                type="button"
-                onClick={() => handleThemePick(theme)}
-                className={cn(
-                  "rounded-lg border p-3 text-left transition-colors",
-                  selectedSlug === theme.slug ? "border-primary ring-primary/30 ring-2" : "",
-                )}
-              >
-                <div
-                  className="mb-2 flex h-16 items-center justify-center rounded-md"
-                  style={{
-                    background: `linear-gradient(135deg, ${theme.colorPalette.primary}, ${theme.colorPalette.accent})`,
-                  }}
+              <div key={theme.slug} className="overflow-hidden rounded-xl border">
+                <button
+                  type="button"
+                  onClick={() => handleThemePick(theme)}
+                  className={cn(
+                    "w-full p-3 text-left transition-colors",
+                    selectedSlug === theme.slug && !selectedVariantSlug
+                      ? "bg-primary/5 ring-primary/30 ring-2 ring-inset"
+                      : "hover:bg-muted/40",
+                  )}
                 >
-                  <span
-                    className="text-lg"
+                  <div
+                    className="mb-2 flex h-16 items-center justify-center rounded-md"
                     style={{
-                      fontFamily: fontVarFor(theme.fontPairing.script),
-                      color: theme.colorPalette.background,
+                      background: `linear-gradient(135deg, ${theme.colorPalette.primary}, ${theme.colorPalette.accent})`,
                     }}
                   >
-                    Aa
+                    <span
+                      className="text-lg"
+                      style={{
+                        fontFamily: fontVarFor(theme.fontPairing.script),
+                        color: theme.colorPalette.background,
+                      }}
+                    >
+                      Aa
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium">{theme.name}</span>
+                  <span className="text-muted-foreground block text-[11px] capitalize">
+                    {theme.category} · base
                   </span>
-                </div>
-                <span className="text-sm font-medium">{theme.name}</span>
-                <span className="text-muted-foreground block text-[11px] capitalize">
-                  {theme.category}
-                </span>
-              </button>
+                </button>
+
+                {theme.variants.length > 0 && (
+                  <div className="border-t p-2">
+                    <p className="text-muted-foreground mb-1.5 px-1 text-[9px] font-bold tracking-wide uppercase">
+                      Variants
+                    </p>
+                    <div className="grid gap-1">
+                      {theme.variants.map((variant) => (
+                        <button
+                          key={variant.slug}
+                          type="button"
+                          onClick={() => handleVariantPick(theme, variant)}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg px-2 py-2 text-left text-xs transition",
+                            selectedSlug === theme.slug && selectedVariantSlug === variant.slug
+                              ? "bg-primary/10 ring-primary/30 ring-1"
+                              : "hover:bg-muted",
+                          )}
+                        >
+                          <span
+                            className="size-5 shrink-0 rounded-full border"
+                            style={{
+                              background: `linear-gradient(135deg, ${variant.colorPalette.primary} 50%, ${variant.colorPalette.accent} 50%)`,
+                            }}
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-medium">{variant.name}</span>
+                            <span className="text-muted-foreground block truncate text-[9px] capitalize">
+                              {variant.effectPreset} · {variant.galleryAnimation}
+                              {variant.musicTrackId ? " · music" : ""}
+                            </span>
+                          </span>
+                          {variant.isPremium && (
+                            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[8px] font-bold text-amber-800">
+                              Pro
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
             {visibleThemes.length === 0 && (
               <p className="text-muted-foreground col-span-full py-6 text-center text-sm">
