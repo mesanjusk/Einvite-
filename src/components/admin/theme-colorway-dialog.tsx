@@ -401,7 +401,7 @@ export function ThemeColorwayDialog({
                 <div className="grid grid-cols-2 gap-2">
                   <SelectField
                     label="Effect"
-                    value={form.watch("decorAssets.effectPreset")}
+                    value={form.watch("decorAssets.effectPreset") ?? fallbackDecor.effectPreset}
                     options={EFFECT_PRESETS}
                     onChange={(value) =>
                       form.setValue("decorAssets.effectPreset", value as ThemeDecorConfig["effectPreset"])
@@ -409,7 +409,7 @@ export function ThemeColorwayDialog({
                   />
                   <SelectField
                     label="Intensity"
-                    value={form.watch("decorAssets.effectIntensity")}
+                    value={form.watch("decorAssets.effectIntensity") ?? fallbackDecor.effectIntensity}
                     options={EFFECT_INTENSITIES}
                     onChange={(value) =>
                       form.setValue("decorAssets.effectIntensity", value as ThemeDecorConfig["effectIntensity"])
@@ -417,7 +417,7 @@ export function ThemeColorwayDialog({
                   />
                   <SelectField
                     label="Hero"
-                    value={form.watch("decorAssets.heroStyle")}
+                    value={form.watch("decorAssets.heroStyle") ?? fallbackDecor.heroStyle}
                     options={HERO_STYLES}
                     onChange={(value) =>
                       form.setValue("decorAssets.heroStyle", value as ThemeDecorConfig["heroStyle"])
@@ -425,7 +425,7 @@ export function ThemeColorwayDialog({
                   />
                   <SelectField
                     label="Gallery"
-                    value={form.watch("decorAssets.galleryStyle")}
+                    value={form.watch("decorAssets.galleryStyle") ?? fallbackDecor.galleryStyle}
                     options={GALLERY_STYLES}
                     onChange={(value) =>
                       form.setValue("decorAssets.galleryStyle", value as ThemeDecorConfig["galleryStyle"])
