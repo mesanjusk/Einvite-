@@ -34,7 +34,12 @@ export const metadata: Metadata = {
 export default async function Home() {
   const [themes, demos] = await Promise.all([
     db.theme
-      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" }, take: 8 })
+      .findMany({
+        where: { type: "WEBSITE" },
+        orderBy: { sortOrder: "asc" },
+        take: 8,
+        include: { colorways: { orderBy: { sortOrder: "asc" } } },
+      })
       .catch(() => []),
     db.invitation
       .findMany({
@@ -49,20 +54,43 @@ export default async function Home() {
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
   const themeCards =
     themes.length > 0
-      ? themes.map((theme) => ({
-          id: theme.id,
-          name: theme.name,
-          slug: theme.slug,
-          category: theme.category,
-          eventCategory: theme.eventCategory,
-          isPremium: theme.isPremium,
-          previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
-          demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
-        }))
+      ? themes
+          .flatMap((theme) => [
+            {
+              id: theme.id,
+              name: theme.name,
+              slug: theme.slug,
+              category: theme.category,
+              eventCategory: theme.eventCategory,
+              isPremium: theme.isPremium,
+              previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
+              demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+              variantSlug: null as string | null,
+              baseThemeName: null as string | null,
+            },
+            ...theme.colorways.map((variant) => ({
+              id: `${theme.id}:${variant.id}`,
+              name: `${theme.name} · ${variant.name}`,
+              slug: theme.slug,
+              category: theme.category,
+              eventCategory: theme.eventCategory,
+              isPremium: theme.isPremium || variant.isPremium,
+              previewImage:
+                variant.previewImage ??
+                theme.previewImage ??
+                fallbackThumbnailFor(theme.slug),
+              demoSlug: null as string | null,
+              variantSlug: variant.slug,
+              baseThemeName: theme.name,
+            })),
+          ])
+          .slice(0, 12)
       : FALLBACK_THEMES.map((theme) => ({
           ...theme,
           eventCategory: "wedding",
           demoSlug: null as string | null,
+          variantSlug: null as string | null,
+          baseThemeName: null as string | null,
         }));
 
   const heroThemes = themeCards.slice(0, 5);
