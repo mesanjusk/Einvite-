@@ -18,6 +18,7 @@ import { pickStockPhotos } from "@/lib/media/stock-photos";
 import { generateToken, hashToken } from "@/lib/otp";
 import { getAppUrl } from "@/lib/app-url";
 import { normalizePhone } from "@/lib/phone";
+import { resolveThemeVariant, sectionConfigFromOrder } from "@/lib/theme-variant";
 
 export async function createInvitationAction(
   input: InvitationWizardFormValues,
@@ -49,6 +50,11 @@ export async function createInvitationAction(
         where: { themeId_slug: { themeId: theme.id, slug: data.colorwaySlug } },
       })
     : null;
+  const resolvedDesign = resolveThemeVariant(
+    theme,
+    colorway,
+    (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER,
+  );
 
   const slug = await uniqueSlug(
     [data.brideName, data.groomName].filter(Boolean).join("-"),
@@ -98,12 +104,11 @@ export async function createInvitationAction(
       themeId: theme.id,
       templateId: template?.id,
       colorwayId: colorway?.id ?? null,
-      colorPalette: colorway?.colorPalette ?? undefined,
-      musicTrackId: data.musicTrackId || null,
+      colorPalette: colorway ? resolvedDesign.colorPalette : undefined,
+      musicTrackId: data.musicTrackId || resolvedDesign.musicTrackId || null,
       customMusicUrl: data.customMusicUrl || null,
-      sectionConfig: (
-        (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER
-      ).map((type, order) => ({ id: type, type, visible: true, locked: false, order })),
+      galleryAnimation: resolvedDesign.galleryAnimation,
+      sectionConfig: sectionConfigFromOrder(resolvedDesign.sectionOrder),
       aiGenerated,
       aiGeneratedCopy: aiGeneratedCopy ?? undefined,
       seoTitle: aiGeneratedCopy?.seoTitle,
