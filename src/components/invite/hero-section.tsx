@@ -111,30 +111,83 @@ export function HeroSection({
   // An empty second name is simply absent from a guest's invitation; in the
   // editor it has to be there to be tapped, or there is no way to fill it in.
   const showSecondName = Boolean(secondName) || Boolean(edit?.active);
+  const design = invite.designRecipe;
+  const showSectionPetals =
+    design.effectPreset === "mixed" || design.effectPreset === "petals";
+  const backgroundImage = design.backgroundImageUrl
+    ? `linear-gradient(color-mix(in srgb, var(--inv-background) 48%, transparent), color-mix(in srgb, var(--inv-background) 72%, transparent)), url("${design.backgroundImageUrl.replace(/"/g, "%22")}")`
+    : "radial-gradient(120% 80% at 50% 0%, var(--inv-secondary) 0%, var(--inv-background) 55%)";
+
+  const cardStyle: React.CSSProperties =
+    design.heroStyle === "minimal"
+      ? {
+          background: "transparent",
+          borderColor: "transparent",
+          boxShadow: "none",
+        }
+      : design.heroStyle === "glass"
+        ? {
+            background: "color-mix(in srgb, var(--inv-background) 64%, transparent)",
+            borderColor: "color-mix(in srgb, var(--inv-accent) 32%, transparent)",
+            boxShadow: "0 24px 60px rgba(0,0,0,0.16)",
+            backdropFilter: "blur(18px)",
+          }
+        : design.heroStyle === "royal"
+          ? {
+              background:
+                "linear-gradient(145deg, color-mix(in srgb, var(--inv-background) 88%, black 12%), color-mix(in srgb, var(--inv-background) 94%, white 6%))",
+              borderColor: "color-mix(in srgb, var(--inv-accent) 58%, transparent)",
+              boxShadow:
+                "0 28px 70px rgba(0,0,0,0.2), inset 0 0 0 1px color-mix(in srgb, var(--inv-accent) 14%, transparent)",
+            }
+          : {
+              background: "color-mix(in srgb, var(--inv-background) 92%, white 8%)",
+              borderColor: "color-mix(in srgb, var(--inv-accent) 35%, transparent)",
+              boxShadow: "0 20px 45px rgba(0,0,0,0.12)",
+            };
 
   return (
     <section
       className="relative flex min-h-svh items-center justify-center overflow-hidden px-5 py-8"
       style={{
-        background:
-          "radial-gradient(120% 80% at 50% 0%, var(--inv-secondary) 0%, var(--inv-background) 55%)",
+        backgroundColor: "var(--inv-background)",
+        backgroundImage,
+        backgroundPosition: "center",
+        backgroundSize: "cover",
       }}
     >
-      <PetalField count={10} seed={7} />
+      {design.motifImageUrl && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage: `url("${design.motifImageUrl.replace(/"/g, "%22")}")`,
+            backgroundPosition: "center",
+            backgroundRepeat: "repeat",
+            backgroundSize: "180px auto",
+          }}
+        />
+      )}
+      {showSectionPetals && (
+        <PetalField
+          count={design.effectIntensity === "low" ? 5 : design.effectIntensity === "high" ? 14 : 9}
+          seed={7}
+        />
+      )}
 
       <RevealGroup className="relative z-[2] w-full max-w-md">
         <div
           className="relative rounded-[20px] border px-6 py-10 text-center"
-          style={{
-            background: "color-mix(in srgb, var(--inv-background) 92%, white 8%)",
-            borderColor: "color-mix(in srgb, var(--inv-accent) 35%, transparent)",
-            boxShadow: "0 20px 45px rgba(0,0,0,0.12)",
-          }}
+          style={cardStyle}
         >
-          <CornerBracket style={{ top: -12, left: -12 }} />
-          <CornerBracket style={{ top: -12, right: -12, transform: "scaleX(-1)" }} />
-          <CornerBracket style={{ bottom: -12, left: -12, transform: "scaleY(-1)" }} />
-          <CornerBracket style={{ bottom: -12, right: -12, transform: "scale(-1,-1)" }} />
+          {design.heroStyle !== "minimal" && (
+            <>
+              <CornerBracket style={{ top: -12, left: -12 }} />
+              <CornerBracket style={{ top: -12, right: -12, transform: "scaleX(-1)" }} />
+              <CornerBracket style={{ bottom: -12, left: -12, transform: "scaleY(-1)" }} />
+              <CornerBracket style={{ bottom: -12, right: -12, transform: "scale(-1,-1)" }} />
+            </>
+          )}
 
           <Reveal variants={fadeUp}>
             <div
