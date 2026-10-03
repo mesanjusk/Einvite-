@@ -74,6 +74,11 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
       return { success: false, error: "A theme with this slug already exists." };
   }
 
+  if (data.defaultMusicTrackId) {
+    const track = await db.musicTrack.findUnique({ where: { id: data.defaultMusicTrackId } });
+    if (!track) return { success: false, error: "Default music track not found." };
+  }
+
   const themeFields = {
     type: data.type,
     name: data.name,
@@ -88,6 +93,9 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     sortOrder: data.sortOrder,
     colorPalette: data.colorPalette,
     fontPairing: data.fontPairing,
+    decorAssets: data.decorAssets,
+    defaultMusicTrackId: data.defaultMusicTrackId || null,
+    galleryAnimation: data.galleryAnimation,
   };
 
   const theme = data.id
@@ -745,7 +753,12 @@ export async function upsertThemeColorwayAction(
     where: { themeId_slug: { themeId: data.themeId, slug: data.slug } },
   });
   if (clash && clash.id !== data.id) {
-    return { success: false, error: "This theme already has a colour with that slug." };
+    return { success: false, error: "This theme already has a variant with that slug." };
+  }
+
+  if (data.musicTrackId) {
+    const track = await db.musicTrack.findUnique({ where: { id: data.musicTrackId } });
+    if (!track) return { success: false, error: "Music track not found." };
   }
 
   const fields = {
@@ -753,6 +766,15 @@ export async function upsertThemeColorwayAction(
     name: data.name,
     slug: data.slug,
     colorPalette: data.colorPalette,
+    previewImage: data.previewImage || null,
+    fontPairing: data.fontPairing ?? undefined,
+    decorAssets: data.decorAssets ?? undefined,
+    revealMode: data.revealMode || null,
+    revealVideoUrl: data.revealVideoUrl || null,
+    musicTrackId: data.musicTrackId || null,
+    galleryAnimation: data.galleryAnimation || null,
+    sectionOrder: data.sectionOrder ?? undefined,
+    isPremium: data.isPremium,
     sortOrder: data.sortOrder,
   };
 
@@ -763,6 +785,7 @@ export async function upsertThemeColorwayAction(
   }
 
   revalidatePath("/admin/library/themes");
+  revalidatePath("/themes");
   revalidatePath("/");
   return { success: true, data: undefined };
 }
