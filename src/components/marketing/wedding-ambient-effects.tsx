@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import type { EffectIntensity, EffectPreset } from "@/lib/theme-recipe";
 
 const PETALS = [
   { left: "6%", delay: "-1.4s", duration: "8.2s", size: 13 },
@@ -38,12 +39,25 @@ export function WeddingAmbientEffects({
   variant = "browser",
   className,
   reactToMusic = false,
+  preset = "mixed",
+  intensity = "medium",
 }: {
   variant?: "browser" | "viewer";
   className?: string;
   reactToMusic?: boolean;
+  preset?: EffectPreset;
+  intensity?: EffectIntensity;
 }) {
   const [musicActive, setMusicActive] = useState(false);
+  const limits =
+    intensity === "low"
+      ? { petals: 3, confetti: 2, sparkles: 3 }
+      : intensity === "high"
+        ? { petals: PETALS.length, confetti: CONFETTI.length, sparkles: SPARKLES.length }
+        : { petals: 5, confetti: 4, sparkles: 4 };
+  const showPetals = preset === "mixed" || preset === "petals";
+  const showConfetti = preset === "mixed" || preset === "confetti";
+  const showSparkles = preset !== "minimal";
 
   useEffect(() => {
     if (!reactToMusic) return;
@@ -62,6 +76,8 @@ export function WeddingAmbientEffects({
       aria-hidden="true"
       data-ambient-variant={variant}
       data-music-active={musicActive ? "true" : "false"}
+      data-effect-preset={preset}
+      data-effect-intensity={intensity}
       className={cn(
         "wedding-ambient pointer-events-none overflow-hidden",
         variant === "viewer" ? "fixed inset-0 z-20" : "absolute inset-0 z-[1]",
@@ -71,7 +87,7 @@ export function WeddingAmbientEffects({
       <div className="wedding-ambient-glow wedding-ambient-glow-a" />
       <div className="wedding-ambient-glow wedding-ambient-glow-b" />
 
-      {PETALS.map((petal, index) => (
+      {showPetals && PETALS.slice(0, limits.petals).map((petal, index) => (
         <span
           key={`petal-${index}`}
           className="wedding-ambient-petal"
@@ -85,7 +101,7 @@ export function WeddingAmbientEffects({
         />
       ))}
 
-      {CONFETTI.map((piece, index) => (
+      {showConfetti && CONFETTI.slice(0, limits.confetti).map((piece, index) => (
         <span
           key={`confetti-${index}`}
           className={`wedding-ambient-confetti wedding-ambient-confetti-${(index % 3) + 1}`}
@@ -98,7 +114,7 @@ export function WeddingAmbientEffects({
         />
       ))}
 
-      {SPARKLES.map((sparkle, index) => (
+      {showSparkles && SPARKLES.slice(0, limits.sparkles).map((sparkle, index) => (
         <span
           key={`sparkle-${index}`}
           className="wedding-ambient-sparkle"
