@@ -22,6 +22,8 @@ import {
   type LiveEventPatch,
 } from "@/lib/validations/live-invitation";
 import type { ActionResult } from "@/lib/actions/auth";
+import { mergeThemeDecor } from "@/lib/theme-recipe";
+import { resolveThemeVariant, sectionConfigFromOrder } from "@/lib/theme-variant";
 
 /**
  * The live editor's save path. Where the wizard collects a whole form and
@@ -41,8 +43,14 @@ function toDate(value: string) {
 type PatchResult = {
   slug: string;
   musicUrl: string | null;
+  musicTrackId: string | null;
+  customMusicUrl: string | null;
   themeStyle: Record<string, string>;
   themeSlug: string | null;
+  galleryAnimation: string;
+  sectionConfig: SectionConfigEntry[];
+  designRecipe: ReturnType<typeof mergeThemeDecor>;
+  revealVideoUrl: string | null;
 };
 
 export async function patchInvitationAction(
@@ -101,8 +109,9 @@ export async function patchInvitationAction(
       update.musicTrackId = null;
   }
 
-  // Design changes resolve to a palette here, so every render path keeps
-  // reading `colorPalette` and never has to know colourways exist.
+  // A base theme is the reusable structure; a ThemeColorway is now a lightweight
+  // variant recipe. Selecting either one resolves the whole design in one place
+  // instead of carrying only a palette across the editor.
   let theme = invitation.themeId
     ? await db.theme.findUnique({ where: { id: invitation.themeId } })
     : null;
@@ -113,29 +122,58 @@ export async function patchInvitationAction(
       return { success: false, error: "Unknown design selected." };
     }
     const template = await db.template.findFirst({ where: { themeId: next.id } });
+    const resolved = resolveThemeVariant(
+      next,
+      null,
+      (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER,
+    );
     theme = next;
     update.themeId = next.id;
     update.templateId = template?.id ?? null;
-    // A colourway belongs to the design it came from — switching designs
-    // drops it rather than carrying a mismatched palette across.
     update.colorwayId = null;
-    // A JSON column is cleared with DbNull, not with a bare null — Prisma
-    // rejects the latter.
     update.colorPalette = Prisma.DbNull;
+    update.fontPairing = Prisma.DbNull;
+    update.galleryAnimation = resolved.galleryAnimation;
+    update.sectionConfig = sectionConfigFromOrder(resolved.sectionOrder);
+    if (resolved.musicTrackId) {
+      update.musicTrackId = resolved.musicTrackId;
+      update.customMusicUrl = null;
+    }
   }
 
-  if (data.colorwaySlug !== undefined) {
+  if (data.colorwaySlug !== undefined && theme) {
+    const template = await db.template.findFirst({ where: { themeId: theme.id } });
     if (!data.colorwaySlug) {
+      const resolved = resolveThemeVariant(
+        theme,
+        null,
+        (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER,
+      );
       update.colorwayId = null;
       update.colorPalette = Prisma.DbNull;
-    } else if (theme) {
+      update.fontPairing = Prisma.DbNull;
+      update.galleryAnimation = resolved.galleryAnimation;
+      update.sectionConfig = sectionConfigFromOrder(resolved.sectionOrder);
+      update.musicTrackId = resolved.musicTrackId;
+      update.customMusicUrl = null;
+    } else {
       const colorway = await db.themeColorway.findUnique({
         where: { themeId_slug: { themeId: theme.id, slug: data.colorwaySlug } },
       });
       if (!colorway)
-        return { success: false, error: "Unknown colour scheme selected." };
+        return { success: false, error: "Unknown design variant selected." };
+      const resolved = resolveThemeVariant(
+        theme,
+        colorway,
+        (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER,
+      );
       update.colorwayId = colorway.id;
-      update.colorPalette = colorway.colorPalette ?? undefined;
+      update.colorPalette = resolved.colorPalette;
+      update.fontPairing = colorway.fontPairing ?? Prisma.DbNull;
+      update.galleryAnimation = resolved.galleryAnimation;
+      update.sectionConfig = sectionConfigFromOrder(resolved.sectionOrder);
+      update.musicTrackId = resolved.musicTrackId;
+      update.customMusicUrl = null;
     }
   }
 
@@ -153,11 +191,11 @@ export async function patchInvitationAction(
     ? await db.invitation.update({
         where: { id: invitationId },
         data: update,
-        include: { music: true, theme: true },
+        include: { music: true, theme: true, colorway: true },
       })
     : await db.invitation.findUniqueOrThrow({
         where: { id: invitationId },
-        include: { music: true, theme: true },
+        include: { music: true, theme: true, colorway: true },
       });
 
   revalidatePath(`/invite/${saved.slug}`);
@@ -168,11 +206,26 @@ export async function patchInvitationAction(
     data: {
       slug: saved.slug,
       musicUrl: saved.customMusicUrl ?? saved.music?.url ?? null,
+      musicTrackId: saved.musicTrackId ?? null,
+      customMusicUrl: saved.customMusicUrl ?? null,
       themeStyle: resolveInviteThemeStyle(
-        saved.colorPalette ?? saved.theme?.colorPalette,
-        saved.fontPairing ?? saved.theme?.fontPairing,
+        saved.colorPalette ?? saved.colorway?.colorPalette ?? saved.theme?.colorPalette,
+        saved.fontPairing ?? saved.colorway?.fontPairing ?? saved.theme?.fontPairing,
       ) as Record<string, string>,
       themeSlug: saved.theme?.slug ?? null,
+      galleryAnimation: saved.galleryAnimation,
+      sectionConfig: (saved.sectionConfig as SectionConfigEntry[] | null) ?? [],
+      designRecipe: mergeThemeDecor(
+        saved.theme?.decorAssets,
+        saved.colorway?.decorAssets,
+      ),
+      revealVideoUrl:
+        saved.introVideoMp4Url ??
+        (saved.colorway?.revealMode === "VIDEO"
+          ? (saved.colorway?.revealVideoUrl ?? null)
+          : saved.theme?.revealMode === "VIDEO"
+            ? (saved.theme?.revealVideoUrl ?? null)
+            : null),
     },
   };
 }
@@ -440,13 +493,14 @@ export async function startLiveInvitationAction(input: {
   fromSlug?: string;
   category?: string;
   themeSlug?: string;
+  variantSlug?: string;
 }): Promise<ActionResult<{ invitationId: string }>> {
   const session = await auth();
 
   const source = input.fromSlug
     ? await db.invitation.findUnique({
         where: { slug: input.fromSlug },
-        include: { theme: true },
+        include: { theme: true, colorway: true },
       })
     : null;
 
@@ -473,23 +527,31 @@ export async function startLiveInvitationAction(input: {
   const template = theme
     ? await db.template.findFirst({ where: { themeId: theme.id } })
     : null;
+  const variant =
+    !source && theme && input.variantSlug
+      ? await db.themeColorway.findUnique({
+          where: { themeId_slug: { themeId: theme.id, slug: input.variantSlug } },
+        })
+      : null;
+  const resolvedDesign = theme
+    ? resolveThemeVariant(
+        theme,
+        variant,
+        (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER,
+      )
+    : null;
 
-  // Music: only a shared library track travels with the design. An uploaded
-  // clip belongs to the couple who uploaded it.
+  // Music: only shared library tracks travel with a design. Uploaded audio
+  // belongs to the person who uploaded it.
   const musicTrackId =
     source?.musicTrackId ??
+    resolvedDesign?.musicTrackId ??
     (await db.musicTrack.findFirst({ where: { isDefault: true } }))?.id ??
     null;
 
   const sectionConfig =
     (source?.sectionConfig as SectionConfigEntry[] | null) ??
-    DEFAULT_SECTION_ORDER.map((type, order) => ({
-      id: type,
-      type,
-      visible: true,
-      locked: false,
-      order,
-    }));
+    sectionConfigFromOrder(resolvedDesign?.sectionOrder ?? DEFAULT_SECTION_ORDER);
 
   const weddingDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180);
   const slug = await uniqueSlug(`${DRAFT_SLUG_PREFIX}${Date.now()}`);
@@ -504,10 +566,15 @@ export async function startLiveInvitationAction(input: {
       weddingDate,
       themeId: theme?.id,
       templateId: template?.id,
-      colorwayId: source?.colorwayId ?? null,
-      colorPalette: source?.colorPalette ?? undefined,
+      colorwayId: source?.colorwayId ?? variant?.id ?? null,
+      colorPalette:
+        source?.colorPalette ??
+        (variant ? resolvedDesign?.colorPalette : undefined),
+      fontPairing:
+        source?.fontPairing ??
+        (variant?.fontPairing ?? undefined),
       musicTrackId,
-      galleryAnimation: source?.galleryAnimation ?? "fade",
+      galleryAnimation: source?.galleryAnimation ?? resolvedDesign?.galleryAnimation ?? "fade",
       sectionConfig,
     },
   });
