@@ -53,9 +53,9 @@ type ThemeRecord = {
   revealVideoUrl: string | null;
   colorPalette: { primary: string; secondary: string; accent: string; background: string; foreground: string };
   fontPairing: { display: string; body: string; script: string };
-  decorAssets: ThemeDecorConfig | null;
-  defaultMusicTrackId: string | null;
-  galleryAnimation: string;
+  decorAssets?: ThemeDecorConfig | null;
+  defaultMusicTrackId?: string | null;
+  galleryAnimation?: string;
   sectionOrder: string[];
 };
 
@@ -420,7 +420,7 @@ export function ThemeFormDialog({
                     onChange={(e) =>
                       form.setValue(
                         "decorAssets.effectPreset",
-                        e.target.value as ThemeFormValues["decorAssets"]["effectPreset"],
+                        e.target.value as ThemeDecorConfig["effectPreset"],
                       )
                     }
                   >
@@ -437,7 +437,7 @@ export function ThemeFormDialog({
                     onChange={(e) =>
                       form.setValue(
                         "decorAssets.effectIntensity",
-                        e.target.value as ThemeFormValues["decorAssets"]["effectIntensity"],
+                        e.target.value as ThemeDecorConfig["effectIntensity"],
                       )
                     }
                   >
@@ -454,7 +454,7 @@ export function ThemeFormDialog({
                     onChange={(e) =>
                       form.setValue(
                         "decorAssets.heroStyle",
-                        e.target.value as ThemeFormValues["decorAssets"]["heroStyle"],
+                        e.target.value as ThemeDecorConfig["heroStyle"],
                       )
                     }
                   >
@@ -471,7 +471,7 @@ export function ThemeFormDialog({
                     onChange={(e) =>
                       form.setValue(
                         "decorAssets.galleryStyle",
-                        e.target.value as ThemeFormValues["decorAssets"]["galleryStyle"],
+                        e.target.value as ThemeDecorConfig["galleryStyle"],
                       )
                     }
                   >
