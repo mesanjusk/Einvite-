@@ -568,11 +568,17 @@ export async function startLiveInvitationAction(input: {
       templateId: template?.id,
       colorwayId: source?.colorwayId ?? variant?.id ?? null,
       colorPalette:
-        source?.colorPalette ??
-        (variant ? resolvedDesign?.colorPalette : undefined),
+        source?.colorPalette
+          ? (source.colorPalette as Prisma.InputJsonValue)
+          : variant
+            ? resolvedDesign?.colorPalette
+            : undefined,
       fontPairing:
-        source?.fontPairing ??
-        (variant?.fontPairing ?? undefined),
+        source?.fontPairing
+          ? (source.fontPairing as Prisma.InputJsonValue)
+          : variant
+            ? resolvedDesign?.fontPairing
+            : undefined,
       musicTrackId,
       galleryAnimation: source?.galleryAnimation ?? resolvedDesign?.galleryAnimation ?? "fade",
       sectionConfig,
