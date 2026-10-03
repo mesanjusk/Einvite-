@@ -13,6 +13,8 @@ export type MarketplaceThemeCard = {
   isPremium: boolean;
   previewImage: string | null;
   demoSlug?: string | null;
+  variantSlug?: string | null;
+  baseThemeName?: string | null;
 };
 
 export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard }) {
@@ -70,7 +72,9 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
               {theme.name}
             </h3>
             <p className="mt-0.5 truncate text-[9px] font-bold tracking-[0.12em] text-[#9b773b] uppercase">
-              {theme.category}
+              {theme.variantSlug && theme.baseThemeName
+                ? `${theme.baseThemeName} · variant`
+                : theme.category}
             </p>
           </div>
           <ArrowUpRight className="mt-1 size-4 shrink-0 text-[#b98d43] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -87,6 +91,7 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
           <StartLiveInvitationButton
             category={theme.eventCategory}
             themeSlug={theme.slug}
+            variantSlug={theme.variantSlug ?? undefined}
             className="wedding-cta mt-3 flex w-full items-center justify-center rounded-full px-3 py-2.5 text-[9px] font-extrabold tracking-[0.1em] uppercase transition sm:text-[10px]"
           >
             Make it mine
