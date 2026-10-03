@@ -800,7 +800,7 @@ export async function deleteThemeColorwayAction(
   if (inUse > 0) {
     return {
       success: false,
-      error: `${inUse} invitation(s) use this colour — cannot delete.`,
+      error: `${inUse} invitation(s) use this variant — cannot delete.`,
     };
   }
 
