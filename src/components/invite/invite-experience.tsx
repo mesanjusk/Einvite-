@@ -25,6 +25,7 @@ import {
 } from "./edit-context";
 import { EditChip } from "./editable";
 import type { InviteData } from "./types";
+import { ThemeElementProvider } from "./theme-text-element";
 
 type SectionConfigEntry = {
   id: string;
@@ -125,14 +126,16 @@ function SectionScope({
         } as React.CSSProperties}
       >
         {elementCss && <style>{elementCss}</style>}
-        <div
-          className="relative"
-          style={{
-            transform: `translate(${sectionStyle?.x ?? 0}%, ${sectionStyle?.y ?? 0}%)`,
-          }}
-        >
-          {children}
-        </div>
+        <ThemeElementProvider value={elementStyles}>
+          <div
+            className="relative"
+            style={{
+              transform: `translate(${sectionStyle?.x ?? 0}%, ${sectionStyle?.y ?? 0}%)`,
+            }}
+          >
+            {children}
+          </div>
+        </ThemeElementProvider>
         {customText && customText.length > 0 && (
           <div className="pointer-events-none absolute inset-0 z-20">
             {customText.map((block) => (
