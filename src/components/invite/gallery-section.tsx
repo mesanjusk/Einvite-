@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/i18n/locale-context";
 import { useInviteEdit } from "./edit-context";
 import { EditableText, EditPanelChip } from "./editable";
 import type { InviteMedia } from "./types";
+import { ThemeText } from "./theme-text-element";
 
 const ANIMATION_MAP: Record<string, Variants> = {
   fade: fadeUp,
@@ -95,7 +96,7 @@ export function GallerySection({
       <RevealGroup className="relative z-[2] w-full">
         <Reveal variants={fadeUp}>
           <p data-theme-element="GALLERY.eyebrow" className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
-            {t.ourStory}
+            <ThemeText elementKey="GALLERY.eyebrow">{t.ourStory}</ThemeText>
           </p>
         </Reveal>
         <Reveal variants={fadeUp}>
