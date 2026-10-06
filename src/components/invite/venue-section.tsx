@@ -6,6 +6,7 @@ import { trackInviteEvent } from "@/lib/analytics-client";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { useInviteEdit } from "./edit-context";
 import { EditableText } from "./editable";
+import { ThemeText } from "./theme-text-element";
 
 export function VenueSection({
   invitationId,
@@ -28,7 +29,7 @@ export function VenueSection({
       <RevealGroup className="w-full max-w-md">
         <Reveal variants={fadeUp}>
           <p data-theme-element="VENUE.eyebrow" className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
-            {t.venueLabel}
+            <ThemeText elementKey="VENUE.eyebrow">{t.venueLabel}</ThemeText>
           </p>
         </Reveal>
         <Reveal variants={fadeUp}>
