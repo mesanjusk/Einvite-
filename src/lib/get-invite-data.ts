@@ -85,6 +85,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
   const decorAssets = (invitation.theme?.decorAssets ?? {}) as {
     revealAnimation?: InviteData["revealAnimation"];
     sectionImages?: InviteData["sectionImages"];
+    sectionTextBlocks?: InviteData["sectionTextBlocks"];
     sectionStyles?: InviteData["sectionStyles"];
   };
 
@@ -108,7 +109,10 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     customMessage: invitation.customMessage,
     musicUrl: invitation.customMusicUrl ?? invitation.music?.url ?? null,
     galleryAnimation: invitation.galleryAnimation,
-    copy: invitation.aiGeneratedCopy as InviteData["copy"],
+    copy: {
+      ...((invitation.theme?.content as Record<string, unknown> | null) ?? {}),
+      ...((invitation.aiGeneratedCopy as Record<string, unknown> | null) ?? {}),
+    } as InviteData["copy"],
     events: invitation.events,
     familyMembers: invitation.familyMembers,
     media: invitation.media,
@@ -125,6 +129,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
       speed: 1,
     },
     sectionImages: decorAssets.sectionImages ?? {},
+    sectionTextBlocks: decorAssets.sectionTextBlocks ?? {},
     sectionStyles: decorAssets.sectionStyles ?? {},
   };
 
