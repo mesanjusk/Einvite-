@@ -68,6 +68,7 @@ export const themeDecorAssetsSchema = z.object({
     .record(
       z.string(),
       z.object({
+        text: z.string().optional(),
         hidden: z.boolean().default(false),
         fontSize: z.coerce.number().min(8).max(120).optional(),
         fontRole: z.enum(["display", "body", "script"]).optional(),
