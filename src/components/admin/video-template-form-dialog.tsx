@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Upload, Video } from "lucide-react";
 
 import {
   videoTemplateFormSchema,
@@ -35,6 +35,7 @@ type VideoTemplateRecord = {
   name: string;
   slug: string;
   description: string | null;
+  previewImage?: string | null;
   aspectRatio: string;
   durationSeconds: number;
   promptTemplate: string;
@@ -50,6 +51,7 @@ function defaultValues(template?: VideoTemplateRecord): VideoTemplateFormValues 
     name: template?.name ?? "",
     slug: template?.slug ?? "",
     description: template?.description ?? "",
+    previewImage: template?.previewImage ?? "",
     aspectRatio: (template?.aspectRatio as VideoTemplateFormValues["aspectRatio"]) ?? "9:16",
     durationSeconds: template?.durationSeconds ?? 15,
     promptTemplate:
@@ -74,6 +76,29 @@ export function VideoTemplateFormDialog({ template }: { template?: VideoTemplate
     resolver: zodResolver(videoTemplateFormSchema),
     defaultValues: defaultValues(template),
   });
+
+  async function uploadRevealVideo(file?: File) {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("kind", "video");
+      const response = await fetch("/api/admin/theme-assets/upload", {
+        method: "POST",
+        body,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error(data.error ?? "Video upload failed.");
+        return;
+      }
+      form.setValue("previewImage", data.url);
+      toast.success("Reveal video uploaded. It is now reusable when creating themes.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function onSubmit(values: VideoTemplateFormInput) {
     setLoading(true);
@@ -128,6 +153,36 @@ export function VideoTemplateFormDialog({ template }: { template?: VideoTemplate
           <div className="grid gap-1.5">
             <Label>Description</Label>
             <Textarea rows={2} {...form.register("description")} />
+          </div>
+
+          <div className="grid gap-2 rounded-xl border p-3">
+            <div className="flex items-center gap-2">
+              <Video className="size-4" />
+              <Label>Reusable reveal video</Label>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              Upload the short opening/reveal clip here. Theme creation can reuse it without uploading again.
+            </p>
+            {form.watch("previewImage") && (
+              <video
+                src={form.watch("previewImage")}
+                className="aspect-[9/16] max-h-64 w-full rounded-xl bg-black object-cover"
+                controls
+                muted
+                playsInline
+              />
+            )}
+            <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
+              <Upload className="size-4" />
+              {form.watch("previewImage") ? "Replace reveal video" : "Upload reveal video"}
+              <input
+                type="file"
+                accept="video/*"
+                className="hidden"
+                disabled={loading}
+                onChange={(e) => uploadRevealVideo(e.target.files?.[0])}
+              />
+            </label>
           </div>
 
           <div className="grid gap-1.5">
