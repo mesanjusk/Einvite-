@@ -161,11 +161,11 @@ export function ThemeRealSectionPreview({
     isDemo: true,
     themeSlug: "preview",
     revealVideoUrl: resolvedRevealMode === "VIDEO" ? revealVideoUrl ?? null : null,
-    revealAnimation,
+    revealAnimation: resolvedRevealAnimation,
     sectionImages,
-    sectionStyles,
-    elementStyles,
-    customText,
+    sectionStyles: resolvedSectionStyles,
+    elementStyles: resolvedElementStyles,
+    customText: resolvedCustomText,
   };
 
   const sectionConfig = [
