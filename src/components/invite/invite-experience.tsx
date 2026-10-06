@@ -424,6 +424,7 @@ export function InviteExperience({
                       groomName={invite.groomName}
                       hashtags={invite.copy?.hashtags}
                       shareUrl={shareUrl}
+                      message={invite.copy?.thankYou}
                     />
                   </SectionScope>
                 );
