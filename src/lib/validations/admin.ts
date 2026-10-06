@@ -91,6 +91,16 @@ export const THEME_CATEGORIES = [
 
 export const THEME_TYPES = ["WEBSITE", "PDF"] as const;
 
+export const themeContentSchema = z.object({
+  eyebrow: z.string().optional(),
+  heroHeadline: z.string().optional(),
+  heroSubline: z.string().optional(),
+  invitationLetter: z.string().optional(),
+  storyHeadline: z.string().optional(),
+  thankYou: z.string().optional(),
+  hashtagSuffix: z.string().optional(),
+});
+
 export const themeFormSchema = z.object({
   id: z.string().optional(),
   type: z.enum(THEME_TYPES).default("WEBSITE"),
@@ -111,6 +121,7 @@ export const themeFormSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,
   fontPairing: fontPairingSchema,
+  content: themeContentSchema.optional(),
   decorAssets: themeDecorAssetsSchema.optional(),
   sectionOrder: z
     .array(z.enum(SECTION_TYPES))
