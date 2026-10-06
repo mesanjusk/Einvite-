@@ -79,10 +79,11 @@ export function RsvpSection({
     >
       <RevealGroup className="w-full max-w-md">
         <Reveal variants={fadeUp} className="mb-8 text-center">
-          <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
+          <p data-theme-element="RSVP.eyebrow" className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
             {t.rsvpEyebrow}
           </p>
           <h2
+            data-theme-element="RSVP.heading"
             className="mt-1.5 text-4xl"
             style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
           >
