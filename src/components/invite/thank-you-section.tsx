@@ -5,6 +5,7 @@ import { Sparkles } from "@/components/animation/sparkles";
 import { fadeUp } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { ShareButton } from "./share-button";
+import { ThemeText } from "./theme-text-element";
 
 export function ThankYouSection({
   brideName,
@@ -36,7 +37,7 @@ export function ThankYouSection({
             className="mb-4 text-[38px]"
             style={{ fontFamily: "var(--inv-font-script)", fontWeight: 400, color: "var(--inv-secondary)" }}
           >
-            {t.thankYouSectionHeading}
+            <ThemeText elementKey="THANK_YOU.heading">{t.thankYouSectionHeading}</ThemeText>
           </h2>
         </Reveal>
         <Reveal variants={fadeUp}>
