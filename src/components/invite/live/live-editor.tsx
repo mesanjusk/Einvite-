@@ -862,15 +862,15 @@ function EditorTopBar({
 }) {
   return (
     <div className="no-print fixed inset-x-0 top-0 z-[100000] flex justify-center px-2 pt-2">
-      <div className="flex h-12 w-full max-w-[430px] items-center gap-2 rounded-2xl border border-[#e8d8c8] bg-[#fffdf9]/96 px-2.5 shadow-[0_8px_28px_rgba(82,33,43,0.14)] backdrop-blur-xl">
+      <div className="flex h-12 w-full max-w-[430px] items-center gap-2 rounded-2xl border border-[#e2d7ea] bg-[#fcf9ff]/96 px-2.5 shadow-[0_8px_28px_rgba(82,33,43,0.14)] backdrop-blur-xl">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <Sparkles className="size-3.5 shrink-0 text-[#9a6b47]" />
-            <p className="truncate text-[10px] font-extrabold tracking-[0.14em] text-[#651d33] uppercase">
+            <Sparkles className="size-3.5 shrink-0 text-[#8a6a92]" />
+            <p className="truncate text-[10px] font-extrabold tracking-[0.14em] text-[#6b4a7d] uppercase">
               Your live preview
             </p>
           </div>
-          <p className="mt-0.5 text-[9px] text-[#8a746a]">
+          <p className="mt-0.5 text-[9px] text-[#796b80]">
             {pending > 0
               ? `Saving ${pending} change${pending === 1 ? "" : "s"}…`
               : publishQueued
@@ -883,7 +883,7 @@ function EditorTopBar({
           type="button"
           onClick={onOpenDesign}
           aria-label="Change design"
-          className="grid size-8 place-items-center rounded-full border border-[#eadfd3] bg-white text-[#651d33]"
+          className="grid size-8 place-items-center rounded-full border border-[#eadfd3] bg-white text-[#6b4a7d]"
         >
           <Palette className="size-3.5" />
         </button>
@@ -891,14 +891,14 @@ function EditorTopBar({
           type="button"
           onClick={onOpenMusic}
           aria-label="Change music"
-          className="grid size-8 place-items-center rounded-full border border-[#eadfd3] bg-white text-[#651d33]"
+          className="grid size-8 place-items-center rounded-full border border-[#eadfd3] bg-white text-[#6b4a7d]"
         >
           <Music className="size-3.5" />
         </button>
         <Button
           size="sm"
           onClick={onPublish}
-          className="h-8 rounded-full bg-[#651d33] px-3 text-[10px] font-bold text-white hover:bg-[#54172a]"
+          className="h-8 rounded-full bg-[#6b4a7d] px-3 text-[10px] font-bold text-white hover:bg-[#563965]"
         >
           <Send className="size-3.5" />
           {published ? "Share" : "Publish"}
@@ -928,25 +928,25 @@ function GuidedDock({
   if (activeSectionId) {
     return (
       <div className="no-print fixed inset-x-0 bottom-0 z-[100000] flex justify-center px-3 pb-3">
-        <div className="flex w-full max-w-[410px] items-center gap-3 rounded-2xl border border-[#d9c7b6] bg-[#fffdf9]/97 p-3 shadow-[0_-8px_32px_rgba(82,33,43,0.18)] backdrop-blur-xl">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#651d33] text-white">
+        <div className="flex w-full max-w-[410px] items-center gap-3 rounded-2xl border border-[#d9c7b6] bg-[#fcf9ff]/97 p-3 shadow-[0_-8px_32px_rgba(82,33,43,0.18)] backdrop-blur-xl">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#6b4a7d] text-white">
             <Pencil className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-extrabold tracking-[0.16em] text-[#9a6b47] uppercase">
+            <p className="text-[9px] font-extrabold tracking-[0.16em] text-[#8a6a92] uppercase">
               Editing one slide
             </p>
-            <p className="truncate text-sm font-bold text-[#4e2630]">
+            <p className="truncate text-sm font-bold text-[#49334f]">
               {activeSectionLabel ?? "This slide"}
             </p>
-            <p className="text-[10px] text-[#8a746a]">
+            <p className="text-[10px] text-[#796b80]">
               {pending > 0 ? "Autosaving your change…" : "Tap highlighted text or controls to edit."}
             </p>
           </div>
           <button
             type="button"
             onClick={onDone}
-            className="shrink-0 rounded-full bg-[#e4bb68] px-3.5 py-2 text-[10px] font-extrabold text-[#4c1627] shadow-sm"
+            className="shrink-0 rounded-full bg-[#d8b86f] px-3.5 py-2 text-[10px] font-extrabold text-[#49334f] shadow-sm"
           >
             Done & preview
           </button>
@@ -959,32 +959,25 @@ function GuidedDock({
   const completed = completedSectionIds.includes(visibleSection.id);
 
   return (
-    <div className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-[100000] flex justify-center px-3 pb-3">
-      <div className="pointer-events-auto flex w-full max-w-[390px] items-center gap-3 rounded-2xl border border-[#e2d2c2] bg-[#fffdf9]/96 p-3 shadow-[0_-8px_32px_rgba(82,33,43,0.16)] backdrop-blur-xl">
-        <span
-          className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-full",
-            completed ? "bg-[#edf6ee] text-[#487452]" : "bg-[#f6eadc] text-[#8d603e]",
-          )}
-        >
+    <div className="no-print pointer-events-none fixed right-3 top-1/2 z-[100000] -translate-y-1/2 sm:right-5">
+      <button
+        type="button"
+        onClick={() => onEdit(visibleSection)}
+        className="pointer-events-auto group flex items-center gap-2 rounded-full border border-violet-200 bg-white/95 px-3.5 py-3 text-violet-950 shadow-[0_14px_38px_rgba(82,56,112,0.22)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-violet-50"
+        aria-label={`Edit ${visibleSection.label}`}
+      >
+        <span className="grid size-8 place-items-center rounded-full bg-violet-700 text-white">
           {completed ? <CheckCircle2 className="size-4" /> : <Pencil className="size-4" />}
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[9px] font-extrabold tracking-[0.16em] text-[#9a6b47] uppercase">
-            {completed ? "Personalized" : "Sample preview"}
-          </p>
-          <p className="truncate text-sm font-bold text-[#4e2630]">{visibleSection.label}</p>
-          <p className="text-[10px] text-[#8a746a]">Scroll naturally. Edit only when this slide feels right.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onEdit(visibleSection)}
-          className="flex shrink-0 items-center gap-1 rounded-full bg-[#651d33] px-3.5 py-2 text-[10px] font-extrabold text-white shadow-sm"
-        >
-          <Pencil className="size-3" />
-          {completed ? "Edit again" : "Make it yours"}
-        </button>
-      </div>
+        <span className="hidden pr-1 text-left sm:block">
+          <span className="block text-[9px] font-extrabold tracking-[0.14em] text-violet-500 uppercase">
+            {completed ? "Personalized" : "Your preview"}
+          </span>
+          <span className="block max-w-[150px] truncate text-xs font-bold">
+            Edit yours
+          </span>
+        </span>
+      </button>
     </div>
   );
 }
