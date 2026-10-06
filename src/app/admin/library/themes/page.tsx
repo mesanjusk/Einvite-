@@ -37,7 +37,10 @@ export default async function AdminThemesPage() {
       url: theme.revealVideoUrl as string,
     })),
     ...videoTemplates
-      .filter((template) => Boolean(template.previewImage))
+      .filter((template) => {
+        const url = template.previewImage ?? "";
+        return url.includes("/video/upload/") || /\.(mp4|webm)(\?|$)/i.test(url);
+      })
       .map((template) => ({
         label: `Video library · ${template.name}`,
         url: template.previewImage as string,
