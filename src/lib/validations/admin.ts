@@ -46,9 +46,7 @@ export const themeDecorAssetsSchema = z.object({
       speed: z.coerce.number().min(0.5).max(2).default(1),
     })
     .default({ preset: "MAGIC_BLOOM", intensity: 1, speed: 1 }),
-  sectionImages: z
-    .record(z.enum(SECTION_TYPES), z.string())
-    .default({}),
+  sectionImages: z.record(z.string(), z.string()).default({}),
 });
 
 export const THEME_CATEGORIES = [
