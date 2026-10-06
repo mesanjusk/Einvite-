@@ -757,6 +757,38 @@ export function ThemeFormDialog({
     toast.success("Artwork applied to every active section. You can replace any section individually.");
   }
 
+  const selectedDefinition = selectedElement
+    ? definitionForElement(selectedElement)
+    : undefined;
+  const selectedCustom = findCustomText(selectedElement);
+  const selectedStyle: ThemeElementStyleValue = selectedCustom
+    ? {
+        fontSize: selectedCustom.block.fontSize,
+        fontRole: selectedCustom.block.fontRole,
+        align: selectedCustom.block.align,
+        color: selectedCustom.block.color,
+        x: selectedCustom.block.x,
+        y: selectedCustom.block.y,
+      }
+    : selectedElement
+      ? elementStyles[selectedElement] ?? {}
+      : {};
+  const selectedText = selectedCustom
+    ? selectedCustom.block.text
+    : selectedDefinition?.coreField
+      ? getCoreContent(selectedDefinition.coreField)
+      : selectedElement
+        ? elementStyles[selectedElement]?.text ?? selectedDefinition?.fallbackText ?? ""
+        : "";
+  const selectedCanEditText = Boolean(
+    selectedCustom || (selectedDefinition && !selectedDefinition.dynamic),
+  );
+  const selectedCommunity = form.watch("decorAssets.contentCommunity") ?? "General";
+  const selectedPresets = COMMUNITY_CONTENT_PRESETS.filter(
+    (preset) =>
+      preset.community === selectedCommunity || preset.community === "General",
+  );
+
   async function onSubmit(values: ThemeFormInput) {
     setLoading(true);
     const result = await upsertThemeAction(values);
