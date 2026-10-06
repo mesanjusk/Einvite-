@@ -47,7 +47,7 @@ type DecorAssets = {
     intensity?: number;
     speed?: number;
   };
-  sectionImages?: Partial<Record<(typeof SECTION_TYPES)[number], string>>;
+  sectionImages?: Record<string, string>;
 };
 
 type ThemeRecord = {
