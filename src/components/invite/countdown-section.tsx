@@ -82,13 +82,14 @@ export function CountdownSection({
               >
                 <Reveal variants={fadeUp}>
                   <h2
+                    data-theme-element="COUNTDOWN.saveTheDate"
                     className="mb-1 text-[38px]"
                     style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
                   >
                     {t.saveTheDate}
                   </h2>
                 </Reveal>
-                <p className="mb-2 text-xs tracking-[0.15em] opacity-70">
+                <p data-theme-element="COUNTDOWN.scratchInstruction" className="mb-2 text-xs tracking-[0.15em] opacity-70">
                   {t.scratchToRevealDate}
                 </p>
                 <div className="flex justify-center gap-3">
@@ -136,18 +137,20 @@ export function CountdownSection({
                 transition={{ duration: 0.5 }}
               >
                 <p
+                  data-theme-element="COUNTDOWN.quote"
                   className="mb-4 text-[15px]"
                   style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", opacity: 0.75 }}
                 >
                   {quote ?? t.countdownQuoteDefault}
                 </p>
                 <h2
+                  data-theme-element="COUNTDOWN.heading"
                   className="mb-3.5 text-[38px]"
                   style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
                 >
                   {t.theWedding}
                 </h2>
-                <p className="mb-7 text-sm tracking-[0.2em]" style={{ color: "var(--inv-accent)" }}>
+                <p data-theme-element="COUNTDOWN.date" className="mb-7 text-sm tracking-[0.2em]" style={{ color: "var(--inv-accent)" }}>
                   <EditableDate target={{ kind: "invitation" }} value={weddingDate}>
                     {dateDisplay}
                   </EditableDate>
