@@ -27,10 +27,13 @@ export type InviteMedia = {
 };
 
 export type InviteCopy = {
+  eyebrow?: string;
   heroHeadline?: string;
   heroSubline?: string;
   invitationLetter?: string;
   storyHeadline?: string;
+  thankYou?: string;
+  hashtagSuffix?: string;
   hashtags?: string[];
 };
 
