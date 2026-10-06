@@ -61,7 +61,7 @@ function SectionScope({
   guidedActiveSectionId: string | null | undefined;
   edit: InviteEditApi | null;
   sectionImage?: string | null;
-  sectionStyle?: InviteData["sectionStyles"][string];
+  sectionStyle?: NonNullable<InviteData["sectionStyles"]>[string];
   children: ReactNode;
 }) {
   const guided = guidedActiveSectionId !== undefined;
