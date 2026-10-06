@@ -47,6 +47,22 @@ export const themeDecorAssetsSchema = z.object({
     })
     .default({ preset: "MAGIC_BLOOM", intensity: 1, speed: 1 }),
   sectionImages: z.record(z.string(), z.string()).default({}),
+  sectionTextBlocks: z
+    .record(
+      z.string(),
+      z.array(
+        z.object({
+          id: z.string().min(1),
+          text: z.string(),
+          fontSize: z.coerce.number().min(8).max(96).default(22),
+          fontRole: z.enum(["display", "body", "script"]).default("body"),
+          align: z.enum(["left", "center", "right"]).default("center"),
+          color: z.string().optional(),
+        }),
+      ),
+    )
+    .default({}),
+  contentCommunity: z.string().default("General"),
   sectionStyles: z
     .record(
       z.string(),
@@ -75,6 +91,16 @@ export const THEME_CATEGORIES = [
 
 export const THEME_TYPES = ["WEBSITE", "PDF"] as const;
 
+export const themeContentSchema = z.object({
+  eyebrow: z.string().optional(),
+  heroHeadline: z.string().optional(),
+  heroSubline: z.string().optional(),
+  invitationLetter: z.string().optional(),
+  storyHeadline: z.string().optional(),
+  thankYou: z.string().optional(),
+  hashtagSuffix: z.string().optional(),
+});
+
 export const themeFormSchema = z.object({
   id: z.string().optional(),
   type: z.enum(THEME_TYPES).default("WEBSITE"),
@@ -95,6 +121,7 @@ export const themeFormSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,
   fontPairing: fontPairingSchema,
+  content: themeContentSchema.optional(),
   decorAssets: themeDecorAssetsSchema.optional(),
   sectionOrder: z
     .array(z.enum(SECTION_TYPES))

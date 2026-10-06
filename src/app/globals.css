@@ -946,8 +946,8 @@
    SK Digital royal brand system — HTML/CSS motion, no heavy canvas effects.
    -------------------------------------------------------------------------- */
 .royal-logo-frame {
-  border: 1px solid rgba(218, 181, 107, .46);
-  background: #292724;
+  border: 1px solid rgba(177, 145, 203, .5);
+  background: #5d466b;
   box-shadow:
     0 8px 24px rgba(0,0,0,.26),
     0 0 0 1px rgba(255,255,255,.035) inset;
@@ -965,7 +965,7 @@
 }
 
 .royal-wordmark {
-  color: #f0dfbd;
+  color: #f8efff;
   line-height: .98;
   text-shadow: 0 4px 20px rgba(0,0,0,.22);
 }
@@ -980,7 +980,7 @@
   position: absolute;
   inset: auto 0 -1px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(226,190,116,.72), transparent);
+  background: linear-gradient(90deg, transparent, rgba(174,139,203,.78), rgba(221,185,112,.45), transparent);
   background-size: 220% 100%;
   animation: royal-border-flow 7s linear infinite;
   pointer-events: none;
@@ -989,10 +989,10 @@
 .royal-gold-button {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(246,219,157,.44);
-  background: linear-gradient(110deg, #9b7536 0%, #e0bd72 30%, #c49a4c 52%, #f1d99a 70%, #8d682f 100%);
+  border: 1px solid rgba(213,190,231,.58);
+  background: linear-gradient(110deg, #684d7a 0%, #9c79b5 30%, #d9b66f 54%, #b48ac9 74%, #624572 100%);
   background-size: 220% 100%;
-  color: #211d18;
+  color: #fffaf2;
   box-shadow:
     0 12px 30px rgba(176,133,57,.18),
     inset 0 1px 0 rgba(255,255,255,.38);
@@ -1155,12 +1155,12 @@
 }
 
 .royal-title-dark {
-  color: #2e2923;
+  color: #4b3659;
   text-shadow: 0 1px 0 rgba(255,255,255,.5);
 }
 
 .royal-title-light {
-  background: linear-gradient(110deg, #f7e9c7 0%, #d4ad63 28%, #f2d895 52%, #b78a42 76%, #f7e9c7 100%);
+  background: linear-gradient(110deg, #fff8e8 0%, #d8bee8 28%, #f0d58f 52%, #b995cd 76%, #fff8e8 100%);
   background-size: 230% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -1170,7 +1170,7 @@
 }
 
 .royal-gold-text {
-  background: linear-gradient(110deg, #f3dfb3, #c89e51 45%, #f1d694 70%, #a77b38);
+  background: linear-gradient(110deg, #ead8f4, #b995cd 45%, #efd38b 70%, #8f6aa6);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -1182,10 +1182,10 @@
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(circle at 18% 18%, rgba(197,155,80,.15), transparent 30rem),
-    radial-gradient(circle at 86% 20%, rgba(105,64,55,.16), transparent 28rem),
-    linear-gradient(145deg, #191816 0%, #24211e 42%, #1b1917 100%);
-  color: #f2e4c7;
+    radial-gradient(circle at 18% 18%, rgba(201,169,225,.2), transparent 30rem),
+    radial-gradient(circle at 86% 20%, rgba(220,184,110,.14), transparent 28rem),
+    linear-gradient(145deg, #4f3a5d 0%, #684e77 42%, #564164 100%);
+  color: #fbf4ff;
 }
 
 .royal-hero::before {
@@ -1210,23 +1210,24 @@
 }
 
 .royal-glass-dark {
-  border: 1px solid rgba(214,175,101,.26);
-  background: rgba(255,255,255,.05);
-  color: #ead9b9;
+  border: 1px solid rgba(220,201,234,.3);
+  background: rgba(255,255,255,.075);
+  color: #f7ecff;
   box-shadow: 0 16px 44px rgba(0,0,0,.22);
   backdrop-filter: blur(18px);
 }
 
 .royal-kicker {
-  color: #d1ac67;
+  color: #e6c978;
   letter-spacing: .2em;
   text-transform: uppercase;
 }
 
 .royal-section {
   background:
-    radial-gradient(circle at 12% 8%, rgba(198,157,82,.12), transparent 24rem),
-    linear-gradient(180deg, #fbf6eb 0%, #f7efe1 100%);
+    radial-gradient(circle at 12% 8%, rgba(182,150,207,.18), transparent 24rem),
+    radial-gradient(circle at 92% 18%, rgba(226,193,127,.10), transparent 22rem),
+    linear-gradient(180deg, #fcf9ff 0%, #f2eaf8 100%);
 }
 
 @keyframes royal-logo-breathe {
@@ -1302,4 +1303,20 @@
   .wedding-title {
     animation: none !important;
   }
+}
+
+/* Lavender wedding skin: final override for public/product surfaces still using royal utility names. */
+body {
+  background-color: #f7f0fb;
+  color: #4b3659;
+}
+.royal-menu,
+[data-radix-popper-content-wrapper] > div {
+  --tw-shadow-color: rgba(91, 67, 107, .12);
+}
+.lavender-wedding-surface {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(183,151,208,.18), transparent 26rem),
+    radial-gradient(circle at 90% 14%, rgba(225,190,119,.10), transparent 24rem),
+    linear-gradient(180deg, #fcf9ff, #f1e8f7);
 }

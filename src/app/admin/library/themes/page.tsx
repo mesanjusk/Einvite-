@@ -110,6 +110,7 @@ export default async function AdminThemesPage() {
                         sortOrder: theme.sortOrder,
                         colorPalette: theme.colorPalette as never,
                         fontPairing: theme.fontPairing as never,
+                        content: theme.content as never,
                         decorAssets: theme.decorAssets as never,
                         sectionOrder,
                       }}

@@ -88,6 +88,7 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     sortOrder: data.sortOrder,
     colorPalette: data.colorPalette,
     fontPairing: data.fontPairing,
+    content: data.content,
     decorAssets: data.decorAssets,
   };
 
