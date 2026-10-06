@@ -31,6 +31,9 @@ export function SignInForm() {
     if (searchParams.get("deactivated") === "1") {
       toast.error("This account has been deactivated. Contact support if this is a mistake.");
     }
+    if (searchParams.get("reset") === "1") {
+      toast.success("Password updated. Sign in with your new password.");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -84,7 +87,15 @@ export function SignInForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <div className="flex items-center justify-between gap-3">
+                    <FormLabel>Password</FormLabel>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs font-semibold text-[#e0bd76] underline decoration-[#c59c52]/55 underline-offset-4"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>

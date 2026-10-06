@@ -24,6 +24,7 @@ model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String    @unique
+  phone         String?
   emailVerified DateTime?
   image         String?
   password      String? // set for credentials sign-up; null for OAuth-only users
@@ -93,6 +94,18 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
+
+model PasswordResetOtp {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  phone      String   @unique
+  otpHash    String
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  lastSentAt DateTime @default(now())
+
+  @@map("password_reset_otps")
+}
+
 
 // ---------------------------------------------------------------------------
 // Billing

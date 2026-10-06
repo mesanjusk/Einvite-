@@ -28,7 +28,7 @@ export function SignUpForm() {
 
   const form = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", phone: "", password: "" },
   });
 
   async function onSubmit(values: SignUpInput) {
@@ -90,6 +90,19 @@ export function SignUpForm() {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="you@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mobile number</FormLabel>
+                  <FormControl>
+                    <Input type="tel" autoComplete="tel" placeholder="9876543210" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
