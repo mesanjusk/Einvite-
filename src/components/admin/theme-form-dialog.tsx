@@ -73,6 +73,20 @@ type DecorAssets = {
       color?: string;
     }>
   >;
+  elementStyles?: Record<string, ThemeElementStyleValue>;
+  customText?: Record<
+    string,
+    Array<{
+      id: string;
+      text: string;
+      fontSize: number;
+      fontRole: "display" | "body" | "script";
+      align: "left" | "center" | "right";
+      color?: string;
+      x?: number;
+      y?: number;
+    }>
+  >;
   contentCommunity?: string;
   sectionStyles?: Record<
     string,
