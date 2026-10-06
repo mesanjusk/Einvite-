@@ -69,15 +69,34 @@ async function findUserByRecoveryPhone(phone: string) {
   const direct = await db.user.findFirst({ where: { phone } });
   if (direct) return direct;
 
+  // Existing invitation owners already have a durable verified PhoneLink.
+  const phoneLink = await db.phoneLink.findUnique({
+    where: { phone },
+    select: { invitation: { select: { userId: true } } },
+  });
+  if (phoneLink?.invitation.userId) {
+    const linkedUser = await db.user.findUnique({
+      where: { id: phoneLink.invitation.userId },
+    });
+    if (linkedUser) return linkedUser;
+  }
+
   // Compatibility for older staff accounts that stored the number on Employee.
   const employees = await db.employee.findMany({
-    where: { userId: { not: null }, phone: { not: null } },
-    select: { userId: true, phone: true },
+    where: { phone: { not: null } },
+    select: { userId: true, email: true, phone: true },
   });
   const employee = employees.find((item) => item.phone && normalizePhone(item.phone) === phone);
-  if (!employee?.userId) return null;
+  if (!employee) return null;
 
-  return db.user.findUnique({ where: { id: employee.userId } });
+  if (employee.userId) {
+    const linkedUser = await db.user.findUnique({ where: { id: employee.userId } });
+    if (linkedUser) return linkedUser;
+  }
+
+  return employee.email
+    ? db.user.findUnique({ where: { email: employee.email } })
+    : null;
 }
 
 export async function forgotPasswordAction(
