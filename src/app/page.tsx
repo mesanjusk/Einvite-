@@ -72,7 +72,7 @@ export default async function Home() {
   const heroThemes = themeCards.slice(0, 5);
 
   return (
-    <div className="min-h-svh bg-[#f8f1e4] text-[#2f2a25]">
+    <div className="lavender-wedding-surface min-h-svh text-[#4b3659]">
       <PublicMarketplaceHeader />
 
       <main>
@@ -99,7 +99,7 @@ export default async function Home() {
               <h1 className="font-display royal-title-light mx-auto mt-1 max-w-[380px] text-[2.75rem] leading-[0.92] sm:max-w-none sm:text-6xl md:mx-0 lg:text-7xl">
                 Royal invitations that feel alive.
               </h1>
-              <p className="mx-auto mt-4 max-w-[330px] text-[13px] leading-6 text-[#d8c9ac]/78 sm:max-w-md sm:text-base md:mx-0">
+              <p className="mx-auto mt-4 max-w-[330px] text-[13px] leading-6 text-[#eadcf1]/82 sm:max-w-md sm:text-base md:mx-0">
                 Elegant motion, music and meaningful details—crafted into one beautiful invitation.
               </p>
             </div>
@@ -121,7 +121,7 @@ export default async function Home() {
                   href="/dashboard"
                   className="royal-glass-dark inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-bold transition hover:-translate-y-0.5 hover:border-[#d5ad63]/45 sm:px-5 sm:text-xs"
                 >
-                  <Sparkles className="size-4 text-[#d7b56f]" />
+                  <Sparkles className="size-4 text-[#ead083]" />
                   My invitations
                 </Link>
               </div>
@@ -133,12 +133,12 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="royal-section relative border-y border-[#c5a15a]/22">
+        <section className="royal-section relative border-y border-[#b89acb]/28">
           <div className="royal-dust pointer-events-none absolute inset-0 opacity-20" />
           <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-8 lg:px-10">
             <div className="mb-7 flex items-end justify-between gap-4">
               <div>
-                <p className="text-[9px] font-bold tracking-[0.22em] text-[#a87f3e] uppercase">
+                <p className="text-[9px] font-bold tracking-[0.22em] text-[#8a649d] uppercase">
                   Signature collections
                 </p>
                 <h2 className="font-display royal-title-dark mt-1 text-3xl sm:text-4xl">
@@ -147,7 +147,7 @@ export default async function Home() {
               </div>
               <Link
                 href="/themes"
-                className="hidden items-center gap-1.5 rounded-full border border-[#bf9850]/35 bg-[#fffaf0]/78 px-4 py-2 text-[10px] font-black tracking-wide text-[#5d4a2c] uppercase shadow-sm transition hover:-translate-y-0.5 hover:border-[#b98d3e]/55 sm:inline-flex"
+                className="hidden items-center gap-1.5 rounded-full border border-[#b89acb]/40 bg-[#fbf7ff]/84 px-4 py-2 text-[10px] font-black tracking-wide text-[#604b70] uppercase shadow-sm transition hover:-translate-y-0.5 hover:border-[#9c79b5]/60 sm:inline-flex"
               >
                 All designs <ArrowRight className="size-3.5" />
               </Link>
@@ -170,7 +170,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-[#211f1c] px-5 py-14 text-[#eadfc8] sm:px-8 lg:px-10">
+        <section className="relative overflow-hidden bg-[#5a4268] px-5 py-14 text-[#f8efff] sm:px-8 lg:px-10">
           <div className="royal-dust pointer-events-none absolute inset-0 opacity-35" />
           <div className="royal-orbit royal-orbit-a opacity-50" />
           <div className="relative mx-auto max-w-5xl">
