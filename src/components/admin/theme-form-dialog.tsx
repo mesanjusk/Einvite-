@@ -26,6 +26,10 @@ import {
   type ThemeFormValues,
 } from "@/lib/validations/admin";
 import { upsertThemeAction } from "@/lib/actions/admin";
+import {
+  COMMUNITY_CONTENT_GROUPS,
+  COMMUNITY_CONTENT_PRESETS,
+} from "@/lib/theme-content-library";
 import { EVENT_CATEGORIES } from "@/lib/event-categories";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -49,6 +53,18 @@ type DecorAssets = {
     speed?: number;
   };
   sectionImages?: Record<string, string>;
+  sectionTextBlocks?: Record<
+    string,
+    Array<{
+      id: string;
+      text: string;
+      fontSize: number;
+      fontRole: "display" | "body" | "script";
+      align: "left" | "center" | "right";
+      color?: string;
+    }>
+  >;
+  contentCommunity?: string;
   sectionStyles?: Record<
     string,
     {
@@ -115,6 +131,7 @@ function ThemeSectionPreview({
   styleConfig,
   revealMode,
   revealVideoUrl,
+  textBlocks = [],
 }: {
   section: (typeof SECTION_TYPES)[number];
   imageUrl?: string;
@@ -139,6 +156,14 @@ function ThemeSectionPreview({
   };
   revealMode?: "ANIMATION" | "VIDEO";
   revealVideoUrl?: string;
+  textBlocks?: Array<{
+    id: string;
+    text: string;
+    fontSize: number;
+    fontRole: "display" | "body" | "script";
+    align: "left" | "center" | "right";
+    color?: string;
+  }>;
 }) {
   const sectionPrimary = styleConfig?.primary || palette.primary;
   const sectionAccent = styleConfig?.accent || palette.accent;
@@ -287,6 +312,28 @@ function ThemeSectionPreview({
               </button>
             </div>
           )}
+          {textBlocks.length > 0 && (
+            <div className="absolute inset-x-4 bottom-6 z-30 grid gap-1.5">
+              {textBlocks.map((block) => (
+                <div
+                  key={block.id}
+                  style={{
+                    fontSize: Math.max(8, Math.min(96, block.fontSize)) * 0.58,
+                    fontFamily:
+                      block.fontRole === "display"
+                        ? sectionDisplay
+                        : block.fontRole === "script"
+                          ? sectionScript
+                          : sectionBody,
+                    textAlign: block.align,
+                    color: block.color || sectionForeground,
+                  }}
+                >
+                  {block.text}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {!imageUrl && (
@@ -339,6 +386,8 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
         speed: decor.revealAnimation?.speed ?? 1,
       },
       sectionImages: decor.sectionImages ?? {},
+      sectionTextBlocks: decor.sectionTextBlocks ?? {},
+      contentCommunity: decor.contentCommunity ?? "General",
       sectionStyles: decor.sectionStyles ?? {},
     },
     sectionOrder:
@@ -397,6 +446,36 @@ export function ThemeFormDialog({
         ...patch,
       },
     });
+  }
+
+  function setSectionTextBlocks(
+    sectionType: (typeof SECTION_TYPES)[number],
+    blocks: NonNullable<DecorAssets["sectionTextBlocks"]>[string],
+  ) {
+    const current = (form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
+      DecorAssets["sectionTextBlocks"]
+    >;
+    form.setValue("decorAssets.sectionTextBlocks", {
+      ...current,
+      [sectionType]: blocks,
+    });
+  }
+
+  function addTextBlock(sectionType: (typeof SECTION_TYPES)[number], text = "New text") {
+    const current =
+      ((form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
+        DecorAssets["sectionTextBlocks"]
+      >)[sectionType] ?? [];
+    setSectionTextBlocks(sectionType, [
+      ...current,
+      {
+        id: `text-${Date.now().toString(36)}`,
+        text,
+        fontSize: 22,
+        fontRole: "body",
+        align: "center",
+      },
+    ]);
   }
 
   function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
@@ -798,6 +877,15 @@ export function ThemeFormDialog({
                 {sectionOrder.map((sectionType, index) => {
                   const typedSection = sectionType as (typeof SECTION_TYPES)[number];
                   const imageUrl = form.watch(`decorAssets.sectionImages.${typedSection}`);
+                  const textBlocks =
+                    ((form.watch("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
+                      DecorAssets["sectionTextBlocks"]
+                    >)[typedSection] ?? [];
+                  const community = form.watch("decorAssets.contentCommunity") ?? "General";
+                  const contentPresets = COMMUNITY_CONTENT_PRESETS.filter(
+                    (preset) =>
+                      preset.community === community || preset.community === "General",
+                  );
                   return (
                     <div key={sectionType} className="grid gap-2 rounded-xl border p-3">
                       <div className="flex items-center justify-between gap-2">
@@ -850,6 +938,152 @@ export function ThemeFormDialog({
                           >
                             Remove image
                           </button>
+                        )}
+                      </div>
+
+                      <div className="grid gap-3 rounded-xl border border-violet-200/70 bg-violet-50/45 p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <Label className="text-xs font-semibold">Text content</Label>
+                            <p className="text-muted-foreground text-[10px]">
+                              Add, remove and style text that belongs to this section.
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addTextBlock(typedSection)}
+                          >
+                            <Plus className="size-3.5" />
+                            Add text
+                          </Button>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)]">
+                          <select
+                            className="border-input h-9 rounded-md border bg-background px-2 text-xs"
+                            value={community}
+                            onChange={(e) =>
+                              form.setValue("decorAssets.contentCommunity", e.target.value)
+                            }
+                          >
+                            {COMMUNITY_CONTENT_GROUPS.map((item) => (
+                              <option key={item} value={item}>{item}</option>
+                            ))}
+                          </select>
+                          <select
+                            className="border-input h-9 min-w-0 rounded-md border bg-background px-2 text-xs"
+                            defaultValue=""
+                            onChange={(e) => {
+                              const preset = COMMUNITY_CONTENT_PRESETS.find(
+                                (item) => item.id === e.target.value,
+                              );
+                              if (preset) addTextBlock(typedSection, preset.text);
+                              e.currentTarget.value = "";
+                            }}
+                          >
+                            <option value="">Choose from content collection…</option>
+                            {contentPresets.map((preset) => (
+                              <option key={preset.id} value={preset.id}>
+                                {preset.community} · {preset.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {textBlocks.length === 0 ? (
+                          <p className="rounded-lg border border-dashed p-3 text-center text-[11px] text-muted-foreground">
+                            No extra text blocks in this section.
+                          </p>
+                        ) : (
+                          <div className="grid gap-2">
+                            {textBlocks.map((block, blockIndex) => (
+                              <div key={block.id} className="grid gap-2 rounded-lg border bg-background p-3">
+                                <Textarea
+                                  value={block.text}
+                                  rows={2}
+                                  onChange={(e) => {
+                                    const next = [...textBlocks];
+                                    next[blockIndex] = { ...block, text: e.target.value };
+                                    setSectionTextBlocks(typedSection, next);
+                                  }}
+                                />
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                  <div className="grid gap-1">
+                                    <Label className="text-[10px]">Font size</Label>
+                                    <Input
+                                      type="number"
+                                      min={8}
+                                      max={96}
+                                      value={block.fontSize}
+                                      onChange={(e) => {
+                                        const next = [...textBlocks];
+                                        next[blockIndex] = {
+                                          ...block,
+                                          fontSize: Number(e.target.value) || 8,
+                                        };
+                                        setSectionTextBlocks(typedSection, next);
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="grid gap-1">
+                                    <Label className="text-[10px]">Font</Label>
+                                    <select
+                                      className="border-input h-9 rounded-md border bg-background px-2 text-xs"
+                                      value={block.fontRole}
+                                      onChange={(e) => {
+                                        const next = [...textBlocks];
+                                        next[blockIndex] = {
+                                          ...block,
+                                          fontRole: e.target.value as "display" | "body" | "script",
+                                        };
+                                        setSectionTextBlocks(typedSection, next);
+                                      }}
+                                    >
+                                      <option value="display">Display</option>
+                                      <option value="body">Body</option>
+                                      <option value="script">Script</option>
+                                    </select>
+                                  </div>
+                                  <div className="grid gap-1">
+                                    <Label className="text-[10px]">Align</Label>
+                                    <select
+                                      className="border-input h-9 rounded-md border bg-background px-2 text-xs"
+                                      value={block.align}
+                                      onChange={(e) => {
+                                        const next = [...textBlocks];
+                                        next[blockIndex] = {
+                                          ...block,
+                                          align: e.target.value as "left" | "center" | "right",
+                                        };
+                                        setSectionTextBlocks(typedSection, next);
+                                      }}
+                                    >
+                                      <option value="left">Left</option>
+                                      <option value="center">Center</option>
+                                      <option value="right">Right</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex items-end">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      className="w-full text-destructive"
+                                      onClick={() =>
+                                        setSectionTextBlocks(
+                                          typedSection,
+                                          textBlocks.filter((_, index) => index !== blockIndex),
+                                        )
+                                      }
+                                    >
+                                      Remove
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
 
@@ -955,6 +1189,11 @@ export function ThemeFormDialog({
                     styleConfig={sectionStyles[previewSection]}
                     revealMode={form.watch("revealMode")}
                     revealVideoUrl={form.watch("revealVideoUrl")}
+                    textBlocks={
+                      ((form.watch("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
+                        DecorAssets["sectionTextBlocks"]
+                      >)[previewSection] ?? []
+                    }
                   />
                 </div>
               </div>
