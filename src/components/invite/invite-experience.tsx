@@ -54,6 +54,7 @@ function SectionScope({
   edit,
   sectionImage,
   sectionStyle,
+  textBlocks,
   children,
 }: {
   id: string;
@@ -62,6 +63,7 @@ function SectionScope({
   edit: InviteEditApi | null;
   sectionImage?: string | null;
   sectionStyle?: NonNullable<InviteData["sectionStyles"]>[string];
+  textBlocks?: NonNullable<InviteData["sectionTextBlocks"]>[string];
   children: ReactNode;
 }) {
   const guided = guidedActiveSectionId !== undefined;
@@ -102,6 +104,30 @@ function SectionScope({
         >
           {children}
         </div>
+        {textBlocks && textBlocks.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-5 bottom-8 z-20 grid gap-2">
+            {textBlocks.map((block) => (
+              <div
+                key={block.id}
+                style={{
+                  fontSize: `${block.fontSize}px`,
+                  lineHeight: 1.25,
+                  fontFamily:
+                    block.fontRole === "display"
+                      ? "var(--inv-font-display)"
+                      : block.fontRole === "script"
+                        ? "var(--inv-font-script)"
+                        : "var(--inv-font-body)",
+                  textAlign: block.align,
+                  color: block.color || "var(--inv-foreground)",
+                  textShadow: sectionImage ? "0 1px 12px rgba(255,255,255,.72)" : undefined,
+                }}
+              >
+                {block.text}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </InviteEditProvider>
   );
@@ -214,6 +240,7 @@ export function InviteExperience({
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
                     sectionStyle={invite.sectionStyles?.[section.type]}
+                    textBlocks={invite.sectionTextBlocks?.[section.type]}
                   >
                     <HeroSection invite={invite} guestName={guestName} />
                   </SectionScope>
@@ -228,6 +255,7 @@ export function InviteExperience({
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
                     sectionStyle={invite.sectionStyles?.[section.type]}
+                    textBlocks={invite.sectionTextBlocks?.[section.type]}
                   >
                     <CountdownSection weddingDate={invite.weddingDate} />
                   </SectionScope>
@@ -285,6 +313,7 @@ export function InviteExperience({
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
                     sectionStyle={invite.sectionStyles?.[section.type]}
+                    textBlocks={invite.sectionTextBlocks?.[section.type]}
                   >
                     <GallerySection
                       media={invite.media}
@@ -306,6 +335,7 @@ export function InviteExperience({
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
                     sectionStyle={invite.sectionStyles?.[section.type]}
+                    textBlocks={invite.sectionTextBlocks?.[section.type]}
                   >
                     <VenueSection
                       invitationId={invite.id}
@@ -325,6 +355,7 @@ export function InviteExperience({
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
                     sectionStyle={invite.sectionStyles?.[section.type]}
+                    textBlocks={invite.sectionTextBlocks?.[section.type]}
                   >
                     <RsvpSection
                       invitationId={invite.id}
@@ -343,6 +374,7 @@ export function InviteExperience({
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
                     sectionStyle={invite.sectionStyles?.[section.type]}
+                    textBlocks={invite.sectionTextBlocks?.[section.type]}
                   >
                     <ThankYouSection
                       brideName={invite.brideName}
