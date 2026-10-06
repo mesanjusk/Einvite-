@@ -65,7 +65,20 @@ export type InviteData = {
     speed: number;
   };
   sectionImages?: Partial<Record<string, string>>;
-  sectionTextBlocks?: Record<
+  elementStyles?: Record<
+    string,
+    {
+      hidden?: boolean;
+      fontSize?: number;
+      fontRole?: "display" | "body" | "script";
+      align?: "left" | "center" | "right";
+      color?: string;
+      x?: number;
+      y?: number;
+      showBackground?: boolean;
+    }
+  >;
+  customText?: Record<
     string,
     Array<{
       id: string;
@@ -74,6 +87,8 @@ export type InviteData = {
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";
       color?: string;
+      x?: number;
+      y?: number;
     }>
   >;
   sectionStyles?: Record<
