@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="relative flex min-h-svh bg-[#f8f2e7]">
+    <div className="relative flex min-h-svh bg-[#f7f0fb]">
       <DashboardSidebar isAdmin />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopbar user={session.user} isAdmin />

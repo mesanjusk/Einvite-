@@ -37,6 +37,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ThemeRealSectionPreview } from "@/components/admin/theme-real-section-preview";
+import {
+  ThemeElementInspector,
+  type ThemeElementStyleValue,
+} from "@/components/admin/theme-element-inspector";
+import {
+  definitionForElement,
+  elementsForSection,
+} from "@/lib/theme-element-catalog";
 import {
   Dialog,
   DialogContent,
@@ -62,6 +71,20 @@ type DecorAssets = {
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";
       color?: string;
+    }>
+  >;
+  elementStyles?: Record<string, ThemeElementStyleValue>;
+  customText?: Record<
+    string,
+    Array<{
+      id: string;
+      text: string;
+      fontSize: number;
+      fontRole: "display" | "body" | "script";
+      align: "left" | "center" | "right";
+      color?: string;
+      x?: number;
+      y?: number;
     }>
   >;
   contentCommunity?: string;
@@ -405,6 +428,8 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       },
       sectionImages: decor.sectionImages ?? {},
       sectionTextBlocks: decor.sectionTextBlocks ?? {},
+      elementStyles: decor.elementStyles ?? {},
+      customText: decor.customText ?? {},
       contentCommunity: decor.contentCommunity ?? "General",
       sectionStyles: decor.sectionStyles ?? {},
     },
@@ -436,6 +461,7 @@ export function ThemeFormDialog({
   const [thumbUploading, setThumbUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
   const [previewSection, setPreviewSection] = useState<(typeof SECTION_TYPES)[number]>("HERO");
+  const [selectedElement, setSelectedElement] = useState<string | null>("HERO.invitationLetter");
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const bulkArtworkInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -448,6 +474,12 @@ export function ThemeFormDialog({
   const sectionOrder = form.watch("sectionOrder");
   const sectionStyles = (form.watch("decorAssets.sectionStyles") ?? {}) as NonNullable<
     DecorAssets["sectionStyles"]
+  >;
+  const elementStyles = (form.watch("decorAssets.elementStyles") ?? {}) as NonNullable<
+    DecorAssets["elementStyles"]
+  >;
+  const customTextBySection = (form.watch("decorAssets.customText") ?? {}) as NonNullable<
+    DecorAssets["customText"]
   >;
 
   function updateSectionStyle(
@@ -466,6 +498,56 @@ export function ThemeFormDialog({
     });
   }
 
+  function updateElementStyle(key: string, patch: Partial<ThemeElementStyleValue>) {
+    const current = (form.getValues("decorAssets.elementStyles") ?? {}) as NonNullable<
+      DecorAssets["elementStyles"]
+    >;
+    form.setValue("decorAssets.elementStyles", {
+      ...current,
+      [key]: {
+        ...(current[key] ?? {}),
+        ...patch,
+      },
+    });
+  }
+
+  function setCustomText(
+    sectionType: (typeof SECTION_TYPES)[number],
+    blocks: NonNullable<DecorAssets["customText"]>[string],
+  ) {
+    const current = (form.getValues("decorAssets.customText") ?? {}) as NonNullable<
+      DecorAssets["customText"]
+    >;
+    form.setValue("decorAssets.customText", {
+      ...current,
+      [sectionType]: blocks,
+    });
+  }
+
+  function addCustomText(text = "New text") {
+    const sectionType = previewSection;
+    const current =
+      ((form.getValues("decorAssets.customText") ?? {}) as NonNullable<
+        DecorAssets["customText"]
+      >)[sectionType] ?? [];
+    const id = `CUSTOM.${sectionType}.${Date.now().toString(36)}`;
+    setCustomText(sectionType, [
+      ...current,
+      {
+        id,
+        text,
+        fontSize: 22,
+        fontRole: "body",
+        align: "center",
+        x: 0,
+        y: 0,
+      },
+    ]);
+    setSelectedElement(id);
+  }
+
+  // Legacy PR #79 helpers remain only so old saved data can be opened safely.
+  // The corresponding UI is hidden and these blocks are no longer rendered publicly.
   function setSectionTextBlocks(
     sectionType: (typeof SECTION_TYPES)[number],
     blocks: NonNullable<DecorAssets["sectionTextBlocks"]>[string],
@@ -473,27 +555,110 @@ export function ThemeFormDialog({
     const current = (form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
       DecorAssets["sectionTextBlocks"]
     >;
-    form.setValue("decorAssets.sectionTextBlocks", {
-      ...current,
-      [sectionType]: blocks,
-    });
+    form.setValue("decorAssets.sectionTextBlocks", { ...current, [sectionType]: blocks });
   }
 
-  function addTextBlock(sectionType: (typeof SECTION_TYPES)[number], text = "New text") {
-    const current =
-      ((form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
-        DecorAssets["sectionTextBlocks"]
-      >)[sectionType] ?? [];
-    setSectionTextBlocks(sectionType, [
-      ...current,
-      {
-        id: `text-${Date.now().toString(36)}`,
-        text,
-        fontSize: 22,
-        fontRole: "body",
-        align: "center",
-      },
-    ]);
+  function addTextBlock(_sectionType: (typeof SECTION_TYPES)[number], text = "New text") {
+    addCustomText(text);
+  }
+
+  function findCustomText(key: string | null) {
+    if (!key) return null;
+    for (const [section, blocks] of Object.entries(customTextBySection)) {
+      const index = blocks.findIndex((block) => block.id === key);
+      if (index >= 0) return { section, index, block: blocks[index] };
+    }
+    return null;
+  }
+
+  function setCoreContent(field: string, value: string) {
+    switch (field) {
+      case "eyebrow":
+        form.setValue("content.eyebrow", value);
+        break;
+      case "heroHeadline":
+        form.setValue("content.heroHeadline", value);
+        break;
+      case "heroSubline":
+        form.setValue("content.heroSubline", value);
+        break;
+      case "invitationLetter":
+        form.setValue("content.invitationLetter", value);
+        break;
+      case "storyHeadline":
+        form.setValue("content.storyHeadline", value);
+        break;
+      case "thankYou":
+        form.setValue("content.thankYou", value);
+        break;
+    }
+  }
+
+  function getCoreContent(field?: string) {
+    switch (field) {
+      case "eyebrow":
+        return form.watch("content.eyebrow") ?? "";
+      case "heroHeadline":
+        return form.watch("content.heroHeadline") ?? "";
+      case "heroSubline":
+        return form.watch("content.heroSubline") ?? "";
+      case "invitationLetter":
+        return form.watch("content.invitationLetter") ?? "";
+      case "storyHeadline":
+        return form.watch("content.storyHeadline") ?? "";
+      case "thankYou":
+        return form.watch("content.thankYou") ?? "";
+      default:
+        return "";
+    }
+  }
+
+  function updateSelectedText(value: string) {
+    if (!selectedElement) return;
+    const custom = findCustomText(selectedElement);
+    if (custom) {
+      const blocks = [...customTextBySection[custom.section]];
+      blocks[custom.index] = { ...custom.block, text: value };
+      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+      return;
+    }
+    const definition = definitionForElement(selectedElement);
+    if (definition?.coreField) {
+      setCoreContent(definition.coreField, value);
+      return;
+    }
+    updateElementStyle(selectedElement, { text: value });
+  }
+
+  function updateSelectedAppearance(patch: Partial<ThemeElementStyleValue>) {
+    if (!selectedElement) return;
+    const custom = findCustomText(selectedElement);
+    if (custom) {
+      const blocks = [...customTextBySection[custom.section]];
+      blocks[custom.index] = {
+        ...custom.block,
+        ...(patch.fontSize !== undefined ? { fontSize: patch.fontSize } : {}),
+        ...(patch.fontRole !== undefined ? { fontRole: patch.fontRole } : {}),
+        ...(patch.align !== undefined ? { align: patch.align } : {}),
+        ...(patch.color !== undefined ? { color: patch.color } : {}),
+        ...(patch.x !== undefined ? { x: patch.x } : {}),
+        ...(patch.y !== undefined ? { y: patch.y } : {}),
+      };
+      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+      return;
+    }
+    updateElementStyle(selectedElement, patch);
+  }
+
+  function removeSelectedCustomText() {
+    if (!selectedElement) return;
+    const custom = findCustomText(selectedElement);
+    if (!custom) return;
+    setCustomText(
+      custom.section as (typeof SECTION_TYPES)[number],
+      customTextBySection[custom.section].filter((_, index) => index !== custom.index),
+    );
+    setSelectedElement(null);
   }
 
   function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
@@ -591,6 +756,38 @@ export function ThemeFormDialog({
     setPreviewSection((form.getValues("sectionOrder")[0] ?? "HERO") as (typeof SECTION_TYPES)[number]);
     toast.success("Artwork applied to every active section. You can replace any section individually.");
   }
+
+  const selectedDefinition = selectedElement
+    ? definitionForElement(selectedElement)
+    : undefined;
+  const selectedCustom = findCustomText(selectedElement);
+  const selectedStyle: ThemeElementStyleValue = selectedCustom
+    ? {
+        fontSize: selectedCustom.block.fontSize,
+        fontRole: selectedCustom.block.fontRole,
+        align: selectedCustom.block.align,
+        color: selectedCustom.block.color,
+        x: selectedCustom.block.x,
+        y: selectedCustom.block.y,
+      }
+    : selectedElement
+      ? elementStyles[selectedElement] ?? {}
+      : {};
+  const selectedText = selectedCustom
+    ? selectedCustom.block.text
+    : selectedDefinition?.coreField
+      ? getCoreContent(selectedDefinition.coreField)
+      : selectedElement
+        ? elementStyles[selectedElement]?.text ?? selectedDefinition?.fallbackText ?? ""
+        : "";
+  const selectedCanEditText = Boolean(
+    selectedCustom || (selectedDefinition && !selectedDefinition.dynamic),
+  );
+  const selectedCommunity = form.watch("decorAssets.contentCommunity") ?? "General";
+  const selectedPresets = COMMUNITY_CONTENT_PRESETS.filter(
+    (preset) =>
+      preset.community === selectedCommunity || preset.community === "General",
+  );
 
   async function onSubmit(values: ThemeFormInput) {
     setLoading(true);
@@ -983,7 +1180,10 @@ export function ThemeFormDialog({
                       <div className="flex items-center justify-between gap-2">
                         <button
                           type="button"
-                          onClick={() => setPreviewSection(typedSection)}
+                          onClick={() => {
+                            setPreviewSection(typedSection);
+                            setSelectedElement(elementsForSection(typedSection)[0]?.key ?? null);
+                          }}
                           className={`flex items-center gap-2 rounded-md px-2 py-1 text-left text-sm font-medium ${previewSection === typedSection ? "bg-primary/10 text-primary" : ""}`}
                         >
                           <Smartphone className="size-3.5" />
@@ -1033,7 +1233,7 @@ export function ThemeFormDialog({
                         )}
                       </div>
 
-                      <div className="grid gap-3 rounded-xl border border-violet-200/70 bg-violet-50/45 p-3">
+                      <div className="hidden">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <Label className="text-xs font-semibold">Text content</Label>
@@ -1272,20 +1472,51 @@ export function ThemeFormDialog({
                   </div>
                 </div>
 
-                <div className="lg:sticky lg:top-0 lg:self-start">
-                  <ThemeSectionPreview
+                <div className="grid gap-4 lg:sticky lg:top-0 lg:self-start">
+                  <ThemeRealSectionPreview
                     section={previewSection}
-                    imageUrl={form.watch(`decorAssets.sectionImages.${previewSection}`)}
+                    eventCategory={form.watch("eventCategory")}
                     palette={form.watch("colorPalette")}
                     fonts={form.watch("fontPairing")}
-                    styleConfig={sectionStyles[previewSection]}
+                    content={form.watch("content")}
                     revealMode={form.watch("revealMode")}
                     revealVideoUrl={form.watch("revealVideoUrl")}
-                    textBlocks={
-                      ((form.watch("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
-                        DecorAssets["sectionTextBlocks"]
-                      >)[previewSection] ?? []
-                    }
+                    revealAnimation={form.watch("decorAssets.revealAnimation")}
+                    sectionImages={form.watch("decorAssets.sectionImages")}
+                    sectionStyles={form.watch("decorAssets.sectionStyles")}
+                    elementStyles={form.watch("decorAssets.elementStyles")}
+                    customText={form.watch("decorAssets.customText")}
+                    onSelectElement={(key) => setSelectedElement(key)}
+                  />
+
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Content collection community</Label>
+                    <select
+                      className="border-input h-10 rounded-md border bg-background px-3 text-sm"
+                      value={selectedCommunity}
+                      onChange={(e) =>
+                        form.setValue("decorAssets.contentCommunity", e.target.value)
+                      }
+                    >
+                      {COMMUNITY_CONTENT_GROUPS.map((item) => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <ThemeElementInspector
+                    selectedKey={selectedElement}
+                    label={selectedDefinition?.label ?? (selectedCustom ? "Added text" : undefined)}
+                    text={selectedText}
+                    canEditText={selectedCanEditText}
+                    isCustom={Boolean(selectedCustom)}
+                    style={selectedStyle}
+                    presets={selectedPresets}
+                    onTextChange={updateSelectedText}
+                    onStyleChange={updateSelectedAppearance}
+                    onChoosePreset={(preset) => updateSelectedText(preset.text)}
+                    onRemove={removeSelectedCustomText}
+                    onAddText={() => addCustomText()}
                   />
                 </div>
               </div>

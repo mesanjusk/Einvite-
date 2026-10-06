@@ -32,8 +32,8 @@ export function SidebarNav({
             className={cn(
               "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
               isActive
-                ? "border border-[#d7b36c]/35 bg-[linear-gradient(135deg,#cda65d,#f0d18d_55%,#b8893e)] text-[#241f19] shadow-[0_10px_28px_rgba(201,163,91,.18)]"
-                : "border border-transparent text-[#d8c7a7] hover:-translate-y-0.5 hover:border-[#c8a45e]/20 hover:bg-white/[0.05] hover:text-[#f3d99d]",
+                ? "border border-[#d9c3e7]/45 bg-[linear-gradient(135deg,#8e6aa3,#b590c7_55%,#d8b56d)] text-white shadow-[0_10px_28px_rgba(111,77,132,.2)]"
+                : "border border-transparent text-[#eadff0] hover:-translate-y-0.5 hover:border-[#d8c2e5]/25 hover:bg-white/[0.07] hover:text-white",
             )}
           >
             <Icon className="size-4 shrink-0" />

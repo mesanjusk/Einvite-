@@ -47,6 +47,8 @@ export const themeDecorAssetsSchema = z.object({
     })
     .default({ preset: "MAGIC_BLOOM", intensity: 1, speed: 1 }),
   sectionImages: z.record(z.string(), z.string()).default({}),
+  // Kept only so themes saved by PR #79 continue to parse; these blocks are
+  // no longer rendered. Real section elements are edited through elementStyles.
   sectionTextBlocks: z
     .record(
       z.string(),
@@ -58,6 +60,39 @@ export const themeDecorAssetsSchema = z.object({
           fontRole: z.enum(["display", "body", "script"]).default("body"),
           align: z.enum(["left", "center", "right"]).default("center"),
           color: z.string().optional(),
+        }),
+      ),
+    )
+    .default({}),
+  elementStyles: z
+    .record(
+      z.string(),
+      z.object({
+        text: z.string().optional(),
+        hidden: z.boolean().default(false),
+        fontSize: z.coerce.number().min(8).max(120).optional(),
+        fontRole: z.enum(["display", "body", "script"]).optional(),
+        align: z.enum(["left", "center", "right"]).optional(),
+        color: z.string().optional(),
+        x: z.coerce.number().min(-60).max(60).default(0),
+        y: z.coerce.number().min(-60).max(60).default(0),
+        showBackground: z.boolean().default(false),
+      }),
+    )
+    .default({}),
+  customText: z
+    .record(
+      z.string(),
+      z.array(
+        z.object({
+          id: z.string().min(1),
+          text: z.string(),
+          fontSize: z.coerce.number().min(8).max(120).default(22),
+          fontRole: z.enum(["display", "body", "script"]).default("body"),
+          align: z.enum(["left", "center", "right"]).default("center"),
+          color: z.string().optional(),
+          x: z.coerce.number().min(-60).max(60).default(0),
+          y: z.coerce.number().min(-60).max(60).default(0),
         }),
       ),
     )

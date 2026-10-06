@@ -17,7 +17,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-3 bottom-3 z-40 flex h-16 items-stretch overflow-hidden rounded-[1.4rem] border border-[#c8a45e]/35 bg-[#211f1c]/94 shadow-[0_18px_44px_rgba(0,0,0,.3)] backdrop-blur-2xl lg:hidden">
+    <nav className="fixed inset-x-3 bottom-3 z-40 flex h-16 items-stretch overflow-hidden rounded-[1.4rem] border border-[#c5add5]/45 bg-[#533d61]/95 shadow-[0_18px_44px_rgba(0,0,0,.3)] backdrop-blur-2xl lg:hidden">
       {TABS.map((tab) => {
         const active =
           pathname === tab.href ||
@@ -29,8 +29,8 @@ export function MobileBottomNav() {
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-bold transition-all",
               active
-                ? "bg-gradient-to-t from-[#d4ad63]/25 to-transparent text-[#f0cf89]"
-                : "text-[#b8a98e]",
+                ? "bg-gradient-to-t from-[#b894cb]/30 to-transparent text-[#f6e5ff]"
+                : "text-[#d7c7df]",
             )}
           >
             <tab.icon className="size-5" />

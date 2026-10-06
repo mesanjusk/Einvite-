@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     shortcut: SITE_LOGO_PATH,
     apple: SITE_LOGO_PATH,
   },
-  themeColor: "#211f1c",
+  themeColor: "#6b4f7a",
 };
 
 export default function RootLayout({

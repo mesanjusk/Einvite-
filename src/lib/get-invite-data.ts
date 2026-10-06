@@ -85,7 +85,8 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
   const decorAssets = (invitation.theme?.decorAssets ?? {}) as {
     revealAnimation?: InviteData["revealAnimation"];
     sectionImages?: InviteData["sectionImages"];
-    sectionTextBlocks?: InviteData["sectionTextBlocks"];
+    elementStyles?: InviteData["elementStyles"];
+    customText?: InviteData["customText"];
     sectionStyles?: InviteData["sectionStyles"];
   };
 
@@ -129,7 +130,8 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
       speed: 1,
     },
     sectionImages: decorAssets.sectionImages ?? {},
-    sectionTextBlocks: decorAssets.sectionTextBlocks ?? {},
+    elementStyles: decorAssets.elementStyles ?? {},
+    customText: decorAssets.customText ?? {},
     sectionStyles: decorAssets.sectionStyles ?? {},
   };
 

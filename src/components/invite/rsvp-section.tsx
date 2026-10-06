@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useInviteEdit } from "./edit-context";
+import { ThemeText } from "./theme-text-element";
 
 export function RsvpSection({
   invitationId,
@@ -79,14 +80,15 @@ export function RsvpSection({
     >
       <RevealGroup className="w-full max-w-md">
         <Reveal variants={fadeUp} className="mb-8 text-center">
-          <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
-            {t.rsvpEyebrow}
+          <p data-theme-element="RSVP.eyebrow" className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
+            <ThemeText elementKey="RSVP.eyebrow">{t.rsvpEyebrow}</ThemeText>
           </p>
           <h2
+            data-theme-element="RSVP.heading"
             className="mt-1.5 text-4xl"
             style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
           >
-            {t.willYouJoin}
+            <ThemeText elementKey="RSVP.heading">{t.willYouJoin}</ThemeText>
           </h2>
         </Reveal>
 

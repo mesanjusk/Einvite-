@@ -36,10 +36,10 @@ export function SiteLogo({
 
       {showName && (
         <span className="royal-wordmark">
-          <span className="block text-[0.58em] font-semibold tracking-[0.28em] uppercase text-[#b78c45]">
+          <span className="block text-[0.58em] font-semibold tracking-[0.28em] uppercase text-[#e0bf72]">
             SK
           </span>
-          <span className="block -mt-0.5 font-display leading-none text-[#f4dfae]">
+          <span className="block -mt-0.5 font-display leading-none text-[#f8eaff]">
             Digital
           </span>
         </span>

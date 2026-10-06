@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/i18n/locale-context";
 import { ScratchCard } from "./scratch-card";
 import { useInviteEdit } from "./edit-context";
 import { EditableDate } from "./editable";
+import { ThemeText } from "./theme-text-element";
 
 const SCRATCH_PARTS = ["month", "day", "year"] as const;
 type ScratchPart = (typeof SCRATCH_PARTS)[number];
@@ -82,14 +83,15 @@ export function CountdownSection({
               >
                 <Reveal variants={fadeUp}>
                   <h2
+                    data-theme-element="COUNTDOWN.saveTheDate"
                     className="mb-1 text-[38px]"
                     style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
                   >
-                    {t.saveTheDate}
+                    <ThemeText elementKey="COUNTDOWN.saveTheDate">{t.saveTheDate}</ThemeText>
                   </h2>
                 </Reveal>
-                <p className="mb-2 text-xs tracking-[0.15em] opacity-70">
-                  {t.scratchToRevealDate}
+                <p data-theme-element="COUNTDOWN.scratchInstruction" className="mb-2 text-xs tracking-[0.15em] opacity-70">
+                  <ThemeText elementKey="COUNTDOWN.scratchInstruction">{t.scratchToRevealDate}</ThemeText>
                 </p>
                 <div className="flex justify-center gap-3">
                   {(["month", "day"] as ScratchPart[]).map((part) => (
@@ -136,18 +138,20 @@ export function CountdownSection({
                 transition={{ duration: 0.5 }}
               >
                 <p
+                  data-theme-element="COUNTDOWN.quote"
                   className="mb-4 text-[15px]"
                   style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", opacity: 0.75 }}
                 >
-                  {quote ?? t.countdownQuoteDefault}
+                  <ThemeText elementKey="COUNTDOWN.quote">{quote ?? t.countdownQuoteDefault}</ThemeText>
                 </p>
                 <h2
+                  data-theme-element="COUNTDOWN.heading"
                   className="mb-3.5 text-[38px]"
                   style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
                 >
-                  {t.theWedding}
+                  <ThemeText elementKey="COUNTDOWN.heading">{t.theWedding}</ThemeText>
                 </h2>
-                <p className="mb-7 text-sm tracking-[0.2em]" style={{ color: "var(--inv-accent)" }}>
+                <p data-theme-element="COUNTDOWN.date" className="mb-7 text-sm tracking-[0.2em]" style={{ color: "var(--inv-accent)" }}>
                   <EditableDate target={{ kind: "invitation" }} value={weddingDate}>
                     {dateDisplay}
                   </EditableDate>
