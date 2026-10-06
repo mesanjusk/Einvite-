@@ -365,7 +365,7 @@ export function ThemeFormDialog({
                         onChange={(e) =>
                           form.setValue(
                             "decorAssets.revealAnimation.preset",
-                            e.target.value as ThemeFormValues["decorAssets"]["revealAnimation"]["preset"],
+                            e.target.value as (typeof REVEAL_ANIMATION_PRESETS)[number],
                           )
                         }
                       >
