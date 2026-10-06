@@ -1,8 +1,11 @@
 import { z } from "zod";
 
+const mobileSchema = z.string().min(8, "Enter a valid mobile number").max(20);
+
 export const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(80),
   email: z.email("Enter a valid email address"),
+  phone: mobileSchema,
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -28,14 +31,15 @@ export const magicLinkSchema = z.object({
 export type MagicLinkInput = z.infer<typeof magicLinkSchema>;
 
 export const forgotPasswordSchema = z.object({
-  email: z.email("Enter a valid email address"),
+  phone: mobileSchema,
 });
 
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
 export const resetPasswordSchema = z
   .object({
-    token: z.string().min(1, "Reset token is required"),
+    phone: mobileSchema,
+    otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit OTP"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
