@@ -94,12 +94,13 @@ export function GallerySection({
 
       <RevealGroup className="relative z-[2] w-full">
         <Reveal variants={fadeUp}>
-          <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
+          <p data-theme-element="GALLERY.eyebrow" className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
             {t.ourStory}
           </p>
         </Reveal>
         <Reveal variants={fadeUp}>
           <h2
+            data-theme-element="GALLERY.storyHeadline"
             className="mt-1.5 mb-3 text-[48px]"
             style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
           >
