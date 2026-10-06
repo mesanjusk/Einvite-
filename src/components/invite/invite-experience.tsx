@@ -368,6 +368,7 @@ export function InviteExperience({
         >
           <StartLiveInvitationButton
             fromSlug={invite.slug}
+            loadingVideoUrl={invite.revealVideoUrl}
             className="pill-button shadow-lg"
             style={{ background: "var(--inv-accent)", color: "var(--inv-primary)" }}
           >
