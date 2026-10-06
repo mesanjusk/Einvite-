@@ -59,4 +59,10 @@ export type InviteData = {
   revealVideoUrl: string | null;
   revealVideoWebmUrl?: string | null;
   revealVideoPosterUrl?: string | null;
+  revealAnimation?: {
+    preset: "MAGIC_BLOOM" | "SPARKLES" | "CONFETTI" | "PETALS";
+    intensity: number;
+    speed: number;
+  };
+  sectionImages?: Partial<Record<string, string>>;
 };
