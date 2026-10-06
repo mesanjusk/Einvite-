@@ -31,6 +31,26 @@ export const SECTION_TYPES = [
   "THANK_YOU",
 ] as const;
 
+export const REVEAL_ANIMATION_PRESETS = [
+  "MAGIC_BLOOM",
+  "SPARKLES",
+  "CONFETTI",
+  "PETALS",
+] as const;
+
+export const themeDecorAssetsSchema = z.object({
+  revealAnimation: z
+    .object({
+      preset: z.enum(REVEAL_ANIMATION_PRESETS).default("MAGIC_BLOOM"),
+      intensity: z.coerce.number().min(0.5).max(2).default(1),
+      speed: z.coerce.number().min(0.5).max(2).default(1),
+    })
+    .default({ preset: "MAGIC_BLOOM", intensity: 1, speed: 1 }),
+  sectionImages: z
+    .record(z.enum(SECTION_TYPES), z.string())
+    .default({}),
+});
+
 export const THEME_CATEGORIES = [
   "traditional",
   "modern",
@@ -61,6 +81,7 @@ export const themeFormSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,
   fontPairing: fontPairingSchema,
+  decorAssets: themeDecorAssetsSchema.optional(),
   sectionOrder: z
     .array(z.enum(SECTION_TYPES))
     .min(1, "At least one section is required"),
