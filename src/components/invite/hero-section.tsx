@@ -10,6 +10,7 @@ import { celebrantNames, eventCategoryFor, fillContent } from "@/lib/event-categ
 import { useInviteEdit } from "./edit-context";
 import { EditableText } from "./editable";
 import type { InviteData, InviteFamilyMember } from "./types";
+import { ThemeText } from "./theme-text-element";
 
 function CornerBracket({ style }: { style: React.CSSProperties }) {
   return (
@@ -232,7 +233,7 @@ export function HeroSection({
                 <div className="my-2.5 flex items-center justify-center gap-3.5">
                   <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
                   <span data-theme-element="HERO.joiner" style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-accent)" }} className="text-2xl">
-                    {category.joiner}
+                    <ThemeText elementKey="HERO.joiner">{category.joiner}</ThemeText>
                   </span>
                   <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
                 </div>
