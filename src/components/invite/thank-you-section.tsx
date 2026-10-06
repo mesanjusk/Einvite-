@@ -11,11 +11,13 @@ export function ThankYouSection({
   groomName,
   hashtags,
   shareUrl,
+  message,
 }: {
   brideName: string;
   groomName: string;
   hashtags?: string[];
   shareUrl?: string;
+  message?: string;
 }) {
   const { t } = useLocale();
   return (
@@ -30,6 +32,7 @@ export function ThankYouSection({
       <RevealGroup className="relative z-[2]">
         <Reveal variants={fadeUp}>
           <h2
+            data-theme-element="THANK_YOU.heading"
             className="mb-4 text-[38px]"
             style={{ fontFamily: "var(--inv-font-script)", fontWeight: 400, color: "var(--inv-secondary)" }}
           >
@@ -38,12 +41,24 @@ export function ThankYouSection({
         </Reveal>
         <Reveal variants={fadeUp}>
           <p
+            data-theme-element="THANK_YOU.names"
             className="text-[15px]"
             style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", color: "var(--inv-accent)" }}
           >
             {brideName} &amp; {groomName}
           </p>
         </Reveal>
+        {message && (
+          <Reveal variants={fadeUp}>
+            <p
+              data-theme-element="THANK_YOU.message"
+              className="mx-auto mt-4 max-w-sm text-sm leading-relaxed"
+              style={{ fontFamily: "var(--inv-font-body)", color: "var(--inv-secondary)" }}
+            >
+              {message}
+            </p>
+          </Reveal>
+        )}
         {hashtags && hashtags.length > 0 && (
           <Reveal variants={fadeUp}>
             <p className="mt-4 text-xs tracking-wide opacity-70" style={{ color: "var(--inv-secondary)" }}>
