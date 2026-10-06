@@ -71,6 +71,7 @@ export type InviteData = {
   elementStyles?: Record<
     string,
     {
+      text?: string;
       hidden?: boolean;
       fontSize?: number;
       fontRole?: "display" | "body" | "script";
