@@ -88,6 +88,7 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
     sortOrder: data.sortOrder,
     colorPalette: data.colorPalette,
     fontPairing: data.fontPairing,
+    decorAssets: data.decorAssets,
   };
 
   const theme = data.id
@@ -116,6 +117,9 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
   revalidatePath("/dashboard/invitations/new");
   revalidatePath("/dashboard/publish/theme");
   revalidatePath("/dashboard/publish/pdf");
+  revalidatePath("/");
+  revalidatePath("/themes");
+  revalidatePath("/create");
 
   return { success: true, data: undefined };
 }
