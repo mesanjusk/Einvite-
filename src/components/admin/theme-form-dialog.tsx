@@ -428,6 +428,8 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       },
       sectionImages: decor.sectionImages ?? {},
       sectionTextBlocks: decor.sectionTextBlocks ?? {},
+      elementStyles: decor.elementStyles ?? {},
+      customText: decor.customText ?? {},
       contentCommunity: decor.contentCommunity ?? "General",
       sectionStyles: decor.sectionStyles ?? {},
     },
@@ -459,6 +461,7 @@ export function ThemeFormDialog({
   const [thumbUploading, setThumbUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
   const [previewSection, setPreviewSection] = useState<(typeof SECTION_TYPES)[number]>("HERO");
+  const [selectedElement, setSelectedElement] = useState<string | null>("HERO.invitationLetter");
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const bulkArtworkInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -489,34 +492,52 @@ export function ThemeFormDialog({
     });
   }
 
-  function setSectionTextBlocks(
-    sectionType: (typeof SECTION_TYPES)[number],
-    blocks: NonNullable<DecorAssets["sectionTextBlocks"]>[string],
-  ) {
-    const current = (form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
-      DecorAssets["sectionTextBlocks"]
+  function updateElementStyle(key: string, patch: Partial<ThemeElementStyleValue>) {
+    const current = (form.getValues("decorAssets.elementStyles") ?? {}) as NonNullable<
+      DecorAssets["elementStyles"]
     >;
-    form.setValue("decorAssets.sectionTextBlocks", {
+    form.setValue("decorAssets.elementStyles", {
+      ...current,
+      [key]: {
+        ...(current[key] ?? {}),
+        ...patch,
+      },
+    });
+  }
+
+  function setCustomText(
+    sectionType: (typeof SECTION_TYPES)[number],
+    blocks: NonNullable<DecorAssets["customText"]>[string],
+  ) {
+    const current = (form.getValues("decorAssets.customText") ?? {}) as NonNullable<
+      DecorAssets["customText"]
+    >;
+    form.setValue("decorAssets.customText", {
       ...current,
       [sectionType]: blocks,
     });
   }
 
-  function addTextBlock(sectionType: (typeof SECTION_TYPES)[number], text = "New text") {
+  function addCustomText(text = "New text") {
+    const sectionType = previewSection;
     const current =
-      ((form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
-        DecorAssets["sectionTextBlocks"]
+      ((form.getValues("decorAssets.customText") ?? {}) as NonNullable<
+        DecorAssets["customText"]
       >)[sectionType] ?? [];
-    setSectionTextBlocks(sectionType, [
+    const id = `CUSTOM.${sectionType}.${Date.now().toString(36)}`;
+    setCustomText(sectionType, [
       ...current,
       {
-        id: `text-${Date.now().toString(36)}`,
+        id,
         text,
         fontSize: 22,
         fontRole: "body",
         align: "center",
+        x: 0,
+        y: 0,
       },
     ]);
+    setSelectedElement(id);
   }
 
   function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
