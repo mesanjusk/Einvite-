@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -24,12 +25,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function ForgotPasswordForm() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const form = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: "" },
+    defaultValues: { phone: "" },
   });
 
   async function onSubmit(values: ForgotPasswordInput) {
@@ -42,7 +43,8 @@ export function ForgotPasswordForm() {
       return;
     }
 
-    setSent(true);
+    toast.success(result.data.message);
+    router.push(`/reset-password?phone=${encodeURIComponent(values.phone)}`);
   }
 
   return (
@@ -54,50 +56,37 @@ export function ForgotPasswordForm() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {sent ? (
-          <div className="grid gap-5 text-center">
-            <p className="text-sm leading-6 text-[#e7dcc8]">
-              If an account exists for that email, we sent a secure reset link. The link expires in 1 hour.
-            </p>
-            <Button asChild>
-              <Link href="/sign-in">Back to sign in</Link>
+        <p className="mb-5 text-sm leading-6 text-[#cfc3ad]">
+          Enter the mobile number registered with your SK Digital account. We&apos;ll send a 6-digit OTP on WhatsApp.
+        </p>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mobile number</FormLabel>
+                  <FormControl>
+                    <Input type="tel" autoComplete="tel" inputMode="tel" placeholder="9876543210" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" disabled={loading} className="mt-2">
+              {loading ? "Sending OTP…" : "Send OTP"}
             </Button>
-          </div>
-        ) : (
-          <>
-            <p className="mb-5 text-sm leading-6 text-[#cfc3ad]">
-              Enter the email used for your SK Digital account and we&apos;ll send you a secure reset link.
-            </p>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" autoComplete="email" placeholder="you@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={loading} className="mt-2">
-                  {loading ? "Sending…" : "Send reset link"}
-                </Button>
-              </form>
-            </Form>
-            <div className="mt-6 text-center text-sm">
-              <Link
-                href="/sign-in"
-                className="font-semibold text-[#e0bd76] underline decoration-[#c59c52]/55 underline-offset-4"
-              >
-                Back to sign in
-              </Link>
-            </div>
-          </>
-        )}
+          </form>
+        </Form>
+        <div className="mt-6 text-center text-sm">
+          <Link
+            href="/sign-in"
+            className="font-semibold text-[#e0bd76] underline decoration-[#c59c52]/55 underline-offset-4"
+          >
+            Back to sign in
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );
