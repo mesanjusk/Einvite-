@@ -172,6 +172,8 @@ export function InviteExperience({
   guestId = null,
   showRemixCta = false,
   guidedActiveSectionId,
+  previewMode = false,
+  onlySectionType,
 }: {
   invite: InviteData;
   sectionConfig: SectionConfigEntry[];
@@ -190,6 +192,10 @@ export function InviteExperience({
    * id means that one slide — and only that slide — is editable.
    */
   guidedActiveSectionId?: string | null;
+  /** Theme Studio: render inside its phone frame without global fixed controls. */
+  previewMode?: boolean;
+  /** Theme Studio: render one real section instead of the whole invitation. */
+  onlySectionType?: string;
 }) {
   const edit = useInviteEdit();
   const [inviteOpen, setInviteOpen] = useState(skipEnvelope);
@@ -203,7 +209,7 @@ export function InviteExperience({
   }, [invite.slug]);
 
   const visibleSections = [...sectionConfig]
-    .filter((s) => s.visible)
+    .filter((s) => s.visible && (!onlySectionType || s.type === onlySectionType))
     .sort((a, b) => a.order - b.order);
 
   // "STORY" and "GALLERY" both render the same photo stack — the section
@@ -223,15 +229,17 @@ export function InviteExperience({
 
   return (
     <LocaleProvider>
-      <ScrollProgress />
-      <LanguageToggle />
-      <MusicPlayer
-        key={invite.musicUrl ?? "no-music"}
-        musicUrl={invite.musicUrl}
-        active={inviteOpen}
-      />
+      {!previewMode && <ScrollProgress />}
+      {!previewMode && <LanguageToggle />}
+      {!previewMode && (
+        <MusicPlayer
+          key={invite.musicUrl ?? "no-music"}
+          musicUrl={invite.musicUrl}
+          active={inviteOpen}
+        />
+      )}
 
-      {inviteOpen && (
+      {inviteOpen && !previewMode && (
         <WeddingAmbientEffects
           variant="viewer"
           reactToMusic
@@ -435,7 +443,7 @@ export function InviteExperience({
         </main>
       )}
 
-      {inviteOpen && showRemixCta && (
+      {inviteOpen && showRemixCta && !previewMode && (
         <motion.div
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
