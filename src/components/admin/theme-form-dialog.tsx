@@ -540,6 +540,22 @@ export function ThemeFormDialog({
     setSelectedElement(id);
   }
 
+  // Legacy PR #79 helpers remain only so old saved data can be opened safely.
+  // The corresponding UI is hidden and these blocks are no longer rendered publicly.
+  function setSectionTextBlocks(
+    sectionType: (typeof SECTION_TYPES)[number],
+    blocks: NonNullable<DecorAssets["sectionTextBlocks"]>[string],
+  ) {
+    const current = (form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
+      DecorAssets["sectionTextBlocks"]
+    >;
+    form.setValue("decorAssets.sectionTextBlocks", { ...current, [sectionType]: blocks });
+  }
+
+  function addTextBlock(_sectionType: (typeof SECTION_TYPES)[number], text = "New text") {
+    addCustomText(text);
+  }
+
   function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
     const current = form.getValues("sectionOrder");
     if (current.includes(sectionType)) {
