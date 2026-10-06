@@ -65,7 +65,7 @@ export async function forgotPasswordAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid email" };
   }
 
-  const email = parsed.data.email.toLowerCase();
+  const email = parsed.data.email;
   const genericMessage =
     "If an account exists for that email, a password reset link has been sent.";
 
@@ -91,12 +91,15 @@ export async function forgotPasswordAction(
   const resetUrl = `${appUrl.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
   try {
-    await getResendClient().emails.send({
+    const sendResult = await getResendClient().emails.send({
       from: EMAIL_FROM,
       to: email,
       subject: "Reset your SK Digital password",
       html: passwordResetEmailHtml({ url: resetUrl }),
     });
+    if (sendResult.error) {
+      throw new Error(sendResult.error.message);
+    }
   } catch (error) {
     console.error("Failed to send password reset email", error);
     await db.verificationToken.deleteMany({ where: { identifier, token: tokenHash } });
