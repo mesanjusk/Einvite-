@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { ScrollProgress } from "@/components/animation/scroll-progress";
@@ -52,6 +53,7 @@ function SectionScope({
   guidedActiveSectionId,
   edit,
   sectionImage,
+  sectionStyle,
   children,
 }: {
   id: string;
@@ -59,6 +61,7 @@ function SectionScope({
   guidedActiveSectionId: string | null | undefined;
   edit: InviteEditApi | null;
   sectionImage?: string | null;
+  sectionStyle?: InviteData["sectionStyles"][string];
   children: ReactNode;
 }) {
   const guided = guidedActiveSectionId !== undefined;
@@ -74,20 +77,31 @@ function SectionScope({
       <div
         data-invite-section-id={id}
         data-invite-section-label={label}
-        className={
-          sectionImage
-            ? "relative bg-cover bg-center bg-no-repeat [&>section]:!bg-transparent"
-            : "relative"
-        }
-        style={
-          sectionImage
-            ? {
-                backgroundImage: `url("${sectionImage.replace(/"/g, "\\\"")}")`,
-              }
-            : undefined
-        }
+        className={cn(
+          "relative",
+          sectionImage && "bg-cover bg-center bg-no-repeat [&>section]:!bg-transparent",
+          sectionStyle?.showBox === false && "inv-section-no-box",
+        )}
+        style={{
+          ...(sectionImage
+            ? { backgroundImage: `url("${sectionImage.replace(/"/g, "\\\"")}")` }
+            : {}),
+          ...(sectionStyle?.primary ? { "--inv-primary": sectionStyle.primary } : {}),
+          ...(sectionStyle?.accent ? { "--inv-accent": sectionStyle.accent } : {}),
+          ...(sectionStyle?.foreground ? { "--inv-foreground": sectionStyle.foreground } : {}),
+          ...(sectionStyle?.displayFont ? { "--inv-font-display": sectionStyle.displayFont } : {}),
+          ...(sectionStyle?.bodyFont ? { "--inv-font-body": sectionStyle.bodyFont } : {}),
+          ...(sectionStyle?.scriptFont ? { "--inv-font-script": sectionStyle.scriptFont } : {}),
+        } as React.CSSProperties}
       >
-        {children}
+        <div
+          className="relative"
+          style={{
+            transform: `translate(${sectionStyle?.x ?? 0}%, ${sectionStyle?.y ?? 0}%)`,
+          }}
+        >
+          {children}
+        </div>
       </div>
     </InviteEditProvider>
   );
@@ -199,6 +213,7 @@ export function InviteExperience({
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
+                    sectionStyle={invite.sectionStyles?.[section.type]}
                   >
                     <HeroSection invite={invite} guestName={guestName} />
                   </SectionScope>
@@ -212,6 +227,7 @@ export function InviteExperience({
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
+                    sectionStyle={invite.sectionStyles?.[section.type]}
                   >
                     <CountdownSection weddingDate={invite.weddingDate} />
                   </SectionScope>
@@ -268,6 +284,7 @@ export function InviteExperience({
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
+                    sectionStyle={invite.sectionStyles?.[section.type]}
                   >
                     <GallerySection
                       media={invite.media}
@@ -288,6 +305,7 @@ export function InviteExperience({
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
+                    sectionStyle={invite.sectionStyles?.[section.type]}
                   >
                     <VenueSection
                       invitationId={invite.id}
@@ -306,6 +324,7 @@ export function InviteExperience({
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
+                    sectionStyle={invite.sectionStyles?.[section.type]}
                   >
                     <RsvpSection
                       invitationId={invite.id}
@@ -323,6 +342,7 @@ export function InviteExperience({
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
+                    sectionStyle={invite.sectionStyles?.[section.type]}
                   >
                     <ThankYouSection
                       brideName={invite.brideName}
