@@ -174,6 +174,18 @@ export function HeroSection({
             </Reveal>
           )}
 
+          {invite.copy?.heroSubline && (
+            <Reveal variants={fadeUp}>
+              <p
+                data-theme-element="HERO.heroSubline"
+                className="mb-3 text-sm leading-relaxed opacity-80"
+                style={{ fontFamily: "var(--inv-font-body)", color: "var(--inv-foreground)" }}
+              >
+                {invite.copy.heroSubline}
+              </p>
+            </Reveal>
+          )}
+
           {guestName && (
             <Reveal variants={fadeUp}>
               <p
