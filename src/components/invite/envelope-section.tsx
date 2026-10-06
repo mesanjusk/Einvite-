@@ -71,6 +71,8 @@ export function EnvelopeSection({
   videoUrl,
   videoWebmUrl,
   posterUrl,
+  animation,
+  backgroundImageUrl,
   onComplete,
 }: {
   initials: string;
@@ -78,12 +80,22 @@ export function EnvelopeSection({
   videoUrl?: string | null;
   videoWebmUrl?: string | null;
   posterUrl?: string | null;
+  animation?: {
+    preset: "MAGIC_BLOOM" | "SPARKLES" | "CONFETTI" | "PETALS";
+    intensity: number;
+    speed: number;
+  };
+  backgroundImageUrl?: string | null;
   onComplete: () => void;
 }) {
   const [opened, setOpened] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { t } = useLocale();
+  const preset = animation?.preset ?? "MAGIC_BLOOM";
+  const intensity = Math.min(2, Math.max(0.5, animation?.intensity ?? 1));
+  const speed = Math.min(2, Math.max(0.5, animation?.speed ?? 1));
+  const extraParticles = Array.from({ length: Math.round(18 * intensity) }, (_, i) => i);
 
   useEffect(() => {
     if (!videoUrl && !videoWebmUrl) return;
@@ -138,6 +150,14 @@ export function EnvelopeSection({
         perspective: 1000,
       }}
     >
+      {backgroundImageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={backgroundImageUrl}
+          alt=""
+          className="pointer-events-none absolute inset-0 size-full object-cover opacity-45"
+        />
+      )}
       <EmbossPattern />
       <Flourish style={{ top: 24, left: 12 }} />
       <Flourish style={{ top: 24, right: 12, transform: "scaleX(-1)" }} />
@@ -248,6 +268,56 @@ export function EnvelopeSection({
           );
         })}
       </div>
+
+      {preset !== "MAGIC_BLOOM" && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {extraParticles.map((i) => {
+            const left = ((i * 37) % 96) + 2;
+            const delay = ((i * 17) % 55) / 20;
+            const duration = (1.4 + ((i * 11) % 10) / 10) / speed;
+            const isConfetti = preset === "CONFETTI";
+            const isPetal = preset === "PETALS";
+            return (
+              <motion.span
+                key={`${preset}-${i}`}
+                className={
+                  isConfetti
+                    ? "absolute top-[-8%] h-3 w-1.5 rounded-sm"
+                    : isPetal
+                      ? "absolute top-[-8%] h-3 w-2 rounded-[70%_30%_70%_30%]"
+                      : "absolute size-1.5 rounded-full"
+                }
+                style={{
+                  left: `${left}%`,
+                  top: preset === "SPARKLES" ? `${20 + ((i * 19) % 55)}%` : "-8%",
+                  background:
+                    i % 2 === 0
+                      ? "var(--inv-accent, #c9942a)"
+                      : "var(--inv-secondary, #fbf3e2)",
+                  boxShadow:
+                    preset === "SPARKLES"
+                      ? "0 0 9px 2px var(--inv-secondary, #fbf3e2)"
+                      : undefined,
+                }}
+                initial={{ opacity: 0, y: 0, rotate: 0, scale: 0.4 }}
+                animate={
+                  opened
+                    ? preset === "SPARKLES"
+                      ? { opacity: [0, 1, 0], scale: [0.4, 1.5, 0.5] }
+                      : {
+                          opacity: [0, 1, 1, 0],
+                          y: [0, 180 + (i % 5) * 55],
+                          rotate: [0, 160 + i * 13],
+                          scale: [0.7, 1, 0.8],
+                        }
+                    : { opacity: 0 }
+                }
+                transition={{ duration, delay: 0.2 + delay, ease: "easeOut" }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* A soft white-gold dissolve, right before the invitation content takes over —
           mirrors the burst fading through white in the reference animation. */}
