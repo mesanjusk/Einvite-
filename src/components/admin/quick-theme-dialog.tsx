@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { upsertThemeAction } from "@/lib/actions/admin";
 import { EVENT_CATEGORIES } from "@/lib/event-categories";
-import { THEME_CATEGORIES } from "@/lib/validations/admin";
+import { THEME_CATEGORIES, type ThemeFormInput } from "@/lib/validations/admin";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export function QuickThemeDialog() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState("");
-  const [eventCategory, setEventCategory] = useState("wedding");
+  const [eventCategory, setEventCategory] = useState<ThemeFormInput["eventCategory"]>("wedding");
   const [category, setCategory] = useState<(typeof THEME_CATEGORIES)[number]>("classic");
   const [previewImage, setPreviewImage] = useState("");
   const [primary, setPrimary] = useState("#7a2e2e");
@@ -150,7 +150,7 @@ export function QuickThemeDialog() {
               <select
                 className="border-input h-10 rounded-md border bg-background px-3 text-sm"
                 value={eventCategory}
-                onChange={(e) => setEventCategory(e.target.value)}
+                onChange={(e) => setEventCategory(e.target.value as ThemeFormInput["eventCategory"])}
               >
                 {EVENT_CATEGORIES.map((item) => (
                   <option key={item.slug} value={item.slug}>{item.label}</option>
