@@ -101,6 +101,15 @@ type ThemeRecord = {
     foreground: string;
   };
   fontPairing: { display: string; body: string; script: string };
+  content?: {
+    eyebrow?: string;
+    heroHeadline?: string;
+    heroSubline?: string;
+    invitationLetter?: string;
+    storyHeadline?: string;
+    thankYou?: string;
+    hashtagSuffix?: string;
+  } | null;
   decorAssets?: DecorAssets | null;
   sectionOrder: string[];
 };
@@ -378,6 +387,15 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       display: "Playfair Display",
       body: "Cormorant Garamond",
       script: "Great Vibes",
+    },
+    content: {
+      eyebrow: theme?.content?.eyebrow ?? "",
+      heroHeadline: theme?.content?.heroHeadline ?? "",
+      heroSubline: theme?.content?.heroSubline ?? "",
+      invitationLetter: theme?.content?.invitationLetter ?? "",
+      storyHeadline: theme?.content?.storyHeadline ?? "",
+      thankYou: theme?.content?.thankYou ?? "",
+      hashtagSuffix: theme?.content?.hashtagSuffix ?? "",
     },
     decorAssets: {
       revealAnimation: {
@@ -831,6 +849,80 @@ export function ThemeFormDialog({
               ))}
             </div>
           </div>
+
+          {type === "WEBSITE" && (
+            <section className="grid gap-4 rounded-2xl border border-violet-200/70 bg-violet-50/45 p-4">
+              <div>
+                <Label className="text-base">Theme text & community content</Label>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Edit the default wording users see before they personalize it, or insert a community-specific line from the content collection.
+                </p>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-[180px_minmax(0,1fr)]">
+                <select
+                  className="border-input h-10 rounded-md border bg-background px-3 text-sm"
+                  value={form.watch("decorAssets.contentCommunity") ?? "General"}
+                  onChange={(e) => form.setValue("decorAssets.contentCommunity", e.target.value)}
+                >
+                  {COMMUNITY_CONTENT_GROUPS.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+                <select
+                  className="border-input h-10 min-w-0 rounded-md border bg-background px-3 text-sm"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const preset = COMMUNITY_CONTENT_PRESETS.find((item) => item.id === e.target.value);
+                    if (preset) {
+                      form.setValue("content.invitationLetter", preset.text);
+                      if (preset.role === "blessing") {
+                        form.setValue("content.eyebrow", preset.text);
+                      }
+                    }
+                    e.currentTarget.value = "";
+                  }}
+                >
+                  <option value="">Choose content from collection…</option>
+                  {COMMUNITY_CONTENT_PRESETS.filter((preset) => {
+                    const community = form.watch("decorAssets.contentCommunity") ?? "General";
+                    return preset.community === community || preset.community === "General";
+                  }).map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.community} · {preset.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Eyebrow / blessing</Label>
+                  <Input {...form.register("content.eyebrow")} placeholder="॥ श्री गणेशाय नमः ॥" />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Hero headline</Label>
+                  <Input {...form.register("content.heroHeadline")} placeholder="We’re Getting Married" />
+                </div>
+                <div className="grid gap-1.5 sm:col-span-2">
+                  <Label className="text-xs">Hero subline</Label>
+                  <Input {...form.register("content.heroSubline")} placeholder="Join us as we celebrate..." />
+                </div>
+                <div className="grid gap-1.5 sm:col-span-2">
+                  <Label className="text-xs">Invitation text</Label>
+                  <Textarea rows={3} {...form.register("content.invitationLetter")} />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Story heading</Label>
+                  <Input {...form.register("content.storyHeadline")} placeholder="Forever Us" />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Thank-you line</Label>
+                  <Input {...form.register("content.thankYou")} placeholder="With love and gratitude..." />
+                </div>
+              </div>
+            </section>
+          )}
 
           {type === "WEBSITE" && (
             <section className="grid gap-4">
