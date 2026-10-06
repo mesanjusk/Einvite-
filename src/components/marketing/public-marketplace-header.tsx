@@ -6,7 +6,7 @@ import { SITE_NAME } from "@/config/site";
 
 export function PublicMarketplaceHeader() {
   return (
-    <header className="royal-nav sticky top-0 z-50 border-b border-[#c9a35b]/25 bg-[#1f1d1a]/92 text-[#f7ecd4] backdrop-blur-2xl">
+    <header className="royal-nav sticky top-0 z-50 border-b border-[#c8b0d8]/30 bg-[#4f3a5d]/94 text-[#fbf3ff] backdrop-blur-2xl">
       <div className="mx-auto flex h-[4.35rem] max-w-7xl items-center justify-between px-4 sm:px-8 lg:px-10">
         <Link
           href="/"
@@ -16,7 +16,7 @@ export function PublicMarketplaceHeader() {
           <SiteLogo size="md" showName />
         </Link>
 
-        <nav className="hidden items-center gap-1 rounded-full border border-[#c9a35b]/22 bg-white/[0.045] p-1.5 shadow-[0_14px_38px_rgba(0,0,0,.22)] md:flex">
+        <nav className="hidden items-center gap-1 rounded-full border border-[#d7c3e4]/24 bg-white/[0.06] p-1.5 shadow-[0_14px_38px_rgba(0,0,0,.22)] md:flex">
           {[
             ["Home", "/"],
             ["Designs", "/themes"],
@@ -25,7 +25,7 @@ export function PublicMarketplaceHeader() {
             <Link
               key={href}
               href={href}
-              className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-[#e7d5ad] transition duration-300 hover:bg-[#d4ac62]/12 hover:text-[#f6dda1]"
+              className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-[#eadff1] transition duration-300 hover:bg-[#c9a7da]/16 hover:text-white"
             >
               {label}
             </Link>
@@ -43,7 +43,7 @@ export function PublicMarketplaceHeader() {
         </div>
 
         <details className="group relative md:hidden">
-          <summary className="grid size-10 cursor-pointer list-none place-items-center rounded-full border border-[#d0ad6b]/40 bg-[#302b25] text-[#e6c47c] shadow-[0_8px_24px_rgba(0,0,0,.28)] transition hover:border-[#e6c47c]/70 [&::-webkit-details-marker]:hidden">
+          <summary className="grid size-10 cursor-pointer list-none place-items-center rounded-full border border-[#cfb6df]/45 bg-[#654b74] text-[#f2dcff] shadow-[0_8px_24px_rgba(0,0,0,.28)] transition hover:border-[#e6d3f1]/75 [&::-webkit-details-marker]:hidden">
             <span className="flex w-4 flex-col gap-[3px]" aria-hidden="true">
               <span className="h-px w-full bg-current" />
               <span className="h-px w-full bg-current" />
@@ -52,16 +52,16 @@ export function PublicMarketplaceHeader() {
             <span className="sr-only">Open menu</span>
           </summary>
 
-          <div className="royal-menu absolute right-0 top-12 w-[min(86vw,320px)] overflow-hidden rounded-[1.8rem] border border-[#c9a35b]/28 bg-[#211e1b]/96 p-4 shadow-[0_26px_80px_rgba(0,0,0,.45)] backdrop-blur-2xl">
-            <div className="mb-3 flex items-center justify-center gap-2 text-[#d9b46b]">
+          <div className="royal-menu absolute right-0 top-12 w-[min(86vw,320px)] overflow-hidden rounded-[1.8rem] border border-[#d4bde2]/32 bg-[#513b5e]/97 p-4 shadow-[0_26px_80px_rgba(0,0,0,.45)] backdrop-blur-2xl">
+            <div className="mb-3 flex items-center justify-center gap-2 text-[#ead083]">
               <Sparkles className="size-4" />
               <span className="font-display text-lg tracking-wide">SK Digital</span>
             </div>
-            <nav className="grid gap-1 text-center font-display text-lg text-[#f0dfbc]">
-              <Link href="/" className="rounded-2xl px-4 py-3 transition hover:bg-[#d4ac62]/10">Home</Link>
-              <Link href="/themes" className="rounded-2xl px-4 py-3 transition hover:bg-[#d4ac62]/10">Designs</Link>
-              <Link href="/dashboard" className="rounded-2xl px-4 py-3 transition hover:bg-[#d4ac62]/10">My invitations</Link>
-              <Link href="/contact" className="rounded-2xl px-4 py-3 transition hover:bg-[#d4ac62]/10">Contact</Link>
+            <nav className="grid gap-1 text-center font-display text-lg text-[#f4e8fb]">
+              <Link href="/" className="rounded-2xl px-4 py-3 transition hover:bg-[#c9a7da]/14">Home</Link>
+              <Link href="/themes" className="rounded-2xl px-4 py-3 transition hover:bg-[#c9a7da]/14">Designs</Link>
+              <Link href="/dashboard" className="rounded-2xl px-4 py-3 transition hover:bg-[#c9a7da]/14">My invitations</Link>
+              <Link href="/contact" className="rounded-2xl px-4 py-3 transition hover:bg-[#c9a7da]/14">Contact</Link>
             </nav>
             <Link
               href="/themes"
