@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { eventCategoryFor } from "@/lib/event-categories";
 import { ThemeFormDialog } from "@/components/admin/theme-form-dialog";
+import { QuickThemeDialog } from "@/components/admin/quick-theme-dialog";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteThemeAction, deleteThemeColorwayAction } from "@/lib/actions/admin";
 import { ThemeColorwayDialog } from "@/components/admin/theme-colorway-dialog";
@@ -26,7 +27,7 @@ export default async function AdminThemesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Themes" meta={`${themes.length} themes`}>
-        <ThemeFormDialog />
+        <QuickThemeDialog />
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
