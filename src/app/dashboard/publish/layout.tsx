@@ -5,11 +5,10 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { TabNav } from "@/components/dashboard/tab-nav";
 
 const TABS = [
-  { href: "/dashboard/publish/theme", label: "Theme" },
+  { href: "/dashboard/publish/theme", label: "Design" },
   { href: "/dashboard/publish/sections", label: "Sections" },
-  { href: "/dashboard/publish/pdf", label: "PDF" },
   { href: "/dashboard/publish/video", label: "Video" },
-  { href: "/dashboard/publish/deploy", label: "Deploy & Share" },
+  { href: "/dashboard/publish/deploy", label: "Export & Share" },
 ];
 
 export default function PublishLayout({ children }: { children: React.ReactNode }) {

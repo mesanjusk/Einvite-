@@ -49,7 +49,12 @@ export default async function DeployPage({
     : invitations[0].id;
   const invitation = await db.invitation.findUnique({
     where: { id: selectedId },
-    include: { deployment: true, phoneLink: { select: { phone: true } } },
+    include: {
+      deployment: true,
+      phoneLink: { select: { phone: true } },
+      theme: { select: { name: true } },
+      pdfTheme: { select: { name: true } },
+    },
   });
   if (!invitation) return null;
 
@@ -115,11 +120,61 @@ export default async function DeployPage({
                 Share to Instagram
               </a>
               <a
-                href={`/api/pdf/${invitation.slug}`}
+                href={`/api/pdf/${invitation.slug}?mode=website`}
                 className="text-primary text-sm underline"
               >
-                Download PDF
+                Download PDF · same website theme
               </a>
+              {invitation.pdfTheme && (
+                <a
+                  href={`/api/pdf/${invitation.slug}?mode=print`}
+                  className="text-primary text-sm underline"
+                >
+                  Download PDF · separate {invitation.pdfTheme.name} print theme
+                </a>
+              )}
+              <Link
+                href={`/dashboard/publish/pdf?invitationId=${invitation.id}`}
+                className="text-muted-foreground text-xs underline"
+              >
+                {invitation.pdfTheme ? "Change separate print theme" : "Optional: choose a separate print-only theme"}
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {invitation.status === "PUBLISHED" && (
+        <Card className="border-violet-200/70 bg-violet-50/50">
+          <CardHeader>
+            <CardTitle>Export choices</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+            <div className="rounded-xl border bg-white/70 p-4">
+              <p className="font-semibold">Website + matching PDF</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Uses {invitation.theme?.name ?? "the live website design"} for both outputs.
+              </p>
+              <a
+                href={`/api/pdf/${invitation.slug}?mode=website`}
+                className="text-primary mt-3 inline-block underline"
+              >
+                Export matching PDF
+              </a>
+            </div>
+            <div className="rounded-xl border bg-white/70 p-4">
+              <p className="font-semibold">Separate print design</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {invitation.pdfTheme
+                  ? `Currently ${invitation.pdfTheme.name}`
+                  : "Optional. Keep web and PDF visually different only when needed."}
+              </p>
+              <Link
+                href={`/dashboard/publish/pdf?invitationId=${invitation.id}`}
+                className="text-primary mt-3 inline-block underline"
+              >
+                Configure separate PDF
+              </Link>
             </div>
           </CardContent>
         </Card>

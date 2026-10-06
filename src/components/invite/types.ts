@@ -65,4 +65,18 @@ export type InviteData = {
     speed: number;
   };
   sectionImages?: Partial<Record<string, string>>;
+  sectionStyles?: Record<
+    string,
+    {
+      x?: number;
+      y?: number;
+      showBox?: boolean;
+      primary?: string;
+      accent?: string;
+      foreground?: string;
+      displayFont?: string;
+      bodyFont?: string;
+      scriptFont?: string;
+    }
+  >;
 };

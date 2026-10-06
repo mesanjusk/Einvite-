@@ -57,7 +57,9 @@ export async function GET(
   // `?design=<theme-slug>` prints the same invitation in another design from
   // the catalogue, so the couple can compare before saving a choice. It only
   // changes how this one download looks — nothing is written.
-  const requestedDesign = new URL(request.url).searchParams.get("design");
+  const searchParams = new URL(request.url).searchParams;
+  const requestedDesign = searchParams.get("design");
+  const exportMode = searchParams.get("mode");
   let designOverride: (PdfThemeRow & { templates: { pages: unknown }[] }) | null = null;
   if (requestedDesign) {
     const theme = await db.theme.findUnique({
@@ -72,9 +74,12 @@ export async function GET(
 
   const data: PdfInvitation = {
     ...invitation,
-    // A design picked for this download stands in for the saved PDF theme,
-    // including its hand-drawn template if it has one.
-    pdfTheme: designOverride ?? invitation.pdfTheme,
+    // mode=website forces the same theme guests see online. mode=print uses
+    // the separately selected legacy print design when one exists.
+    pdfTheme:
+      exportMode === "website"
+        ? null
+        : designOverride ?? invitation.pdfTheme,
     media: invitation.media.map((item) => ({ url: item.url, type: item.type })),
     familyMembers: invitation.familyMembers.map((member) => ({
       side: member.side,

@@ -49,6 +49,20 @@ type DecorAssets = {
     speed?: number;
   };
   sectionImages?: Record<string, string>;
+  sectionStyles?: Record<
+    string,
+    {
+      x?: number;
+      y?: number;
+      showBox?: boolean;
+      primary?: string;
+      accent?: string;
+      foreground?: string;
+      displayFont?: string;
+      bodyFont?: string;
+      scriptFont?: string;
+    }
+  >;
 };
 
 type ThemeRecord = {
@@ -98,6 +112,9 @@ function ThemeSectionPreview({
   imageUrl,
   palette,
   fonts,
+  styleConfig,
+  revealMode,
+  revealVideoUrl,
 }: {
   section: (typeof SECTION_TYPES)[number];
   imageUrl?: string;
@@ -109,12 +126,37 @@ function ThemeSectionPreview({
     foreground: string;
   };
   fonts: { display: string; body: string; script: string };
+  styleConfig?: {
+    x?: number;
+    y?: number;
+    showBox?: boolean;
+    primary?: string;
+    accent?: string;
+    foreground?: string;
+    displayFont?: string;
+    bodyFont?: string;
+    scriptFont?: string;
+  };
+  revealMode?: "ANIMATION" | "VIDEO";
+  revealVideoUrl?: string;
 }) {
+  const sectionPrimary = styleConfig?.primary || palette.primary;
+  const sectionAccent = styleConfig?.accent || palette.accent;
+  const sectionForeground = styleConfig?.foreground || palette.foreground;
+  const sectionDisplay = styleConfig?.displayFont || fonts.display;
+  const sectionBody = styleConfig?.bodyFont || fonts.body;
+  const sectionScript = styleConfig?.scriptFont || fonts.script;
+  const showBox = styleConfig?.showBox !== false;
   const cardStyle = {
-    background: `color-mix(in srgb, ${palette.background} 94%, white 6%)`,
-    borderColor: `color-mix(in srgb, ${palette.accent} 35%, transparent)`,
-    color: palette.foreground,
-    fontFamily: fonts.body,
+    background: showBox
+      ? `color-mix(in srgb, ${palette.background} 94%, white 6%)`
+      : "transparent",
+    borderColor: showBox
+      ? `color-mix(in srgb, ${sectionAccent} 35%, transparent)`
+      : "transparent",
+    boxShadow: showBox ? undefined : "none",
+    color: sectionForeground,
+    fontFamily: sectionBody,
   };
 
   return (
@@ -136,30 +178,45 @@ function ThemeSectionPreview({
         style={{
           backgroundColor: palette.background,
           backgroundImage: imageUrl ? `url("${imageUrl.replace(/"/g, "\\\"")}")` : undefined,
-          color: palette.foreground,
-          fontFamily: fonts.body,
+          color: sectionForeground,
+          fontFamily: sectionBody,
         }}
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-7 items-center justify-center bg-black/10 text-[8px] font-bold tracking-[0.18em] text-white/90 uppercase">
           actual mobile section area
         </div>
 
-        <div className="absolute inset-0 flex items-center justify-center p-4 pt-9">
+        {section === "ENVELOPE" && revealMode === "VIDEO" && revealVideoUrl && (
+          <video
+            src={revealVideoUrl}
+            className="absolute inset-0 size-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        )}
+        <div
+          className="absolute inset-0 flex items-center justify-center p-4 pt-9 transition-transform"
+          style={{
+            transform: `translate(${styleConfig?.x ?? 0}%, ${styleConfig?.y ?? 0}%)`,
+          }}
+        >
           {section === "ENVELOPE" ? (
             <div className="text-center">
               <div
                 className="mx-auto grid size-24 place-items-center rounded-full border shadow-lg"
-                style={{ ...cardStyle, color: palette.primary }}
+                style={{ ...cardStyle, color: sectionPrimary }}
               >
-                <span style={{ fontFamily: fonts.script }} className="text-3xl">M&amp;A</span>
+                <span style={{ fontFamily: sectionScript }} className="text-3xl">M&amp;A</span>
               </div>
-              <p className="mt-5 text-2xl" style={{ fontFamily: fonts.script, color: palette.accent }}>
+              <p className="mt-5 text-2xl" style={{ fontFamily: sectionScript, color: sectionAccent }}>
                 Tap to reveal
               </p>
             </div>
           ) : section === "COUNTDOWN" ? (
             <div className="w-full rounded-[22px] border px-5 py-7 text-center shadow-xl" style={cardStyle}>
-              <h3 className="text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+              <h3 className="text-4xl" style={{ fontFamily: sectionDisplay, color: sectionPrimary }}>
                 Save the Date
               </h3>
               <p className="mt-3 text-[9px] tracking-[0.2em] opacity-65">
@@ -171,7 +228,7 @@ function ThemeSectionPreview({
                     <p className="mb-1 text-[8px] tracking-[0.15em] opacity-60">{label}</p>
                     <div
                       className="grid h-20 w-16 place-items-center rounded-xl text-[10px] font-bold text-white"
-                      style={{ background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})` }}
+                      style={{ background: `linear-gradient(145deg, ${sectionAccent}, ${sectionPrimary})` }}
                     >
                       SCRATCH
                     </div>
@@ -181,7 +238,7 @@ function ThemeSectionPreview({
               <p className="mt-4 text-[8px] tracking-[0.15em] opacity-60">YEAR</p>
               <div
                 className="mx-auto mt-1 grid h-20 w-16 place-items-center rounded-xl text-[10px] font-bold text-white"
-                style={{ background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})` }}
+                style={{ background: `linear-gradient(145deg, ${sectionAccent}, ${sectionPrimary})` }}
               >
                 SCRATCH
               </div>
@@ -189,7 +246,7 @@ function ThemeSectionPreview({
           ) : section === "TIMELINE" ? (
             <div className="w-full rounded-[22px] border px-5 py-7 text-center shadow-xl" style={cardStyle}>
               <p className="text-[9px] tracking-[0.25em] opacity-60">30 OCTOBER 2026</p>
-              <h3 className="mt-2 text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+              <h3 className="mt-2 text-4xl" style={{ fontFamily: sectionDisplay, color: sectionPrimary }}>
                 Sangeet
               </h3>
               <p className="mt-2 text-sm italic opacity-75">An evening of music &amp; celebration</p>
@@ -200,8 +257,8 @@ function ThemeSectionPreview({
             </div>
           ) : section === "GALLERY" || section === "STORY" ? (
             <div className="w-full text-center">
-              <p className="text-[9px] tracking-[0.25em]" style={{ color: palette.accent }}>OUR STORY</p>
-              <h3 className="mt-1 text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+              <p className="text-[9px] tracking-[0.25em]" style={{ color: sectionAccent }}>OUR STORY</p>
+              <h3 className="mt-1 text-4xl" style={{ fontFamily: sectionDisplay, color: sectionPrimary }}>
                 Forever Us
               </h3>
               <div className="relative mx-auto mt-5 h-52 w-40">
@@ -214,8 +271,8 @@ function ThemeSectionPreview({
             </div>
           ) : (
             <div className="w-full rounded-[22px] border px-5 py-8 text-center shadow-xl" style={cardStyle}>
-              <p className="text-[9px] tracking-[0.25em]" style={{ color: palette.accent }}>{section}</p>
-              <h3 className="mt-2 text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+              <p className="text-[9px] tracking-[0.25em]" style={{ color: sectionAccent }}>{section}</p>
+              <h3 className="mt-2 text-4xl" style={{ fontFamily: sectionDisplay, color: sectionPrimary }}>
                 Sample Content
               </h3>
               <p className="mx-auto mt-4 max-w-[210px] text-sm opacity-75">
@@ -224,7 +281,7 @@ function ThemeSectionPreview({
               <button
                 type="button"
                 className="mt-6 rounded-full px-5 py-2 text-xs font-semibold"
-                style={{ background: palette.primary, color: palette.background }}
+                style={{ background: sectionPrimary, color: palette.background }}
               >
                 View details
               </button>
@@ -282,6 +339,7 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
         speed: decor.revealAnimation?.speed ?? 1,
       },
       sectionImages: decor.sectionImages ?? {},
+      sectionStyles: decor.sectionStyles ?? {},
     },
     sectionOrder:
       (theme?.sectionOrder as ThemeFormValues["sectionOrder"]) ?? [
@@ -312,6 +370,7 @@ export function ThemeFormDialog({
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
   const [previewSection, setPreviewSection] = useState<(typeof SECTION_TYPES)[number]>("HERO");
   const thumbInputRef = useRef<HTMLInputElement>(null);
+  const bulkArtworkInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const form = useForm<ThemeFormValues, unknown, ThemeFormInput>({
@@ -320,6 +379,25 @@ export function ThemeFormDialog({
   });
 
   const sectionOrder = form.watch("sectionOrder");
+  const sectionStyles = (form.watch("decorAssets.sectionStyles") ?? {}) as NonNullable<
+    DecorAssets["sectionStyles"]
+  >;
+
+  function updateSectionStyle(
+    sectionType: (typeof SECTION_TYPES)[number],
+    patch: Partial<NonNullable<DecorAssets["sectionStyles"]>[string]>,
+  ) {
+    const current = (form.getValues("decorAssets.sectionStyles") ?? {}) as NonNullable<
+      DecorAssets["sectionStyles"]
+    >;
+    form.setValue("decorAssets.sectionStyles", {
+      ...current,
+      [sectionType]: {
+        ...(current[sectionType] ?? {}),
+        ...patch,
+      },
+    });
+  }
 
   function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
     const current = form.getValues("sectionOrder");
@@ -403,6 +481,18 @@ export function ThemeFormDialog({
     });
     setPreviewSection(sectionType);
     toast.success(`${sectionType} artwork uploaded. Preview updated.`);
+  }
+
+  async function handleBulkArtwork(file?: File) {
+    const uploaded = await uploadAsset(file, "image");
+    if (!uploaded?.url) return;
+    const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+    for (const sectionType of form.getValues("sectionOrder")) {
+      current[sectionType] = uploaded.url;
+    }
+    form.setValue("decorAssets.sectionImages", current);
+    setPreviewSection((form.getValues("sectionOrder")[0] ?? "HERO") as (typeof SECTION_TYPES)[number]);
+    toast.success("Artwork applied to every active section. You can replace any section individually.");
   }
 
   async function onSubmit(values: ThemeFormInput) {
@@ -672,6 +762,28 @@ export function ThemeFormDialog({
                 </p>
               </div>
 
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={bulkArtworkInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleBulkArtwork(e.target.files?.[0])}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => bulkArtworkInputRef.current?.click()}
+                  disabled={assetUploading === "image"}
+                >
+                  <Upload className="size-4" />
+                  Bulk apply one image to all sections
+                </Button>
+                <span className="text-muted-foreground text-xs">
+                  Best for one-artwork themes that repeat the same background throughout.
+                </span>
+              </div>
+
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_310px]">
                 <div className="grid min-w-0 gap-3">
                   <div className="flex flex-wrap gap-2">
@@ -740,6 +852,94 @@ export function ThemeFormDialog({
                           </button>
                         )}
                       </div>
+
+                      <div className="grid gap-3 rounded-xl bg-muted/35 p-3 sm:grid-cols-2">
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs">Content horizontal position</Label>
+                          <input
+                            type="range"
+                            min="-40"
+                            max="40"
+                            value={sectionStyles[typedSection]?.x ?? 0}
+                            onChange={(e) =>
+                              updateSectionStyle(typedSection, { x: Number(e.target.value) })
+                            }
+                          />
+                        </div>
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs">Content vertical position</Label>
+                          <input
+                            type="range"
+                            min="-40"
+                            max="40"
+                            value={sectionStyles[typedSection]?.y ?? 0}
+                            onChange={(e) =>
+                              updateSectionStyle(typedSection, { y: Number(e.target.value) })
+                            }
+                          />
+                        </div>
+
+                        <label className="flex items-center justify-between rounded-lg border bg-background p-2 sm:col-span-2">
+                          <span className="text-xs font-medium">Show content background box</span>
+                          <Switch
+                            checked={sectionStyles[typedSection]?.showBox ?? true}
+                            onCheckedChange={(value) =>
+                              updateSectionStyle(typedSection, { showBox: value })
+                            }
+                          />
+                        </label>
+
+                        <div className="grid grid-cols-3 gap-2 sm:col-span-2">
+                          {([
+                            ["primary", "Main"],
+                            ["accent", "Accent"],
+                            ["foreground", "Text"],
+                          ] as const).map(([key, label]) => (
+                            <label key={key} className="grid gap-1 text-[10px]">
+                              <span>{label}</span>
+                              <input
+                                type="color"
+                                value={
+                                  sectionStyles[typedSection]?.[key] ||
+                                  form.watch(`colorPalette.${key}`)
+                                }
+                                onChange={(e) =>
+                                  updateSectionStyle(typedSection, { [key]: e.target.value })
+                                }
+                                className="h-9 w-full rounded border bg-transparent"
+                              />
+                            </label>
+                          ))}
+                        </div>
+
+                        {(["display", "body", "script"] as const).map((kind) => {
+                          const field =
+                            kind === "display"
+                              ? "displayFont"
+                              : kind === "body"
+                                ? "bodyFont"
+                                : "scriptFont";
+                          return (
+                            <div key={kind} className="grid min-w-0 gap-1">
+                              <Label className="text-[10px] capitalize">{kind} font</Label>
+                              <select
+                                className="border-input h-9 w-full min-w-0 rounded-md border bg-background px-2 text-xs"
+                                value={
+                                  sectionStyles[typedSection]?.[field] ||
+                                  form.watch(`fontPairing.${kind}`)
+                                }
+                                onChange={(e) =>
+                                  updateSectionStyle(typedSection, { [field]: e.target.value })
+                                }
+                              >
+                                {FONT_OPTIONS.map((font) => (
+                                  <option key={font} value={font}>{font}</option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
@@ -752,6 +952,9 @@ export function ThemeFormDialog({
                     imageUrl={form.watch(`decorAssets.sectionImages.${previewSection}`)}
                     palette={form.watch("colorPalette")}
                     fonts={form.watch("fontPairing")}
+                    styleConfig={sectionStyles[previewSection]}
+                    revealMode={form.watch("revealMode")}
+                    revealVideoUrl={form.watch("revealVideoUrl")}
                   />
                 </div>
               </div>

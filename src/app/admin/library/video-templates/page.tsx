@@ -60,6 +60,7 @@ export default async function AdminVideoTemplatesPage() {
                       name: template.name,
                       slug: template.slug,
                       description: template.description,
+                      previewImage: template.previewImage,
                       aspectRatio: template.aspectRatio,
                       durationSeconds: template.durationSeconds,
                       promptTemplate: template.promptTemplate,
@@ -76,6 +77,15 @@ export default async function AdminVideoTemplatesPage() {
                   />
                 </div>
               </div>
+              {template.previewImage && (
+                <video
+                  src={template.previewImage}
+                  className="aspect-video w-full rounded-lg bg-black object-cover"
+                  controls
+                  muted
+                  playsInline
+                />
+              )}
               <p className="text-muted-foreground line-clamp-2 text-xs">
                 {template.promptTemplate}
               </p>

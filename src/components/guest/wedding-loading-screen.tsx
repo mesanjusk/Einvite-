@@ -1,7 +1,9 @@
 export function WeddingLoadingScreen({
   message = "Preparing your invitation",
+  videoUrl,
 }: {
   message?: string;
+  videoUrl?: string | null;
 }) {
   const petals = [
     { left: "10%", delay: "0s", duration: "4.2s", size: 12 },
@@ -33,9 +35,23 @@ export function WeddingLoadingScreen({
         }
       `}</style>
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,rgba(221,185,112,.15),transparent_32%),radial-gradient(circle_at_20%_80%,rgba(101,29,51,.06),transparent_30%)]" />
+      {videoUrl ? (
+        <>
+          <video
+            src={videoUrl}
+            className="absolute inset-0 size-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(32,18,45,.28),rgba(32,18,45,.5))]" />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,rgba(180,151,212,.22),transparent_32%),radial-gradient(circle_at_20%_80%,rgba(104,67,130,.11),transparent_30%)]" />
+      )}
 
-      {petals.map((petal, index) => (
+      {!videoUrl && petals.map((petal, index) => (
         <span
           key={index}
           aria-hidden
