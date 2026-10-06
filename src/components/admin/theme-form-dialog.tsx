@@ -1180,7 +1180,10 @@ export function ThemeFormDialog({
                       <div className="flex items-center justify-between gap-2">
                         <button
                           type="button"
-                          onClick={() => setPreviewSection(typedSection)}
+                          onClick={() => {
+                            setPreviewSection(typedSection);
+                            setSelectedElement(elementsForSection(typedSection)[0]?.key ?? null);
+                          }}
                           className={`flex items-center gap-2 rounded-md px-2 py-1 text-left text-sm font-medium ${previewSection === typedSection ? "bg-primary/10 text-primary" : ""}`}
                         >
                           <Smartphone className="size-3.5" />
@@ -1469,20 +1472,51 @@ export function ThemeFormDialog({
                   </div>
                 </div>
 
-                <div className="lg:sticky lg:top-0 lg:self-start">
-                  <ThemeSectionPreview
+                <div className="grid gap-4 lg:sticky lg:top-0 lg:self-start">
+                  <ThemeRealSectionPreview
                     section={previewSection}
-                    imageUrl={form.watch(`decorAssets.sectionImages.${previewSection}`)}
+                    eventCategory={form.watch("eventCategory")}
                     palette={form.watch("colorPalette")}
                     fonts={form.watch("fontPairing")}
-                    styleConfig={sectionStyles[previewSection]}
+                    content={form.watch("content")}
                     revealMode={form.watch("revealMode")}
                     revealVideoUrl={form.watch("revealVideoUrl")}
-                    textBlocks={
-                      ((form.watch("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
-                        DecorAssets["sectionTextBlocks"]
-                      >)[previewSection] ?? []
-                    }
+                    revealAnimation={form.watch("decorAssets.revealAnimation")}
+                    sectionImages={form.watch("decorAssets.sectionImages")}
+                    sectionStyles={form.watch("decorAssets.sectionStyles")}
+                    elementStyles={form.watch("decorAssets.elementStyles")}
+                    customText={form.watch("decorAssets.customText")}
+                    onSelectElement={(key) => setSelectedElement(key)}
+                  />
+
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Content collection community</Label>
+                    <select
+                      className="border-input h-10 rounded-md border bg-background px-3 text-sm"
+                      value={selectedCommunity}
+                      onChange={(e) =>
+                        form.setValue("decorAssets.contentCommunity", e.target.value)
+                      }
+                    >
+                      {COMMUNITY_CONTENT_GROUPS.map((item) => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <ThemeElementInspector
+                    selectedKey={selectedElement}
+                    label={selectedDefinition?.label ?? (selectedCustom ? "Added text" : undefined)}
+                    text={selectedText}
+                    canEditText={selectedCanEditText}
+                    isCustom={Boolean(selectedCustom)}
+                    style={selectedStyle}
+                    presets={selectedPresets}
+                    onTextChange={updateSelectedText}
+                    onStyleChange={updateSelectedAppearance}
+                    onChoosePreset={(preset) => updateSelectedText(preset.text)}
+                    onRemove={removeSelectedCustomText}
+                    onAddText={() => addCustomText()}
                   />
                 </div>
               </div>
