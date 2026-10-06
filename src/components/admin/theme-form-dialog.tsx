@@ -140,12 +140,12 @@ function ThemeSectionPreview({
   revealMode?: "ANIMATION" | "VIDEO";
   revealVideoUrl?: string;
 }) {
-  const sectionPrimary = styleConfig?.primary || sectionPrimary;
-  const sectionAccent = styleConfig?.accent || sectionAccent;
-  const sectionForeground = styleConfig?.foreground || sectionForeground;
-  const sectionDisplay = styleConfig?.displayFont || sectionDisplay;
-  const sectionBody = styleConfig?.bodyFont || sectionBody;
-  const sectionScript = styleConfig?.scriptFont || sectionScript;
+  const sectionPrimary = styleConfig?.primary || palette.primary;
+  const sectionAccent = styleConfig?.accent || palette.accent;
+  const sectionForeground = styleConfig?.foreground || palette.foreground;
+  const sectionDisplay = styleConfig?.displayFont || fonts.display;
+  const sectionBody = styleConfig?.bodyFont || fonts.body;
+  const sectionScript = styleConfig?.scriptFont || fonts.script;
   const showBox = styleConfig?.showBox !== false;
   const cardStyle = {
     background: showBox
