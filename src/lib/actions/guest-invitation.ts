@@ -15,7 +15,7 @@ import {
 } from "@/lib/validations/invitation";
 import { DEFAULT_SECTION_ORDER, uniqueSlug } from "@/lib/invitation-helpers";
 import type { ActionResult } from "@/lib/actions/auth";
-import type { EventCategoryContent } from "@/lib/event-categories";
+import { eventCategoryFor, type EventCategoryContent } from "@/lib/event-categories";
 import { normalizePhone } from "@/lib/phone";
 import { generateToken, hashToken } from "@/lib/otp";
 import { sendWhatsAppText, editLinkMessage } from "@/lib/whatsapp";
@@ -434,4 +434,77 @@ export async function attachPhoneToInvitationAction(input: {
 
   revalidatePath(`/manage/${invitation.id}`);
   return { success: true, data: { editUrl } };
+}
+
+
+export async function quickCreateInvitationAction(input: {
+  eventCategory: string;
+  primaryName: string;
+  secondaryName?: string;
+  date: string;
+  venueName?: string;
+  venueAddress?: string;
+  themeSlug: string;
+}): Promise<ActionResult<{ invitationId: string; slug: string }>> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Please sign in first." };
+
+  const primaryName = input.primaryName.trim();
+  const secondaryName = input.secondaryName?.trim() ?? "";
+  if (!primaryName) return { success: false, error: "Enter the main name." };
+  if (!input.date) return { success: false, error: "Choose the event date." };
+  if (!input.themeSlug) return { success: false, error: "Choose a design." };
+
+  const category = eventCategoryFor(input.eventCategory);
+  if (!category.secondaryOptional && !secondaryName) {
+    return { success: false, error: `Enter ${category.secondaryNameLabel.toLowerCase()}.` };
+  }
+
+  const draft = await createDraftInvitationAction();
+  if (!draft.success) return draft;
+
+  const mainEventName = category.defaultEvents[0] ?? category.label;
+  const result = await updateGuestInvitationAction(draft.data.invitationId, {
+    eventCategory: category.slug,
+    brideName: primaryName,
+    groomName: secondaryName,
+    weddingDate: input.date,
+    venueName: input.venueName?.trim() ?? "",
+    venueAddress: input.venueAddress?.trim() ?? "",
+    googleMapsUrl: "",
+    customMessage: "",
+    religion: "",
+    caste: "",
+    subCaste: "",
+    themeSlug: input.themeSlug,
+    colorwaySlug: undefined,
+    musicTrackId: undefined,
+    customMusicUrl: undefined,
+    events: [
+      {
+        name: mainEventName,
+        date: input.date,
+        time: "",
+        venueName: input.venueName?.trim() ?? "",
+        address: input.venueAddress?.trim() ?? "",
+        googleMapsUrl: "",
+        dressCode: "",
+        accentColor: "",
+        tagline: "",
+      },
+    ],
+    familyMembers: [],
+    useAiCopy: true,
+  });
+
+  if (!result.success) return result;
+
+  await autoFillPhotosAction(draft.data.invitationId);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/invitations");
+
+  return {
+    success: true,
+    data: { invitationId: draft.data.invitationId, slug: result.data.slug },
+  };
 }
