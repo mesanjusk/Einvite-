@@ -45,6 +45,7 @@ export function TimelineSection({
         >
           <Reveal variants={fadeLeft}>
             <p
+              data-theme-element="TIMELINE.date"
               className="mb-2.5 text-[11px] tracking-[0.3em] uppercase"
               style={{ color: "var(--inv-foreground)", opacity: 0.6 }}
             >
@@ -56,6 +57,7 @@ export function TimelineSection({
 
           <Reveal variants={fadeUp}>
             <h2
+              data-theme-element="TIMELINE.name"
               className="mb-2 text-[46px]"
               style={{ fontFamily: "var(--inv-font-display)", color: accent }}
             >
@@ -70,6 +72,7 @@ export function TimelineSection({
           {(event.tagline || edit?.active) && (
             <Reveal variants={fadeUp}>
               <p
+                data-theme-element="TIMELINE.tagline"
                 className="mb-4 text-sm"
                 style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", opacity: 0.75 }}
               >
