@@ -47,6 +47,22 @@ export const themeDecorAssetsSchema = z.object({
     })
     .default({ preset: "MAGIC_BLOOM", intensity: 1, speed: 1 }),
   sectionImages: z.record(z.string(), z.string()).default({}),
+  sectionTextBlocks: z
+    .record(
+      z.string(),
+      z.array(
+        z.object({
+          id: z.string().min(1),
+          text: z.string(),
+          fontSize: z.coerce.number().min(8).max(96).default(22),
+          fontRole: z.enum(["display", "body", "script"]).default("body"),
+          align: z.enum(["left", "center", "right"]).default("center"),
+          color: z.string().optional(),
+        }),
+      ),
+    )
+    .default({}),
+  contentCommunity: z.string().default("General"),
   sectionStyles: z
     .record(
       z.string(),
