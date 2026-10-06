@@ -130,8 +130,8 @@ model Subscription {
   userId               String             @unique @db.ObjectId
   plan                 SubscriptionPlan   @default(FREE)
   status               SubscriptionStatus @default(ACTIVE)
-  stripeCustomerId     String?            @unique
-  stripeSubscriptionId String?            @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
   stripePriceId        String?
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean            @default(false)
