@@ -37,6 +37,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ThemeRealSectionPreview } from "@/components/admin/theme-real-section-preview";
+import {
+  ThemeElementInspector,
+  type ThemeElementStyleValue,
+} from "@/components/admin/theme-element-inspector";
+import {
+  definitionForElement,
+  elementsForSection,
+} from "@/lib/theme-element-catalog";
 import {
   Dialog,
   DialogContent,
