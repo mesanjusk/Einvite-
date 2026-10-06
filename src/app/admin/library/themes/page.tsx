@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { eventCategoryFor } from "@/lib/event-categories";
 import { ThemeFormDialog } from "@/components/admin/theme-form-dialog";
-import { QuickThemeDialog } from "@/components/admin/quick-theme-dialog";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteThemeAction, deleteThemeColorwayAction } from "@/lib/actions/admin";
 import { ThemeColorwayDialog } from "@/components/admin/theme-colorway-dialog";
@@ -14,28 +13,49 @@ import { Badge } from "@/components/ui/badge";
 export const metadata: Metadata = { title: "Manage Themes" };
 
 export default async function AdminThemesPage() {
-  const themes = await db.theme.findMany({
-    where: { type: "WEBSITE" },
-    orderBy: { sortOrder: "asc" },
+  const [themes, videoTemplates] = await Promise.all([
+    db.theme.findMany({
+    orderBy: [{ type: "asc" }, { sortOrder: "asc" }],
     include: {
       templates: true,
       colorways: { orderBy: { sortOrder: "asc" } },
-      _count: { select: { invitations: true } },
+      _count: { select: { invitations: true, pdfInvitations: true } },
     },
-  });
+  }),
+    db.videoTemplate.findMany({
+      where: { previewImage: { not: null } },
+      orderBy: { sortOrder: "asc" },
+      select: { name: true, previewImage: true },
+    }),
+  ]);
 
-  const revealVideoLibrary = themes
+  const revealVideoLibrary = [
+    ...themes
     .filter((theme) => Boolean(theme.revealVideoUrl))
     .map((theme) => ({
-      label: theme.name,
+      label: `Theme · ${theme.name}`,
       url: theme.revealVideoUrl as string,
-    }));
+    })),
+    ...videoTemplates
+      .filter((template) => Boolean(template.previewImage))
+      .map((template) => ({
+        label: `Video library · ${template.name}`,
+        url: template.previewImage as string,
+      })),
+  ];
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Themes" meta={`${themes.length} themes`}>
-        <QuickThemeDialog />
+      <PageHeader title="Theme Studio" meta={`${themes.length} themes`}>
+        <ThemeFormDialog type="WEBSITE" revealVideoLibrary={revealVideoLibrary} />
       </PageHeader>
+
+      <Card className="border-violet-200/70 bg-violet-50/50">
+        <CardContent className="py-4 text-sm text-violet-950">
+          One theme now drives the live website and can also be exported as PDF. Legacy PDF-only
+          themes remain listed below for compatibility, but new designs should be created once here.
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {themes.map((theme) => {
@@ -67,8 +87,12 @@ export default async function AdminThemesPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Badge variant="secondary">
+                      {theme.type === "WEBSITE" ? "Web + PDF" : "Legacy PDF"}
+                    </Badge>
                     {theme.isPremium && <Badge variant="gold">Premium</Badge>}
                     <ThemeFormDialog
+                      type={theme.type === "PDF" ? "PDF" : "WEBSITE"}
                       theme={{
                         id: theme.id,
                         name: theme.name,
@@ -138,7 +162,7 @@ export default async function AdminThemesPage() {
                     />
                   </div>
                   <p className="text-muted-foreground text-xs">
-                    {theme._count.invitations} invitation(s) using this theme
+                    {theme._count.invitations} website invitation(s) · {theme._count.pdfInvitations} PDF selection(s)
                   </p>
                 </div>
               </CardContent>
