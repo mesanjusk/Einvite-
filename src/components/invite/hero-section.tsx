@@ -150,6 +150,30 @@ export function HeroSection({
             </div>
           </Reveal>
 
+          {invite.copy?.eyebrow && (
+            <Reveal variants={fadeUp}>
+              <p
+                data-theme-element="HERO.eyebrow"
+                className="mb-3 text-[11px] font-semibold tracking-[0.22em] uppercase"
+                style={{ color: "var(--inv-accent)" }}
+              >
+                {invite.copy.eyebrow}
+              </p>
+            </Reveal>
+          )}
+
+          {invite.copy?.heroHeadline && (
+            <Reveal variants={fadeUp}>
+              <p
+                data-theme-element="HERO.heroHeadline"
+                className="mb-3 text-[24px] leading-tight"
+                style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
+              >
+                {invite.copy.heroHeadline}
+              </p>
+            </Reveal>
+          )}
+
           {guestName && (
             <Reveal variants={fadeUp}>
               <p
@@ -163,6 +187,7 @@ export function HeroSection({
 
           <Reveal variants={fadeUp}>
             <p
+              data-theme-element="HERO.invitationLetter"
               className="mb-5 text-[15px] leading-relaxed"
               style={{ fontFamily: "var(--inv-font-body)", fontStyle: "italic", color: "var(--inv-foreground)", opacity: 0.75 }}
             >
@@ -178,7 +203,7 @@ export function HeroSection({
           </Reveal>
 
           <Reveal variants={fadeUp}>
-            <h1 className="text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
+            <h1 data-theme-element="HERO.primaryName" className="text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
               <EditableText
                 target={{ kind: "invitation", field: "brideName" }}
                 value={invite.brideName}
@@ -194,7 +219,7 @@ export function HeroSection({
               <Reveal variants={fadeUp}>
                 <div className="my-2.5 flex items-center justify-center gap-3.5">
                   <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
-                  <span style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-accent)" }} className="text-2xl">
+                  <span data-theme-element="HERO.joiner" style={{ fontFamily: "var(--inv-font-script)", color: "var(--inv-accent)" }} className="text-2xl">
                     {category.joiner}
                   </span>
                   <span className="h-px w-9" style={{ background: "color-mix(in srgb, var(--inv-accent) 50%, transparent)" }} />
@@ -202,7 +227,7 @@ export function HeroSection({
               </Reveal>
 
               <Reveal variants={fadeUp}>
-                <h1 className="mb-5 text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
+                <h1 data-theme-element="HERO.secondaryName" className="mb-5 text-[42px] leading-tight" style={{ fontFamily: "var(--inv-font-display)" }}>
                   <EditableText
                     target={{ kind: "invitation", field: "groomName" }}
                     value={secondName}
