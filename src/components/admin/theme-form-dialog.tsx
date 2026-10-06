@@ -379,6 +379,25 @@ export function ThemeFormDialog({
   });
 
   const sectionOrder = form.watch("sectionOrder");
+  const sectionStyles = (form.watch("decorAssets.sectionStyles") ?? {}) as NonNullable<
+    DecorAssets["sectionStyles"]
+  >;
+
+  function updateSectionStyle(
+    sectionType: (typeof SECTION_TYPES)[number],
+    patch: Partial<NonNullable<DecorAssets["sectionStyles"]>[string]>,
+  ) {
+    const current = (form.getValues("decorAssets.sectionStyles") ?? {}) as NonNullable<
+      DecorAssets["sectionStyles"]
+    >;
+    form.setValue("decorAssets.sectionStyles", {
+      ...current,
+      [sectionType]: {
+        ...(current[sectionType] ?? {}),
+        ...patch,
+      },
+    });
+  }
 
   function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
     const current = form.getValues("sectionOrder");
@@ -841,12 +860,9 @@ export function ThemeFormDialog({
                             type="range"
                             min="-40"
                             max="40"
-                            value={form.watch(`decorAssets.sectionStyles.${typedSection}.x`) ?? 0}
+                            value={sectionStyles[typedSection]?.x ?? 0}
                             onChange={(e) =>
-                              form.setValue(
-                                `decorAssets.sectionStyles.${typedSection}.x`,
-                                Number(e.target.value),
-                              )
+                              updateSectionStyle(typedSection, { x: Number(e.target.value) })
                             }
                           />
                         </div>
@@ -856,12 +872,9 @@ export function ThemeFormDialog({
                             type="range"
                             min="-40"
                             max="40"
-                            value={form.watch(`decorAssets.sectionStyles.${typedSection}.y`) ?? 0}
+                            value={sectionStyles[typedSection]?.y ?? 0}
                             onChange={(e) =>
-                              form.setValue(
-                                `decorAssets.sectionStyles.${typedSection}.y`,
-                                Number(e.target.value),
-                              )
+                              updateSectionStyle(typedSection, { y: Number(e.target.value) })
                             }
                           />
                         </div>
@@ -869,12 +882,9 @@ export function ThemeFormDialog({
                         <label className="flex items-center justify-between rounded-lg border bg-background p-2 sm:col-span-2">
                           <span className="text-xs font-medium">Show content background box</span>
                           <Switch
-                            checked={form.watch(`decorAssets.sectionStyles.${typedSection}.showBox`) ?? true}
+                            checked={sectionStyles[typedSection]?.showBox ?? true}
                             onCheckedChange={(value) =>
-                              form.setValue(
-                                `decorAssets.sectionStyles.${typedSection}.showBox`,
-                                value,
-                              )
+                              updateSectionStyle(typedSection, { showBox: value })
                             }
                           />
                         </label>
@@ -890,14 +900,11 @@ export function ThemeFormDialog({
                               <input
                                 type="color"
                                 value={
-                                  form.watch(`decorAssets.sectionStyles.${typedSection}.${key}`) ||
+                                  sectionStyles[typedSection]?.[key] ||
                                   form.watch(`colorPalette.${key}`)
                                 }
                                 onChange={(e) =>
-                                  form.setValue(
-                                    `decorAssets.sectionStyles.${typedSection}.${key}`,
-                                    e.target.value,
-                                  )
+                                  updateSectionStyle(typedSection, { [key]: e.target.value })
                                 }
                                 className="h-9 w-full rounded border bg-transparent"
                               />
@@ -918,15 +925,11 @@ export function ThemeFormDialog({
                               <select
                                 className="border-input h-9 w-full min-w-0 rounded-md border bg-background px-2 text-xs"
                                 value={
-                                  form.watch(
-                                    `decorAssets.sectionStyles.${typedSection}.${field}`,
-                                  ) || form.watch(`fontPairing.${kind}`)
+                                  sectionStyles[typedSection]?.[field] ||
+                                  form.watch(`fontPairing.${kind}`)
                                 }
                                 onChange={(e) =>
-                                  form.setValue(
-                                    `decorAssets.sectionStyles.${typedSection}.${field}`,
-                                    e.target.value,
-                                  )
+                                  updateSectionStyle(typedSection, { [field]: e.target.value })
                                 }
                               >
                                 {FONT_OPTIONS.map((font) => (
@@ -949,7 +952,7 @@ export function ThemeFormDialog({
                     imageUrl={form.watch(`decorAssets.sectionImages.${previewSection}`)}
                     palette={form.watch("colorPalette")}
                     fonts={form.watch("fontPairing")}
-                    styleConfig={form.watch(`decorAssets.sectionStyles.${previewSection}`)}
+                    styleConfig={sectionStyles[previewSection]}
                     revealMode={form.watch("revealMode")}
                     revealVideoUrl={form.watch("revealVideoUrl")}
                   />
