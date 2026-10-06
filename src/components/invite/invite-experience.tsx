@@ -74,17 +74,19 @@ function SectionScope({
       <div
         data-invite-section-id={id}
         data-invite-section-label={label}
-        className="relative"
+        className={
+          sectionImage
+            ? "relative bg-cover bg-center bg-no-repeat [&>section]:!bg-transparent"
+            : "relative"
+        }
+        style={
+          sectionImage
+            ? {
+                backgroundImage: `url("${sectionImage.replace(/"/g, "\\\"")}")`,
+              }
+            : undefined
+        }
       >
-        {sectionImage && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={sectionImage}
-            alt=""
-            className="block h-auto w-full"
-            loading="lazy"
-          />
-        )}
         {children}
       </div>
     </InviteEditProvider>
@@ -225,6 +227,7 @@ export function InviteExperience({
                       label="Functions"
                       guidedActiveSectionId={guidedActiveSectionId}
                       edit={edit}
+                      sectionImage={invite.sectionImages?.[section.type]}
                     >
                       <section
                         className="flex min-h-[40svh] flex-col items-center justify-center gap-3 px-6 text-center"
@@ -245,6 +248,7 @@ export function InviteExperience({
                       label={event.name || `Function ${i + 1}`}
                       guidedActiveSectionId={guidedActiveSectionId}
                       edit={edit}
+                      sectionImage={invite.sectionImages?.[section.type]}
                     >
                       <TimelineSection
                         event={event}
