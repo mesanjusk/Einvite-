@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Pencil,
   Plus,
+  Smartphone,
   Sparkles,
   Upload,
   Video,
@@ -92,6 +93,160 @@ const ANIMATION_LABELS: Record<(typeof REVEAL_ANIMATION_PRESETS)[number], string
   PETALS: "Falling petals",
 };
 
+function ThemeSectionPreview({
+  section,
+  imageUrl,
+  palette,
+  fonts,
+}: {
+  section: (typeof SECTION_TYPES)[number];
+  imageUrl?: string;
+  palette: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    foreground: string;
+  };
+  fonts: { display: string; body: string; script: string };
+}) {
+  const cardStyle = {
+    background: `color-mix(in srgb, ${palette.background} 94%, white 6%)`,
+    borderColor: `color-mix(in srgb, ${palette.accent} 35%, transparent)`,
+    color: palette.foreground,
+    fontFamily: fonts.body,
+  };
+
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold">Live section preview</p>
+          <p className="text-muted-foreground text-[11px]">
+            Shows how content will cover the uploaded artwork.
+          </p>
+        </div>
+        <span className="rounded-full border px-2 py-1 text-[10px] font-semibold">
+          {section}
+        </span>
+      </div>
+
+      <div
+        className="relative mx-auto aspect-[9/16] w-full max-w-[285px] overflow-hidden rounded-[28px] border-[5px] border-neutral-900 bg-cover bg-center bg-no-repeat shadow-xl"
+        style={{
+          backgroundColor: palette.background,
+          backgroundImage: imageUrl ? `url("${imageUrl.replace(/"/g, "\\\"")}")` : undefined,
+          color: palette.foreground,
+          fontFamily: fonts.body,
+        }}
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-7 items-center justify-center bg-black/10 text-[8px] font-bold tracking-[0.18em] text-white/90 uppercase">
+          actual mobile section area
+        </div>
+
+        <div className="absolute inset-0 flex items-center justify-center p-4 pt-9">
+          {section === "ENVELOPE" ? (
+            <div className="text-center">
+              <div
+                className="mx-auto grid size-24 place-items-center rounded-full border shadow-lg"
+                style={{ ...cardStyle, color: palette.primary }}
+              >
+                <span style={{ fontFamily: fonts.script }} className="text-3xl">M&amp;A</span>
+              </div>
+              <p className="mt-5 text-2xl" style={{ fontFamily: fonts.script, color: palette.accent }}>
+                Tap to reveal
+              </p>
+            </div>
+          ) : section === "COUNTDOWN" ? (
+            <div className="w-full rounded-[22px] border px-5 py-7 text-center shadow-xl" style={cardStyle}>
+              <h3 className="text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+                Save the Date
+              </h3>
+              <p className="mt-3 text-[9px] tracking-[0.2em] opacity-65">
+                SCRATCH BELOW TO REVEAL OUR WEDDING DATE
+              </p>
+              <div className="mt-6 flex justify-center gap-3">
+                {["MONTH", "DAY"].map((label) => (
+                  <div key={label}>
+                    <p className="mb-1 text-[8px] tracking-[0.15em] opacity-60">{label}</p>
+                    <div
+                      className="grid h-20 w-16 place-items-center rounded-xl text-[10px] font-bold text-white"
+                      style={{ background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})` }}
+                    >
+                      SCRATCH
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-[8px] tracking-[0.15em] opacity-60">YEAR</p>
+              <div
+                className="mx-auto mt-1 grid h-20 w-16 place-items-center rounded-xl text-[10px] font-bold text-white"
+                style={{ background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})` }}
+              >
+                SCRATCH
+              </div>
+            </div>
+          ) : section === "TIMELINE" ? (
+            <div className="w-full rounded-[22px] border px-5 py-7 text-center shadow-xl" style={cardStyle}>
+              <p className="text-[9px] tracking-[0.25em] opacity-60">30 OCTOBER 2026</p>
+              <h3 className="mt-2 text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+                Sangeet
+              </h3>
+              <p className="mt-2 text-sm italic opacity-75">An evening of music &amp; celebration</p>
+              <div className="mt-5 border-t border-dashed pt-4 text-left text-xs">
+                <p>Time &nbsp; 7:00 PM</p>
+                <p className="mt-2">Venue &nbsp; Celebration Lawn</p>
+              </div>
+            </div>
+          ) : section === "GALLERY" || section === "STORY" ? (
+            <div className="w-full text-center">
+              <p className="text-[9px] tracking-[0.25em]" style={{ color: palette.accent }}>OUR STORY</p>
+              <h3 className="mt-1 text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+                Forever Us
+              </h3>
+              <div className="relative mx-auto mt-5 h-52 w-40">
+                <div className="absolute inset-0 rotate-[-5deg] rounded-lg border bg-white/95 shadow-lg" />
+                <div className="absolute inset-0 translate-y-3 rotate-[4deg] rounded-lg border bg-white/95 shadow-lg" />
+                <div className="absolute inset-0 translate-y-6 rounded-lg border bg-white/95 p-2 shadow-lg">
+                  <div className="h-full rounded bg-black/10" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full rounded-[22px] border px-5 py-8 text-center shadow-xl" style={cardStyle}>
+              <p className="text-[9px] tracking-[0.25em]" style={{ color: palette.accent }}>{section}</p>
+              <h3 className="mt-2 text-4xl" style={{ fontFamily: fonts.display, color: palette.primary }}>
+                Sample Content
+              </h3>
+              <p className="mx-auto mt-4 max-w-[210px] text-sm opacity-75">
+                This area represents the real invitation text and controls that will sit over the artwork.
+              </p>
+              <button
+                type="button"
+                className="mt-6 rounded-full px-5 py-2 text-xs font-semibold"
+                style={{ background: palette.primary, color: palette.background }}
+              >
+                View details
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!imageUrl && (
+          <div className="absolute inset-x-4 bottom-4 rounded-lg border border-dashed bg-white/80 p-2 text-center text-[10px] text-neutral-700">
+            Upload a section image to preview artwork placement.
+          </div>
+        )}
+      </div>
+
+      <p className="text-muted-foreground text-center text-[10px]">
+        Background uses the same centered <b>cover</b> behavior as the live invitation.
+      </p>
+    </div>
+  );
+}
+
+
 function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
   const decor = theme?.decorAssets ?? {};
   return {
@@ -155,6 +310,7 @@ export function ThemeFormDialog({
   const [loading, setLoading] = useState(false);
   const [thumbUploading, setThumbUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
+  const [previewSection, setPreviewSection] = useState<(typeof SECTION_TYPES)[number]>("HERO");
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -245,7 +401,8 @@ export function ThemeFormDialog({
       ...current,
       [sectionType]: uploaded.url,
     });
-    toast.success(`${sectionType} artwork uploaded.`);
+    setPreviewSection(sectionType);
+    toast.success(`${sectionType} artwork uploaded. Preview updated.`);
   }
 
   async function onSubmit(values: ThemeFormInput) {
@@ -275,7 +432,7 @@ export function ThemeFormDialog({
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>
             {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
@@ -507,30 +664,39 @@ export function ThemeFormDialog({
           </div>
 
           {type === "WEBSITE" && (
-            <section className="grid gap-3">
+            <section className="grid gap-4">
               <div>
                 <Label className="text-base">Sections & image-based artwork</Label>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  Upload an image for any section when the design is artwork-led. It is shown full-width with that section in invitations using this theme.
+                  Upload an image for any section. Use the live preview to check exactly which parts of the artwork will be covered by invitation content before saving.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_310px]">
+                <div className="grid min-w-0 gap-3">
+                  <div className="flex flex-wrap gap-2">
                 {SECTION_TYPES.filter((item) => !sectionOrder.includes(item)).map((item) => (
                   <button key={item} type="button" onClick={() => toggleSection(item)} className="text-muted-foreground rounded-full border px-2.5 py-1 text-xs">
                     + {item}
                   </button>
                 ))}
-              </div>
+                  </div>
 
-              <div className="grid gap-2">
+                  <div className="grid gap-2">
                 {sectionOrder.map((sectionType, index) => {
                   const typedSection = sectionType as (typeof SECTION_TYPES)[number];
                   const imageUrl = form.watch(`decorAssets.sectionImages.${typedSection}`);
                   return (
                     <div key={sectionType} className="grid gap-2 rounded-xl border p-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium">{sectionType}</span>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewSection(typedSection)}
+                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-left text-sm font-medium ${previewSection === typedSection ? "bg-primary/10 text-primary" : ""}`}
+                        >
+                          <Smartphone className="size-3.5" />
+                          {sectionType}
+                        </button>
                         <div className="flex items-center gap-1">
                           <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => moveSection(index, -1)}>
                             <ArrowUp className="size-3.5" />
@@ -577,6 +743,17 @@ export function ThemeFormDialog({
                     </div>
                   );
                 })}
+                  </div>
+                </div>
+
+                <div className="lg:sticky lg:top-0 lg:self-start">
+                  <ThemeSectionPreview
+                    section={previewSection}
+                    imageUrl={form.watch(`decorAssets.sectionImages.${previewSection}`)}
+                    palette={form.watch("colorPalette")}
+                    fonts={form.watch("fontPairing")}
+                  />
+                </div>
               </div>
             </section>
           )}
