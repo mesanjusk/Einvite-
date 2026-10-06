@@ -475,6 +475,12 @@ export function ThemeFormDialog({
   const sectionStyles = (form.watch("decorAssets.sectionStyles") ?? {}) as NonNullable<
     DecorAssets["sectionStyles"]
   >;
+  const elementStyles = (form.watch("decorAssets.elementStyles") ?? {}) as NonNullable<
+    DecorAssets["elementStyles"]
+  >;
+  const customTextBySection = (form.watch("decorAssets.customText") ?? {}) as NonNullable<
+    DecorAssets["customText"]
+  >;
 
   function updateSectionStyle(
     sectionType: (typeof SECTION_TYPES)[number],
@@ -554,6 +560,105 @@ export function ThemeFormDialog({
 
   function addTextBlock(_sectionType: (typeof SECTION_TYPES)[number], text = "New text") {
     addCustomText(text);
+  }
+
+  function findCustomText(key: string | null) {
+    if (!key) return null;
+    for (const [section, blocks] of Object.entries(customTextBySection)) {
+      const index = blocks.findIndex((block) => block.id === key);
+      if (index >= 0) return { section, index, block: blocks[index] };
+    }
+    return null;
+  }
+
+  function setCoreContent(field: string, value: string) {
+    switch (field) {
+      case "eyebrow":
+        form.setValue("content.eyebrow", value);
+        break;
+      case "heroHeadline":
+        form.setValue("content.heroHeadline", value);
+        break;
+      case "heroSubline":
+        form.setValue("content.heroSubline", value);
+        break;
+      case "invitationLetter":
+        form.setValue("content.invitationLetter", value);
+        break;
+      case "storyHeadline":
+        form.setValue("content.storyHeadline", value);
+        break;
+      case "thankYou":
+        form.setValue("content.thankYou", value);
+        break;
+    }
+  }
+
+  function getCoreContent(field?: string) {
+    switch (field) {
+      case "eyebrow":
+        return form.watch("content.eyebrow") ?? "";
+      case "heroHeadline":
+        return form.watch("content.heroHeadline") ?? "";
+      case "heroSubline":
+        return form.watch("content.heroSubline") ?? "";
+      case "invitationLetter":
+        return form.watch("content.invitationLetter") ?? "";
+      case "storyHeadline":
+        return form.watch("content.storyHeadline") ?? "";
+      case "thankYou":
+        return form.watch("content.thankYou") ?? "";
+      default:
+        return "";
+    }
+  }
+
+  function updateSelectedText(value: string) {
+    if (!selectedElement) return;
+    const custom = findCustomText(selectedElement);
+    if (custom) {
+      const blocks = [...customTextBySection[custom.section]];
+      blocks[custom.index] = { ...custom.block, text: value };
+      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+      return;
+    }
+    const definition = definitionForElement(selectedElement);
+    if (definition?.coreField) {
+      setCoreContent(definition.coreField, value);
+      return;
+    }
+    updateElementStyle(selectedElement, { text: value });
+  }
+
+  function updateSelectedAppearance(patch: Partial<ThemeElementStyleValue>) {
+    if (!selectedElement) return;
+    const custom = findCustomText(selectedElement);
+    if (custom) {
+      const blocks = [...customTextBySection[custom.section]];
+      blocks[custom.index] = {
+        ...custom.block,
+        ...(patch.fontSize !== undefined ? { fontSize: patch.fontSize } : {}),
+        ...(patch.fontRole !== undefined ? { fontRole: patch.fontRole } : {}),
+        ...(patch.align !== undefined ? { align: patch.align } : {}),
+        ...(patch.color !== undefined ? { color: patch.color } : {}),
+        ...(patch.x !== undefined ? { x: patch.x } : {}),
+        ...(patch.y !== undefined ? { y: patch.y } : {}),
+      };
+      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+      return;
+    }
+    updateElementStyle(selectedElement, patch);
+  }
+
+  function removeSelectedCustomText() {
+    if (!selectedElement) return;
+    const custom = findCustomText(selectedElement);
+    if (!custom) return;
+    setCustomText(
+      custom.section as (typeof SECTION_TYPES)[number],
+      customTextBySection[custom.section].filter((_, index) => index !== custom.index),
+    );
+    setSelectedElement(null);
   }
 
   function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
@@ -1093,7 +1198,7 @@ export function ThemeFormDialog({
                         )}
                       </div>
 
-                      <div className="grid gap-3 rounded-xl border border-violet-200/70 bg-violet-50/45 p-3">
+                      <div className="hidden">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <Label className="text-xs font-semibold">Text content</Label>
