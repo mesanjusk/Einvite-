@@ -27,12 +27,13 @@ export function VenueSection({
     >
       <RevealGroup className="w-full max-w-md">
         <Reveal variants={fadeUp}>
-          <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
+          <p data-theme-element="VENUE.eyebrow" className="text-xs tracking-[0.3em] uppercase" style={{ color: "var(--inv-accent)" }}>
             {t.venueLabel}
           </p>
         </Reveal>
         <Reveal variants={fadeUp}>
           <h2
+            data-theme-element="VENUE.name"
             className="mt-1.5 mb-3 text-4xl"
             style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
           >
@@ -45,7 +46,7 @@ export function VenueSection({
         </Reveal>
         {(venueAddress || edit?.active) && (
           <Reveal variants={fadeUp}>
-            <p className="mb-6 text-sm opacity-75" style={{ fontFamily: "var(--inv-font-body)" }}>
+            <p data-theme-element="VENUE.address" className="mb-6 text-sm opacity-75" style={{ fontFamily: "var(--inv-font-body)" }}>
               <EditableText
                 target={{ kind: "invitation", field: "venueAddress" }}
                 value={venueAddress ?? ""}
