@@ -20,6 +20,7 @@ export function StartLiveInvitationButton({
   children,
   className,
   style,
+  loadingVideoUrl,
 }: {
   fromSlug?: string;
   category?: string;
@@ -27,6 +28,7 @@ export function StartLiveInvitationButton({
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  loadingVideoUrl?: string | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -56,7 +58,12 @@ export function StartLiveInvitationButton({
       >
         {children}
       </button>
-      {isPending && <WeddingLoadingScreen message="Opening your selected wedding design" />}
+      {isPending && (
+        <WeddingLoadingScreen
+          message="Opening your selected wedding design"
+          videoUrl={loadingVideoUrl}
+        />
+      )}
     </>
   );
 }
