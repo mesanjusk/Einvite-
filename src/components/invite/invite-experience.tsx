@@ -51,12 +51,14 @@ function SectionScope({
   label,
   guidedActiveSectionId,
   edit,
+  sectionImage,
   children,
 }: {
   id: string;
   label: string;
   guidedActiveSectionId: string | null | undefined;
   edit: InviteEditApi | null;
+  sectionImage?: string | null;
   children: ReactNode;
 }) {
   const guided = guidedActiveSectionId !== undefined;
@@ -74,6 +76,15 @@ function SectionScope({
         data-invite-section-label={label}
         className="relative"
       >
+        {sectionImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={sectionImage}
+            alt=""
+            className="block h-auto w-full"
+            loading="lazy"
+          />
+        )}
         {children}
       </div>
     </InviteEditProvider>
@@ -166,6 +177,8 @@ export function InviteExperience({
             videoUrl={invite.revealVideoUrl}
             videoWebmUrl={invite.revealVideoWebmUrl}
             posterUrl={invite.revealVideoPosterUrl}
+            animation={invite.revealAnimation}
+            backgroundImageUrl={invite.sectionImages?.ENVELOPE}
             onComplete={() => setInviteOpen(true)}
           />
         )}
@@ -183,6 +196,7 @@ export function InviteExperience({
                     label="Names & welcome"
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
+                    sectionImage={invite.sectionImages?.[section.type]}
                   >
                     <HeroSection invite={invite} guestName={guestName} />
                   </SectionScope>
@@ -195,6 +209,7 @@ export function InviteExperience({
                     label="Date & countdown"
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
+                    sectionImage={invite.sectionImages?.[section.type]}
                   >
                     <CountdownSection weddingDate={invite.weddingDate} />
                   </SectionScope>
@@ -248,6 +263,7 @@ export function InviteExperience({
                     label="Photos & story"
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
+                    sectionImage={invite.sectionImages?.[section.type]}
                   >
                     <GallerySection
                       media={invite.media}
@@ -267,6 +283,7 @@ export function InviteExperience({
                     label="Venue & directions"
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
+                    sectionImage={invite.sectionImages?.[section.type]}
                   >
                     <VenueSection
                       invitationId={invite.id}
@@ -284,6 +301,7 @@ export function InviteExperience({
                     label="RSVP"
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
+                    sectionImage={invite.sectionImages?.[section.type]}
                   >
                     <RsvpSection
                       invitationId={invite.id}
@@ -300,6 +318,7 @@ export function InviteExperience({
                     label="Final message"
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
+                    sectionImage={invite.sectionImages?.[section.type]}
                   >
                     <ThankYouSection
                       brideName={invite.brideName}

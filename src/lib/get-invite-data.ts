@@ -82,6 +82,11 @@ type InvitationWithRelations = NonNullable<
 >;
 
 export function toInviteRenderData(invitation: InvitationWithRelations) {
+  const decorAssets = (invitation.theme?.decorAssets ?? {}) as {
+    revealAnimation?: InviteData["revealAnimation"];
+    sectionImages?: InviteData["sectionImages"];
+  };
+
   const themeStyle = resolveInviteThemeStyle(
     invitation.colorPalette ?? invitation.theme?.colorPalette,
     invitation.fontPairing ?? invitation.theme?.fontPairing,
@@ -113,6 +118,12 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
       (invitation.theme?.revealMode === "VIDEO" ? (invitation.theme?.revealVideoUrl ?? null) : null),
     revealVideoWebmUrl: invitation.introVideoWebmUrl ?? null,
     revealVideoPosterUrl: invitation.introVideoPosterUrl ?? null,
+    revealAnimation: decorAssets.revealAnimation ?? {
+      preset: "MAGIC_BLOOM",
+      intensity: 1,
+      speed: 1,
+    },
+    sectionImages: decorAssets.sectionImages ?? {},
   };
 
   const sectionConfig = (invitation.sectionConfig as SectionConfigEntry[] | null) ?? [];

@@ -24,6 +24,13 @@ export default async function AdminThemesPage() {
     },
   });
 
+  const revealVideoLibrary = themes
+    .filter((theme) => Boolean(theme.revealVideoUrl))
+    .map((theme) => ({
+      label: theme.name,
+      url: theme.revealVideoUrl as string,
+    }));
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Themes" meta={`${themes.length} themes`}>
@@ -76,8 +83,10 @@ export default async function AdminThemesPage() {
                         sortOrder: theme.sortOrder,
                         colorPalette: theme.colorPalette as never,
                         fontPairing: theme.fontPairing as never,
+                        decorAssets: theme.decorAssets as never,
                         sectionOrder,
                       }}
+                      revealVideoLibrary={revealVideoLibrary}
                     />
                     <DeleteEntityButton
                       id={theme.id}
