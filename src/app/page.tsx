@@ -34,7 +34,11 @@ export const metadata: Metadata = {
 export default async function Home() {
   const [themes, demos] = await Promise.all([
     db.theme
-      .findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" }, take: 8 })
+      .findMany({
+        where: { type: "WEBSITE" },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+        take: 12,
+      })
       .catch(() => []),
     db.invitation
       .findMany({
