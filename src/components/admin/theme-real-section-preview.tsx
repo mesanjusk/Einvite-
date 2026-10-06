@@ -9,7 +9,7 @@ type PreviewSection = string;
 
 type PreviewProps = {
   section: PreviewSection;
-  eventCategory: string;
+  eventCategory?: string;
   palette: {
     primary: string;
     secondary: string;
@@ -26,13 +26,17 @@ type PreviewProps = {
     storyHeadline?: string;
     thankYou?: string;
   };
-  revealMode: "ANIMATION" | "VIDEO";
+  revealMode?: "ANIMATION" | "VIDEO";
   revealVideoUrl?: string;
-  revealAnimation?: InviteData["revealAnimation"];
-  sectionImages?: InviteData["sectionImages"];
-  sectionStyles?: InviteData["sectionStyles"];
-  elementStyles?: InviteData["elementStyles"];
-  customText?: InviteData["customText"];
+  revealAnimation?: {
+    preset?: "MAGIC_BLOOM" | "SPARKLES" | "CONFETTI" | "PETALS";
+    intensity?: unknown;
+    speed?: unknown;
+  };
+  sectionImages?: Record<string, string>;
+  sectionStyles?: Record<string, unknown>;
+  elementStyles?: Record<string, unknown>;
+  customText?: Record<string, unknown[]>;
   onSelectElement: (key: string) => void;
 };
 
@@ -51,6 +55,16 @@ export function ThemeRealSectionPreview({
   customText,
   onSelectElement,
 }: PreviewProps) {
+  const resolvedRevealMode = revealMode ?? "ANIMATION";
+  const resolvedRevealAnimation: InviteData["revealAnimation"] = {
+    preset: revealAnimation?.preset ?? "MAGIC_BLOOM",
+    intensity: Number(revealAnimation?.intensity ?? 1),
+    speed: Number(revealAnimation?.speed ?? 1),
+  };
+  const resolvedSectionStyles = (sectionStyles ?? {}) as InviteData["sectionStyles"];
+  const resolvedElementStyles = (elementStyles ?? {}) as InviteData["elementStyles"];
+  const resolvedCustomText = (customText ?? {}) as InviteData["customText"];
+
   if (section === "ENVELOPE") {
     return (
       <div className="grid gap-2">
@@ -64,7 +78,7 @@ export function ThemeRealSectionPreview({
               : undefined,
           }}
         >
-          {revealMode === "VIDEO" && revealVideoUrl ? (
+          {resolvedRevealMode === "VIDEO" && revealVideoUrl ? (
             <video
               src={revealVideoUrl}
               className="absolute inset-0 size-full object-cover"
@@ -88,7 +102,7 @@ export function ThemeRealSectionPreview({
                   M&amp;A
                 </div>
                 <p className="mt-5 text-xl" style={{ fontFamily: fonts.script }}>
-                  {revealAnimation?.preset?.replaceAll("_", " ") ?? "MAGIC BLOOM"}
+                  {resolvedRevealAnimation?.preset.replaceAll("_", " ") ?? "MAGIC BLOOM"}
                 </p>
                 <p className="mt-2 text-[10px] uppercase tracking-[0.2em] opacity-70">
                   coded reveal preview
@@ -104,7 +118,7 @@ export function ThemeRealSectionPreview({
   const invite: InviteData = {
     id: "theme-preview",
     slug: "theme-preview",
-    eventCategory,
+    eventCategory: eventCategory ?? "wedding",
     brideName: "Meera",
     bridePhoto: null,
     groomName: "Arjun",
@@ -146,7 +160,7 @@ export function ThemeRealSectionPreview({
     media: [],
     isDemo: true,
     themeSlug: "preview",
-    revealVideoUrl: revealMode === "VIDEO" ? revealVideoUrl ?? null : null,
+    revealVideoUrl: resolvedRevealMode === "VIDEO" ? revealVideoUrl ?? null : null,
     revealAnimation,
     sectionImages,
     sectionStyles,
