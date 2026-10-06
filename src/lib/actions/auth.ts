@@ -1,11 +1,12 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { createHash, randomBytes } from "node:crypto";
+import { randomInt } from "node:crypto";
 
 import { db } from "@/lib/db";
-import { EMAIL_FROM, getResendClient } from "@/lib/email/resend";
-import { passwordResetEmailHtml } from "@/lib/email/templates";
+import { hashToken } from "@/lib/otp";
+import { maskPhone, normalizePhone } from "@/lib/phone";
+import { sendPasswordResetOtp } from "@/lib/whatsapp";
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -19,12 +20,9 @@ export type ActionResult<T = undefined> =
   | { success: true; data: T }
   | { success: false; error: string };
 
-const PASSWORD_RESET_PREFIX = "password-reset:";
-const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
-
-function hashResetToken(token: string) {
-  return createHash("sha256").update(token).digest("hex");
-}
+const OTP_TTL_MS = 10 * 60 * 1000;
+const RESEND_COOLDOWN_MS = 60 * 1000;
+const MAX_OTP_ATTEMPTS = 5;
 
 export async function signUpAction(
   input: SignUpInput,
@@ -34,11 +32,20 @@ export async function signUpAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { name, email, password } = parsed.data;
+  const phone = normalizePhone(parsed.data.phone);
+  if (!phone) {
+    return { success: false, error: "Enter a valid mobile number." };
+  }
 
+  const { name, email, password } = parsed.data;
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) {
     return { success: false, error: "An account with this email already exists." };
+  }
+
+  const existingPhone = await db.user.findFirst({ where: { phone } });
+  if (existingPhone) {
+    return { success: false, error: "An account with this mobile number already exists." };
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -47,6 +54,7 @@ export async function signUpAction(
     data: {
       name,
       email,
+      phone,
       password: passwordHash,
       subscription: {
         create: { plan: "FREE", status: "ACTIVE" },
@@ -57,55 +65,88 @@ export async function signUpAction(
   return { success: true, data: { userId: user.id } };
 }
 
+async function findUserByRecoveryPhone(phone: string) {
+  const direct = await db.user.findFirst({ where: { phone } });
+  if (direct) return direct;
+
+  // Compatibility for older staff accounts that stored the number on Employee.
+  const employees = await db.employee.findMany({
+    where: { userId: { not: null }, phone: { not: null } },
+    select: { userId: true, phone: true },
+  });
+  const employee = employees.find((item) => item.phone && normalizePhone(item.phone) === phone);
+  if (!employee?.userId) return null;
+
+  return db.user.findUnique({ where: { id: employee.userId } });
+}
+
 export async function forgotPasswordAction(
   input: ForgotPasswordInput,
-): Promise<ActionResult<{ message: string }>> {
+): Promise<ActionResult<{ message: string; maskedPhone?: string }>> {
   const parsed = forgotPasswordSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid email" };
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid mobile number" };
   }
 
-  const email = parsed.data.email;
-  const genericMessage =
-    "If an account exists for that email, a password reset link has been sent.";
+  const phone = normalizePhone(parsed.data.phone);
+  if (!phone) {
+    return { success: false, error: "Enter a valid mobile number." };
+  }
 
-  const user = await db.user.findUnique({ where: { email } });
+  const genericMessage =
+    "If this mobile number is registered, a 6-digit OTP has been sent on WhatsApp.";
+
+  const user = await findUserByRecoveryPhone(phone);
   if (!user?.password || user.isActive === false) {
     return { success: true, data: { message: genericMessage } };
   }
 
-  const identifier = `${PASSWORD_RESET_PREFIX}${email}`;
-  const rawToken = randomBytes(32).toString("hex");
-  const tokenHash = hashResetToken(rawToken);
-  const expires = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
-
-  await db.verificationToken.deleteMany({ where: { identifier } });
-  await db.verificationToken.create({
-    data: { identifier, token: tokenHash, expires },
-  });
-
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.NEXTAUTH_URL ??
-    "http://localhost:3000";
-  const resetUrl = `${appUrl.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(rawToken)}`;
-
-  try {
-    const sendResult = await getResendClient().emails.send({
-      from: EMAIL_FROM,
-      to: email,
-      subject: "Reset your SK Digital password",
-      html: passwordResetEmailHtml({ url: resetUrl }),
-    });
-    if (sendResult.error) {
-      throw new Error(sendResult.error.message);
-    }
-  } catch (error) {
-    console.error("Failed to send password reset email", error);
-    await db.verificationToken.deleteMany({ where: { identifier, token: tokenHash } });
+  const existing = await db.passwordResetOtp.findUnique({ where: { phone } });
+  if (
+    existing &&
+    existing.lastSentAt.getTime() > Date.now() - RESEND_COOLDOWN_MS &&
+    existing.expiresAt.getTime() > Date.now()
+  ) {
+    return {
+      success: true,
+      data: { message: genericMessage, maskedPhone: maskPhone(phone) },
+    };
   }
 
-  return { success: true, data: { message: genericMessage } };
+  const otp = randomInt(100000, 1000000).toString();
+  const otpHash = hashToken(`${phone}:${otp}`);
+  const now = new Date();
+
+  await db.passwordResetOtp.upsert({
+    where: { phone },
+    create: {
+      phone,
+      otpHash,
+      expiresAt: new Date(now.getTime() + OTP_TTL_MS),
+      attempts: 0,
+      lastSentAt: now,
+    },
+    update: {
+      otpHash,
+      expiresAt: new Date(now.getTime() + OTP_TTL_MS),
+      attempts: 0,
+      lastSentAt: now,
+    },
+  });
+
+  const delivery = await sendPasswordResetOtp(phone, otp);
+  if (!delivery.delivered && !delivery.devMode) {
+    await db.passwordResetOtp.deleteMany({ where: { phone } });
+    return {
+      success: false,
+      error: "We could not send the OTP right now. Please try again.",
+    };
+  }
+
+  return {
+    success: true,
+    data: { message: genericMessage, maskedPhone: maskPhone(phone) },
+  };
 }
 
 export async function resetPasswordAction(
@@ -116,48 +157,45 @@ export async function resetPasswordAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { token, password } = parsed.data;
-  const tokenHash = hashResetToken(token);
-
-  const stored = await db.verificationToken.findUnique({
-    where: { token: tokenHash },
-  });
-
-  if (
-    !stored ||
-    !stored.identifier.startsWith(PASSWORD_RESET_PREFIX) ||
-    stored.expires.getTime() <= Date.now()
-  ) {
-    if (stored) {
-      await db.verificationToken.deleteMany({ where: { token: tokenHash } });
-    }
-    return {
-      success: false,
-      error: "This reset link is invalid or has expired. Please request a new one.",
-    };
+  const phone = normalizePhone(parsed.data.phone);
+  if (!phone) {
+    return { success: false, error: "Enter a valid mobile number." };
   }
 
-  const email = stored.identifier.slice(PASSWORD_RESET_PREFIX.length);
-  const user = await db.user.findUnique({ where: { email } });
+  const record = await db.passwordResetOtp.findUnique({ where: { phone } });
+  if (!record || record.expiresAt.getTime() <= Date.now()) {
+    if (record) await db.passwordResetOtp.deleteMany({ where: { phone } });
+    return { success: false, error: "OTP is invalid or expired. Request a new OTP." };
+  }
 
+  if (record.attempts >= MAX_OTP_ATTEMPTS) {
+    await db.passwordResetOtp.deleteMany({ where: { phone } });
+    return { success: false, error: "Too many incorrect attempts. Request a new OTP." };
+  }
+
+  const submittedHash = hashToken(`${phone}:${parsed.data.otp}`);
+  if (submittedHash !== record.otpHash) {
+    await db.passwordResetOtp.update({
+      where: { phone },
+      data: { attempts: { increment: 1 } },
+    });
+    return { success: false, error: "Incorrect OTP." };
+  }
+
+  const user = await findUserByRecoveryPhone(phone);
   if (!user?.password || user.isActive === false) {
-    await db.verificationToken.deleteMany({ where: { identifier: stored.identifier } });
-    return {
-      success: false,
-      error: "This reset link is invalid or has expired. Please request a new one.",
-    };
+    await db.passwordResetOtp.deleteMany({ where: { phone } });
+    return { success: false, error: "Unable to reset this account." };
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
 
   await db.$transaction([
     db.user.update({
       where: { id: user.id },
-      data: { password: passwordHash },
+      data: { password: passwordHash, phone: user.phone ?? phone },
     }),
-    db.verificationToken.deleteMany({
-      where: { identifier: stored.identifier },
-    }),
+    db.passwordResetOtp.deleteMany({ where: { phone } }),
   ]);
 
   return {
