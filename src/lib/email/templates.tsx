@@ -21,29 +21,6 @@ export function magicLinkEmailHtml({ url }: MagicLinkEmailProps) {
   </div>`;
 }
 
-type PasswordResetEmailProps = {
-  url: string;
-};
-
-export function passwordResetEmailHtml({ url }: PasswordResetEmailProps) {
-  return `
-  <div style="font-family: Georgia, 'Times New Roman', serif; background:#faf3ea; padding:40px 20px;">
-    <div style="max-width:480px;margin:0 auto;background:#fffdf9;border-radius:16px;border:1px solid rgba(201,148,42,0.3);padding:36px;text-align:center;">
-      <p style="letter-spacing:0.3em;font-size:11px;color:#c9942a;margin:0 0 12px;">SK DIGITAL</p>
-      <h1 style="color:#7a2e2e;font-size:24px;margin:0 0 16px;">Reset your password</h1>
-      <p style="color:#6b4a3a;font-size:15px;line-height:1.6;margin:0 0 28px;">
-        We received a request to reset your password. This secure link expires in 1 hour.
-      </p>
-      <a href="${url}" style="display:inline-block;background:#7a2e2e;color:#fdf0e2;padding:14px 28px;border-radius:999px;text-decoration:none;font-size:14px;letter-spacing:0.08em;">
-        RESET PASSWORD
-      </a>
-      <p style="color:#9a8a80;font-size:12px;line-height:1.5;margin-top:28px;">
-        If you didn't request a password reset, you can safely ignore this email. Your current password will continue to work.
-      </p>
-    </div>
-  </div>`;
-}
-
 type RsvpNotificationEmailProps = {
   coupleNames: string;
   guestName: string;
