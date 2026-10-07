@@ -10,8 +10,14 @@ export type MarketplaceThemeCard = {
   slug: string;
   category: string;
   eventCategory: string;
+  eventCategories?: string[];
   isPremium: boolean;
   previewImage: string | null;
+  revealMode?: string | null;
+  revealVideoUrl?: string | null;
+  revealAnimationPreset?: string | null;
+  previewPrimary?: string | null;
+  previewAccent?: string | null;
   demoSlug?: string | null;
 };
 
@@ -27,18 +33,61 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
           <span className="wedding-petal wedding-petal-a pointer-events-none left-2 top-4 z-30 hidden sm:block" />
           <span className="wedding-sparkle pointer-events-none right-3 top-4 z-30 hidden sm:block">✦</span>
           <PhoneMockup className="template-phone-lift max-w-none shadow-none">
-            {theme.previewImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={theme.previewImage}
-                alt={`${theme.name} invitation preview`}
-                className="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-[1.045]"
+            {theme.revealMode === "VIDEO" && theme.revealVideoUrl ? (
+              <video
+                src={theme.revealVideoUrl}
+                poster={theme.previewImage ?? undefined}
+                className="absolute inset-0 size-full object-cover"
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
               />
             ) : (
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#efd99e,#9d7844_45%,#2b2723)]" />
+              <div
+                className="absolute inset-0 overflow-hidden"
+                style={{
+                  background: `radial-gradient(circle at 50% 24%, color-mix(in srgb, ${theme.previewAccent || "#a987bd"} 28%, white), transparent 34%), linear-gradient(160deg, #ffffff, color-mix(in srgb, ${theme.previewPrimary || "#76508c"} 18%, white))`,
+                }}
+              >
+                {theme.revealAnimationPreset === "PETALS" && (
+                  <>
+                    <span className="wedding-petal wedding-petal-a left-[18%] top-[12%]" />
+                    <span className="wedding-petal wedding-petal-b right-[14%] top-[26%]" />
+                    <span className="wedding-petal wedding-petal-c bottom-[22%] left-[28%]" />
+                  </>
+                )}
+                {theme.revealAnimationPreset === "CONFETTI" && (
+                  <>
+                    <span className="template-mini-confetti template-mini-confetti-a" />
+                    <span className="template-mini-confetti template-mini-confetti-b" />
+                    <span className="template-mini-confetti template-mini-confetti-c" />
+                  </>
+                )}
+                {theme.revealAnimationPreset === "SPARKLES" && (
+                  <>
+                    <span className="wedding-sparkle left-[20%] top-[20%]">✦</span>
+                    <span className="wedding-sparkle wedding-sparkle-delay right-[18%] top-[34%]">✦</span>
+                  </>
+                )}
+                {(!theme.revealAnimationPreset || theme.revealAnimationPreset === "MAGIC_BLOOM") && (
+                  <>
+                    <span className="absolute left-1/2 top-1/2 size-28 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full border border-violet-300/60 bg-violet-100/30" />
+                    <span className="absolute left-1/2 top-1/2 size-20 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full border border-violet-300/70 bg-white/45 [animation-delay:-.7s]" />
+                  </>
+                )}
+                <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 text-center">
+                  <Sparkles className="mx-auto size-5 text-[#76508c]" />
+                  <p className="mt-2 font-display text-sm leading-tight text-[#4b3659]">{theme.name}</p>
+                  <p className="mt-1 text-[8px] font-bold tracking-[0.12em] text-[#8a7397] uppercase">
+                    {theme.revealAnimationPreset?.replaceAll("_", " ") || "Magic bloom"}
+                  </p>
+                </div>
+              </div>
             )}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#181511]/72 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#4b3659]/46 to-transparent" />
             <div className="template-shimmer" />
 
             {theme.demoSlug && (
