@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   BookOpen,
   Copy,
@@ -21,6 +23,7 @@ import {
   Type,
   Upload,
   Video,
+  X,
 } from "lucide-react";
 
 import {
@@ -144,7 +147,17 @@ type ThemeRecord = {
 };
 
 type ThemeType = "WEBSITE" | "PDF";
-type LibraryVideo = { label: string; url: string };
+type LibraryVideo = { label: string; url: string; thumbnailUrl?: string | null };
+type LibraryImage = { id: string; name: string; url: string; thumbnailUrl?: string | null; category?: string | null };
+type LibraryContent = {
+  id: string;
+  title: string;
+  text: string;
+  community: string;
+  section: string;
+  role: string;
+  previewImage?: string | null;
+};
 
 const FONT_OPTIONS = [
   "Playfair Display",
@@ -229,12 +242,20 @@ export function ThemeFormDialog({
   theme,
   type = "WEBSITE",
   revealVideoLibrary = [],
+  imageLibrary = [],
+  contentLibrary = [],
+  standalone = false,
+  returnHref = "/admin/library/themes",
 }: {
   theme?: ThemeRecord;
   type?: ThemeType;
   revealVideoLibrary?: LibraryVideo[];
+  imageLibrary?: LibraryImage[];
+  contentLibrary?: LibraryContent[];
+  standalone?: boolean;
+  returnHref?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(standalone);
   const [loading, setLoading] = useState(false);
   const [thumbUploading, setThumbUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
@@ -571,7 +592,16 @@ export function ThemeFormDialog({
   const selectedSectionDefinitions = elementsForSection(previewSection);
   const selectedSectionCustomText = customTextBySection[previewSection] ?? [];
   const selectedSectionIndex = sectionOrder.indexOf(previewSection);
-  const libraryPresets = COMMUNITY_CONTENT_PRESETS.filter((preset) => {
+  const databaseContent = contentLibrary.map((item) => ({
+    id: `db-${item.id}`,
+    label: item.title,
+    text: item.text,
+    community: item.community,
+    suggestedSection: item.section,
+    role: item.role as "heading" | "subheading" | "body" | "blessing",
+    previewImage: item.previewImage ?? undefined,
+  }));
+  const libraryPresets = [...databaseContent, ...COMMUNITY_CONTENT_PRESETS.map((preset) => ({ ...preset, previewImage: undefined as string | undefined }))].filter((preset) => {
     const communityMatch =
       selectedCommunity === "General"
         ? preset.community === "General"
@@ -611,7 +641,7 @@ export function ThemeFormDialog({
     setMobileTool("content");
   }
 
-  function applyLibraryPreset(preset: (typeof COMMUNITY_CONTENT_PRESETS)[number]) {
+  function applyLibraryPreset(preset: { text: string }) {
     if (selectedCanEditText && selectedElement) {
       updateSelectedText(preset.text);
     } else {
@@ -629,8 +659,13 @@ export function ThemeFormDialog({
       return;
     }
     toast.success(theme ? "Theme updated and published." : "Theme created and published.");
-    setOpen(false);
-    router.refresh();
+    if (standalone) {
+      router.push(returnHref);
+      router.refresh();
+    } else {
+      setOpen(false);
+      router.refresh();
+    }
   }
 
   return (
