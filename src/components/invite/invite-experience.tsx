@@ -26,6 +26,7 @@ import {
 import { EditChip } from "./editable";
 import type { InviteData } from "./types";
 import { ThemeElementProvider } from "./theme-text-element";
+import { sectionDisplayName } from "@/lib/section-labels";
 
 type SectionConfigEntry = {
   id: string;
@@ -177,6 +178,7 @@ export function InviteExperience({
   guidedActiveSectionId,
   previewMode = false,
   onlySectionType,
+  onEnvelopeComplete,
 }: {
   invite: InviteData;
   sectionConfig: SectionConfigEntry[];
@@ -199,6 +201,8 @@ export function InviteExperience({
   previewMode?: boolean;
   /** Theme Studio: render one real section instead of the whole invitation. */
   onlySectionType?: string;
+  /** Live editor uses this to refresh mobile preview controls after opening. */
+  onEnvelopeComplete?: () => void;
 }) {
   const edit = useInviteEdit();
   const [inviteOpen, setInviteOpen] = useState(skipEnvelope);
@@ -263,7 +267,10 @@ export function InviteExperience({
             posterUrl={invite.revealVideoPosterUrl}
             animation={invite.revealAnimation}
             backgroundImageUrl={invite.sectionImages?.ENVELOPE}
-            onComplete={() => setInviteOpen(true)}
+            onComplete={() => {
+              setInviteOpen(true);
+              onEnvelopeComplete?.();
+            }}
           />
         )}
       </AnimatePresence>
@@ -277,7 +284,7 @@ export function InviteExperience({
                   <SectionScope
                     key={section.id}
                     id={section.id}
-                    label="Names & welcome"
+                    label={sectionDisplayName("HERO")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
@@ -293,7 +300,7 @@ export function InviteExperience({
                   <SectionScope
                     key={section.id}
                     id={section.id}
-                    label="Date & countdown"
+                    label={sectionDisplayName("COUNTDOWN")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
@@ -312,7 +319,7 @@ export function InviteExperience({
                     <SectionScope
                       key={section.id}
                       id={section.id}
-                      label="Functions"
+                      label={sectionDisplayName("TIMELINE")}
                       guidedActiveSectionId={guidedActiveSectionId}
                       edit={edit}
                       sectionImage={invite.sectionImages?.[section.type]}
@@ -336,7 +343,7 @@ export function InviteExperience({
                     <SectionScope
                       key={event.id}
                       id={eventSectionId}
-                      label={event.name || `Function ${i + 1}`}
+                      label={`${sectionDisplayName("TIMELINE")} · ${event.name || `Function ${i + 1}`}`}
                       guidedActiveSectionId={guidedActiveSectionId}
                       edit={edit}
                       sectionImage={invite.sectionImages?.[section.type]}
@@ -358,7 +365,7 @@ export function InviteExperience({
                   <SectionScope
                     key={section.id}
                     id={section.id}
-                    label="Photos & story"
+                    label={sectionDisplayName(section.type)}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
@@ -381,7 +388,7 @@ export function InviteExperience({
                   <SectionScope
                     key={section.id}
                     id={section.id}
-                    label="Venue & directions"
+                    label={sectionDisplayName("VENUE")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
@@ -402,7 +409,7 @@ export function InviteExperience({
                   <SectionScope
                     key={section.id}
                     id={section.id}
-                    label="RSVP"
+                    label={sectionDisplayName("RSVP")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
@@ -422,7 +429,7 @@ export function InviteExperience({
                   <SectionScope
                     key={section.id}
                     id={section.id}
-                    label="Final message"
+                    label={sectionDisplayName("THANK_YOU")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
                     sectionImage={invite.sectionImages?.[section.type]}
