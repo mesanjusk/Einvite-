@@ -1027,23 +1027,41 @@ export function ThemeFormDialog({
                       </select>
                     </div>
 
-                    <div className="grid max-h-[46vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
-                      {libraryPresets.map((preset) => (
-                        <div key={preset.id} className="grid content-between gap-2 rounded-2xl border border-violet-200/70 bg-white p-3">
-                          <div>
-                            <div className="mb-2 grid size-9 place-items-center rounded-xl bg-violet-50 text-[#76508c]">
-                              <BookOpen className="size-4" />
+                    <div className="grid max-h-[48vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+                      {libraryPresets.map((preset) => {
+                        const cardImage =
+                          preset.previewImage ||
+                          (form.watch("decorAssets.sectionImages") ?? {})[previewSection] ||
+                          theme?.previewImage ||
+                          null;
+                        return (
+                          <div key={preset.id} className="grid min-w-0 content-between overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm">
+                            <div>
+                              {cardImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={cardImage} alt="" className="aspect-[16/9] w-full object-cover" />
+                              ) : (
+                                <div className="grid aspect-[16/9] place-items-center bg-violet-50 text-[#76508c]">
+                                  <BookOpen className="size-5" />
+                                </div>
+                              )}
+                              <div className="p-2">
+                                <p className="line-clamp-2 text-[10px] font-bold leading-tight text-[#4b3659]">{preset.label}</p>
+                                <p className="mt-1 truncate text-[8px] font-semibold text-[#9a82a7]">
+                                  {preset.community} · {preset.suggestedSection}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-[8px] leading-relaxed text-[#75617f]">{preset.text}</p>
+                              </div>
                             </div>
-                            <p className="text-[11px] font-bold leading-tight text-[#4b3659]">{preset.label}</p>
-                            <p className="mt-1 text-[9px] font-semibold text-[#9a82a7]">{preset.community}</p>
-                            <p className="mt-2 line-clamp-3 text-[9px] leading-relaxed text-[#75617f]">{preset.text}</p>
+                            <div className="px-2 pb-2">
+                              <Button type="button" variant="outline" size="sm" className="h-8 w-full text-[9px]" onClick={() => applyLibraryPreset(preset)}>
+                                <Plus className="size-3" />
+                                Apply
+                              </Button>
+                            </div>
                           </div>
-                          <Button type="button" variant="outline" size="sm" onClick={() => applyLibraryPreset(preset)}>
-                            <Plus className="size-3.5" />
-                            Apply
-                          </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {libraryPresets.length === 0 && (
@@ -1221,9 +1239,40 @@ export function ThemeFormDialog({
                           </button>
                         )}
                       </div>
+                      {imageLibrary.length > 0 && (
+                        <div className="grid gap-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[10px]">Choose from Template Library</Label>
+                            <Link href="/admin/library/templates" className="text-[9px] font-semibold text-[#76508c]">Manage library</Link>
+                          </div>
+                          <div className="grid max-h-48 grid-cols-4 gap-2 overflow-y-auto">
+                            {imageLibrary.map((asset) => (
+                              <button
+                                key={asset.id}
+                                type="button"
+                                onClick={() => {
+                                  const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                                  form.setValue("decorAssets.sectionImages", { ...current, [previewSection]: asset.url });
+                                }}
+                                className={
+                                  (form.watch("decorAssets.sectionImages") ?? {})[previewSection] === asset.url
+                                    ? "overflow-hidden rounded-xl border-2 border-[#76508c] bg-violet-50"
+                                    : "overflow-hidden rounded-xl border border-violet-200 bg-white"
+                                }
+                                title={asset.name}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={asset.thumbnailUrl || asset.url} alt={asset.name} className="aspect-[3/4] w-full object-cover" />
+                                <span className="block truncate px-1 py-1 text-[8px] font-semibold text-[#5f476c]">{asset.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-violet-50/50 px-3 py-3 text-xs font-semibold text-[#6c4a7d]">
                         <ImageIcon className="size-4" />
-                        {assetUploading === "image" ? "Uploading…" : "Upload / change section image"}
+                        {assetUploading === "image" ? "Uploading…" : "Upload new image"}
                         <input
                           type="file"
                           accept="image/*"
@@ -1385,16 +1434,34 @@ export function ThemeFormDialog({
                               />
                             </label>
                             {revealVideoLibrary.length > 0 && (
-                              <select
-                                className="border-input h-10 rounded-md border bg-background px-2 text-xs"
-                                value={form.watch("revealVideoUrl") ?? ""}
-                                onChange={(e) => form.setValue("revealVideoUrl", e.target.value)}
-                              >
-                                <option value="">Choose existing reveal video…</option>
-                                {revealVideoLibrary.map((item) => (
-                                  <option key={item.url} value={item.url}>{item.label}</option>
-                                ))}
-                              </select>
+                              <div className="grid gap-2">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-[10px]">Reveal Video Gallery</Label>
+                                  <Link href="/admin/library/video-reveals" className="text-[9px] font-semibold text-[#76508c]">Manage</Link>
+                                </div>
+                                <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto">
+                                  {revealVideoLibrary.map((item) => (
+                                    <button
+                                      key={item.url}
+                                      type="button"
+                                      onClick={() => form.setValue("revealVideoUrl", item.url)}
+                                      className={
+                                        form.watch("revealVideoUrl") === item.url
+                                          ? "overflow-hidden rounded-xl border-2 border-[#76508c] bg-violet-50 text-left"
+                                          : "overflow-hidden rounded-xl border border-violet-200 bg-white text-left"
+                                      }
+                                    >
+                                      {item.thumbnailUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={item.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
+                                      ) : (
+                                        <video src={item.url} className="aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" />
+                                      )}
+                                      <span className="block truncate px-2 py-1.5 text-[9px] font-semibold text-[#5f476c]">{item.label}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
