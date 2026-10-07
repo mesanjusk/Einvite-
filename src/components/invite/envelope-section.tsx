@@ -74,6 +74,8 @@ export function EnvelopeSection({
   animation,
   backgroundImageUrl,
   onComplete,
+  embedded = false,
+  autoPlay = false,
 }: {
   initials: string;
   /** Optional short muted clip layered over the coded burst once preloaded. */
@@ -87,6 +89,10 @@ export function EnvelopeSection({
   };
   backgroundImageUrl?: string | null;
   onComplete: () => void;
+  /** Render inside a phone preview instead of taking over the browser viewport. */
+  embedded?: boolean;
+  /** Theme Studio preview: play the real opening automatically after mount. */
+  autoPlay?: boolean;
 }) {
   const [opened, setOpened] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
@@ -107,7 +113,11 @@ export function EnvelopeSection({
     setOpened(true);
 
     const video = videoRef.current;
-    const videoLikelyReady = Boolean((videoUrl || videoWebmUrl) && video && video.readyState >= 3);
+    const videoLikelyReady = Boolean(
+      (videoUrl || videoWebmUrl) &&
+        video &&
+        (embedded || video.readyState >= 3),
+    );
 
     if (!videoLikelyReady) {
       setTimeout(onComplete, OPEN_DURATION_MS);
@@ -138,12 +148,21 @@ export function EnvelopeSection({
     }, VIDEO_HANDOFF_DELAY_MS);
   }
 
+  useEffect(() => {
+    if (!autoPlay) return;
+    const timer = window.setTimeout(() => handleTap(), embedded ? 450 : 180);
+    return () => window.clearTimeout(timer);
+    // Remounting the preview is the replay mechanism; handleTap intentionally
+    // stays out of the dependency list so the timer is not restarted by state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlay, embedded]);
+
   return (
     <motion.div
       onClick={handleTap}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
-      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center overflow-hidden"
+      className={`${embedded ? "absolute inset-0 z-10" : "fixed inset-0 z-50"} flex cursor-pointer flex-col items-center justify-center overflow-hidden`}
       style={{
         background:
           "radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--inv-primary) 80%, white 8%) 0%, var(--inv-primary) 45%, color-mix(in srgb, var(--inv-primary) 70%, black 30%) 100%)",
