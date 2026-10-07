@@ -16,21 +16,9 @@ import {
 import { GALLERY_ANIMATIONS } from "@/lib/validations/live-invitation";
 import type { SectionConfigEntry } from "@/lib/get-invite-data";
 import type { EditorTheme } from "./types";
+import { sectionDisplayName } from "@/lib/section-labels";
 import { IntroVideoUploader } from "./intro-video-uploader";
 
-const SECTION_LABELS: Record<string, string> = {
-  HERO: "Names & invitation",
-  COUNTDOWN: "Save the date",
-  STORY: "Photos",
-  GALLERY: "Photos",
-  TIMELINE: "Functions",
-  VENUE: "Venue",
-  RSVP: "RSVP",
-  THANK_YOU: "Thank you",
-  ENVELOPE: "Envelope",
-  REGISTRY: "Registry",
-  INSTAGRAM: "Instagram",
-};
 
 /** The design sheet: which look the invitation wears, and what's on it. */
 export function DesignSheet({
@@ -197,13 +185,13 @@ export function DesignSheet({
                   className="flex items-center justify-between gap-3 p-3"
                 >
                   <span className="text-sm">
-                    {SECTION_LABELS[section.type] ?? section.type}
+                    {sectionDisplayName(section.type)}
                   </span>
                   <Switch
                     checked={section.visible}
                     disabled={section.locked}
                     onCheckedChange={(checked) => onSectionToggle(section.id, checked)}
-                    aria-label={`Show ${SECTION_LABELS[section.type] ?? section.type}`}
+                    aria-label={`Show ${sectionDisplayName(section.type)}`}
                   />
                 </div>
               ))}
