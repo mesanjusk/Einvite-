@@ -1606,8 +1606,6 @@ export function ThemeFormDialog({
                         );
                       })}
                     </div>
-
-                    </div>
                   </div>
                 )}
               </div>
