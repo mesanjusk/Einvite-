@@ -1,56 +1,38 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Pencil, Plus } from "lucide-react";
 
 import { db } from "@/lib/db";
 import { eventCategoryFor } from "@/lib/event-categories";
-import { ThemeFormDialog } from "@/components/admin/theme-form-dialog";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteThemeAction, deleteThemeColorwayAction } from "@/lib/actions/admin";
 import { ThemeColorwayDialog } from "@/components/admin/theme-colorway-dialog";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Manage Themes" };
 
 export default async function AdminThemesPage() {
-  const [themes, videoTemplates] = await Promise.all([
-    db.theme.findMany({
-    orderBy: [{ type: "asc" }, { sortOrder: "asc" }],
+  const themes = await db.theme.findMany({
+    orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
     include: {
       templates: true,
       colorways: { orderBy: { sortOrder: "asc" } },
       _count: { select: { invitations: true, pdfInvitations: true } },
     },
-  }),
-    db.videoTemplate.findMany({
-      where: { previewImage: { not: null } },
-      orderBy: { sortOrder: "asc" },
-      select: { name: true, previewImage: true },
-    }),
-  ]);
-
-  const revealVideoLibrary = [
-    ...themes
-    .filter((theme) => Boolean(theme.revealVideoUrl))
-    .map((theme) => ({
-      label: `Theme · ${theme.name}`,
-      url: theme.revealVideoUrl as string,
-    })),
-    ...videoTemplates
-      .filter((template) => {
-        const url = template.previewImage ?? "";
-        return url.includes("/video/upload/") || /\.(mp4|webm)(\?|$)/i.test(url);
-      })
-      .map((template) => ({
-        label: `Video library · ${template.name}`,
-        url: template.previewImage as string,
-      })),
-  ];
+  });
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Theme Studio" meta={`${themes.length} themes`}>
-        <ThemeFormDialog type="WEBSITE" revealVideoLibrary={revealVideoLibrary} />
+        <Button asChild>
+          <Link href="/admin/library/themes/new">
+            <Plus className="size-4" />
+            New theme
+          </Link>
+        </Button>
       </PageHeader>
 
       <Card className="border-violet-200/70 bg-violet-50/50">
@@ -72,12 +54,21 @@ export default async function AdminThemesPage() {
           const sectionOrder = (theme.templates[0]?.sectionOrder as string[] | undefined) ?? [];
           return (
             <Card key={theme.id} className="overflow-hidden py-0">
-              <div
-                className="h-16"
-                style={{
-                  background: `linear-gradient(135deg, ${palette.primary}, ${palette.accent})`,
-                }}
-              />
+              {theme.previewImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={theme.previewImage}
+                  alt={`${theme.name} thumbnail`}
+                  className="aspect-[16/9] w-full object-cover"
+                />
+              ) : (
+                <div
+                  className="aspect-[16/9]"
+                  style={{
+                    background: `linear-gradient(135deg, ${palette.primary}, ${palette.accent})`,
+                  }}
+                />
+              )}
               <CardContent className="flex flex-col gap-2 py-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -94,28 +85,11 @@ export default async function AdminThemesPage() {
                       {theme.type === "WEBSITE" ? "Web + PDF" : "Legacy PDF"}
                     </Badge>
                     {theme.isPremium && <Badge variant="gold">Premium</Badge>}
-                    <ThemeFormDialog
-                      type={theme.type === "PDF" ? "PDF" : "WEBSITE"}
-                      theme={{
-                        id: theme.id,
-                        name: theme.name,
-                        slug: theme.slug,
-                        description: theme.description,
-                        previewImage: theme.previewImage,
-                        revealMode: theme.revealMode,
-                        revealVideoUrl: theme.revealVideoUrl,
-                        category: theme.category,
-                        eventCategory: theme.eventCategory,
-                        isPremium: theme.isPremium,
-                        sortOrder: theme.sortOrder,
-                        colorPalette: theme.colorPalette as never,
-                        fontPairing: theme.fontPairing as never,
-                        content: theme.content as never,
-                        decorAssets: theme.decorAssets as never,
-                        sectionOrder,
-                      }}
-                      revealVideoLibrary={revealVideoLibrary}
-                    />
+                    <Button asChild variant="ghost" size="icon" className="size-8">
+                      <Link href={`/admin/library/themes/${theme.id}/edit`} aria-label={`Edit ${theme.name}`}>
+                        <Pencil className="size-4" />
+                      </Link>
+                    </Button>
                     <DeleteEntityButton
                       id={theme.id}
                       confirmLabel={`Delete the ${theme.name} theme? This can't be undone.`}
