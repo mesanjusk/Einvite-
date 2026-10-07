@@ -267,6 +267,7 @@ export function InviteExperience({
             posterUrl={invite.revealVideoPosterUrl}
             animation={invite.revealAnimation}
             backgroundImageUrl={invite.sectionImages?.ENVELOPE}
+            embedded={previewMode}
             onComplete={() => {
               setInviteOpen(true);
               onEnvelopeComplete?.();
