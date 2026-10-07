@@ -34,7 +34,10 @@ import {
   type ThemeFormInput,
   type ThemeFormValues,
 } from "@/lib/validations/admin";
-import { upsertThemeAction } from "@/lib/actions/admin";
+import {
+  upsertThemeAction,
+  upsertThemeLibraryAssetAction,
+} from "@/lib/actions/admin";
 import {
   COMMUNITY_CONTENT_GROUPS,
   COMMUNITY_CONTENT_PRESETS,
@@ -169,7 +172,7 @@ const FONT_OPTIONS = [
 
 const ANIMATION_LABELS: Record<(typeof REVEAL_ANIMATION_PRESETS)[number], string> = {
   MAGIC_BLOOM: "Magic bloom",
-  SPARKLES: "Golden sparkles",
+  SPARKLES: "Lavender sparkles",
   CONFETTI: "Celebration confetti",
   PETALS: "Falling petals",
 };
@@ -191,11 +194,11 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
     isPremium: theme?.isPremium ?? false,
     sortOrder: theme?.sortOrder ?? 0,
     colorPalette: theme?.colorPalette ?? {
-      primary: "#7a2e2e",
-      secondary: "#f3d9d9",
-      accent: "#c9942a",
-      background: "#faf3ea",
-      foreground: "#3a1414",
+      primary: "#76508c",
+      secondary: "#eee6f4",
+      accent: "#a987bd",
+      background: "#ffffff",
+      foreground: "#4b3659",
     },
     fontPairing: theme?.fontPairing ?? {
       display: "Playfair Display",
@@ -527,7 +530,17 @@ export function ThemeFormDialog({
     const uploaded = await uploadAsset(file, "video");
     if (uploaded?.url) {
       form.setValue("revealVideoUrl", uploaded.url);
-      toast.success("Reveal video uploaded and selected.");
+      const saved = await upsertThemeLibraryAssetAction({
+        name: file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") || `${form.getValues("name") || "Theme"} reveal`,
+        kind: "REVEAL_VIDEO",
+        url: uploaded.url,
+        sortOrder: revealVideoLibrary.length,
+      });
+      if (!saved.success) {
+        toast.error(saved.error);
+      } else {
+        toast.success("Reveal video uploaded, selected and saved to the gallery.");
+      }
     }
   }
 
@@ -542,8 +555,22 @@ export function ThemeFormDialog({
       ...current,
       [sectionType]: uploaded.url,
     });
+    const saved = await upsertThemeLibraryAssetAction({
+      name:
+        file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") ||
+        `${form.getValues("name") || "Theme"} ${sectionType.toLowerCase()} artwork`,
+      kind: "IMAGE",
+      url: uploaded.url,
+      category: sectionType,
+      community: form.getValues("decorAssets.contentCommunity") || "General",
+      sortOrder: imageLibrary.length,
+    });
     setPreviewSection(sectionType);
-    toast.success(`${sectionType} artwork uploaded. Preview updated.`);
+    if (!saved.success) {
+      toast.error(saved.error);
+    } else {
+      toast.success(`${sectionType} artwork uploaded and saved to Template Library.`);
+    }
   }
 
   async function handleBulkArtwork(file?: File) {
@@ -554,8 +581,22 @@ export function ThemeFormDialog({
       current[sectionType] = uploaded.url;
     }
     form.setValue("decorAssets.sectionImages", current);
+    const saved = await upsertThemeLibraryAssetAction({
+      name:
+        file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") ||
+        `${form.getValues("name") || "Theme"} shared artwork`,
+      kind: "IMAGE",
+      url: uploaded.url,
+      category: "ALL_SECTIONS",
+      community: form.getValues("decorAssets.contentCommunity") || "General",
+      sortOrder: imageLibrary.length,
+    });
     setPreviewSection((form.getValues("sectionOrder")[0] ?? "HERO") as (typeof SECTION_TYPES)[number]);
-    toast.success("Artwork applied to every active section. You can replace any section individually.");
+    if (!saved.success) {
+      toast.error(saved.error);
+    } else {
+      toast.success("Artwork applied to every active section and saved to Template Library.");
+    }
   }
 
   const selectedDefinition = selectedElement
