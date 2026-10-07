@@ -14,15 +14,14 @@ const paletteSchema = (colorPalette: unknown) => {
     background?: string;
   } | null;
   return {
-    primary: p?.primary ?? "#7a2e2e",
-    accent: p?.accent ?? "#c9942a",
-    background: p?.background ?? "#faf3ea",
+    primary: p?.primary ?? "#76508c",
+    accent: p?.accent ?? "#a987bd",
+    background: p?.background ?? "#ffffff",
   };
 };
 
 export default async function TemplatesPage() {
   const themes = await db.theme.findMany({
-    where: { type: "WEBSITE" },
     orderBy: { sortOrder: "asc" },
     include: { templates: true },
   });
