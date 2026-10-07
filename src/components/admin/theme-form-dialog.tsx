@@ -655,6 +655,729 @@ export function ThemeFormDialog({
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-6">
+          {type === "WEBSITE" && (
+            <section className="-mx-3 grid gap-3 md:hidden">
+              <div className="sticky top-0 z-20 grid gap-2 border-y border-violet-200/70 bg-[#faf6fd]/95 px-3 py-2 backdrop-blur-xl">
+                <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+                  {sectionOrder.map((sectionType) => {
+                    const typedSection = sectionType as (typeof SECTION_TYPES)[number];
+                    return (
+                      <button
+                        key={sectionType}
+                        type="button"
+                        onClick={() => selectSectionForEditing(typedSection)}
+                        className={
+                          previewSection === typedSection
+                            ? "shrink-0 rounded-full bg-[#76508c] px-3 py-2 text-[11px] font-bold text-white shadow-sm"
+                            : "shrink-0 rounded-full border border-violet-200 bg-white px-3 py-2 text-[11px] font-semibold text-[#5a4168]"
+                        }
+                      >
+                        {sectionType}
+                      </button>
+                    );
+                  })}
+                  {SECTION_TYPES.filter((item) => !sectionOrder.includes(item)).map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => {
+                        toggleSection(item);
+                        selectSectionForEditing(item);
+                      }}
+                      className="shrink-0 rounded-full border border-dashed border-violet-300 bg-violet-50 px-3 py-2 text-[11px] font-semibold text-[#76508c]"
+                    >
+                      + {item}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 rounded-2xl border border-violet-200/70 bg-white/85 px-2 py-1.5">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-9"
+                      disabled={selectedSectionIndex <= 0}
+                      onClick={() => moveSection(selectedSectionIndex, -1)}
+                      aria-label="Move section up"
+                    >
+                      <ArrowUp className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-9"
+                      disabled={selectedSectionIndex < 0 || selectedSectionIndex >= sectionOrder.length - 1}
+                      onClick={() => moveSection(selectedSectionIndex, 1)}
+                      aria-label="Move section down"
+                    >
+                      <ArrowDown className="size-4" />
+                    </Button>
+                  </div>
+                  <div className="min-w-0 text-center">
+                    <p className="truncate text-xs font-bold text-[#4b3659]">{previewSection}</p>
+                    <p className="text-[9px] text-[#8a7397]">Selected section</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={removeSelectedSection}
+                  >
+                    <Trash2 className="size-3.5" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] px-3 py-4 shadow-inner">
+                <ThemeRealSectionPreview
+                  section={previewSection}
+                  eventCategory={form.watch("eventCategory")}
+                  palette={form.watch("colorPalette")}
+                  fonts={form.watch("fontPairing")}
+                  content={form.watch("content")}
+                  revealMode={form.watch("revealMode")}
+                  revealVideoUrl={form.watch("revealVideoUrl")}
+                  revealAnimation={form.watch("decorAssets.revealAnimation")}
+                  sectionImages={form.watch("decorAssets.sectionImages")}
+                  sectionStyles={form.watch("decorAssets.sectionStyles")}
+                  elementStyles={form.watch("decorAssets.elementStyles")}
+                  customText={form.watch("decorAssets.customText")}
+                  onSelectElement={(key) => {
+                    setSelectedElement(key);
+                    setMobileTool("content");
+                  }}
+                  compact
+                />
+              </div>
+
+              <div className="overflow-hidden rounded-t-[1.75rem] rounded-b-2xl border border-violet-200/80 bg-[#fffaff] shadow-[0_-12px_36px_rgba(99,71,118,.12)]">
+                <div className="flex items-center justify-between gap-3 border-b border-violet-100 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-lg font-semibold text-[#442852]">
+                      {previewSection} Section
+                    </p>
+                    <p className="text-[10px] text-[#8a7397]">
+                      Edit content and load text from library
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addCustomText()}>
+                    <Plus className="size-3.5" />
+                    Add text
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-4 border-b border-violet-100 bg-violet-50/60 p-1">
+                  {[
+                    ["content", "Content", Smartphone],
+                    ["library", "Library", BookOpen],
+                    ["text", "Text", Type],
+                    ["advanced", "Advanced", SlidersHorizontal],
+                  ].map(([value, label, Icon]) => (
+                    <button
+                      key={String(value)}
+                      type="button"
+                      onClick={() => setMobileTool(value as "content" | "library" | "text" | "advanced")}
+                      className={
+                        mobileTool === value
+                          ? "flex min-w-0 items-center justify-center gap-1 rounded-xl bg-[#76508c] px-2 py-2 text-[10px] font-bold text-white shadow-sm"
+                          : "flex min-w-0 items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold text-[#6d547a]"
+                      }
+                    >
+                      <Icon className="size-3.5 shrink-0" />
+                      <span className="truncate">{String(label)}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {mobileTool === "content" && (
+                  <div className="grid gap-3 p-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold text-[#4b3659]">Text layers</Label>
+                      <button
+                        type="button"
+                        className="text-[10px] font-semibold text-[#76508c]"
+                        onClick={() => addCustomText()}
+                      >
+                        + Add
+                      </button>
+                    </div>
+
+                    <div className="grid max-h-44 gap-1.5 overflow-y-auto pr-1">
+                      {selectedSectionDefinitions.map((definition) => {
+                        const layerText = definition.coreField
+                          ? getCoreContent(definition.coreField)
+                          : elementStyles[definition.key]?.text ??
+                            definition.fallbackText ??
+                            (definition.dynamic ? "Dynamic invitation data" : "");
+                        return (
+                          <button
+                            key={definition.key}
+                            type="button"
+                            onClick={() => setSelectedElement(definition.key)}
+                            className={
+                              selectedElement === definition.key
+                                ? "grid grid-cols-[32px_minmax(0,1fr)] items-center gap-2 rounded-xl border border-violet-300 bg-violet-100/80 p-2 text-left"
+                                : "grid grid-cols-[32px_minmax(0,1fr)] items-center gap-2 rounded-xl border bg-white p-2 text-left"
+                            }
+                          >
+                            <span className="grid size-8 place-items-center rounded-lg bg-violet-50 text-[#76508c]">
+                              <Type className="size-4" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-[11px] font-bold text-[#4b3659]">
+                                {definition.label}
+                              </span>
+                              <span className="block truncate text-[9px] text-[#8a7397]">
+                                {layerText || "Empty"}
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                      {selectedSectionCustomText.map((block) => (
+                        <button
+                          key={block.id}
+                          type="button"
+                          onClick={() => setSelectedElement(block.id)}
+                          className={
+                            selectedElement === block.id
+                              ? "grid grid-cols-[32px_minmax(0,1fr)] items-center gap-2 rounded-xl border border-violet-300 bg-violet-100/80 p-2 text-left"
+                              : "grid grid-cols-[32px_minmax(0,1fr)] items-center gap-2 rounded-xl border bg-white p-2 text-left"
+                          }
+                        >
+                          <span className="grid size-8 place-items-center rounded-lg bg-violet-50 text-[#76508c]">
+                            <Type className="size-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-[11px] font-bold text-[#4b3659]">
+                              Added text
+                            </span>
+                            <span className="block truncate text-[9px] text-[#8a7397]">{block.text}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="grid gap-2 rounded-2xl border border-violet-200/70 bg-white p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-bold text-[#4b3659]">
+                            {selectedDefinition?.label ?? (selectedCustom ? "Added text" : "Select content")}
+                          </p>
+                          <p className="text-[9px] text-[#8a7397]">Edit the selected layer only</p>
+                        </div>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setMobileTool("library")}>
+                          <BookOpen className="size-3.5" />
+                          Library
+                        </Button>
+                      </div>
+
+                      {selectedCanEditText ? (
+                        <Textarea
+                          rows={3}
+                          value={selectedText}
+                          onChange={(e) => updateSelectedText(e.target.value)}
+                          className="resize-none text-sm"
+                        />
+                      ) : selectedElement ? (
+                        <div className="rounded-xl border border-dashed bg-violet-50/40 p-3 text-[10px] leading-relaxed text-[#75617f]">
+                          This layer uses invitation data such as names, date or venue. You can style it from the Text tab, but its value comes from the invitation.
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-dashed p-3 text-center text-[10px] text-[#8a7397]">
+                          Tap text in the preview or choose a layer above.
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={() => addCustomText()}>
+                          <Plus className="size-3.5" />
+                          Add
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" disabled={!selectedElement} onClick={duplicateSelectedContent}>
+                          <Copy className="size-3.5" />
+                          Duplicate
+                        </Button>
+                        {selectedElement && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => {
+                              if (selectedCustom) {
+                                removeSelectedCustomText();
+                              } else {
+                                updateElementStyle(selectedElement, { hidden: true });
+                              }
+                            }}
+                          >
+                            <Trash2 className="size-3.5" />
+                            {selectedCustom ? "Delete" : "Hide"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {mobileTool === "library" && (
+                  <div className="grid gap-3 p-3">
+                    <div className="grid gap-2">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9b86a6]" />
+                        <Input
+                          value={libraryQuery}
+                          onChange={(e) => setLibraryQuery(e.target.value)}
+                          placeholder="Search invitation content"
+                          className="pl-9"
+                        />
+                      </div>
+                      <select
+                        className="border-input h-10 rounded-md border bg-background px-3 text-sm"
+                        value={selectedCommunity}
+                        onChange={(e) => form.setValue("decorAssets.contentCommunity", e.target.value)}
+                      >
+                        {COMMUNITY_CONTENT_GROUPS.map((item) => (
+                          <option key={item} value={item}>{item}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid max-h-[46vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
+                      {libraryPresets.map((preset) => (
+                        <div key={preset.id} className="grid content-between gap-2 rounded-2xl border border-violet-200/70 bg-white p-3">
+                          <div>
+                            <div className="mb-2 grid size-9 place-items-center rounded-xl bg-violet-50 text-[#76508c]">
+                              <BookOpen className="size-4" />
+                            </div>
+                            <p className="text-[11px] font-bold leading-tight text-[#4b3659]">{preset.label}</p>
+                            <p className="mt-1 text-[9px] font-semibold text-[#9a82a7]">{preset.community}</p>
+                            <p className="mt-2 line-clamp-3 text-[9px] leading-relaxed text-[#75617f]">{preset.text}</p>
+                          </div>
+                          <Button type="button" variant="outline" size="sm" onClick={() => applyLibraryPreset(preset)}>
+                            <Plus className="size-3.5" />
+                            Apply
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {libraryPresets.length === 0 && (
+                      <div className="rounded-xl border border-dashed p-6 text-center text-xs text-muted-foreground">
+                        No library content matches this search.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {mobileTool === "text" && (
+                  <div className="grid gap-4 p-3">
+                    {!selectedElement ? (
+                      <div className="rounded-xl border border-dashed p-5 text-center text-xs text-muted-foreground">
+                        Select a text layer or tap text in the preview first.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="grid gap-1">
+                            <Label className="text-[10px]">Font size</Label>
+                            <div className="flex items-center rounded-xl border bg-white">
+                              <button
+                                type="button"
+                                className="size-10 text-lg"
+                                onClick={() =>
+                                  updateSelectedAppearance({ fontSize: Math.max(8, (selectedStyle.fontSize ?? 22) - 2) })
+                                }
+                              >
+                                −
+                              </button>
+                              <Input
+                                type="number"
+                                min={8}
+                                max={120}
+                                value={selectedStyle.fontSize ?? ""}
+                                placeholder="Auto"
+                                onChange={(e) =>
+                                  updateSelectedAppearance({
+                                    fontSize: e.target.value ? Number(e.target.value) : undefined,
+                                  })
+                                }
+                                className="h-10 border-0 text-center shadow-none"
+                              />
+                              <button
+                                type="button"
+                                className="size-10 text-lg"
+                                onClick={() =>
+                                  updateSelectedAppearance({ fontSize: Math.min(120, (selectedStyle.fontSize ?? 22) + 2) })
+                                }
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid gap-1">
+                            <Label className="text-[10px]">Font</Label>
+                            <select
+                              className="border-input h-10 rounded-md border bg-background px-2 text-xs"
+                              value={selectedStyle.fontRole ?? ""}
+                              onChange={(e) =>
+                                updateSelectedAppearance({
+                                  fontRole: (e.target.value || undefined) as ThemeElementStyleValue["fontRole"],
+                                })
+                              }
+                            >
+                              <option value="">Theme default</option>
+                              <option value="display">Display</option>
+                              <option value="body">Body</option>
+                              <option value="script">Script</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-[1fr_92px] gap-2">
+                          <div className="grid gap-1">
+                            <Label className="text-[10px]">Alignment</Label>
+                            <div className="grid grid-cols-3 overflow-hidden rounded-xl border bg-white">
+                              {(["left", "center", "right"] as const).map((align) => (
+                                <button
+                                  key={align}
+                                  type="button"
+                                  className={
+                                    selectedStyle.align === align
+                                      ? "bg-violet-100 px-2 py-2 text-[10px] font-bold text-[#68467b]"
+                                      : "px-2 py-2 text-[10px] font-semibold text-[#765f81]"
+                                  }
+                                  onClick={() => updateSelectedAppearance({ align })}
+                                >
+                                  {align}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <label className="grid gap-1">
+                            <span className="text-[10px] font-medium">Color</span>
+                            <input
+                              type="color"
+                              value={selectedStyle.color || "#4b3659"}
+                              onChange={(e) => updateSelectedAppearance({ color: e.target.value })}
+                              className="h-10 w-full rounded-xl border bg-white"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="grid gap-3 rounded-2xl border bg-white p-3">
+                          <div className="grid gap-1">
+                            <div className="flex justify-between text-[10px]">
+                              <Label className="text-[10px]">Horizontal position</Label>
+                              <span>{selectedStyle.x ?? 0}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="-60"
+                              max="60"
+                              value={selectedStyle.x ?? 0}
+                              onChange={(e) => updateSelectedAppearance({ x: Number(e.target.value) })}
+                            />
+                          </div>
+                          <div className="grid gap-1">
+                            <div className="flex justify-between text-[10px]">
+                              <Label className="text-[10px]">Vertical position</Label>
+                              <span>{selectedStyle.y ?? 0}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="-60"
+                              max="60"
+                              value={selectedStyle.y ?? 0}
+                              onChange={(e) => updateSelectedAppearance({ y: Number(e.target.value) })}
+                            />
+                          </div>
+                        </div>
+
+                        <label className="flex items-center justify-between rounded-xl border bg-white p-3">
+                          <span className="text-xs font-semibold">Background behind text</span>
+                          <Switch
+                            checked={selectedStyle.showBackground ?? false}
+                            onCheckedChange={(value) => updateSelectedAppearance({ showBackground: value })}
+                          />
+                        </label>
+                        {!selectedCustom && (
+                          <label className="flex items-center justify-between rounded-xl border bg-white p-3">
+                            <span className="text-xs font-semibold">Hide selected content</span>
+                            <Switch
+                              checked={selectedStyle.hidden ?? false}
+                              onCheckedChange={(value) => updateSelectedAppearance({ hidden: value })}
+                            />
+                          </label>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {mobileTool === "advanced" && (
+                  <div className="grid max-h-[58vh] gap-4 overflow-y-auto p-3">
+                    <div className="grid gap-3 rounded-2xl border border-violet-200/70 bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-[#4b3659]">Section artwork</p>
+                          <p className="text-[9px] text-[#8a7397]">Background for {previewSection}</p>
+                        </div>
+                        {(form.watch("decorAssets.sectionImages") ?? {})[previewSection] && (
+                          <button
+                            type="button"
+                            className="text-[10px] font-semibold text-destructive"
+                            onClick={() => {
+                              const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                              delete current[previewSection];
+                              form.setValue("decorAssets.sectionImages", current);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-violet-50/50 px-3 py-3 text-xs font-semibold text-[#6c4a7d]">
+                        <ImageIcon className="size-4" />
+                        {assetUploading === "image" ? "Uploading…" : "Upload / change section image"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={assetUploading === "image"}
+                          onChange={(e) => handleSectionImage(previewSection, e.target.files?.[0])}
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={assetUploading === "image"}
+                        onClick={() => bulkArtworkInputRef.current?.click()}
+                      >
+                        <Upload className="size-3.5" />
+                        Apply one image to all sections
+                      </Button>
+                      <input
+                        ref={bulkArtworkInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleBulkArtwork(e.target.files?.[0])}
+                      />
+                    </div>
+
+                    <div className="grid gap-3 rounded-2xl border bg-white p-3">
+                      <p className="text-xs font-bold text-[#4b3659]">Section layout</p>
+                      <div className="grid gap-1">
+                        <div className="flex justify-between text-[10px]">
+                          <Label className="text-[10px]">Content horizontal position</Label>
+                          <span>{sectionStyles[previewSection]?.x ?? 0}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-40"
+                          max="40"
+                          value={sectionStyles[previewSection]?.x ?? 0}
+                          onChange={(e) => updateSectionStyle(previewSection, { x: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div className="grid gap-1">
+                        <div className="flex justify-between text-[10px]">
+                          <Label className="text-[10px]">Content vertical position</Label>
+                          <span>{sectionStyles[previewSection]?.y ?? 0}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-40"
+                          max="40"
+                          value={sectionStyles[previewSection]?.y ?? 0}
+                          onChange={(e) => updateSectionStyle(previewSection, { y: Number(e.target.value) })}
+                        />
+                      </div>
+                      <label className="flex items-center justify-between rounded-xl border p-3">
+                        <span className="text-xs font-semibold">Show content background box</span>
+                        <Switch
+                          checked={sectionStyles[previewSection]?.showBox ?? true}
+                          onCheckedChange={(value) => updateSectionStyle(previewSection, { showBox: value })}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid gap-3 rounded-2xl border bg-white p-3">
+                      <p className="text-xs font-bold text-[#4b3659]">Section colors & fonts</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          ["primary", "Main"],
+                          ["accent", "Accent"],
+                          ["foreground", "Text"],
+                        ] as const).map(([key, label]) => (
+                          <label key={key} className="grid gap-1 text-[9px]">
+                            <span>{label}</span>
+                            <input
+                              type="color"
+                              value={sectionStyles[previewSection]?.[key] || form.watch("colorPalette")[key]}
+                              onChange={(e) => updateSectionStyle(previewSection, { [key]: e.target.value })}
+                              className="h-10 w-full rounded-xl border bg-transparent"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      {(["display", "body", "script"] as const).map((kind) => {
+                        const field =
+                          kind === "display" ? "displayFont" : kind === "body" ? "bodyFont" : "scriptFont";
+                        return (
+                          <div key={kind} className="grid gap-1">
+                            <Label className="text-[10px] capitalize">{kind} font</Label>
+                            <select
+                              className="border-input h-10 rounded-md border bg-background px-2 text-xs"
+                              value={sectionStyles[previewSection]?.[field] || form.watch("fontPairing")[kind]}
+                              onChange={(e) => updateSectionStyle(previewSection, { [field]: e.target.value })}
+                            >
+                              {FONT_OPTIONS.map((font) => (
+                                <option key={font} value={font}>{font}</option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {previewSection === "ENVELOPE" && (
+                      <div className="grid gap-3 rounded-2xl border bg-white p-3">
+                        <p className="text-xs font-bold text-[#4b3659]">Envelope reveal</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            variant={form.watch("revealMode") === "ANIMATION" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => form.setValue("revealMode", "ANIMATION")}
+                          >
+                            <Sparkles className="size-3.5" />
+                            Animation
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={form.watch("revealMode") === "VIDEO" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => form.setValue("revealMode", "VIDEO")}
+                          >
+                            <Video className="size-3.5" />
+                            Video
+                          </Button>
+                        </div>
+                        {form.watch("revealMode") === "ANIMATION" ? (
+                          <div className="grid gap-2">
+                            <select
+                              className="border-input h-10 rounded-md border bg-background px-2 text-xs"
+                              value={form.watch("decorAssets.revealAnimation.preset")}
+                              onChange={(e) =>
+                                form.setValue(
+                                  "decorAssets.revealAnimation.preset",
+                                  e.target.value as (typeof REVEAL_ANIMATION_PRESETS)[number],
+                                )
+                              }
+                            >
+                              {REVEAL_ANIMATION_PRESETS.map((preset) => (
+                                <option key={preset} value={preset}>{ANIMATION_LABELS[preset]}</option>
+                              ))}
+                            </select>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input type="number" min="0.5" max="2" step="0.1" placeholder="Intensity" {...form.register("decorAssets.revealAnimation.intensity", { valueAsNumber: true })} />
+                              <Input type="number" min="0.5" max="2" step="0.1" placeholder="Speed" {...form.register("decorAssets.revealAnimation.speed", { valueAsNumber: true })} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid gap-2">
+                            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-xs">
+                              <Upload className="size-4" />
+                              {assetUploading === "video" ? "Uploading…" : "Upload reveal video"}
+                              <input
+                                type="file"
+                                accept="video/mp4,video/webm,video/*"
+                                className="hidden"
+                                disabled={assetUploading === "video"}
+                                onChange={(e) => handleRevealVideo(e.target.files?.[0])}
+                              />
+                            </label>
+                            {revealVideoLibrary.length > 0 && (
+                              <select
+                                className="border-input h-10 rounded-md border bg-background px-2 text-xs"
+                                value={form.watch("revealVideoUrl") ?? ""}
+                                onChange={(e) => form.setValue("revealVideoUrl", e.target.value)}
+                              >
+                                <option value="">Choose existing reveal video…</option>
+                                {revealVideoLibrary.map((item) => (
+                                  <option key={item.url} value={item.url}>{item.label}</option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="grid gap-3 rounded-2xl border bg-white p-3">
+                      <p className="text-xs font-bold text-[#4b3659]">Theme setup</p>
+                      <div className="grid gap-1">
+                        <Label className="text-[10px]">Theme name</Label>
+                        <Input {...form.register("name")} />
+                      </div>
+                      <div className="grid gap-1">
+                        <Label className="text-[10px]">Slug</Label>
+                        <Input {...form.register("slug")} disabled={!!theme} />
+                      </div>
+                      <div className="grid gap-1">
+                        <Label className="text-[10px]">Description</Label>
+                        <Textarea rows={2} {...form.register("description")} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="grid gap-1">
+                          <Label className="text-[10px]">Celebration</Label>
+                          <select
+                            className="border-input h-10 rounded-md border bg-background px-2 text-xs"
+                            value={form.watch("eventCategory")}
+                            onChange={(e) => form.setValue("eventCategory", e.target.value as ThemeFormValues["eventCategory"])}
+                          >
+                            {EVENT_CATEGORIES.map((category) => (
+                              <option key={category.slug} value={category.slug}>{category.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="grid gap-1">
+                          <Label className="text-[10px]">Style</Label>
+                          <select
+                            className="border-input h-10 rounded-md border bg-background px-2 text-xs capitalize"
+                            value={form.watch("category")}
+                            onChange={(e) => form.setValue("category", e.target.value as ThemeFormValues["category"])}
+                          >
+                            {THEME_CATEGORIES.map((category) => (
+                              <option key={category} value={category}>{category}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <label className="flex items-center justify-between rounded-xl border p-3">
+                        <span className="text-xs font-semibold">Premium theme</span>
+                        <Switch
+                          checked={form.watch("isPremium")}
+                          onCheckedChange={(value) => form.setValue("isPremium", value)}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          <div className="hidden md:contents">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid min-w-0 gap-1.5">
               <Label>Name</Label>
@@ -1354,7 +2077,9 @@ export function ThemeFormDialog({
             </section>
           )}
 
-          <DialogFooter>
+          </div>
+
+          <DialogFooter className="sticky bottom-0 z-30 -mx-1 border-t border-violet-200/70 bg-[#fffaff]/95 px-1 pt-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
             <Button type="submit" disabled={loading || Boolean(assetUploading)}>
               {loading ? "Saving…" : theme ? "Save changes" : type === "PDF" ? "Create PDF theme" : "Create theme"}
             </Button>
