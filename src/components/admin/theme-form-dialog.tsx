@@ -669,25 +669,68 @@ export function ThemeFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {theme ? (
-          <IconButton label="Edit">
-            <Pencil className="size-4" />
-          </IconButton>
-        ) : (
-          <IconButton label={type === "PDF" ? "New PDF theme" : "New theme"} variant="default">
-            <Plus className="size-4" />
-          </IconButton>
-        )}
-      </DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (standalone && !next) {
+          router.push(returnHref);
+          return;
+        }
+        setOpen(next);
+      }}
+    >
+      {!standalone && (
+        <DialogTrigger asChild>
+          {theme ? (
+            <IconButton label="Edit">
+              <Pencil className="size-4" />
+            </IconButton>
+          ) : (
+            <IconButton label={type === "PDF" ? "New PDF theme" : "New theme"} variant="default">
+              <Plus className="size-4" />
+            </IconButton>
+          )}
+        </DialogTrigger>
+      )}
 
-      <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-5xl">
-        <DialogHeader>
-          <DialogTitle>
-            {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent
+        showCloseButton={!standalone}
+        className={
+          standalone
+            ? "fixed inset-0 top-0 left-0 h-svh w-screen max-w-none translate-x-0 translate-y-0 overflow-x-hidden overflow-y-auto rounded-none border-0 bg-[#fbf9fd] p-0 shadow-none data-[state=open]:zoom-in-100 sm:max-w-none"
+            : "max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-5xl"
+        }
+      >
+        {standalone ? (
+          <div className="sticky top-0 z-50 flex h-16 items-center justify-between gap-3 border-b border-violet-200/70 bg-white/95 px-3 backdrop-blur-xl sm:px-6">
+            <Link href={returnHref} className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]">
+              <ArrowLeft className="size-4" />
+              <span className="sr-only">Back</span>
+            </Link>
+            <div className="min-w-0 flex-1 text-center">
+              <p className="truncate font-display text-base font-semibold text-[#4b3659]">
+                {theme ? theme.name : "New Theme"}
+              </p>
+              <p className="text-[9px] font-semibold tracking-[0.15em] text-[#9a83a5] uppercase">Theme Editor</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push(returnHref)}
+              className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]"
+              aria-label="Close editor"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        ) : (
+          <DialogHeader>
+            <DialogTitle>
+              {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
+            </DialogTitle>
+          </DialogHeader>
+        )}
+
+        <div className={standalone ? "mx-auto w-full max-w-7xl px-3 py-4 sm:px-6" : ""}>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-6">
           {type === "WEBSITE" && (
@@ -2120,6 +2163,7 @@ export function ThemeFormDialog({
             </Button>
           </DialogFooter>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
