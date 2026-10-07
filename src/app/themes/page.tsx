@@ -56,7 +56,6 @@ export default async function PublicThemesPage({
     db.theme
       .findMany({
         where: {
-          type: "WEBSITE",
           ...(activeSlug ? { eventCategory: activeSlug } : {}),
         },
         orderBy: { sortOrder: "asc" },
@@ -120,11 +119,11 @@ export default async function PublicThemesPage({
   };
 
   return (
-    <div className="min-h-svh bg-[#f8f1e4] text-[#2f2a25]">
+    <div className="min-h-svh bg-white text-[#4b3659]">
       <PublicMarketplaceHeader />
 
       <main>
-        <section className="royal-hero relative overflow-hidden border-b border-[#c8a45e]/20">
+        <section className="royal-hero relative overflow-hidden border-b border-violet-200/70">
           <div className="royal-dust pointer-events-none absolute inset-0 opacity-55" />
           <WeddingAmbientEffects variant="browser" className="opacity-30" />
           <div className="royal-orbit royal-orbit-a" />
@@ -145,7 +144,7 @@ export default async function PublicThemesPage({
               <MobileTemplateSpotlight themes={mobilePreviewThemes} />
             </div>
 
-            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#c9b690] uppercase">
+            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#806b8c] uppercase">
               Select collection
             </p>
             <div className="royal-glass-dark mx-auto mt-2 grid max-w-md grid-cols-2 rounded-full p-1.5">
@@ -154,8 +153,8 @@ export default async function PublicThemesPage({
                 className={cn(
                   "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
                   tier === "all"
-                    ? "royal-gold-button text-[#211d18]"
-                    : "text-[#d7c7a6] hover:text-[#f0d48f]",
+                    ? "royal-gold-button text-[#4b3659]"
+                    : "text-[#765f81] hover:text-[#4b3659]",
                 )}
               >
                 All designs
@@ -165,15 +164,15 @@ export default async function PublicThemesPage({
                 className={cn(
                   "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
                   tier === "premium"
-                    ? "royal-gold-button text-[#211d18]"
-                    : "text-[#d7c7a6] hover:text-[#f0d48f]",
+                    ? "royal-gold-button text-[#4b3659]"
+                    : "text-[#765f81] hover:text-[#4b3659]",
                 )}
               >
                 Premium designs
               </Link>
             </div>
 
-            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#8d756b] uppercase">
+            <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#806b8c] uppercase">
               Celebration
             </p>
             <nav className="mx-auto mt-2 flex max-w-3xl gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -201,7 +200,7 @@ export default async function PublicThemesPage({
               {activeStyle && <input type="hidden" name="style" value={activeStyle} />}
               {sort !== "popular" && <input type="hidden" name="sort" value={sort} />}
               {tier !== "all" && <input type="hidden" name="tier" value={tier} />}
-              <span className="text-[#b09b91]" aria-hidden="true">
+              <span className="text-[#927c9d]" aria-hidden="true">
                 ⌕
               </span>
               <input
@@ -209,7 +208,7 @@ export default async function PublicThemesPage({
                 name="q"
                 defaultValue={rawQuery ?? ""}
                 placeholder="Search templates by style or name..."
-                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-[#efe2c7] outline-none placeholder:text-[#aa9a7d] sm:text-sm"
+                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-[#4b3659] outline-none placeholder:text-[#a28dab] sm:text-sm"
               />
               <button
                 type="submit"
@@ -237,15 +236,15 @@ export default async function PublicThemesPage({
 
         <section className="royal-section relative mx-auto max-w-none px-4 py-8 sm:px-8 sm:py-10 lg:px-10">
           <div className="relative mx-auto mb-5 flex max-w-7xl items-center justify-between gap-3">
-            <span className="rounded-full border border-[#c7a15a]/30 bg-[#fffaf0]/80 px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#675538] uppercase shadow-sm sm:text-[10px]">
+            <span className="rounded-full border border-violet-200/80 bg-white px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#6a5377] uppercase shadow-sm sm:text-[10px]">
               {themes.length} {themes.length === 1 ? "template" : "templates"}
             </span>
 
             <details className="group relative">
-              <summary className="cursor-pointer list-none rounded-full border border-[#c7a15a]/30 bg-[#fffaf0]/85 px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#675538] uppercase shadow-sm [&::-webkit-details-marker]:hidden sm:text-[10px]">
+              <summary className="cursor-pointer list-none rounded-full border border-violet-200/80 bg-white px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#6a5377] uppercase shadow-sm [&::-webkit-details-marker]:hidden sm:text-[10px]">
                 Sort: {sortLabel(sort)} ▾
               </summary>
-              <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-2xl border border-[#c7a15a]/28 bg-[#fffaf0] p-1.5 text-left shadow-[0_18px_45px_rgba(50,40,27,0.15)]">
+              <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-2xl border border-violet-200 bg-white p-1.5 text-left shadow-[0_18px_45px_rgba(50,40,27,0.15)]">
                 <SortLink href={hrefFor({ sort: null })} label="Popular" active={sort === "popular"} />
                 <SortLink href={hrefFor({ sort: "newest" })} label="Newest" active={sort === "newest"} />
                 <SortLink href={hrefFor({ sort: "premium" })} label="Premium first" active={sort === "premium"} />
@@ -256,9 +255,9 @@ export default async function PublicThemesPage({
 
           <div className="relative mx-auto max-w-7xl">
           {themes.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-[#c9aa6c]/40 bg-[#fffaf0] px-6 py-16 text-center">
-              <p className="font-display text-2xl text-[#342c24]">No matching designs yet</p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#756348]">
+            <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/30 px-6 py-16 text-center">
+              <p className="font-display text-2xl text-[#4b3659]">No matching designs yet</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#806b8c]">
                 Try another celebration, style or search term.
               </p>
               <Link
@@ -337,7 +336,7 @@ function StyleChip({ href, label, active }: { href: string; label: string; activ
       className={cn(
         "shrink-0 rounded-full px-3.5 py-2 text-[9px] font-extrabold tracking-wide capitalize transition sm:text-[10px]",
         active
-          ? "bg-gradient-to-r from-[#d3ae64] to-[#9c7132] text-[#211d18] shadow-sm"
+          ? "bg-gradient-to-r from-[#d3ae64] to-[#9c7132] text-[#4b3659] shadow-sm"
           : "bg-white/[0.06] text-[#d8c8a7] hover:bg-[#d2ae68]/10 hover:text-[#f0d58f]",
       )}
     >
