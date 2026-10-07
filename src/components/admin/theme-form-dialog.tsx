@@ -546,6 +546,7 @@ export function ThemeFormDialog({
         name: file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") || `${form.getValues("name") || "Theme"} reveal`,
         kind: "REVEAL_VIDEO",
         url: uploaded.url,
+        thumbnailUrl: uploaded.posterUrl,
         sortOrder: revealVideoLibrary.length,
       });
       if (!saved.success) {
