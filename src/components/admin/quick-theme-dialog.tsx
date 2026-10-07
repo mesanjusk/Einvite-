@@ -84,6 +84,7 @@ export function QuickThemeDialog() {
       revealVideoUrl: "",
       category,
       eventCategory,
+      eventCategories: [eventCategory],
       isPremium,
       sortOrder: 0,
       colorPalette: {
