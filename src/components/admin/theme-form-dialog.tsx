@@ -1649,20 +1649,35 @@ export function ThemeFormDialog({
                   </div>
 
                   {revealVideoLibrary.length > 0 && (
-                    <div className="grid gap-1.5">
-                      <Label>Choose from uploaded collection</Label>
-                      <select
-                        className="border-input h-10 w-full min-w-0 rounded-md border bg-background px-3 text-sm"
-                        value={form.watch("revealVideoUrl") ?? ""}
-                        onChange={(e) => form.setValue("revealVideoUrl", e.target.value)}
-                      >
-                        <option value="">Select a reveal video…</option>
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Reveal Video Gallery</Label>
+                        <Link href="/admin/library/video-reveals" className="text-xs font-semibold text-violet-700">
+                          Manage gallery
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                         {revealVideoLibrary.map((item) => (
-                          <option key={`${item.label}-${item.url}`} value={item.url}>
-                            {item.label}
-                          </option>
+                          <button
+                            key={item.url}
+                            type="button"
+                            onClick={() => form.setValue("revealVideoUrl", item.url)}
+                            className={
+                              form.watch("revealVideoUrl") === item.url
+                                ? "overflow-hidden rounded-xl border-2 border-violet-600 bg-violet-50 text-left"
+                                : "overflow-hidden rounded-xl border border-violet-200 bg-white text-left"
+                            }
+                          >
+                            {item.thumbnailUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={item.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
+                            ) : (
+                              <video src={item.url} className="aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" />
+                            )}
+                            <span className="block truncate px-2 py-2 text-[10px] font-semibold text-[#5f476c]">{item.label}</span>
+                          </button>
                         ))}
-                      </select>
+                      </div>
                     </div>
                   )}
 
@@ -1769,25 +1784,29 @@ export function ThemeFormDialog({
                   className="border-input h-10 min-w-0 rounded-md border bg-background px-3 text-sm"
                   defaultValue=""
                   onChange={(e) => {
-                    const preset = COMMUNITY_CONTENT_PRESETS.find((item) => item.id === e.target.value);
-                    if (preset) {
-                      form.setValue("content.invitationLetter", preset.text);
-                      if (preset.role === "blessing") {
-                        form.setValue("content.eyebrow", preset.text);
+                    const chosen = [...databaseContent, ...COMMUNITY_CONTENT_PRESETS].find(
+                      (item) => item.id === e.target.value,
+                    );
+                    if (chosen) {
+                      form.setValue("content.invitationLetter", chosen.text);
+                      if (chosen.role === "blessing") {
+                        form.setValue("content.eyebrow", chosen.text);
                       }
                     }
                     e.currentTarget.value = "";
                   }}
                 >
                   <option value="">Choose content from collection…</option>
-                  {COMMUNITY_CONTENT_PRESETS.filter((preset) => {
-                    const community = form.watch("decorAssets.contentCommunity") ?? "General";
-                    return preset.community === community || preset.community === "General";
-                  }).map((preset) => (
-                    <option key={preset.id} value={preset.id}>
-                      {preset.community} · {preset.label}
-                    </option>
-                  ))}
+                  {[...databaseContent, ...COMMUNITY_CONTENT_PRESETS]
+                    .filter((preset) => {
+                      const community = form.watch("decorAssets.contentCommunity") ?? "General";
+                      return preset.community === community || preset.community === "General";
+                    })
+                    .map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.community} · {preset.label}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -1901,34 +1920,63 @@ export function ThemeFormDialog({
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2">
-                        {imageUrl && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={imageUrl} alt="" className="h-14 w-10 rounded border object-cover" />
-                        )}
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
-                          <ImageIcon className="size-3.5" />
-                          {assetUploading === "image" ? "Uploading…" : imageUrl ? "Replace section image" : "Upload section image"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={assetUploading === "image"}
-                            onChange={(e) => handleSectionImage(typedSection, e.target.files?.[0])}
-                          />
-                        </label>
-                        {imageUrl && (
-                          <button
-                            type="button"
-                            className="text-destructive text-xs"
-                            onClick={() => {
-                              const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
-                              delete current[typedSection];
-                              form.setValue("decorAssets.sectionImages", current);
-                            }}
-                          >
-                            Remove image
-                          </button>
+                      <div className="grid gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {imageUrl && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={imageUrl} alt="" className="h-14 w-10 rounded border object-cover" />
+                          )}
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
+                            <ImageIcon className="size-3.5" />
+                            {assetUploading === "image" ? "Uploading…" : imageUrl ? "Upload new / replace" : "Upload new image"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={assetUploading === "image"}
+                              onChange={(e) => handleSectionImage(typedSection, e.target.files?.[0])}
+                            />
+                          </label>
+                          {imageLibrary.length > 0 && (
+                            <span className="text-[10px] font-semibold text-violet-700">or choose from Template Library below</span>
+                          )}
+                          {imageUrl && (
+                            <button
+                              type="button"
+                              className="text-destructive text-xs"
+                              onClick={() => {
+                                const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                                delete current[typedSection];
+                                form.setValue("decorAssets.sectionImages", current);
+                              }}
+                            >
+                              Remove image
+                            </button>
+                          )}
+                        </div>
+
+                        {imageLibrary.length > 0 && (
+                          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                            {imageLibrary.slice(0, 12).map((asset) => (
+                              <button
+                                key={asset.id}
+                                type="button"
+                                onClick={() => {
+                                  const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                                  form.setValue("decorAssets.sectionImages", { ...current, [typedSection]: asset.url });
+                                }}
+                                className={
+                                  imageUrl === asset.url
+                                    ? "overflow-hidden rounded-lg border-2 border-violet-600 bg-violet-50"
+                                    : "overflow-hidden rounded-lg border border-violet-200 bg-white"
+                                }
+                                title={asset.name}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={asset.thumbnailUrl || asset.url} alt={asset.name} className="aspect-[3/4] w-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
                         )}
                       </div>
 
