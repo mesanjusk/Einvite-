@@ -19,7 +19,7 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
   return (
     <article className="group min-w-0">
       <div className="relative">
-        <div className="absolute -inset-2 rounded-[2rem] bg-[linear-gradient(135deg,#e1bf77,#6d5030,#2c2925)] opacity-0 blur-lg transition duration-500 group-hover:opacity-25" />
+        <div className="absolute -inset-2 rounded-[2rem] bg-[linear-gradient(135deg,#dcc8e8,#b995cd,#8a68a0)] opacity-0 blur-lg transition duration-500 group-hover:opacity-30" />
         <div className="wedding-card template-preview-stage relative rounded-[1.8rem] p-2 transition duration-300 group-hover:-translate-y-1.5 sm:p-2.5">
           <span className="template-mini-confetti template-mini-confetti-a" />
           <span className="template-mini-confetti template-mini-confetti-b" />
@@ -47,15 +47,15 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
                 aria-label={`Preview ${theme.name}`}
                 className="absolute inset-0 z-10 grid place-items-center"
               >
-                <span className="grid size-12 place-items-center rounded-full border border-white/60 bg-[#211f1c]/88 text-[#e4bf76] shadow-[0_12px_28px_rgba(0,0,0,.28)] backdrop-blur transition group-hover:scale-110">
+                <span className="grid size-12 place-items-center rounded-full border border-violet-200 bg-white/92 text-[#76508c] shadow-[0_12px_28px_rgba(91,67,107,.16)] backdrop-blur transition group-hover:scale-110">
                   <Play className="ml-0.5 size-4 fill-current" />
                 </span>
               </Link>
             )}
 
             <div className="pointer-events-none absolute left-2 top-2 z-20">
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#e4c27e]/35 bg-[#211f1c]/86 px-2.5 py-1 text-[8px] font-black tracking-[0.1em] text-[#f1dcae] uppercase shadow-sm backdrop-blur">
-                <Sparkles className="size-3 text-[#d7af63]" />
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/80 bg-white/92 px-2.5 py-1 text-[8px] font-black tracking-[0.1em] text-[#5b4268] uppercase shadow-sm backdrop-blur">
+                <Sparkles className="size-3 text-[#8a649d]" />
                 {theme.isPremium ? "Premium" : "Included"}
               </span>
             </div>
@@ -66,14 +66,14 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
       <div className="px-1 pt-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="truncate font-display text-[17px] leading-tight text-[#312a24] sm:text-xl">
+            <h3 className="truncate font-display text-[17px] leading-tight text-[#4b3659] sm:text-xl">
               {theme.name}
             </h3>
-            <p className="mt-0.5 truncate text-[9px] font-bold tracking-[0.12em] text-[#9b773b] uppercase">
+            <p className="mt-0.5 truncate text-[9px] font-bold tracking-[0.12em] text-[#806b8c] uppercase">
               {theme.category}
             </p>
           </div>
-          <ArrowUpRight className="mt-1 size-4 shrink-0 text-[#b98d43] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          <ArrowUpRight className="mt-1 size-4 shrink-0 text-[#76508c] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>
 
         {theme.demoSlug ? (
