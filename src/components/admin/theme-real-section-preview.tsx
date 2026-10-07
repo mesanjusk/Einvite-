@@ -1,8 +1,11 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 
 import { InviteExperience } from "@/components/invite/invite-experience";
+import { EnvelopeSection } from "@/components/invite/envelope-section";
+import { LocaleProvider } from "@/lib/i18n/locale-context";
+import { sectionDisplayName } from "@/lib/section-labels";
 import type { InviteData } from "@/components/invite/types";
 
 type PreviewSection = string;
@@ -57,7 +60,8 @@ export function ThemeRealSectionPreview({
   onSelectElement,
   compact = false,
 }: PreviewProps) {
-  const resolvedRevealMode = revealMode ?? "ANIMATION";
+  const [envelopeReplay, setEnvelopeReplay] = useState(0);
+    const resolvedRevealMode = revealMode ?? "ANIMATION";
   const resolvedRevealAnimation: InviteData["revealAnimation"] = {
     preset: revealAnimation?.preset ?? "MAGIC_BLOOM",
     intensity: Number(revealAnimation?.intensity ?? 1),
@@ -72,47 +76,51 @@ export function ThemeRealSectionPreview({
       <div className="grid gap-2">
         {!compact && <PreviewHeading section={section} />}
         <div
-          className={`relative mx-auto aspect-[9/16] w-full overflow-hidden rounded-[28px] border-[5px] border-violet-950 bg-cover bg-center shadow-xl ${compact ? "max-w-[245px]" : "max-w-[285px]"}`}
-          style={{
-            backgroundColor: palette.primary,
-            backgroundImage: sectionImages?.ENVELOPE
-              ? `url("${sectionImages.ENVELOPE.replace(/"/g, "\\\"")}")`
-              : undefined,
-          }}
+          className={`relative mx-auto aspect-[9/16] w-full overflow-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl ${compact ? "max-w-[245px]" : "max-w-[285px]"}`}
+          style={
+            {
+              "--inv-primary": palette.primary,
+              "--inv-secondary": palette.secondary,
+              "--inv-accent": palette.accent,
+              "--inv-background": palette.background,
+              "--inv-foreground": palette.foreground,
+              "--inv-font-display": fonts.display,
+              "--inv-font-body": fonts.body,
+              "--inv-font-script": fonts.script,
+            } as React.CSSProperties
+          }
         >
-          {resolvedRevealMode === "VIDEO" && revealVideoUrl ? (
-            <video
-              src={revealVideoUrl}
-              className="absolute inset-0 size-full object-cover"
+          <LocaleProvider>
+            <EnvelopeSection
+              key={`${resolvedRevealMode}-${resolvedRevealAnimation.preset}-${resolvedRevealAnimation.intensity}-${resolvedRevealAnimation.speed}-${revealVideoUrl ?? "coded"}-${envelopeReplay}`}
+              initials="M&A"
+              videoUrl={resolvedRevealMode === "VIDEO" ? revealVideoUrl ?? null : null}
+              animation={resolvedRevealAnimation}
+              backgroundImageUrl={sectionImages?.ENVELOPE}
+              embedded
               autoPlay
-              muted
-              loop
-              playsInline
-              controls
+              onComplete={() => {
+                window.setTimeout(() => setEnvelopeReplay((value) => value + 1), 500);
+              }}
             />
-          ) : (
-            <div className="absolute inset-0 grid place-items-center overflow-hidden">
-              <div
-                className="absolute size-64 animate-pulse rounded-full opacity-40 blur-3xl"
-                style={{ background: palette.accent }}
-              />
-              <div className="relative text-center text-white">
-                <div
-                  className="mx-auto grid size-24 place-items-center rounded-full border border-white/40 bg-white/10 text-3xl backdrop-blur"
-                  style={{ fontFamily: fonts.script }}
-                >
-                  M&amp;A
-                </div>
-                <p className="mt-5 text-xl" style={{ fontFamily: fonts.script }}>
-                  {resolvedRevealAnimation?.preset.replaceAll("_", " ") ?? "MAGIC BLOOM"}
-                </p>
-                <p className="mt-2 text-[10px] uppercase tracking-[0.2em] opacity-70">
-                  coded reveal preview
-                </p>
-              </div>
-            </div>
-          )}
+          </LocaleProvider>
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setEnvelopeReplay((value) => value + 1);
+            }}
+            className="absolute right-2 top-2 z-30 rounded-full border border-white/60 bg-white/90 px-2.5 py-1 text-[9px] font-bold text-[#5a4168] shadow-sm backdrop-blur"
+          >
+            Replay
+          </button>
         </div>
+        {!compact && (
+          <p className="text-muted-foreground text-center text-[10px]">
+            Real mobile opening. It loops automatically; use Replay to run it again.
+          </p>
+        )}
       </div>
     );
   }
@@ -236,7 +244,7 @@ function PreviewHeading({ section }: { section: string }) {
         <p className="text-sm font-semibold">Actual section preview</p>
         <p className="text-muted-foreground text-[11px]">Same component used by the guest invitation.</p>
       </div>
-      <span className="rounded-full border px-2 py-1 text-[10px] font-semibold">{section}</span>
+      <span className="rounded-full border px-2 py-1 text-[10px] font-semibold">{sectionDisplayName(section)}</span>
     </div>
   );
 }
