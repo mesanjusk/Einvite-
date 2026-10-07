@@ -613,15 +613,18 @@ export function ThemeFormDialog({
   }
 
   function toggleThemeCategory(slug: string) {
-    const current = form.getValues("eventCategories") ?? [];
-    const exists = current.includes(slug as ThemeFormValues["eventCategory"]);
+    const current = (form.getValues("eventCategories") ?? []).filter(
+      (item): item is ThemeFormInput["eventCategory"] => Boolean(item),
+    );
+    const typedSlug = slug as ThemeFormInput["eventCategory"];
+    const exists = current.includes(typedSlug);
     if (exists && current.length === 1) {
       toast.error("Keep at least one celebration selected.");
       return;
     }
     const next = exists
       ? current.filter((item) => item !== slug)
-      : [...current, slug as ThemeFormValues["eventCategory"]];
+      : [...current, typedSlug];
     form.setValue("eventCategories", next, { shouldValidate: true });
     form.setValue("eventCategory", next[0] ?? "wedding");
   }
@@ -830,7 +833,7 @@ export function ThemeFormDialog({
                   <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {EVENT_CATEGORIES.map((category) => {
                       const active = (form.watch("eventCategories") ?? []).includes(
-                        category.slug as ThemeFormValues["eventCategory"],
+                        category.slug as ThemeFormInput["eventCategory"],
                       );
                       return (
                         <button
@@ -1045,7 +1048,7 @@ export function ThemeFormDialog({
               <div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] px-3 py-4 shadow-inner lg:sticky lg:top-40">
                 <ThemeRealSectionPreview
                   section={previewSection}
-                  eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory")) as ThemeFormValues["eventCategory"]}
+                  eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
                   palette={form.watch("colorPalette")}
                   fonts={form.watch("fontPairing")}
                   content={form.watch("content")}
