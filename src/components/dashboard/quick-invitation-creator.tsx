@@ -15,6 +15,7 @@ type Theme = {
   slug: string;
   name: string;
   eventCategory: string;
+  eventCategories?: string[];
   previewImage?: string | null;
   isPremium: boolean;
   primary: string;
@@ -35,7 +36,11 @@ export function QuickInvitationCreator({ themes }: { themes: Theme[] }) {
 
   const category = eventCategoryFor(eventCategory);
   const visibleThemes = useMemo(() => {
-    const exact = themes.filter((theme) => theme.eventCategory === eventCategory);
+    const exact = themes.filter(
+      (theme) =>
+        theme.eventCategory === eventCategory ||
+        theme.eventCategories?.includes(eventCategory),
+    );
     return exact.length ? exact : themes;
   }, [themes, eventCategory]);
 
