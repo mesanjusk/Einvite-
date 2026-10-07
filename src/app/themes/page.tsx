@@ -292,7 +292,16 @@ export default async function PublicThemesPage({
                     eventCategory: activeSlug ?? theme.eventCategory,
                     eventCategories: theme.eventCategories,
                     isPremium: theme.isPremium,
-                    previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
+                    previewImage: theme.previewImage ?? null,
+                    revealMode: theme.revealMode,
+                    revealVideoUrl: theme.revealVideoUrl,
+                    revealAnimationPreset:
+                      ((theme.decorAssets ?? {}) as { revealAnimation?: { preset?: string } })
+                        .revealAnimation?.preset ?? "MAGIC_BLOOM",
+                    previewPrimary:
+                      (theme.colorPalette as { primary?: string }).primary ?? "#76508c",
+                    previewAccent:
+                      (theme.colorPalette as { accent?: string }).accent ?? "#a987bd",
                     demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
                   }}
                 />
