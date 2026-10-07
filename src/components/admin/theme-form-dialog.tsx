@@ -8,11 +8,17 @@ import { toast } from "sonner";
 import {
   ArrowDown,
   ArrowUp,
+  BookOpen,
+  Copy,
   Image as ImageIcon,
   Pencil,
   Plus,
+  Search,
+  SlidersHorizontal,
   Smartphone,
   Sparkles,
+  Trash2,
+  Type,
   Upload,
   Video,
 } from "lucide-react";
@@ -234,6 +240,8 @@ export function ThemeFormDialog({
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
   const [previewSection, setPreviewSection] = useState<(typeof SECTION_TYPES)[number]>("HERO");
   const [selectedElement, setSelectedElement] = useState<string | null>("HERO.invitationLetter");
+  const [mobileTool, setMobileTool] = useState<"content" | "library" | "text" | "advanced">("content");
+  const [libraryQuery, setLibraryQuery] = useState("");
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const bulkArtworkInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -560,6 +568,57 @@ export function ThemeFormDialog({
     (preset) =>
       preset.community === selectedCommunity || preset.community === "General",
   );
+  const selectedSectionDefinitions = elementsForSection(previewSection);
+  const selectedSectionCustomText = customTextBySection[previewSection] ?? [];
+  const selectedSectionIndex = sectionOrder.indexOf(previewSection);
+  const libraryPresets = COMMUNITY_CONTENT_PRESETS.filter((preset) => {
+    const communityMatch =
+      selectedCommunity === "General"
+        ? preset.community === "General"
+        : preset.community === selectedCommunity || preset.community === "General";
+    const query = libraryQuery.trim().toLowerCase();
+    const queryMatch =
+      !query ||
+      preset.label.toLowerCase().includes(query) ||
+      preset.text.toLowerCase().includes(query) ||
+      preset.community.toLowerCase().includes(query);
+    return communityMatch && queryMatch;
+  });
+
+  function selectSectionForEditing(section: (typeof SECTION_TYPES)[number]) {
+    setPreviewSection(section);
+    setSelectedElement(elementsForSection(section)[0]?.key ?? null);
+    setMobileTool("content");
+  }
+
+  function removeSelectedSection() {
+    if (sectionOrder.length <= 1) {
+      toast.error("Keep at least one section in the theme.");
+      return;
+    }
+    const currentIndex = sectionOrder.indexOf(previewSection);
+    const nextSection =
+      (sectionOrder[currentIndex + 1] ?? sectionOrder[currentIndex - 1]) as
+        | (typeof SECTION_TYPES)[number]
+        | undefined;
+    toggleSection(previewSection);
+    if (nextSection) selectSectionForEditing(nextSection);
+  }
+
+  function duplicateSelectedContent() {
+    const text = selectedText.trim();
+    addCustomText(text || "New text");
+    setMobileTool("content");
+  }
+
+  function applyLibraryPreset(preset: (typeof COMMUNITY_CONTENT_PRESETS)[number]) {
+    if (selectedCanEditText && selectedElement) {
+      updateSelectedText(preset.text);
+    } else {
+      addCustomText(preset.text);
+    }
+    setMobileTool("content");
+  }
 
   async function onSubmit(values: ThemeFormInput) {
     setLoading(true);
