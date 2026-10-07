@@ -463,7 +463,7 @@
   width: 14px;
   height: 22px;
   border-radius: 80% 20% 80% 20%;
-  background: linear-gradient(145deg, #e5c77e, #8a6233);
+  background: linear-gradient(145deg, #d8c1e5, #9c79b5);
   box-shadow: 0 6px 16px rgba(164, 37, 79, .16);
   opacity: .82;
   pointer-events: none;
@@ -476,7 +476,7 @@
 .wedding-petal-b {
   width: 11px;
   height: 18px;
-  background: linear-gradient(145deg, #ffd77c, #e99028);
+  background: linear-gradient(145deg, #eee4f4, #b995cd);
   animation: wedding-petal-b 7.3s ease-in-out infinite;
   animation-delay: -2.3s;
 }
@@ -484,7 +484,7 @@
 .wedding-petal-c {
   width: 12px;
   height: 19px;
-  background: linear-gradient(145deg, #8f4f51, #542d30);
+  background: linear-gradient(145deg, #cdb6dc, #76508c);
   animation: wedding-petal-c 8s ease-in-out infinite;
   animation-delay: -4s;
 }
@@ -492,7 +492,7 @@
 .wedding-sparkle {
   position: absolute;
   z-index: 38;
-  color: #d88a1f;
+  color: #8f6aa6;
   font-size: 18px;
   line-height: 1;
   text-shadow: 0 5px 14px rgba(216, 138, 31, .24);
@@ -501,7 +501,7 @@
 }
 
 .wedding-sparkle-delay {
-  color: #8f4d4f;
+  color: #a47fba;
   animation-delay: -1.8s;
 }
 
@@ -516,7 +516,7 @@
   inset: auto -25% -45% -25%;
   height: 72%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(241, 176, 63, .18), transparent 68%);
+  background: radial-gradient(circle, rgba(173, 137, 199, .16), transparent 68%);
   pointer-events: none;
 }
 
@@ -525,7 +525,7 @@
   position: absolute;
   right: 10%;
   top: 7%;
-  color: rgba(195, 38, 89, .5);
+  color: rgba(118, 80, 140, .48);
   font-size: 18px;
   animation: wedding-sparkle-pop 4s ease-in-out infinite;
   pointer-events: none;
@@ -730,7 +730,7 @@
 }
 
 .wedding-ambient-confetti-3 {
-  background: #6d7351;
+  background: #d1bce0;
 }
 
 .wedding-ambient-sparkle {
@@ -900,14 +900,14 @@
 .template-mini-confetti-a {
   left: 10%;
   top: 16%;
-  background: #825052;
+  background: #8f6aa6;
   rotate: 22deg;
 }
 
 .template-mini-confetti-b {
   right: 12%;
   top: 22%;
-  background: #c59a4f;
+  background: #b995cd;
   rotate: -18deg;
   animation-delay: -2.1s;
 }
@@ -946,11 +946,11 @@
    SK Digital royal brand system — HTML/CSS motion, no heavy canvas effects.
    -------------------------------------------------------------------------- */
 .royal-logo-frame {
-  border: 1px solid rgba(177, 145, 203, .5);
-  background: #5d466b;
+  border: 1px solid rgba(177, 145, 203, .42);
+  background: #ffffff;
   box-shadow:
-    0 8px 24px rgba(0,0,0,.26),
-    0 0 0 1px rgba(255,255,255,.035) inset;
+    0 8px 24px rgba(91,67,107,.10),
+    0 0 0 1px rgba(255,255,255,.7) inset;
   animation: royal-logo-breathe 6.8s ease-in-out infinite;
 }
 
@@ -959,15 +959,15 @@
   inset: -30% auto -30% -52%;
   width: 28%;
   transform: rotate(15deg);
-  background: linear-gradient(90deg, transparent, rgba(255,233,175,.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(205,181,222,.62), transparent);
   animation: royal-logo-glint 5.6s ease-in-out infinite;
   pointer-events: none;
 }
 
 .royal-wordmark {
-  color: #f8efff;
+  color: #4b3659;
   line-height: .98;
-  text-shadow: 0 4px 20px rgba(0,0,0,.22);
+  text-shadow: none;
 }
 
 .royal-nav {
@@ -980,7 +980,7 @@
   position: absolute;
   inset: auto 0 -1px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(174,139,203,.78), rgba(221,185,112,.45), transparent);
+  background: linear-gradient(90deg, transparent, rgba(174,139,203,.42), rgba(201,171,220,.38), transparent);
   background-size: 220% 100%;
   animation: royal-border-flow 7s linear infinite;
   pointer-events: none;
@@ -989,12 +989,12 @@
 .royal-gold-button {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(213,190,231,.58);
-  background: linear-gradient(110deg, #684d7a 0%, #9c79b5 30%, #d9b66f 54%, #b48ac9 74%, #624572 100%);
+  border: 1px solid rgba(176,145,198,.48);
+  background: linear-gradient(110deg, #6b4b7c 0%, #8c68a1 36%, #a887ba 62%, #76548a 100%);
   background-size: 220% 100%;
-  color: #fffaf2;
+  color: #ffffff;
   box-shadow:
-    0 12px 30px rgba(176,133,57,.18),
+    0 12px 30px rgba(91,67,107,.14),
     inset 0 1px 0 rgba(255,255,255,.38);
   animation: royal-gold-flow 8s ease-in-out infinite;
   transition: transform .25s ease, box-shadow .25s ease;
@@ -1003,7 +1003,7 @@
 .royal-gold-button:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 18px 38px rgba(176,133,57,.24),
+    0 18px 38px rgba(91,67,107,.20),
     inset 0 1px 0 rgba(255,255,255,.44);
 }
 
@@ -1024,10 +1024,10 @@
 
 .royal-dust {
   background-image:
-    radial-gradient(circle at 14% 23%, rgba(230,197,132,.45) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 73% 16%, rgba(230,197,132,.28) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 38% 76%, rgba(230,197,132,.24) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 88% 68%, rgba(230,197,132,.32) 0 1px, transparent 1.5px);
+    radial-gradient(circle at 14% 23%, rgba(184,151,208,.34) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 73% 16%, rgba(168,132,194,.24) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 38% 76%, rgba(201,177,219,.22) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 88% 68%, rgba(154,116,183,.26) 0 1px, transparent 1.5px);
   background-size: 88px 88px, 123px 123px, 147px 147px, 171px 171px;
   animation: royal-dust-drift 28s linear infinite;
 }
@@ -1045,7 +1045,7 @@
 .royal-corner::after {
   content: "";
   position: absolute;
-  background: linear-gradient(90deg, transparent, rgba(219,181,108,.85));
+  background: linear-gradient(90deg, transparent, rgba(175,143,198,.62));
 }
 
 .royal-corner::before {
@@ -1060,7 +1060,7 @@
   height: 100%;
   top: 0;
   left: 0;
-  background: linear-gradient(180deg, rgba(219,181,108,.85), transparent);
+  background: linear-gradient(180deg, rgba(175,143,198,.62), transparent);
 }
 
 .royal-corner-tl {
@@ -1076,13 +1076,13 @@
 
 .royal-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(218,179,104,.58), transparent);
+  background: linear-gradient(90deg, transparent, rgba(175,143,198,.46), transparent);
 }
 
 .royal-orbit {
   position: absolute;
   border-radius: 999px;
-  border: 1px solid rgba(210,171,97,.18);
+  border: 1px solid rgba(175,143,198,.18);
   pointer-events: none;
   animation: royal-orbit-spin 22s linear infinite;
 }
@@ -1092,7 +1092,7 @@
   content: "";
   position: absolute;
   border-radius: inherit;
-  border: 1px solid rgba(210,171,97,.12);
+  border: 1px solid rgba(175,143,198,.12);
 }
 
 .royal-orbit::before { inset: 12%; }
@@ -1170,7 +1170,7 @@
 }
 
 .royal-gold-text {
-  background: linear-gradient(110deg, #ead8f4, #b995cd 45%, #efd38b 70%, #8f6aa6);
+  background: linear-gradient(110deg, #5a4168, #8c68a1 45%, #ad8bc0 70%, #6b4b7c);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
