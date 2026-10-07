@@ -10,8 +10,10 @@ const TABS = [
   // What the form asks belongs with what it offers: both are "what a couple
   // is given to work with", curated in one place.
   { href: "/admin/library/celebrations", label: "Celebrations" },
-  { href: "/admin/library/themes", label: "Themes · Web + PDF" },
-  { href: "/admin/library/video-templates", label: "Video Templates" },
+  { href: "/admin/library/themes", label: "Themes" },
+  { href: "/admin/library/video-reveals", label: "Video Reveals" },
+  { href: "/admin/library/templates", label: "Templates" },
+  { href: "/admin/library/content", label: "Content" },
   { href: "/admin/library/music", label: "Music" },
 ];
 

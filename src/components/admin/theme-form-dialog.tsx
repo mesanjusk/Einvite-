@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   BookOpen,
   Copy,
@@ -21,6 +23,7 @@ import {
   Type,
   Upload,
   Video,
+  X,
 } from "lucide-react";
 
 import {
@@ -31,7 +34,10 @@ import {
   type ThemeFormInput,
   type ThemeFormValues,
 } from "@/lib/validations/admin";
-import { upsertThemeAction } from "@/lib/actions/admin";
+import {
+  upsertThemeAction,
+  upsertThemeLibraryAssetAction,
+} from "@/lib/actions/admin";
 import {
   COMMUNITY_CONTENT_GROUPS,
   COMMUNITY_CONTENT_PRESETS,
@@ -144,7 +150,17 @@ type ThemeRecord = {
 };
 
 type ThemeType = "WEBSITE" | "PDF";
-type LibraryVideo = { label: string; url: string };
+type LibraryVideo = { label: string; url: string; thumbnailUrl?: string | null };
+type LibraryImage = { id: string; name: string; url: string; thumbnailUrl?: string | null; category?: string | null };
+type LibraryContent = {
+  id: string;
+  title: string;
+  text: string;
+  community: string;
+  section: string;
+  role: string;
+  previewImage?: string | null;
+};
 
 const FONT_OPTIONS = [
   "Playfair Display",
@@ -156,7 +172,7 @@ const FONT_OPTIONS = [
 
 const ANIMATION_LABELS: Record<(typeof REVEAL_ANIMATION_PRESETS)[number], string> = {
   MAGIC_BLOOM: "Magic bloom",
-  SPARKLES: "Golden sparkles",
+  SPARKLES: "Lavender sparkles",
   CONFETTI: "Celebration confetti",
   PETALS: "Falling petals",
 };
@@ -178,11 +194,11 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
     isPremium: theme?.isPremium ?? false,
     sortOrder: theme?.sortOrder ?? 0,
     colorPalette: theme?.colorPalette ?? {
-      primary: "#7a2e2e",
-      secondary: "#f3d9d9",
-      accent: "#c9942a",
-      background: "#faf3ea",
-      foreground: "#3a1414",
+      primary: "#76508c",
+      secondary: "#eee6f4",
+      accent: "#a987bd",
+      background: "#ffffff",
+      foreground: "#4b3659",
     },
     fontPairing: theme?.fontPairing ?? {
       display: "Playfair Display",
@@ -229,12 +245,20 @@ export function ThemeFormDialog({
   theme,
   type = "WEBSITE",
   revealVideoLibrary = [],
+  imageLibrary = [],
+  contentLibrary = [],
+  standalone = false,
+  returnHref = "/admin/library/themes",
 }: {
   theme?: ThemeRecord;
   type?: ThemeType;
   revealVideoLibrary?: LibraryVideo[];
+  imageLibrary?: LibraryImage[];
+  contentLibrary?: LibraryContent[];
+  standalone?: boolean;
+  returnHref?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(standalone);
   const [loading, setLoading] = useState(false);
   const [thumbUploading, setThumbUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
@@ -506,7 +530,17 @@ export function ThemeFormDialog({
     const uploaded = await uploadAsset(file, "video");
     if (uploaded?.url) {
       form.setValue("revealVideoUrl", uploaded.url);
-      toast.success("Reveal video uploaded and selected.");
+      const saved = await upsertThemeLibraryAssetAction({
+        name: file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") || `${form.getValues("name") || "Theme"} reveal`,
+        kind: "REVEAL_VIDEO",
+        url: uploaded.url,
+        sortOrder: revealVideoLibrary.length,
+      });
+      if (!saved.success) {
+        toast.error(saved.error);
+      } else {
+        toast.success("Reveal video uploaded, selected and saved to the gallery.");
+      }
     }
   }
 
@@ -521,8 +555,22 @@ export function ThemeFormDialog({
       ...current,
       [sectionType]: uploaded.url,
     });
+    const saved = await upsertThemeLibraryAssetAction({
+      name:
+        file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") ||
+        `${form.getValues("name") || "Theme"} ${sectionType.toLowerCase()} artwork`,
+      kind: "IMAGE",
+      url: uploaded.url,
+      category: sectionType,
+      community: form.getValues("decorAssets.contentCommunity") || "General",
+      sortOrder: imageLibrary.length,
+    });
     setPreviewSection(sectionType);
-    toast.success(`${sectionType} artwork uploaded. Preview updated.`);
+    if (!saved.success) {
+      toast.error(saved.error);
+    } else {
+      toast.success(`${sectionType} artwork uploaded and saved to Template Library.`);
+    }
   }
 
   async function handleBulkArtwork(file?: File) {
@@ -533,8 +581,22 @@ export function ThemeFormDialog({
       current[sectionType] = uploaded.url;
     }
     form.setValue("decorAssets.sectionImages", current);
+    const saved = await upsertThemeLibraryAssetAction({
+      name:
+        file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") ||
+        `${form.getValues("name") || "Theme"} shared artwork`,
+      kind: "IMAGE",
+      url: uploaded.url,
+      category: "ALL_SECTIONS",
+      community: form.getValues("decorAssets.contentCommunity") || "General",
+      sortOrder: imageLibrary.length,
+    });
     setPreviewSection((form.getValues("sectionOrder")[0] ?? "HERO") as (typeof SECTION_TYPES)[number]);
-    toast.success("Artwork applied to every active section. You can replace any section individually.");
+    if (!saved.success) {
+      toast.error(saved.error);
+    } else {
+      toast.success("Artwork applied to every active section and saved to Template Library.");
+    }
   }
 
   const selectedDefinition = selectedElement
@@ -571,7 +633,16 @@ export function ThemeFormDialog({
   const selectedSectionDefinitions = elementsForSection(previewSection);
   const selectedSectionCustomText = customTextBySection[previewSection] ?? [];
   const selectedSectionIndex = sectionOrder.indexOf(previewSection);
-  const libraryPresets = COMMUNITY_CONTENT_PRESETS.filter((preset) => {
+  const databaseContent = contentLibrary.map((item) => ({
+    id: `db-${item.id}`,
+    label: item.title,
+    text: item.text,
+    community: item.community,
+    suggestedSection: item.section,
+    role: item.role as "heading" | "subheading" | "body" | "blessing",
+    previewImage: item.previewImage ?? undefined,
+  }));
+  const libraryPresets = [...databaseContent, ...COMMUNITY_CONTENT_PRESETS.map((preset) => ({ ...preset, previewImage: undefined as string | undefined }))].filter((preset) => {
     const communityMatch =
       selectedCommunity === "General"
         ? preset.community === "General"
@@ -611,7 +682,7 @@ export function ThemeFormDialog({
     setMobileTool("content");
   }
 
-  function applyLibraryPreset(preset: (typeof COMMUNITY_CONTENT_PRESETS)[number]) {
+  function applyLibraryPreset(preset: { text: string }) {
     if (selectedCanEditText && selectedElement) {
       updateSelectedText(preset.text);
     } else {
@@ -629,30 +700,78 @@ export function ThemeFormDialog({
       return;
     }
     toast.success(theme ? "Theme updated and published." : "Theme created and published.");
-    setOpen(false);
-    router.refresh();
+    if (standalone) {
+      router.push(returnHref);
+      router.refresh();
+    } else {
+      setOpen(false);
+      router.refresh();
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {theme ? (
-          <IconButton label="Edit">
-            <Pencil className="size-4" />
-          </IconButton>
-        ) : (
-          <IconButton label={type === "PDF" ? "New PDF theme" : "New theme"} variant="default">
-            <Plus className="size-4" />
-          </IconButton>
-        )}
-      </DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (standalone && !next) {
+          router.push(returnHref);
+          return;
+        }
+        setOpen(next);
+      }}
+    >
+      {!standalone && (
+        <DialogTrigger asChild>
+          {theme ? (
+            <IconButton label="Edit">
+              <Pencil className="size-4" />
+            </IconButton>
+          ) : (
+            <IconButton label={type === "PDF" ? "New PDF theme" : "New theme"} variant="default">
+              <Plus className="size-4" />
+            </IconButton>
+          )}
+        </DialogTrigger>
+      )}
 
-      <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-5xl">
-        <DialogHeader>
-          <DialogTitle>
-            {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent
+        showCloseButton={!standalone}
+        className={
+          standalone
+            ? "fixed inset-0 top-0 left-0 h-svh w-screen max-w-none translate-x-0 translate-y-0 overflow-x-hidden overflow-y-auto rounded-none border-0 bg-[#fbf9fd] p-0 shadow-none data-[state=open]:zoom-in-100 sm:max-w-none"
+            : "max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-5xl"
+        }
+      >
+        {standalone ? (
+          <div className="sticky top-0 z-50 flex h-16 items-center justify-between gap-3 border-b border-violet-200/70 bg-white/95 px-3 backdrop-blur-xl sm:px-6">
+            <Link href={returnHref} className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]">
+              <ArrowLeft className="size-4" />
+              <span className="sr-only">Back</span>
+            </Link>
+            <div className="min-w-0 flex-1 text-center">
+              <p className="truncate font-display text-base font-semibold text-[#4b3659]">
+                {theme ? theme.name : "New Theme"}
+              </p>
+              <p className="text-[9px] font-semibold tracking-[0.15em] text-[#9a83a5] uppercase">Theme Editor</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push(returnHref)}
+              className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]"
+              aria-label="Close editor"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        ) : (
+          <DialogHeader>
+            <DialogTitle>
+              {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
+            </DialogTitle>
+          </DialogHeader>
+        )}
+
+        <div className={standalone ? "mx-auto w-full max-w-7xl px-3 py-4 sm:px-6" : ""}>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-6">
           {type === "WEBSITE" && (
@@ -949,23 +1068,41 @@ export function ThemeFormDialog({
                       </select>
                     </div>
 
-                    <div className="grid max-h-[46vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
-                      {libraryPresets.map((preset) => (
-                        <div key={preset.id} className="grid content-between gap-2 rounded-2xl border border-violet-200/70 bg-white p-3">
-                          <div>
-                            <div className="mb-2 grid size-9 place-items-center rounded-xl bg-violet-50 text-[#76508c]">
-                              <BookOpen className="size-4" />
+                    <div className="grid max-h-[48vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+                      {libraryPresets.map((preset) => {
+                        const cardImage =
+                          preset.previewImage ||
+                          (form.watch("decorAssets.sectionImages") ?? {})[previewSection] ||
+                          theme?.previewImage ||
+                          null;
+                        return (
+                          <div key={preset.id} className="grid min-w-0 content-between overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm">
+                            <div>
+                              {cardImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={cardImage} alt="" className="aspect-[16/9] w-full object-cover" />
+                              ) : (
+                                <div className="grid aspect-[16/9] place-items-center bg-violet-50 text-[#76508c]">
+                                  <BookOpen className="size-5" />
+                                </div>
+                              )}
+                              <div className="p-2">
+                                <p className="line-clamp-2 text-[10px] font-bold leading-tight text-[#4b3659]">{preset.label}</p>
+                                <p className="mt-1 truncate text-[8px] font-semibold text-[#9a82a7]">
+                                  {preset.community} · {preset.suggestedSection}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-[8px] leading-relaxed text-[#75617f]">{preset.text}</p>
+                              </div>
                             </div>
-                            <p className="text-[11px] font-bold leading-tight text-[#4b3659]">{preset.label}</p>
-                            <p className="mt-1 text-[9px] font-semibold text-[#9a82a7]">{preset.community}</p>
-                            <p className="mt-2 line-clamp-3 text-[9px] leading-relaxed text-[#75617f]">{preset.text}</p>
+                            <div className="px-2 pb-2">
+                              <Button type="button" variant="outline" size="sm" className="h-8 w-full text-[9px]" onClick={() => applyLibraryPreset(preset)}>
+                                <Plus className="size-3" />
+                                Apply
+                              </Button>
+                            </div>
                           </div>
-                          <Button type="button" variant="outline" size="sm" onClick={() => applyLibraryPreset(preset)}>
-                            <Plus className="size-3.5" />
-                            Apply
-                          </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {libraryPresets.length === 0 && (
@@ -1143,9 +1280,40 @@ export function ThemeFormDialog({
                           </button>
                         )}
                       </div>
+                      {imageLibrary.length > 0 && (
+                        <div className="grid gap-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[10px]">Choose from Template Library</Label>
+                            <Link href="/admin/library/templates" className="text-[9px] font-semibold text-[#76508c]">Manage library</Link>
+                          </div>
+                          <div className="grid max-h-48 grid-cols-4 gap-2 overflow-y-auto">
+                            {imageLibrary.map((asset) => (
+                              <button
+                                key={asset.id}
+                                type="button"
+                                onClick={() => {
+                                  const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                                  form.setValue("decorAssets.sectionImages", { ...current, [previewSection]: asset.url });
+                                }}
+                                className={
+                                  (form.watch("decorAssets.sectionImages") ?? {})[previewSection] === asset.url
+                                    ? "overflow-hidden rounded-xl border-2 border-[#76508c] bg-violet-50"
+                                    : "overflow-hidden rounded-xl border border-violet-200 bg-white"
+                                }
+                                title={asset.name}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={asset.thumbnailUrl || asset.url} alt={asset.name} className="aspect-[3/4] w-full object-cover" />
+                                <span className="block truncate px-1 py-1 text-[8px] font-semibold text-[#5f476c]">{asset.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-violet-50/50 px-3 py-3 text-xs font-semibold text-[#6c4a7d]">
                         <ImageIcon className="size-4" />
-                        {assetUploading === "image" ? "Uploading…" : "Upload / change section image"}
+                        {assetUploading === "image" ? "Uploading…" : "Upload new image"}
                         <input
                           type="file"
                           accept="image/*"
@@ -1307,16 +1475,34 @@ export function ThemeFormDialog({
                               />
                             </label>
                             {revealVideoLibrary.length > 0 && (
-                              <select
-                                className="border-input h-10 rounded-md border bg-background px-2 text-xs"
-                                value={form.watch("revealVideoUrl") ?? ""}
-                                onChange={(e) => form.setValue("revealVideoUrl", e.target.value)}
-                              >
-                                <option value="">Choose existing reveal video…</option>
-                                {revealVideoLibrary.map((item) => (
-                                  <option key={item.url} value={item.url}>{item.label}</option>
-                                ))}
-                              </select>
+                              <div className="grid gap-2">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-[10px]">Reveal Video Gallery</Label>
+                                  <Link href="/admin/library/video-reveals" className="text-[9px] font-semibold text-[#76508c]">Manage</Link>
+                                </div>
+                                <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto">
+                                  {revealVideoLibrary.map((item) => (
+                                    <button
+                                      key={item.url}
+                                      type="button"
+                                      onClick={() => form.setValue("revealVideoUrl", item.url)}
+                                      className={
+                                        form.watch("revealVideoUrl") === item.url
+                                          ? "overflow-hidden rounded-xl border-2 border-[#76508c] bg-violet-50 text-left"
+                                          : "overflow-hidden rounded-xl border border-violet-200 bg-white text-left"
+                                      }
+                                    >
+                                      {item.thumbnailUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={item.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
+                                      ) : (
+                                        <video src={item.url} className="aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" />
+                                      )}
+                                      <span className="block truncate px-2 py-1.5 text-[9px] font-semibold text-[#5f476c]">{item.label}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
@@ -1504,20 +1690,35 @@ export function ThemeFormDialog({
                   </div>
 
                   {revealVideoLibrary.length > 0 && (
-                    <div className="grid gap-1.5">
-                      <Label>Choose from uploaded collection</Label>
-                      <select
-                        className="border-input h-10 w-full min-w-0 rounded-md border bg-background px-3 text-sm"
-                        value={form.watch("revealVideoUrl") ?? ""}
-                        onChange={(e) => form.setValue("revealVideoUrl", e.target.value)}
-                      >
-                        <option value="">Select a reveal video…</option>
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Reveal Video Gallery</Label>
+                        <Link href="/admin/library/video-reveals" className="text-xs font-semibold text-violet-700">
+                          Manage gallery
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                         {revealVideoLibrary.map((item) => (
-                          <option key={`${item.label}-${item.url}`} value={item.url}>
-                            {item.label}
-                          </option>
+                          <button
+                            key={item.url}
+                            type="button"
+                            onClick={() => form.setValue("revealVideoUrl", item.url)}
+                            className={
+                              form.watch("revealVideoUrl") === item.url
+                                ? "overflow-hidden rounded-xl border-2 border-violet-600 bg-violet-50 text-left"
+                                : "overflow-hidden rounded-xl border border-violet-200 bg-white text-left"
+                            }
+                          >
+                            {item.thumbnailUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={item.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
+                            ) : (
+                              <video src={item.url} className="aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" />
+                            )}
+                            <span className="block truncate px-2 py-2 text-[10px] font-semibold text-[#5f476c]">{item.label}</span>
+                          </button>
                         ))}
-                      </select>
+                      </div>
                     </div>
                   )}
 
@@ -1624,25 +1825,29 @@ export function ThemeFormDialog({
                   className="border-input h-10 min-w-0 rounded-md border bg-background px-3 text-sm"
                   defaultValue=""
                   onChange={(e) => {
-                    const preset = COMMUNITY_CONTENT_PRESETS.find((item) => item.id === e.target.value);
-                    if (preset) {
-                      form.setValue("content.invitationLetter", preset.text);
-                      if (preset.role === "blessing") {
-                        form.setValue("content.eyebrow", preset.text);
+                    const chosen = [...databaseContent, ...COMMUNITY_CONTENT_PRESETS].find(
+                      (item) => item.id === e.target.value,
+                    );
+                    if (chosen) {
+                      form.setValue("content.invitationLetter", chosen.text);
+                      if (chosen.role === "blessing") {
+                        form.setValue("content.eyebrow", chosen.text);
                       }
                     }
                     e.currentTarget.value = "";
                   }}
                 >
                   <option value="">Choose content from collection…</option>
-                  {COMMUNITY_CONTENT_PRESETS.filter((preset) => {
-                    const community = form.watch("decorAssets.contentCommunity") ?? "General";
-                    return preset.community === community || preset.community === "General";
-                  }).map((preset) => (
-                    <option key={preset.id} value={preset.id}>
-                      {preset.community} · {preset.label}
-                    </option>
-                  ))}
+                  {[...databaseContent, ...COMMUNITY_CONTENT_PRESETS]
+                    .filter((preset) => {
+                      const community = form.watch("decorAssets.contentCommunity") ?? "General";
+                      return preset.community === community || preset.community === "General";
+                    })
+                    .map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.community} · {preset.label}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -1756,34 +1961,63 @@ export function ThemeFormDialog({
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2">
-                        {imageUrl && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={imageUrl} alt="" className="h-14 w-10 rounded border object-cover" />
-                        )}
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
-                          <ImageIcon className="size-3.5" />
-                          {assetUploading === "image" ? "Uploading…" : imageUrl ? "Replace section image" : "Upload section image"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={assetUploading === "image"}
-                            onChange={(e) => handleSectionImage(typedSection, e.target.files?.[0])}
-                          />
-                        </label>
-                        {imageUrl && (
-                          <button
-                            type="button"
-                            className="text-destructive text-xs"
-                            onClick={() => {
-                              const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
-                              delete current[typedSection];
-                              form.setValue("decorAssets.sectionImages", current);
-                            }}
-                          >
-                            Remove image
-                          </button>
+                      <div className="grid gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {imageUrl && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={imageUrl} alt="" className="h-14 w-10 rounded border object-cover" />
+                          )}
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
+                            <ImageIcon className="size-3.5" />
+                            {assetUploading === "image" ? "Uploading…" : imageUrl ? "Upload new / replace" : "Upload new image"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={assetUploading === "image"}
+                              onChange={(e) => handleSectionImage(typedSection, e.target.files?.[0])}
+                            />
+                          </label>
+                          {imageLibrary.length > 0 && (
+                            <span className="text-[10px] font-semibold text-violet-700">or choose from Template Library below</span>
+                          )}
+                          {imageUrl && (
+                            <button
+                              type="button"
+                              className="text-destructive text-xs"
+                              onClick={() => {
+                                const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                                delete current[typedSection];
+                                form.setValue("decorAssets.sectionImages", current);
+                              }}
+                            >
+                              Remove image
+                            </button>
+                          )}
+                        </div>
+
+                        {imageLibrary.length > 0 && (
+                          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                            {imageLibrary.slice(0, 12).map((asset) => (
+                              <button
+                                key={asset.id}
+                                type="button"
+                                onClick={() => {
+                                  const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                                  form.setValue("decorAssets.sectionImages", { ...current, [typedSection]: asset.url });
+                                }}
+                                className={
+                                  imageUrl === asset.url
+                                    ? "overflow-hidden rounded-lg border-2 border-violet-600 bg-violet-50"
+                                    : "overflow-hidden rounded-lg border border-violet-200 bg-white"
+                                }
+                                title={asset.name}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={asset.thumbnailUrl || asset.url} alt={asset.name} className="aspect-[3/4] w-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
                         )}
                       </div>
 
@@ -2085,6 +2319,7 @@ export function ThemeFormDialog({
             </Button>
           </DialogFooter>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

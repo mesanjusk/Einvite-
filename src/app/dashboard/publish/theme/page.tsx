@@ -24,11 +24,11 @@ type FontPairing = {
 };
 
 const FALLBACK_PALETTE: Palette = {
-  primary: "#7a2e2e",
-  secondary: "#f3d9d9",
-  accent: "#c9942a",
-  background: "#faf3ea",
-  foreground: "#3a1414",
+  primary: "#76508c",
+  secondary: "#eee6f4",
+  accent: "#a987bd",
+  background: "#ffffff",
+  foreground: "#4b3659",
 };
 
 const FALLBACK_FONTS: FontPairing = {
@@ -52,7 +52,7 @@ export default async function ThemeEditorPage({
       orderBy: { updatedAt: "desc" },
       select: { id: true, brideName: true, groomName: true },
     }),
-    db.theme.findMany({ where: { type: "WEBSITE" }, orderBy: { sortOrder: "asc" } }),
+    db.theme.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }),
   ]);
 

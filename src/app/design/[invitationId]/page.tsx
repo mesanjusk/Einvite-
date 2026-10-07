@@ -59,7 +59,7 @@ export default async function DesignInvitationPage({
 
   const [themes, musicTracks, colorway] = await Promise.all([
     db.theme.findMany({
-      where: { type: "WEBSITE", ...themeFilter },
+      where: themeFilter,
       orderBy: { sortOrder: "asc" },
       include: { colorways: { orderBy: { sortOrder: "asc" } } },
     }),

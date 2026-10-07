@@ -7,7 +7,6 @@ export const metadata: Metadata = { title: "Create Invitation" };
 
 export default async function NewInvitationPage() {
   const themes = await db.theme.findMany({
-    where: { type: "WEBSITE" },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
 

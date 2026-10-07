@@ -34,15 +34,12 @@ export default async function Home() {
   const [themes, demos] = await Promise.all([
     db.theme
       .findMany({
-        where: { type: "WEBSITE" },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-        take: 12,
       })
       .catch(() => []),
     db.invitation
       .findMany({
         where: { isDemo: true, status: "PUBLISHED" },
-        take: 24,
         select: { slug: true, themeId: true },
         orderBy: { createdAt: "asc" },
       })
@@ -82,23 +79,23 @@ export default async function Home() {
           <div className="royal-orbit royal-orbit-b" />
           <div className="royal-corner royal-corner-tl" />
           <div className="royal-corner royal-corner-br" />
-          <div className="royal-hero-glow left-[8%] top-[14%] size-56 bg-[#c89d4d]/24" />
-          <div className="royal-hero-glow right-[6%] top-[18%] size-64 bg-[#6e4338]/20 [animation-delay:-3s]" />
+          <div className="royal-hero-glow left-[8%] top-[14%] size-56 bg-violet-300/20" />
+          <div className="royal-hero-glow right-[6%] top-[18%] size-64 bg-violet-200/25 [animation-delay:-3s]" />
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-4 px-4 pb-10 pt-8 sm:px-8 md:grid-cols-[0.9fr_1.1fr] md:gap-x-8 md:gap-y-4 md:py-16 lg:px-10 lg:py-20">
             <div className="relative z-10 text-center md:col-start-1 md:row-start-1 md:max-w-xl md:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#d6af66]/30 bg-white/[0.045] px-3.5 py-2 text-[9px] font-bold tracking-[0.18em] text-[#d9b96f] uppercase shadow-[0_10px_30px_rgba(0,0,0,.14)] backdrop-blur sm:text-[10px]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3.5 py-2 text-[9px] font-bold tracking-[0.18em] text-[#76508c] uppercase shadow-[0_10px_30px_rgba(91,67,107,.08)] backdrop-blur sm:text-[10px]">
                 <Gem className="size-3.5" />
                 SK Digital Signature Invitations
               </div>
 
-              <p className="font-script mt-5 text-4xl text-[#d9b46a] sm:mt-6 sm:text-5xl">
+              <p className="font-script mt-5 text-4xl text-[#76508c] sm:mt-6 sm:text-5xl">
                 Shaadi, styled with grace
               </p>
               <h1 className="font-display royal-title-light mx-auto mt-1 max-w-[380px] text-[2.75rem] leading-[0.92] sm:max-w-none sm:text-6xl md:mx-0 lg:text-7xl">
                 Royal invitations that feel alive.
               </h1>
-              <p className="mx-auto mt-4 max-w-[330px] text-[13px] leading-6 text-[#eadcf1]/82 sm:max-w-md sm:text-base md:mx-0">
+              <p className="mx-auto mt-4 max-w-[330px] text-[13px] leading-6 text-[#6f5b79] sm:max-w-md sm:text-base md:mx-0">
                 Elegant motion, music and meaningful details—crafted into one beautiful invitation.
               </p>
             </div>
@@ -118,9 +115,9 @@ export default async function Home() {
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="royal-glass-dark inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-bold transition hover:-translate-y-0.5 hover:border-[#d5ad63]/45 sm:px-5 sm:text-xs"
+                  className="royal-glass-dark inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[10px] font-bold transition hover:-translate-y-0.5 hover:border-violet-300 sm:px-5 sm:text-xs"
                 >
-                  <Sparkles className="size-4 text-[#ead083]" />
+                  <Sparkles className="size-4 text-[#76508c]" />
                   My invitations
                 </Link>
               </div>
@@ -169,7 +166,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-[#5a4268] px-5 py-14 text-[#f8efff] sm:px-8 lg:px-10">
+        <section className="relative overflow-hidden border-t border-violet-200/70 bg-white px-5 py-14 text-[#4b3659] sm:px-8 lg:px-10">
           <div className="royal-dust pointer-events-none absolute inset-0 opacity-35" />
           <div className="royal-orbit royal-orbit-a opacity-50" />
           <div className="relative mx-auto max-w-5xl">
@@ -204,11 +201,11 @@ function Moment({
 }) {
   return (
     <div className="royal-glass-dark rounded-[1.8rem] px-5 py-6 text-center transition duration-300 hover:-translate-y-1">
-      <div className="wedding-gold mx-auto grid size-12 place-items-center rounded-full shadow-[0_12px_28px_rgba(190,148,68,.2)]">
+      <div className="wedding-gold mx-auto grid size-12 place-items-center rounded-full shadow-[0_12px_28px_rgba(91,67,107,.12)]">
         {icon}
       </div>
-      <p className="font-display mt-4 text-xl text-[#f2dfb8]">{title}</p>
-      <p className="mt-1 text-xs font-semibold text-[#cdbd9f]/72">{note}</p>
+      <p className="font-display mt-4 text-xl text-[#5a4168]">{title}</p>
+      <p className="mt-1 text-xs font-semibold text-[#806b8c]">{note}</p>
     </div>
   );
 }

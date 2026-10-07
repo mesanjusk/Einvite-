@@ -272,6 +272,43 @@ model VideoTemplate {
   @@map("video_templates")
 }
 
+enum ThemeLibraryAssetKind {
+  IMAGE
+  REVEAL_VIDEO
+}
+
+model ThemeLibraryAsset {
+  id           String                @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  kind         ThemeLibraryAssetKind
+  url          String
+  thumbnailUrl String?
+  category     String?
+  community    String?
+  sortOrder    Int                   @default(0)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([kind, sortOrder])
+  @@map("theme_library_assets")
+}
+
+model ThemeContentItem {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  community    String   @default("General")
+  section      String   @default("HERO")
+  role         String   @default("body")
+  text         String
+  previewImage String?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([community, section, sortOrder])
+  @@map("theme_content_items")
+}
+
 model MusicTrack {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   title      String   @unique
