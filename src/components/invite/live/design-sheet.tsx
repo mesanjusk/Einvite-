@@ -36,6 +36,7 @@ export function DesignSheet({
   onColorwayChange,
   onGalleryAnimationChange,
   onSectionToggle,
+  onPreviewOpening,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -59,6 +60,7 @@ export function DesignSheet({
   onColorwayChange: (slug: string | null) => void;
   onGalleryAnimationChange: (value: string) => void;
   onSectionToggle: (sectionId: string, visible: boolean) => void;
+  onPreviewOpening: () => void;
 }) {
   const activeTheme = themes.find((theme) => theme.slug === activeThemeSlug);
   // "STORY" and "GALLERY" both drive the same photo pile, so only the one
@@ -153,6 +155,12 @@ export function DesignSheet({
               value={introVideo}
               onChange={onIntroVideoChange}
             />
+            <Button type="button" variant="outline" onClick={onPreviewOpening}>
+              Preview {sectionDisplayName("ENVELOPE")}
+            </Button>
+            <p className="text-muted-foreground text-[10px]">
+              Plays the theme&apos;s coded animation or reveal video exactly as guests see it on mobile.
+            </p>
           </section>
 
           <section className="flex flex-col gap-2">
