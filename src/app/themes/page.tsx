@@ -319,8 +319,8 @@ function FilterChip({
       className={cn(
         "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
         active
-          ? "border-[#e0c17e]/30 bg-gradient-to-r from-[#d3ae64] via-[#e6ca8b] to-[#9e7738] text-[#221e19] shadow-sm"
-          : "border-[#d3b474]/28 bg-white/[0.05] text-[#dfcfad] hover:border-[#d3b474]/46 hover:bg-[#d3b474]/10 hover:text-[#f1dcaa]",
+          ? "border-violet-300 bg-violet-100 text-[#5a3d6d] shadow-sm"
+          : "border-violet-200 bg-white text-[#765f81] hover:border-violet-300 hover:bg-violet-50 hover:text-[#4b3659]",
       )}
     >
       {icon}
@@ -336,8 +336,8 @@ function StyleChip({ href, label, active }: { href: string; label: string; activ
       className={cn(
         "shrink-0 rounded-full px-3.5 py-2 text-[9px] font-extrabold tracking-wide capitalize transition sm:text-[10px]",
         active
-          ? "bg-gradient-to-r from-[#d3ae64] to-[#9c7132] text-[#4b3659] shadow-sm"
-          : "bg-white/[0.06] text-[#d8c8a7] hover:bg-[#d2ae68]/10 hover:text-[#f0d58f]",
+          ? "bg-violet-100 text-[#5a3d6d] shadow-sm"
+          : "bg-white text-[#765f81] hover:bg-violet-50 hover:text-[#4b3659]",
       )}
     >
       {label}
@@ -352,8 +352,8 @@ function SortLink({ href, label, active }: { href: string; label: string; active
       className={cn(
         "block rounded-xl px-3 py-2 text-[10px] font-bold transition",
         active
-          ? "bg-[#efe0bd] text-[#3b3021]"
-          : "text-[#6f6048] hover:bg-[#f7edd8]",
+          ? "bg-violet-100 text-[#5a3d6d]"
+          : "text-[#765f81] hover:bg-violet-50",
       )}
     >
       {label}
