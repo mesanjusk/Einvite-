@@ -49,16 +49,28 @@ export default async function Home() {
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
   const themeCards =
     themes.length > 0
-      ? themes.map((theme) => ({
-          id: theme.id,
-          name: theme.name,
-          slug: theme.slug,
-          category: theme.category,
-          eventCategory: theme.eventCategory,
-          isPremium: theme.isPremium,
-          previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
-          demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
-        }))
+      ? themes.map((theme) => {
+          const decor = (theme.decorAssets ?? {}) as {
+            revealAnimation?: { preset?: string };
+          };
+          const palette = theme.colorPalette as { primary?: string; accent?: string };
+          return {
+            id: theme.id,
+            name: theme.name,
+            slug: theme.slug,
+            category: theme.category,
+            eventCategory: theme.eventCategory,
+            eventCategories: theme.eventCategories,
+            isPremium: theme.isPremium,
+            previewImage: theme.previewImage ?? null,
+            revealMode: theme.revealMode,
+            revealVideoUrl: theme.revealVideoUrl,
+            revealAnimationPreset: decor.revealAnimation?.preset ?? "MAGIC_BLOOM",
+            previewPrimary: palette.primary ?? "#76508c",
+            previewAccent: palette.accent ?? "#a987bd",
+            demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+          };
+        })
       : FALLBACK_THEMES.map((theme) => ({
           ...theme,
           eventCategory: "wedding",
