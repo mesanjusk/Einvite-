@@ -583,7 +583,7 @@ export function ThemeFormDialog({
     if (!saved.success) {
       toast.error(saved.error);
     } else {
-      toast.success(`${sectionType} artwork uploaded and saved to Template Library.`);
+      toast.success(`${sectionDisplayName(sectionType)} artwork uploaded and saved to Template Library.`);
     }
   }
 
@@ -1055,7 +1055,7 @@ export function ThemeFormDialog({
                     </Button>
                   </div>
                   <div className="min-w-0 text-center">
-                    <p className="truncate text-xs font-bold text-[#4b3659]">{previewSection}</p>
+                    <p className="truncate text-xs font-bold text-[#4b3659]">{sectionDisplayName(previewSection)}</p>
                     <p className="text-[9px] text-[#8a7397]">Selected section</p>
                   </div>
                   <Button
@@ -2032,7 +2032,7 @@ export function ThemeFormDialog({
                   <div className="flex flex-wrap gap-2">
                 {SECTION_TYPES.filter((item) => !sectionOrder.includes(item)).map((item) => (
                   <button key={item} type="button" onClick={() => toggleSection(item)} className="text-muted-foreground rounded-full border px-2.5 py-1 text-xs">
-                    + {item}
+                    + {sectionDisplayName(item)}
                   </button>
                 ))}
                   </div>
