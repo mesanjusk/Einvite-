@@ -210,6 +210,37 @@ export const videoTemplateFormSchema = z.object({
 export type VideoTemplateFormInput = z.infer<typeof videoTemplateFormSchema>;
 export type VideoTemplateFormValues = z.input<typeof videoTemplateFormSchema>;
 
+
+export const THEME_LIBRARY_ASSET_KINDS = ["IMAGE", "REVEAL_VIDEO"] as const;
+
+export const themeLibraryAssetFormSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().trim().min(1, "Name is required"),
+  kind: z.enum(THEME_LIBRARY_ASSET_KINDS),
+  url: z.string().trim().min(1, "Asset URL is required"),
+  thumbnailUrl: z.string().trim().optional(),
+  category: z.string().trim().optional(),
+  community: z.string().trim().optional(),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+export type ThemeLibraryAssetFormInput = z.infer<typeof themeLibraryAssetFormSchema>;
+
+export const THEME_CONTENT_ROLES = ["heading", "subheading", "body", "blessing"] as const;
+
+export const themeContentItemFormSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().trim().min(1, "Title is required"),
+  community: z.string().trim().min(1).default("General"),
+  section: z.enum(SECTION_TYPES).default("HERO"),
+  role: z.enum(THEME_CONTENT_ROLES).default("body"),
+  text: z.string().trim().min(1, "Content text is required"),
+  previewImage: z.string().trim().optional(),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+export type ThemeContentItemFormInput = z.infer<typeof themeContentItemFormSchema>;
+
 export const instagramAutomationFormSchema = z
   .object({
     id: z.string().optional(),
