@@ -43,6 +43,7 @@ import {
   COMMUNITY_CONTENT_PRESETS,
 } from "@/lib/theme-content-library";
 import { EVENT_CATEGORIES } from "@/lib/event-categories";
+import { sectionDisplayName } from "@/lib/section-labels";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -943,6 +944,31 @@ export function ThemeFormDialog({
                 )}
               </div>
 
+              <div className="grid gap-3 rounded-2xl border border-violet-200/80 bg-white p-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
+                <div>
+                  <p className="text-xs font-bold text-[#4b3659]">Live mobile opening preview</p>
+                  <p className="mt-1 text-[10px] leading-relaxed text-[#8a7397]">
+                    This is the real Shubh Aarambh used on the invitation. Coded animations auto-play here exactly like a reveal video and can be replayed.
+                  </p>
+                </div>
+                <ThemeRealSectionPreview
+                  section="ENVELOPE"
+                  eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
+                  palette={form.watch("colorPalette")}
+                  fonts={form.watch("fontPairing")}
+                  content={form.watch("content")}
+                  revealMode={form.watch("revealMode")}
+                  revealVideoUrl={form.watch("revealVideoUrl")}
+                  revealAnimation={form.watch("decorAssets.revealAnimation")}
+                  sectionImages={form.watch("decorAssets.sectionImages")}
+                  sectionStyles={form.watch("decorAssets.sectionStyles")}
+                  elementStyles={form.watch("decorAssets.elementStyles")}
+                  customText={form.watch("decorAssets.customText")}
+                  onSelectElement={() => undefined}
+                  compact
+                />
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" onClick={() => setAppearanceOpen(true)}>
                   <SlidersHorizontal className="size-4" />
@@ -984,7 +1010,7 @@ export function ThemeFormDialog({
                             : "shrink-0 rounded-full border border-violet-200 bg-white px-3 py-2 text-[11px] font-semibold text-[#5a4168]"
                         }
                       >
-                        {sectionType}
+                        {sectionDisplayName(sectionType)}
                       </button>
                     );
                   })}
@@ -998,7 +1024,7 @@ export function ThemeFormDialog({
                       }}
                       className="shrink-0 rounded-full border border-dashed border-violet-300 bg-violet-50 px-3 py-2 text-[11px] font-semibold text-[#76508c]"
                     >
-                      + {item}
+                      + {sectionDisplayName(item)}
                     </button>
                   ))}
                 </div>
@@ -1071,7 +1097,7 @@ export function ThemeFormDialog({
                 <div className="flex items-center justify-between gap-3 border-b border-violet-100 px-4 py-3">
                   <div className="min-w-0">
                     <p className="truncate font-display text-lg font-semibold text-[#442852]">
-                      {previewSection} Section
+                      {sectionDisplayName(previewSection)}
                     </p>
                     <p className="text-[10px] text-[#8a7397]">
                       Edit content and load text from library
@@ -1457,7 +1483,7 @@ export function ThemeFormDialog({
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs font-bold text-[#4b3659]">Section artwork</p>
-                          <p className="text-[9px] text-[#8a7397]">Background for {previewSection}</p>
+                          <p className="text-[9px] text-[#8a7397]">Background for {sectionDisplayName(previewSection)}</p>
                         </div>
                         {(form.watch("decorAssets.sectionImages") ?? {})[previewSection] && (
                           <button
@@ -2036,7 +2062,7 @@ export function ThemeFormDialog({
                           className={`flex items-center gap-2 rounded-md px-2 py-1 text-left text-sm font-medium ${previewSection === typedSection ? "bg-primary/10 text-primary" : ""}`}
                         >
                           <Smartphone className="size-3.5" />
-                          {sectionType}
+                          {sectionDisplayName(sectionType)}
                         </button>
                         <div className="flex items-center gap-1">
                           <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => moveSection(index, -1)}>
