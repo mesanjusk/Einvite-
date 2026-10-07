@@ -25,7 +25,7 @@ export function PreviewPane({
       <div className="bg-muted flex justify-center overflow-auto rounded-xl p-3 sm:p-6">
         <div className="h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[28px] border-[5px] border-violet-950 bg-white shadow-lg">
           <div
-            className="relative mx-auto overflow-x-hidden"
+            className="relative mx-auto h-full overflow-x-hidden"
             style={{ ...themeStyle, fontFamily: "var(--inv-font-body)" }}
           >
             <InviteExperience invite={invite} sectionConfig={sections} previewMode />
