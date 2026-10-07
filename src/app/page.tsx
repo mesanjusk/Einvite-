@@ -79,12 +79,12 @@ export default async function Home() {
           <div className="royal-orbit royal-orbit-b" />
           <div className="royal-corner royal-corner-tl" />
           <div className="royal-corner royal-corner-br" />
-          <div className="royal-hero-glow left-[8%] top-[14%] size-56 bg-[#c89d4d]/24" />
-          <div className="royal-hero-glow right-[6%] top-[18%] size-64 bg-[#6e4338]/20 [animation-delay:-3s]" />
+          <div className="royal-hero-glow left-[8%] top-[14%] size-56 bg-violet-300/20" />
+          <div className="royal-hero-glow right-[6%] top-[18%] size-64 bg-violet-200/25 [animation-delay:-3s]" />
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-4 px-4 pb-10 pt-8 sm:px-8 md:grid-cols-[0.9fr_1.1fr] md:gap-x-8 md:gap-y-4 md:py-16 lg:px-10 lg:py-20">
             <div className="relative z-10 text-center md:col-start-1 md:row-start-1 md:max-w-xl md:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#d6af66]/30 bg-white/[0.045] px-3.5 py-2 text-[9px] font-bold tracking-[0.18em] text-[#76508c] uppercase shadow-[0_10px_30px_rgba(0,0,0,.14)] backdrop-blur sm:text-[10px]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3.5 py-2 text-[9px] font-bold tracking-[0.18em] text-[#76508c] uppercase shadow-[0_10px_30px_rgba(91,67,107,.08)] backdrop-blur sm:text-[10px]">
                 <Gem className="size-3.5" />
                 SK Digital Signature Invitations
               </div>
@@ -201,7 +201,7 @@ function Moment({
 }) {
   return (
     <div className="royal-glass-dark rounded-[1.8rem] px-5 py-6 text-center transition duration-300 hover:-translate-y-1">
-      <div className="wedding-gold mx-auto grid size-12 place-items-center rounded-full shadow-[0_12px_28px_rgba(190,148,68,.2)]">
+      <div className="wedding-gold mx-auto grid size-12 place-items-center rounded-full shadow-[0_12px_28px_rgba(91,67,107,.12)]">
         {icon}
       </div>
       <p className="font-display mt-4 text-xl text-[#5a4168]">{title}</p>
