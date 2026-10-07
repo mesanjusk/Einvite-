@@ -27,6 +27,8 @@ import {
   eventCategoryConfigFormSchema,
   adminResetSchema,
   themeColorwayFormSchema,
+  themeLibraryAssetFormSchema,
+  themeContentItemFormSchema,
   type ThemeFormInput,
   type MusicTrackFormInput,
   type VideoTemplateFormInput,
@@ -36,6 +38,8 @@ import {
   type EventCategoryConfigFormInput,
   type AdminResetInput,
   type ThemeColorwayFormInput,
+  type ThemeLibraryAssetFormInput,
+  type ThemeContentItemFormInput,
 } from "@/lib/validations/admin";
 import {
   pdfTemplatePagesSchema,
@@ -418,6 +422,90 @@ export async function deleteVideoTemplateAction(
   await db.videoTemplate.delete({ where: { id: videoTemplateId } });
 
   revalidatePath("/admin/library/video-templates");
+  return { success: true, data: undefined };
+}
+
+export async function upsertThemeLibraryAssetAction(
+  input: ThemeLibraryAssetFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = themeLibraryAssetFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid asset." };
+  }
+  const data = parsed.data;
+  const fields = {
+    name: data.name,
+    kind: data.kind,
+    url: data.url,
+    thumbnailUrl: data.thumbnailUrl || null,
+    category: data.category || null,
+    community: data.community || null,
+    sortOrder: data.sortOrder,
+  };
+
+  if (data.id) {
+    await db.themeLibraryAsset.update({ where: { id: data.id }, data: fields });
+  } else {
+    await db.themeLibraryAsset.create({ data: fields });
+  }
+
+  revalidatePath("/admin/library/video-reveals");
+  revalidatePath("/admin/library/templates");
+  revalidatePath("/admin/library/themes");
+  return { success: true, data: undefined };
+}
+
+export async function deleteThemeLibraryAssetAction(assetId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+  await db.themeLibraryAsset.delete({ where: { id: assetId } });
+  revalidatePath("/admin/library/video-reveals");
+  revalidatePath("/admin/library/templates");
+  revalidatePath("/admin/library/themes");
+  return { success: true, data: undefined };
+}
+
+export async function upsertThemeContentItemAction(
+  input: ThemeContentItemFormInput,
+): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+
+  const parsed = themeContentItemFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid content." };
+  }
+  const data = parsed.data;
+  const fields = {
+    title: data.title,
+    community: data.community,
+    section: data.section,
+    role: data.role,
+    text: data.text,
+    previewImage: data.previewImage || null,
+    sortOrder: data.sortOrder,
+  };
+
+  if (data.id) {
+    await db.themeContentItem.update({ where: { id: data.id }, data: fields });
+  } else {
+    await db.themeContentItem.create({ data: fields });
+  }
+
+  revalidatePath("/admin/library/content");
+  revalidatePath("/admin/library/themes");
+  return { success: true, data: undefined };
+}
+
+export async function deleteThemeContentItemAction(itemId: string): Promise<ActionResult> {
+  const session = await requireAdmin();
+  if (!session) return { success: false, error: "Admin access required." };
+  await db.themeContentItem.delete({ where: { id: itemId } });
+  revalidatePath("/admin/library/content");
+  revalidatePath("/admin/library/themes");
   return { success: true, data: undefined };
 }
 
