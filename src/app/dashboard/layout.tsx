@@ -28,7 +28,7 @@ export default async function DashboardLayout({
   const isAdmin = profile?.isAdmin ?? false;
 
   return (
-    <div className="relative flex min-h-svh bg-[#f7f0fb]">
+    <div className="relative flex min-h-svh bg-white">
       <DashboardSidebar isAdmin={isAdmin} />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopbar user={session.user} isAdmin={isAdmin} />
