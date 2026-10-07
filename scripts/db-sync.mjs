@@ -21,7 +21,10 @@
 import { spawnSync } from "node:child_process";
 
 const forced = process.env.DB_PUSH_ON_BUILD === "1";
-const isProduction = process.env.VERCEL_ENV === "production";
+const isProduction =
+  process.env.VERCEL_ENV === "production" ||
+  process.env.RENDER === "true" ||
+  Boolean(process.env.RENDER_SERVICE_ID);
 const repairEnabled = process.env.DB_REPAIR_DUPLICATES === "1";
 
 const log = (message) => console.log(`[db-sync] ${message}`);
@@ -185,7 +188,7 @@ async function repair(prisma, duplicates) {
 async function main() {
   if (!forced && !isProduction) {
     log(
-      `skipped (VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}); set DB_PUSH_ON_BUILD=1 to force`,
+      `skipped (VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}, RENDER=${process.env.RENDER ?? "unset"}); set DB_PUSH_ON_BUILD=1 to force`,
     );
     return;
   }
@@ -222,7 +225,7 @@ async function main() {
 
     if (!repairEnabled) {
       warn("indexes are NOT synced. These rows must go before the index can build.");
-      warn("Set DB_REPAIR_DUPLICATES=1 in Vercel and redeploy to delete the extras,");
+      warn("Set DB_REPAIR_DUPLICATES=1 in the deployment environment and redeploy to delete the extras,");
       warn("keeping the row attached to the published invitation in each group.");
       return;
     }
