@@ -38,6 +38,7 @@ type PreviewProps = {
   elementStyles?: Record<string, unknown>;
   customText?: Record<string, unknown[]>;
   onSelectElement: (key: string) => void;
+  compact?: boolean;
 };
 
 export function ThemeRealSectionPreview({
@@ -54,6 +55,7 @@ export function ThemeRealSectionPreview({
   elementStyles,
   customText,
   onSelectElement,
+  compact = false,
 }: PreviewProps) {
   const resolvedRevealMode = revealMode ?? "ANIMATION";
   const resolvedRevealAnimation: InviteData["revealAnimation"] = {
@@ -68,9 +70,9 @@ export function ThemeRealSectionPreview({
   if (section === "ENVELOPE") {
     return (
       <div className="grid gap-2">
-        <PreviewHeading section={section} />
+        {!compact && <PreviewHeading section={section} />}
         <div
-          className="relative mx-auto aspect-[9/16] w-full max-w-[285px] overflow-hidden rounded-[28px] border-[5px] border-violet-950 bg-cover bg-center shadow-xl"
+          className={`relative mx-auto aspect-[9/16] w-full overflow-hidden rounded-[28px] border-[5px] border-violet-950 bg-cover bg-center shadow-xl ${compact ? "max-w-[245px]" : "max-w-[285px]"}`}
           style={{
             backgroundColor: palette.primary,
             backgroundImage: sectionImages?.ENVELOPE
@@ -189,9 +191,9 @@ export function ThemeRealSectionPreview({
 
   return (
     <div className="grid gap-2">
-      <PreviewHeading section={section} />
+      {!compact && <PreviewHeading section={section} />}
       <div
-        className="relative mx-auto h-[570px] w-full max-w-[285px] overflow-y-auto overflow-x-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl"
+        className={`relative mx-auto w-full overflow-y-auto overflow-x-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl ${compact ? "h-[48vh] min-h-[360px] max-h-[500px] max-w-[245px]" : "h-[570px] max-w-[285px]"}`}
         onClickCapture={captureSelection}
       >
         <div
@@ -218,9 +220,11 @@ export function ThemeRealSectionPreview({
           />
         </div>
       </div>
-      <p className="text-muted-foreground text-center text-[10px]">
-        This is the real invitation section. Click its text to edit that exact element.
-      </p>
+      {!compact && (
+        <p className="text-muted-foreground text-center text-[10px]">
+          This is the real invitation section. Click its text to edit that exact element.
+        </p>
+      )}
     </div>
   );
 }
