@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     shortcut: SITE_LOGO_PATH,
     apple: SITE_LOGO_PATH,
   },
-  themeColor: "#6b4f7a",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -72,7 +72,8 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
-          enableSystem
+          forcedTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <SessionProvider>
