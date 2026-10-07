@@ -461,7 +461,13 @@ export async function startLiveInvitationAction(input: {
   if (!theme || theme.type !== "WEBSITE") {
     theme =
       (await db.theme.findFirst({
-        where: { type: "WEBSITE", eventCategory: category.slug },
+        where: {
+          type: "WEBSITE",
+          OR: [
+            { eventCategory: category.slug },
+            { eventCategories: { has: category.slug } },
+          ],
+        },
         orderBy: { sortOrder: "asc" },
       })) ??
       (await db.theme.findFirst({
