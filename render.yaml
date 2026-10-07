@@ -3,7 +3,7 @@ services:
     name: einvite-sk-digital
     runtime: node
     plan: free
-    region: singapore
+    region: oregon
     repo: https://github.com/mesanjusk/Einvite-
     branch: claude/new-session-mz697f
     autoDeploy: true
@@ -12,6 +12,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: NPM_CONFIG_INCLUDE
+        value: "dev"
       - key: AUTH_TRUST_HOST
         value: "true"
       - key: DATABASE_URL
