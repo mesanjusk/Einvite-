@@ -7,18 +7,18 @@
   --radius: 0.75rem;
 
   /* SK Digital lavender wedding palette — soft lavender, plum, ivory and antique gold. */
-  --background: oklch(0.975 0.022 305);
+  --background: oklch(1 0 0);
   --foreground: oklch(0.285 0.045 305);
-  --card: oklch(0.992 0.012 305);
+  --card: oklch(1 0 0);
   --card-foreground: oklch(0.285 0.045 305);
-  --popover: oklch(0.992 0.012 305);
+  --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.285 0.045 305);
 
   --primary: oklch(0.42 0.095 305);
   --primary-foreground: oklch(0.985 0.012 305);
-  --secondary: oklch(0.91 0.055 305);
+  --secondary: oklch(0.95 0.035 305);
   --secondary-foreground: oklch(0.34 0.07 305);
-  --muted: oklch(0.95 0.026 305);
+  --muted: oklch(0.975 0.018 305);
   --muted-foreground: oklch(0.52 0.04 305);
   --accent: oklch(0.72 0.10 80);
   --accent-foreground: oklch(0.30 0.06 305);
@@ -34,7 +34,7 @@
   --chart-4: oklch(0.85 0.1 90);
   --chart-5: oklch(0.78 0.1 150);
 
-  --sidebar: oklch(0.965 0.028 305);
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.34 0.065 305);
   --sidebar-primary: oklch(0.56 0.11 305);
   --sidebar-primary-foreground: oklch(0.99 0.006 305);
@@ -132,8 +132,8 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(circle at 12% 0%, rgba(170, 142, 205, 0.18), transparent 24rem),
-      radial-gradient(circle at 95% 8%, rgba(217, 183, 119, 0.10), transparent 26rem);
+      radial-gradient(circle at 12% 0%, rgba(170, 142, 205, 0.10), transparent 24rem),
+      radial-gradient(circle at 95% 8%, rgba(196, 167, 219, 0.08), transparent 26rem);
   }
 }
 
@@ -143,9 +143,9 @@
     isolation: isolate;
     overflow: hidden;
     background:
-      radial-gradient(circle at 10% 10%, rgba(181, 153, 211, 0.24), transparent 24rem),
-      radial-gradient(circle at 90% 14%, rgba(217, 185, 119, 0.12), transparent 28rem),
-      linear-gradient(180deg, #fbf8ff 0%, #f4edf9 48%, #fffaf1 100%);
+      radial-gradient(circle at 10% 10%, rgba(181, 153, 211, 0.14), transparent 24rem),
+      radial-gradient(circle at 90% 14%, rgba(203, 178, 222, 0.10), transparent 28rem),
+      linear-gradient(180deg, #ffffff 0%, #faf6fd 48%, #ffffff 100%);
   }
 
   .wedding-pattern {
@@ -204,9 +204,9 @@
   }
 
   .wedding-cta {
-    border: 1px solid rgba(230, 197, 128, 0.36);
-    background: linear-gradient(135deg, #4d365b, #674c78 52%, #8b6a98);
-    color: #fff8e8;
+    border: 1px solid rgba(143, 105, 166, 0.28);
+    background: linear-gradient(135deg, #6c4b7e, #8a67a0 52%, #a987bd);
+    color: #ffffff;
     box-shadow: 0 14px 34px rgba(44, 35, 25, 0.24);
   }
 
@@ -216,12 +216,12 @@
   }
 
   .wedding-gold {
-    background: linear-gradient(135deg, #f0d58f, #c89d4e 55%, #8f692f);
-    color: #26211c;
+    background: linear-gradient(135deg, #ede3f4, #cdb8dc 55%, #9b78b0);
+    color: #4b3659;
   }
 
   .wedding-title {
-    background: linear-gradient(110deg, #2d2823 0%, #6e5630 34%, #c69b4f 52%, #332d27 100%);
+    background: linear-gradient(110deg, #4b3659 0%, #76508c 34%, #a884ba 52%, #4b3659 100%);
     background-size: 220% 100%;
     animation: royal-title-sweep 8s ease-in-out infinite;
     -webkit-background-clip: text;
@@ -230,9 +230,9 @@
   }
 
   .wedding-badge {
-    border: 1px solid rgba(205, 166, 91, 0.34);
-    background: rgba(245, 235, 212, 0.86);
-    color: #51432e;
+    border: 1px solid rgba(166, 133, 188, 0.34);
+    background: rgba(248, 243, 252, 0.92);
+    color: #5f476c;
     box-shadow: 0 8px 24px rgba(63, 49, 29, 0.08);
   }
 }
@@ -1160,13 +1160,13 @@
 }
 
 .royal-title-light {
-  background: linear-gradient(110deg, #fff8e8 0%, #d8bee8 28%, #f0d58f 52%, #b995cd 76%, #fff8e8 100%);
+  background: linear-gradient(110deg, #4b3659 0%, #76508c 38%, #a987bd 62%, #4b3659 100%);
   background-size: 230% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: royal-title-sweep 8s ease-in-out infinite;
-  text-shadow: 0 20px 60px rgba(0,0,0,.25);
+  text-shadow: none;
 }
 
 .royal-gold-text {
@@ -1182,10 +1182,10 @@
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(circle at 18% 18%, rgba(201,169,225,.2), transparent 30rem),
-    radial-gradient(circle at 86% 20%, rgba(220,184,110,.14), transparent 28rem),
-    linear-gradient(145deg, #4f3a5d 0%, #684e77 42%, #564164 100%);
-  color: #fbf4ff;
+    radial-gradient(circle at 18% 18%, rgba(201,169,225,.18), transparent 30rem),
+    radial-gradient(circle at 86% 20%, rgba(187,151,211,.10), transparent 28rem),
+    linear-gradient(145deg, #ffffff 0%, #fbf7fd 42%, #f6effa 100%);
+  color: #4b3659;
 }
 
 .royal-hero::before {
@@ -1210,24 +1210,24 @@
 }
 
 .royal-glass-dark {
-  border: 1px solid rgba(220,201,234,.3);
-  background: rgba(255,255,255,.075);
-  color: #f7ecff;
-  box-shadow: 0 16px 44px rgba(0,0,0,.22);
+  border: 1px solid rgba(178,150,198,.34);
+  background: rgba(255,255,255,.88);
+  color: #5b4268;
+  box-shadow: 0 14px 34px rgba(91,67,107,.10);
   backdrop-filter: blur(18px);
 }
 
 .royal-kicker {
-  color: #e6c978;
+  color: #8a649d;
   letter-spacing: .2em;
   text-transform: uppercase;
 }
 
 .royal-section {
   background:
-    radial-gradient(circle at 12% 8%, rgba(182,150,207,.18), transparent 24rem),
-    radial-gradient(circle at 92% 18%, rgba(226,193,127,.10), transparent 22rem),
-    linear-gradient(180deg, #fcf9ff 0%, #f2eaf8 100%);
+    radial-gradient(circle at 12% 8%, rgba(182,150,207,.12), transparent 24rem),
+    radial-gradient(circle at 92% 18%, rgba(195,165,216,.08), transparent 22rem),
+    linear-gradient(180deg, #ffffff 0%, #faf6fd 100%);
 }
 
 @keyframes royal-logo-breathe {
@@ -1307,7 +1307,7 @@
 
 /* Lavender wedding skin: final override for public/product surfaces still using royal utility names. */
 body {
-  background-color: #f7f0fb;
+  background-color: #ffffff;
   color: #4b3659;
 }
 .royal-menu,
@@ -1316,7 +1316,7 @@ body {
 }
 .lavender-wedding-surface {
   background:
-    radial-gradient(circle at 12% 8%, rgba(183,151,208,.18), transparent 26rem),
-    radial-gradient(circle at 90% 14%, rgba(225,190,119,.10), transparent 24rem),
-    linear-gradient(180deg, #fcf9ff, #f1e8f7);
+    radial-gradient(circle at 12% 8%, rgba(183,151,208,.10), transparent 26rem),
+    radial-gradient(circle at 90% 14%, rgba(191,160,213,.07), transparent 24rem),
+    linear-gradient(180deg, #ffffff, #fbf8fd);
 }
