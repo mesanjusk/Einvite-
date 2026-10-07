@@ -1,0 +1,86 @@
+services:
+  - type: web
+    name: einvite-sk-digital
+    runtime: node
+    plan: free
+    region: singapore
+    repo: https://github.com/mesanjusk/Einvite-
+    branch: claude/new-session-mz697f
+    autoDeploy: true
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: AUTH_TRUST_HOST
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: UPLOADTHING_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO
+        sync: false
+      - key: STRIPE_PRICE_ID_PREMIUM
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_API_VERSION
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_BUSINESS_ACCOUNT_ID
+        sync: false
+      - key: WHATSAPP_WABA_ID
+        sync: false
+      - key: WHATSAPP_WEBHOOK_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: WHATSAPP_ENFORCE_WEBHOOK_SIGNATURE
+        sync: false
+      - key: INSTAGRAM_WEBHOOK_VERIFY_TOKEN
+        sync: false
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: META_API_VERSION
+        sync: false
+      - key: META_REDIRECT_URI
+        sync: false
+      - key: IG_ACCESS_TOKEN
+        sync: false
+      - key: SOCIAL_TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
