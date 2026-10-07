@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, LogOut, Settings, Moon, Sun } from "lucide-react";
+import { MoreVertical, LogOut, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { useTheme } from "next-themes";
 
 import { dashboardNav, adminNav } from "@/config/dashboard-nav";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
@@ -51,7 +50,6 @@ export function DashboardTopbar({
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
 
   const initials =
     user.name
@@ -64,7 +62,7 @@ export function DashboardTopbar({
   const moreNavItems = dashboardNav.filter((item) => !BOTTOM_NAV_HREFS.has(item.href));
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-[#c9b3d8]/38 bg-[#faf6fd]/92 px-4 text-[#4b3659] backdrop-blur-2xl">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-violet-200/70 bg-white/95 px-4 text-[#4b3659] shadow-[0_8px_28px_rgba(103,75,123,.06)] backdrop-blur-2xl">
       <SiteLogo size="sm" className="lg:hidden" />
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -106,13 +104,6 @@ export function DashboardTopbar({
 
             <div className="border-t pt-4">
               <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="hover:bg-accent hover:text-accent-foreground flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium"
-              >
-                {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-                {theme === "dark" ? "Light mode" : "Dark mode"}
-              </button>
-              <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-destructive hover:bg-accent flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium"
               >
@@ -127,16 +118,6 @@ export function DashboardTopbar({
       <div className="hidden lg:block" />
 
       <div className="hidden items-center gap-2 lg:flex">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label="Toggle theme"
-        >
-          <Sun className="size-4 scale-100 dark:scale-0" />
-          <Moon className="absolute size-4 scale-0 dark:scale-100" />
-        </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-9 gap-2 px-2">
