@@ -53,9 +53,21 @@ export default async function DesignInvitationPage({
   }
 
   const category = eventCategoryFor(invitation.eventCategory);
+  const categoryFilter = {
+    OR: [
+      { eventCategory: category.slug },
+      { eventCategories: { has: category.slug } },
+    ],
+  };
   const themeFilter = invitation.themeId
-    ? { OR: [{ eventCategory: category.slug }, { id: invitation.themeId }] }
-    : { eventCategory: category.slug };
+    ? {
+        OR: [
+          { id: invitation.themeId },
+          { eventCategory: category.slug },
+          { eventCategories: { has: category.slug } },
+        ],
+      }
+    : categoryFilter;
 
   const [themes, musicTracks, colorway] = await Promise.all([
     db.theme.findMany({

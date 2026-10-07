@@ -49,6 +49,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { ThemeRealSectionPreview } from "@/components/admin/theme-real-section-preview";
 import {
   ThemeElementInspector,
@@ -123,6 +130,7 @@ type ThemeRecord = {
   description: string | null;
   category: string;
   eventCategory: string;
+  eventCategories?: string[];
   isPremium: boolean;
   sortOrder: number;
   previewImage: string | null;
@@ -191,6 +199,8 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
     category: (theme?.category as ThemeFormValues["category"]) ?? "classic",
     eventCategory:
       (theme?.eventCategory as ThemeFormValues["eventCategory"]) ?? "wedding",
+    eventCategories:
+      ((theme?.eventCategories?.length ? theme.eventCategories : [theme?.eventCategory ?? "wedding"]) as ThemeFormValues["eventCategories"]),
     isPremium: theme?.isPremium ?? false,
     sortOrder: theme?.sortOrder ?? 0,
     colorPalette: theme?.colorPalette ?? {
@@ -266,6 +276,7 @@ export function ThemeFormDialog({
   const [selectedElement, setSelectedElement] = useState<string | null>("HERO.invitationLetter");
   const [mobileTool, setMobileTool] = useState<"content" | "library" | "text" | "advanced">("content");
   const [libraryQuery, setLibraryQuery] = useState("");
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const bulkArtworkInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -530,10 +541,12 @@ export function ThemeFormDialog({
     const uploaded = await uploadAsset(file, "video");
     if (uploaded?.url) {
       form.setValue("revealVideoUrl", uploaded.url);
+      form.setValue("previewImage", uploaded.posterUrl ?? "");
       const saved = await upsertThemeLibraryAssetAction({
         name: file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") || `${form.getValues("name") || "Theme"} reveal`,
         kind: "REVEAL_VIDEO",
         url: uploaded.url,
+        thumbnailUrl: uploaded.posterUrl,
         sortOrder: revealVideoLibrary.length,
       });
       if (!saved.success) {
@@ -597,6 +610,32 @@ export function ThemeFormDialog({
     } else {
       toast.success("Artwork applied to every active section and saved to Template Library.");
     }
+  }
+
+  function toggleThemeCategory(slug: string) {
+    const current = (form.getValues("eventCategories") ?? []).filter(
+      (item): item is ThemeFormInput["eventCategory"] => Boolean(item),
+    );
+    const typedSlug = slug as ThemeFormInput["eventCategory"];
+    const exists = current.includes(typedSlug);
+    if (exists && current.length === 1) {
+      toast.error("Keep at least one celebration selected.");
+      return;
+    }
+    const next = exists
+      ? current.filter((item) => item !== slug)
+      : [...current, typedSlug];
+    form.setValue("eventCategories", next, { shouldValidate: true });
+    form.setValue("eventCategory", next[0] ?? "wedding");
+  }
+
+  function applyLibraryImageToAll(url: string) {
+    const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+    for (const sectionType of form.getValues("sectionOrder")) {
+      current[sectionType] = url;
+    }
+    form.setValue("decorAssets.sectionImages", current);
+    toast.success("Library artwork applied to every active section.");
   }
 
   const selectedDefinition = selectedElement
@@ -775,8 +814,162 @@ export function ThemeFormDialog({
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-6">
           {type === "WEBSITE" && (
-            <section className="-mx-3 grid gap-3 md:hidden">
-              <div className="sticky top-0 z-20 grid gap-2 border-y border-violet-200/70 bg-[#faf6fd]/95 px-3 py-2 backdrop-blur-xl">
+            <section className="grid gap-4 rounded-3xl border border-violet-200/80 bg-white p-4 shadow-sm sm:p-5">
+              <div className="grid gap-4 lg:grid-cols-[minmax(260px,1fr)_minmax(0,1.5fr)_auto] lg:items-end">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-bold text-[#4b3659]">
+                    Theme name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    value={form.watch("name")}
+                    onChange={(e) => form.setValue("name", e.target.value, { shouldValidate: true })}
+                    placeholder="e.g. Lavender Floral Wedding"
+                    autoFocus={!theme}
+                  />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-bold text-[#4b3659]">Celebrations</Label>
+                  <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {EVENT_CATEGORIES.map((category) => {
+                      const active = (form.watch("eventCategories") ?? []).includes(
+                        category.slug as ThemeFormInput["eventCategory"],
+                      );
+                      return (
+                        <button
+                          key={category.slug}
+                          type="button"
+                          onClick={() => toggleThemeCategory(category.slug)}
+                          className={
+                            active
+                              ? "shrink-0 rounded-full border border-violet-500 bg-violet-100 px-3 py-2 text-[10px] font-bold text-[#5a3d6d]"
+                              : "shrink-0 rounded-full border border-violet-200 bg-white px-3 py-2 text-[10px] font-semibold text-[#765f81]"
+                          }
+                        >
+                          {category.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <label className="flex min-w-[150px] items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50/45 px-3 py-2.5">
+                  <span className="text-xs font-bold text-[#4b3659]">Premium <span className="text-destructive">*</span></span>
+                  <Switch
+                    checked={form.watch("isPremium")}
+                    onCheckedChange={(value) => form.setValue("isPremium", value)}
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-3 rounded-2xl border border-violet-100 bg-violet-50/35 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold text-[#4b3659]">Opening reveal</p>
+                    <p className="text-[9px] text-[#8a7397]">Thumbnail is generated from this reveal — no separate thumbnail field.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant={form.watch("revealMode") === "ANIMATION" ? "default" : "outline"} size="sm" onClick={() => {
+                      form.setValue("revealMode", "ANIMATION");
+                      form.setValue("previewImage", "");
+                    }}>
+                      <Sparkles className="size-3.5" />
+                      Animation
+                    </Button>
+                    <Button type="button" variant={form.watch("revealMode") === "VIDEO" ? "default" : "outline"} size="sm" onClick={() => form.setValue("revealMode", "VIDEO")}>
+                      <Video className="size-3.5" />
+                      Video reveal
+                    </Button>
+                  </div>
+                </div>
+
+                {form.watch("revealMode") === "ANIMATION" ? (
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="grid gap-1">
+                      <Label className="text-[10px]">Animation style</Label>
+                      <select
+                        className="border-input h-10 rounded-md border bg-white px-2 text-xs"
+                        value={form.watch("decorAssets.revealAnimation.preset")}
+                        onChange={(e) => form.setValue("decorAssets.revealAnimation.preset", e.target.value as (typeof REVEAL_ANIMATION_PRESETS)[number])}
+                      >
+                        {REVEAL_ANIMATION_PRESETS.map((preset) => <option key={preset} value={preset}>{ANIMATION_LABELS[preset]}</option>)}
+                      </select>
+                    </div>
+                    <div className="grid gap-1">
+                      <Label className="text-[10px]">Intensity</Label>
+                      <Input type="number" min="0.5" max="2" step="0.1" {...form.register("decorAssets.revealAnimation.intensity", { valueAsNumber: true })} />
+                    </div>
+                    <div className="grid gap-1">
+                      <Label className="text-[10px]">Speed</Label>
+                      <Input type="number" min="0.5" max="2" step="0.1" {...form.register("decorAssets.revealAnimation.speed", { valueAsNumber: true })} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-[#6c4a7d]">
+                        <Upload className="size-4" />
+                        {assetUploading === "video" ? "Uploading…" : "Upload new reveal"}
+                        <input type="file" accept="video/mp4,video/webm,video/*" className="hidden" disabled={assetUploading === "video"} onChange={(e) => handleRevealVideo(e.target.files?.[0])} />
+                      </label>
+                      <Link href="/admin/library/video-reveals" className="inline-flex items-center rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-semibold text-[#76508c]">
+                        Manage gallery
+                      </Link>
+                    </div>
+                    {revealVideoLibrary.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                        {revealVideoLibrary.map((item) => (
+                          <button
+                            key={item.url}
+                            type="button"
+                            onClick={() => {
+                              form.setValue("revealVideoUrl", item.url);
+                              form.setValue("previewImage", item.thumbnailUrl ?? "");
+                            }}
+                            className={form.watch("revealVideoUrl") === item.url ? "overflow-hidden rounded-xl border-2 border-violet-600 bg-violet-50 text-left" : "overflow-hidden rounded-xl border border-violet-200 bg-white text-left"}
+                          >
+                            {item.thumbnailUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={item.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
+                            ) : (
+                              <video src={item.url} className="aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" />
+                            )}
+                            <span className="block truncate px-2 py-1.5 text-[9px] font-semibold text-[#5f476c]">{item.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={() => setAppearanceOpen(true)}>
+                  <SlidersHorizontal className="size-4" />
+                  Colours & fonts
+                </Button>
+                <Button type="button" variant="outline" onClick={() => bulkArtworkInputRef.current?.click()} disabled={assetUploading === "image"}>
+                  <Upload className="size-4" />
+                  {assetUploading === "image" ? "Uploading…" : "Bulk artwork"}
+                </Button>
+                <input ref={bulkArtworkInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleBulkArtwork(e.target.files?.[0])} />
+                {imageLibrary.length > 0 && (
+                  <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {imageLibrary.slice(0, 10).map((asset) => (
+                      <button key={asset.id} type="button" title={`Apply ${asset.name} to all sections`} onClick={() => applyLibraryImageToAll(asset.url)} className="w-12 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-white">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={asset.thumbnailUrl || asset.url} alt={asset.name} className="aspect-[3/4] w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {type === "WEBSITE" && (
+            <section className="-mx-3 grid gap-3 lg:mx-0 lg:grid-cols-[minmax(360px,0.9fr)_minmax(420px,1.1fr)] lg:items-start">
+              <div className="sticky top-0 z-20 grid gap-2 border-y border-violet-200/70 bg-[#faf6fd]/95 px-3 py-2 backdrop-blur-xl lg:col-span-2 lg:top-16 lg:rounded-2xl lg:border">
                 <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
                   {sectionOrder.map((sectionType) => {
                     const typedSection = sectionType as (typeof SECTION_TYPES)[number];
@@ -852,10 +1045,10 @@ export function ThemeFormDialog({
                 </div>
               </div>
 
-              <div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] px-3 py-4 shadow-inner">
+              <div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] px-3 py-4 shadow-inner lg:sticky lg:top-40">
                 <ThemeRealSectionPreview
                   section={previewSection}
-                  eventCategory={form.watch("eventCategory")}
+                  eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
                   palette={form.watch("colorPalette")}
                   fonts={form.watch("fontPairing")}
                   content={form.watch("content")}
@@ -1416,154 +1609,51 @@ export function ThemeFormDialog({
                         );
                       })}
                     </div>
-
-                    {previewSection === "ENVELOPE" && (
-                      <div className="grid gap-3 rounded-2xl border bg-white p-3">
-                        <p className="text-xs font-bold text-[#4b3659]">Envelope reveal</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            type="button"
-                            variant={form.watch("revealMode") === "ANIMATION" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => form.setValue("revealMode", "ANIMATION")}
-                          >
-                            <Sparkles className="size-3.5" />
-                            Animation
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={form.watch("revealMode") === "VIDEO" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => form.setValue("revealMode", "VIDEO")}
-                          >
-                            <Video className="size-3.5" />
-                            Video
-                          </Button>
-                        </div>
-                        {form.watch("revealMode") === "ANIMATION" ? (
-                          <div className="grid gap-2">
-                            <select
-                              className="border-input h-10 rounded-md border bg-background px-2 text-xs"
-                              value={form.watch("decorAssets.revealAnimation.preset")}
-                              onChange={(e) =>
-                                form.setValue(
-                                  "decorAssets.revealAnimation.preset",
-                                  e.target.value as (typeof REVEAL_ANIMATION_PRESETS)[number],
-                                )
-                              }
-                            >
-                              {REVEAL_ANIMATION_PRESETS.map((preset) => (
-                                <option key={preset} value={preset}>{ANIMATION_LABELS[preset]}</option>
-                              ))}
-                            </select>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input type="number" min="0.5" max="2" step="0.1" placeholder="Intensity" {...form.register("decorAssets.revealAnimation.intensity", { valueAsNumber: true })} />
-                              <Input type="number" min="0.5" max="2" step="0.1" placeholder="Speed" {...form.register("decorAssets.revealAnimation.speed", { valueAsNumber: true })} />
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="grid gap-2">
-                            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-xs">
-                              <Upload className="size-4" />
-                              {assetUploading === "video" ? "Uploading…" : "Upload reveal video"}
-                              <input
-                                type="file"
-                                accept="video/mp4,video/webm,video/*"
-                                className="hidden"
-                                disabled={assetUploading === "video"}
-                                onChange={(e) => handleRevealVideo(e.target.files?.[0])}
-                              />
-                            </label>
-                            {revealVideoLibrary.length > 0 && (
-                              <div className="grid gap-2">
-                                <div className="flex items-center justify-between">
-                                  <Label className="text-[10px]">Reveal Video Gallery</Label>
-                                  <Link href="/admin/library/video-reveals" className="text-[9px] font-semibold text-[#76508c]">Manage</Link>
-                                </div>
-                                <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto">
-                                  {revealVideoLibrary.map((item) => (
-                                    <button
-                                      key={item.url}
-                                      type="button"
-                                      onClick={() => form.setValue("revealVideoUrl", item.url)}
-                                      className={
-                                        form.watch("revealVideoUrl") === item.url
-                                          ? "overflow-hidden rounded-xl border-2 border-[#76508c] bg-violet-50 text-left"
-                                          : "overflow-hidden rounded-xl border border-violet-200 bg-white text-left"
-                                      }
-                                    >
-                                      {item.thumbnailUrl ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={item.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
-                                      ) : (
-                                        <video src={item.url} className="aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" />
-                                      )}
-                                      <span className="block truncate px-2 py-1.5 text-[9px] font-semibold text-[#5f476c]">{item.label}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="grid gap-3 rounded-2xl border bg-white p-3">
-                      <p className="text-xs font-bold text-[#4b3659]">Theme setup</p>
-                      <div className="grid gap-1">
-                        <Label className="text-[10px]">Theme name</Label>
-                        <Input {...form.register("name")} />
-                      </div>
-                      <div className="grid gap-1">
-                        <Label className="text-[10px]">Slug</Label>
-                        <Input {...form.register("slug")} disabled={!!theme} />
-                      </div>
-                      <div className="grid gap-1">
-                        <Label className="text-[10px]">Description</Label>
-                        <Textarea rows={2} {...form.register("description")} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="grid gap-1">
-                          <Label className="text-[10px]">Celebration</Label>
-                          <select
-                            className="border-input h-10 rounded-md border bg-background px-2 text-xs"
-                            value={form.watch("eventCategory")}
-                            onChange={(e) => form.setValue("eventCategory", e.target.value as ThemeFormValues["eventCategory"])}
-                          >
-                            {EVENT_CATEGORIES.map((category) => (
-                              <option key={category.slug} value={category.slug}>{category.label}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-[10px]">Style</Label>
-                          <select
-                            className="border-input h-10 rounded-md border bg-background px-2 text-xs capitalize"
-                            value={form.watch("category")}
-                            onChange={(e) => form.setValue("category", e.target.value as ThemeFormValues["category"])}
-                          >
-                            {THEME_CATEGORIES.map((category) => (
-                              <option key={category} value={category}>{category}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <label className="flex items-center justify-between rounded-xl border p-3">
-                        <span className="text-xs font-semibold">Premium theme</span>
-                        <Switch
-                          checked={form.watch("isPremium")}
-                          onCheckedChange={(value) => form.setValue("isPremium", value)}
-                        />
-                      </label>
-                    </div>
                   </div>
                 )}
               </div>
             </section>
           )}
 
-          <div className="hidden md:contents">
+          <Sheet open={appearanceOpen} onOpenChange={setAppearanceOpen}>
+            <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>Colours & fonts</SheetTitle>
+                <SheetDescription>
+                  Global theme appearance. Section-specific overrides stay inside Advanced.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="grid gap-6 px-4 pb-6">
+                <section className="grid gap-3">
+                  <Label className="text-sm font-bold">Colour palette</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(["primary", "secondary", "accent", "background", "foreground"] as const).map((key) => (
+                      <label key={key} className="flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-white p-3">
+                        <span className="text-xs font-semibold capitalize text-[#5a4168]">{key}</span>
+                        <input type="color" value={form.watch(`colorPalette.${key}`)} onChange={(e) => form.setValue(`colorPalette.${key}`, e.target.value)} className="size-9 rounded-lg border bg-white" />
+                      </label>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="grid gap-3">
+                  <Label className="text-sm font-bold">Fonts</Label>
+                  {(["display", "body", "script"] as const).map((key) => (
+                    <div key={key} className="grid gap-1.5">
+                      <Label className="text-xs capitalize">{key} font</Label>
+                      <select className="border-input h-10 rounded-md border bg-white px-3 text-sm" value={form.watch(`fontPairing.${key}`)} onChange={(e) => form.setValue(`fontPairing.${key}`, e.target.value)}>
+                        {FONT_OPTIONS.map((font) => <option key={font} value={font}>{font}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </section>
+
+                <Button type="button" onClick={() => setAppearanceOpen(false)}>Done</Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <div className="hidden">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid min-w-0 gap-1.5">
               <Label>Name</Label>
@@ -2263,7 +2353,7 @@ export function ThemeFormDialog({
                 <div className="grid gap-4 lg:sticky lg:top-0 lg:self-start">
                   <ThemeRealSectionPreview
                     section={previewSection}
-                    eventCategory={form.watch("eventCategory")}
+                    eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory")) as ThemeFormValues["eventCategory"]}
                     palette={form.watch("colorPalette")}
                     fonts={form.watch("fontPairing")}
                     content={form.watch("content")}

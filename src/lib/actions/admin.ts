@@ -72,22 +72,37 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
   }
   const data = parsed.data;
 
+  const cleanSlugBase =
+    data.slug ||
+    data.name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") ||
+    "theme";
+
+  let resolvedSlug = cleanSlugBase;
   if (!data.id) {
-    const existing = await db.theme.findUnique({ where: { slug: data.slug } });
-    if (existing)
-      return { success: false, error: "A theme with this slug already exists." };
+    let suffix = 2;
+    while (await db.theme.findUnique({ where: { slug: resolvedSlug }, select: { id: true } })) {
+      resolvedSlug = `${cleanSlugBase}-${suffix}`;
+      suffix += 1;
+    }
   }
+
+  const primaryEventCategory = data.eventCategories[0] ?? data.eventCategory;
 
   const themeFields = {
     type: data.type,
     name: data.name,
-    slug: data.slug,
+    slug: data.id ? data.slug || resolvedSlug : resolvedSlug,
     description: data.description,
     previewImage: data.previewImage,
     revealMode: data.revealMode,
     revealVideoUrl: data.revealVideoUrl,
     category: data.category,
-    eventCategory: data.eventCategory,
+    eventCategory: primaryEventCategory,
+    eventCategories: data.eventCategories,
     isPremium: data.isPremium,
     sortOrder: data.sortOrder,
     colorPalette: data.colorPalette,

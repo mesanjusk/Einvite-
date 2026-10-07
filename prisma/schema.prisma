@@ -168,7 +168,10 @@ model Theme {
   // Which celebration this design is written for — "wedding", "birthday",
   // "housewarming"... See src/lib/event-categories.ts. A theme only ever
   // shows up in the picker for its own category.
-  eventCategory  String    @default("wedding")
+  eventCategory   String    @default("wedding")
+  // A theme can be offered for multiple celebrations. eventCategory remains
+  // the primary/legacy category for old records and older code paths.
+  eventCategories String[] @default([])
   // Default copy this design ships with (headline, invitation letter, thank
   // you...), used when the couple asks for no AI copy. Shape: the
   // EventCategoryContent type. Null falls back to the category's own copy.

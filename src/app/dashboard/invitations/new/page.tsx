@@ -29,6 +29,7 @@ export default async function NewInvitationPage() {
             slug: theme.slug,
             name: theme.name,
             eventCategory: theme.eventCategory,
+            eventCategories: theme.eventCategories,
             previewImage: theme.previewImage,
             isPremium: theme.isPremium,
             primary: palette.primary,

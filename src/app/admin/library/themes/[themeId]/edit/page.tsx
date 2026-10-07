@@ -59,6 +59,7 @@ export default async function EditThemePage({
         revealVideoUrl: theme.revealVideoUrl,
         category: theme.category,
         eventCategory: theme.eventCategory,
+        eventCategories: theme.eventCategories,
         isPremium: theme.isPremium,
         sortOrder: theme.sortOrder,
         colorPalette: theme.colorPalette as never,

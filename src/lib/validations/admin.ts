@@ -142,8 +142,8 @@ export const themeFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z
     .string()
-    .min(1, "Slug is required")
-    .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
+    .regex(/^$|^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only")
+    .default(""),
   description: z.string().optional(),
   previewImage: z.string().optional(),
   revealMode: z.enum(["ANIMATION", "VIDEO"]).default("ANIMATION"),
@@ -152,6 +152,10 @@ export const themeFormSchema = z.object({
   // Which celebration the design is for. PDF themes are print layouts shared
   // by every celebration, so this only steers the WEBSITE picker.
   eventCategory: z.enum(EVENT_CATEGORY_SLUGS).default(DEFAULT_EVENT_CATEGORY),
+  eventCategories: z
+    .array(z.enum(EVENT_CATEGORY_SLUGS))
+    .min(1, "Choose at least one celebration")
+    .default([DEFAULT_EVENT_CATEGORY]),
   isPremium: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
   colorPalette: colorPaletteSchema,
