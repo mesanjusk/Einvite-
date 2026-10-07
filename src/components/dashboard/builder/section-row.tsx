@@ -8,20 +8,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useBuilderStore } from "@/lib/stores/builder-store";
 import type { SectionConfigEntry } from "@/lib/get-invite-data";
+import { sectionDisplayName } from "@/lib/section-labels";
 
-const SECTION_LABELS: Record<string, string> = {
-  ENVELOPE: "Envelope",
-  HERO: "Invitation",
-  COUNTDOWN: "Countdown",
-  STORY: "Our Story",
-  TIMELINE: "Event Timeline",
-  GALLERY: "Photo Gallery",
-  VENUE: "Venue",
-  RSVP: "RSVP",
-  REGISTRY: "Gift Registry",
-  INSTAGRAM: "Instagram Feed",
-  THANK_YOU: "Thank You",
-};
 
 export function SectionRow({ section }: { section: SectionConfigEntry }) {
   const { toggleVisible, toggleLock, duplicate, remove } = useBuilderStore();
@@ -58,7 +46,7 @@ export function SectionRow({ section }: { section: SectionConfigEntry }) {
       </button>
 
       <span className="flex-1 text-sm font-medium">
-        {SECTION_LABELS[section.type] ?? section.type}
+        {sectionDisplayName(section.type)}
       </span>
 
       <Button

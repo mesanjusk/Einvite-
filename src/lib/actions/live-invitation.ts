@@ -22,6 +22,7 @@ import {
   type LiveEventPatch,
 } from "@/lib/validations/live-invitation";
 import type { ActionResult } from "@/lib/actions/auth";
+import type { InviteData } from "@/components/invite/types";
 
 /**
  * The live editor's save path. Where the wizard collects a whole form and
@@ -43,6 +44,14 @@ type PatchResult = {
   musicUrl: string | null;
   themeStyle: Record<string, string>;
   themeSlug: string | null;
+  revealVideoUrl: string | null;
+  revealVideoWebmUrl: string | null;
+  revealVideoPosterUrl: string | null;
+  revealAnimation: InviteData["revealAnimation"];
+  sectionImages: InviteData["sectionImages"];
+  elementStyles: InviteData["elementStyles"];
+  customText: InviteData["customText"];
+  sectionStyles: InviteData["sectionStyles"];
 };
 
 export async function patchInvitationAction(
@@ -163,6 +172,14 @@ export async function patchInvitationAction(
   revalidatePath(`/invite/${saved.slug}`);
   revalidatePath(`/design/${invitationId}`);
 
+  const savedThemeDecor = (saved.theme?.decorAssets ?? {}) as {
+    revealAnimation?: InviteData["revealAnimation"];
+    sectionImages?: InviteData["sectionImages"];
+    elementStyles?: InviteData["elementStyles"];
+    customText?: InviteData["customText"];
+    sectionStyles?: InviteData["sectionStyles"];
+  };
+
   return {
     success: true,
     data: {
@@ -173,6 +190,20 @@ export async function patchInvitationAction(
         saved.fontPairing ?? saved.theme?.fontPairing,
       ) as Record<string, string>,
       themeSlug: saved.theme?.slug ?? null,
+      revealVideoUrl:
+        saved.introVideoMp4Url ??
+        (saved.theme?.revealMode === "VIDEO" ? saved.theme?.revealVideoUrl ?? null : null),
+      revealVideoWebmUrl: saved.introVideoWebmUrl ?? null,
+      revealVideoPosterUrl: saved.introVideoPosterUrl ?? null,
+      revealAnimation: savedThemeDecor.revealAnimation ?? {
+        preset: "MAGIC_BLOOM",
+        intensity: 1,
+        speed: 1,
+      },
+      sectionImages: savedThemeDecor.sectionImages ?? {},
+      elementStyles: savedThemeDecor.elementStyles ?? {},
+      customText: savedThemeDecor.customText ?? {},
+      sectionStyles: savedThemeDecor.sectionStyles ?? {},
     },
   };
 }

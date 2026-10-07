@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/admin";
 import { COMMUNITY_CONTENT_GROUPS } from "@/lib/theme-content-library";
 import { SECTION_TYPES, THEME_CONTENT_ROLES } from "@/lib/validations/admin";
+import { sectionDisplayName } from "@/lib/section-labels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -143,7 +144,7 @@ export function ThemeContentLibraryManager({
               value={draft.section}
               onChange={(e) => setDraft((d) => ({ ...d, section: e.target.value }))}
             >
-              {SECTION_TYPES.map((item) => <option key={item} value={item}>{item}</option>)}
+              {SECTION_TYPES.map((item) => <option key={item} value={item}>{sectionDisplayName(item)}</option>)}
             </select>
           </div>
           <div className="grid gap-1">
@@ -206,7 +207,7 @@ export function ThemeContentLibraryManager({
                 <div className="min-w-0">
                   <p className="truncate text-xs font-bold text-[#4b3659]">{item.title}</p>
                   <p className="mt-0.5 text-[9px] font-semibold text-[#927c9d]">
-                    {item.community} · {item.section} · {item.role}
+                    {item.community} · {sectionDisplayName(item.section)} · {item.role}
                   </p>
                 </div>
                 <div className="flex shrink-0">

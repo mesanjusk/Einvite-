@@ -42,6 +42,7 @@ import {
   type EditTarget,
 } from "../edit-context";
 import type { InviteData, InviteFamilyMember, InviteMedia } from "../types";
+import { sectionDisplayName } from "@/lib/section-labels";
 import { DesignSheet } from "./design-sheet";
 import { MusicSheet } from "./music-sheet";
 import { PhotosSheet } from "./photos-sheet";
@@ -188,6 +189,8 @@ export function LiveEditor({
   const [musicTrackId, setMusicTrackId] = useState(initialMusicTrackId);
   const [customMusicUrl, setCustomMusicUrl] = useState(initialCustomMusicUrl);
   const [published, setPublished] = useState(isPublished);
+  const [revealPreviewVersion, setRevealPreviewVersion] = useState(0);
+  const [envelopeOpenVersion, setEnvelopeOpenVersion] = useState(0);
 
   // Null is deliberate: the first screen is always a clean sample preview.
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
@@ -296,7 +299,7 @@ export function LiveEditor({
       window.removeEventListener("scroll", updateVisibleSection);
       window.removeEventListener("resize", updateVisibleSection);
     };
-  }, [sections, invite.events.length]);
+  }, [sections, invite.events.length, envelopeOpenVersion]);
 
   // Keep a small recovery record in this browser. This is intentionally in
   // addition to server autosave, not instead of it.
@@ -545,9 +548,30 @@ export function LiveEditor({
   function applyPatchResult(data: {
     themeStyle: Record<string, string>;
     musicUrl: string | null;
+    themeSlug: string | null;
+    revealVideoUrl: string | null;
+    revealVideoWebmUrl: string | null;
+    revealVideoPosterUrl: string | null;
+    revealAnimation: InviteData["revealAnimation"];
+    sectionImages: InviteData["sectionImages"];
+    elementStyles: InviteData["elementStyles"];
+    customText: InviteData["customText"];
+    sectionStyles: InviteData["sectionStyles"];
   }) {
     setThemeStyle(data.themeStyle as CSSProperties);
-    setInvite((current) => ({ ...current, musicUrl: data.musicUrl }));
+    setInvite((current) => ({
+      ...current,
+      musicUrl: data.musicUrl,
+      themeSlug: data.themeSlug,
+      revealVideoUrl: data.revealVideoUrl,
+      revealVideoWebmUrl: data.revealVideoWebmUrl,
+      revealVideoPosterUrl: data.revealVideoPosterUrl,
+      revealAnimation: data.revealAnimation,
+      sectionImages: data.sectionImages,
+      elementStyles: data.elementStyles,
+      customText: data.customText,
+      sectionStyles: data.sectionStyles,
+    }));
   }
 
   function handleThemeChange(slug: string) {
@@ -652,6 +676,13 @@ export function LiveEditor({
     ).then((data) => data && applyPatchResult(data));
   }
 
+  function previewOpening() {
+    setPanel(null);
+    setActiveSectionId(null);
+    setRevealPreviewVersion((value) => value + 1);
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  }
+
   const shareUrl = `${appUrl}/invite/${invite.slug}`;
 
   const continuePublish = useCallback(() => {
@@ -674,9 +705,9 @@ export function LiveEditor({
     // Sample names are presentation only. An actual name must exist in the
     // saved invitation before the draft is allowed to go live.
     if (!invite.brideName.trim()) {
-      toast.error("Personalize the Names & welcome slide before publishing.");
+      toast.error(`Personalize the ${sectionDisplayName("HERO")} slide before publishing.`);
       const hero = document.querySelector<HTMLElement>(
-        '[data-invite-section-label="Names & welcome"]',
+        `[data-invite-section-label="${sectionDisplayName("HERO")}"]`,
       );
       hero?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
@@ -738,10 +769,11 @@ export function LiveEditor({
         style={{ ...themeStyle, fontFamily: "var(--inv-font-body)" }}
       >
         <InviteExperience
+          key={`mobile-invite-preview-${revealPreviewVersion}`}
           invite={displayInvite}
           sectionConfig={sections}
-          skipEnvelope
           guidedActiveSectionId={activeSectionId}
+          onEnvelopeComplete={() => setEnvelopeOpenVersion((value) => value + 1)}
         />
       </div>
 
@@ -789,6 +821,7 @@ export function LiveEditor({
         onColorwayChange={handleColorwayChange}
         onGalleryAnimationChange={handleGalleryAnimation}
         onSectionToggle={handleSectionToggle}
+        onPreviewOpening={previewOpening}
       />
 
       <MusicSheet

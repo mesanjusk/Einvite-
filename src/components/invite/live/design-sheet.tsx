@@ -16,21 +16,9 @@ import {
 import { GALLERY_ANIMATIONS } from "@/lib/validations/live-invitation";
 import type { SectionConfigEntry } from "@/lib/get-invite-data";
 import type { EditorTheme } from "./types";
+import { sectionDisplayName } from "@/lib/section-labels";
 import { IntroVideoUploader } from "./intro-video-uploader";
 
-const SECTION_LABELS: Record<string, string> = {
-  HERO: "Names & invitation",
-  COUNTDOWN: "Save the date",
-  STORY: "Photos",
-  GALLERY: "Photos",
-  TIMELINE: "Functions",
-  VENUE: "Venue",
-  RSVP: "RSVP",
-  THANK_YOU: "Thank you",
-  ENVELOPE: "Envelope",
-  REGISTRY: "Registry",
-  INSTAGRAM: "Instagram",
-};
 
 /** The design sheet: which look the invitation wears, and what's on it. */
 export function DesignSheet({
@@ -48,6 +36,7 @@ export function DesignSheet({
   onColorwayChange,
   onGalleryAnimationChange,
   onSectionToggle,
+  onPreviewOpening,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -71,6 +60,7 @@ export function DesignSheet({
   onColorwayChange: (slug: string | null) => void;
   onGalleryAnimationChange: (value: string) => void;
   onSectionToggle: (sectionId: string, visible: boolean) => void;
+  onPreviewOpening: () => void;
 }) {
   const activeTheme = themes.find((theme) => theme.slug === activeThemeSlug);
   // "STORY" and "GALLERY" both drive the same photo pile, so only the one
@@ -165,6 +155,12 @@ export function DesignSheet({
               value={introVideo}
               onChange={onIntroVideoChange}
             />
+            <Button type="button" variant="outline" onClick={onPreviewOpening}>
+              Preview {sectionDisplayName("ENVELOPE")}
+            </Button>
+            <p className="text-muted-foreground text-[10px]">
+              Plays the theme&apos;s coded animation or reveal video exactly as guests see it on mobile.
+            </p>
           </section>
 
           <section className="flex flex-col gap-2">
@@ -197,13 +193,13 @@ export function DesignSheet({
                   className="flex items-center justify-between gap-3 p-3"
                 >
                   <span className="text-sm">
-                    {SECTION_LABELS[section.type] ?? section.type}
+                    {sectionDisplayName(section.type)}
                   </span>
                   <Switch
                     checked={section.visible}
                     disabled={section.locked}
                     onCheckedChange={(checked) => onSectionToggle(section.id, checked)}
-                    aria-label={`Show ${SECTION_LABELS[section.type] ?? section.type}`}
+                    aria-label={`Show ${sectionDisplayName(section.type)}`}
                   />
                 </div>
               ))}
