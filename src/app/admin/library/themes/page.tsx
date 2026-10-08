@@ -7,6 +7,7 @@ import { eventCategoryFor } from "@/lib/event-categories";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { deleteThemeAction, deleteThemeColorwayAction } from "@/lib/actions/admin";
 import { ThemeColorwayDialog } from "@/components/admin/theme-colorway-dialog";
+import { ThemePublicationToggle } from "@/components/admin/theme-publication-toggle";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +52,6 @@ export default async function AdminThemesPage() {
             background: string;
             foreground: string;
           };
-          const sectionOrder = (theme.templates[0]?.sectionOrder as string[] | undefined) ?? [];
           return (
             <Card key={theme.id} className="overflow-hidden py-0">
               {theme.previewImage ? (
@@ -80,7 +80,12 @@ export default async function AdminThemesPage() {
                       {eventCategoryFor(theme.eventCategory).label}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    <ThemePublicationToggle
+                      themeId={theme.id}
+                      isPublished={theme.isPublished}
+                      type={theme.type}
+                    />
                     <Badge variant="secondary">
                       {theme.type === "WEBSITE" ? "Web + PDF" : "Legacy PDF"}
                     </Badge>

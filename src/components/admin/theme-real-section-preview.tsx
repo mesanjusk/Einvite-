@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 
 import { InviteExperience } from "@/components/invite/invite-experience";
 import { EnvelopeSection } from "@/components/invite/envelope-section";
 import { LocaleProvider } from "@/lib/i18n/locale-context";
 import { sectionDisplayName } from "@/lib/section-labels";
 import type { InviteData } from "@/components/invite/types";
+import { buildInviteThemeStyle } from "@/lib/theme-css-vars";
 
 type PreviewSection = string;
 
@@ -31,6 +32,9 @@ type PreviewProps = {
   };
   revealMode?: "ANIMATION" | "VIDEO";
   revealVideoUrl?: string;
+  revealVideoWebmUrl?: string;
+  revealVideoPosterUrl?: string;
+  selectedElement?: string | null;
   revealAnimation?: {
     preset?: "MAGIC_BLOOM" | "SPARKLES" | "CONFETTI" | "PETALS";
     intensity?: unknown;
@@ -41,6 +45,7 @@ type PreviewProps = {
   elementStyles?: Record<string, unknown>;
   customText?: Record<string, unknown[]>;
   onSelectElement: (key: string) => void;
+  onMoveElement?: (key: string, position: { x: number; y: number }) => void;
   compact?: boolean;
 };
 
@@ -52,16 +57,23 @@ export function ThemeRealSectionPreview({
   content,
   revealMode,
   revealVideoUrl,
+  revealVideoWebmUrl,
+  revealVideoPosterUrl,
+  selectedElement,
   revealAnimation,
   sectionImages,
   sectionStyles,
   elementStyles,
   customText,
   onSelectElement,
+  onMoveElement,
   compact = false,
 }: PreviewProps) {
+  const drag = useRef<{ pointerId: number; key: string; startX: number; startY: number; x: number; y: number; width: number; height: number } | null>(null);
   const [envelopeReplay, setEnvelopeReplay] = useState(0);
-    const resolvedRevealMode = revealMode ?? "ANIMATION";
+  const replayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (replayTimer.current) clearTimeout(replayTimer.current); }, []);
+  const resolvedRevealMode = revealMode ?? "ANIMATION";
   const resolvedRevealAnimation: InviteData["revealAnimation"] = {
     preset: revealAnimation?.preset ?? "MAGIC_BLOOM",
     intensity: Number(revealAnimation?.intensity ?? 1),
@@ -77,30 +89,21 @@ export function ThemeRealSectionPreview({
         {!compact && <PreviewHeading section={section} />}
         <div
           className={`relative mx-auto aspect-[9/16] w-full overflow-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl ${compact ? "max-w-[245px]" : "max-w-[285px]"}`}
-          style={
-            {
-              "--inv-primary": palette.primary,
-              "--inv-secondary": palette.secondary,
-              "--inv-accent": palette.accent,
-              "--inv-background": palette.background,
-              "--inv-foreground": palette.foreground,
-              "--inv-font-display": fonts.display,
-              "--inv-font-body": fonts.body,
-              "--inv-font-script": fonts.script,
-            } as React.CSSProperties
-          }
+          style={buildInviteThemeStyle(palette, fonts)}
         >
           <LocaleProvider>
             <EnvelopeSection
               key={`${resolvedRevealMode}-${resolvedRevealAnimation.preset}-${resolvedRevealAnimation.intensity}-${resolvedRevealAnimation.speed}-${revealVideoUrl ?? "coded"}-${envelopeReplay}`}
               initials="M&A"
               videoUrl={resolvedRevealMode === "VIDEO" ? revealVideoUrl ?? null : null}
+              videoWebmUrl={resolvedRevealMode === "VIDEO" ? revealVideoWebmUrl ?? null : null}
+              posterUrl={revealVideoPosterUrl}
               animation={resolvedRevealAnimation}
               backgroundImageUrl={sectionImages?.ENVELOPE}
               embedded
               autoPlay
               onComplete={() => {
-                window.setTimeout(() => setEnvelopeReplay((value) => value + 1), 500);
+                replayTimer.current = setTimeout(() => setEnvelopeReplay((value) => value + 1), 500);
               }}
             />
           </LocaleProvider>
@@ -109,6 +112,7 @@ export function ThemeRealSectionPreview({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
+              if (replayTimer.current) clearTimeout(replayTimer.current);
               setEnvelopeReplay((value) => value + 1);
             }}
             className="absolute right-2 top-2 z-30 rounded-full border border-white/60 bg-white/90 px-2.5 py-1 text-[9px] font-bold text-[#5a4168] shadow-sm backdrop-blur"
@@ -167,10 +171,12 @@ export function ThemeRealSectionPreview({
       },
     ],
     familyMembers: [],
-    media: [],
+    media: [{ id: "preview-photo", url: "/images/theme-preview-photo.svg", caption: "Sample customer photo", type: "IMAGE" }],
     isDemo: true,
     themeSlug: "preview",
     revealVideoUrl: resolvedRevealMode === "VIDEO" ? revealVideoUrl ?? null : null,
+    revealVideoWebmUrl: resolvedRevealMode === "VIDEO" ? revealVideoWebmUrl ?? null : null,
+    revealVideoPosterUrl,
     revealAnimation: resolvedRevealAnimation,
     sectionImages,
     sectionStyles: resolvedSectionStyles,
@@ -197,28 +203,59 @@ export function ThemeRealSectionPreview({
     if (key) onSelectElement(key);
   }
 
+  function startDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!onMoveElement || event.pointerType !== "mouse" || event.button !== 0) return;
+    let element = (event.target as HTMLElement).closest<HTMLElement>("[data-theme-element]");
+    const key = element?.dataset.themeElement;
+    if (!element || !key) return;
+    let parent = element.parentElement?.closest<HTMLElement>("[data-theme-element]");
+    while (parent?.dataset.themeElement === key) {
+      element = parent;
+      parent = element.parentElement?.closest<HTMLElement>("[data-theme-element]");
+    }
+    const bounds = element.getBoundingClientRect();
+    const custom = Object.values(customText ?? {}).flat().find((block) => (block as { id?: string }).id === key) as { x?: number; y?: number } | undefined;
+    const style = elementStyles?.[key] as { x?: number; y?: number } | undefined;
+    drag.current = { pointerId: event.pointerId, key, startX: event.clientX, startY: event.clientY, x: custom?.x ?? style?.x ?? 0, y: custom?.y ?? style?.y ?? 0, width: Math.max(1, bounds.width), height: Math.max(1, bounds.height) };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    onSelectElement(key);
+    event.preventDefault();
+  }
+
+  function moveDrag(event: PointerEvent<HTMLDivElement>) {
+    const current = drag.current;
+    if (!current || event.pointerId !== current.pointerId) return;
+    const dx = event.clientX - current.startX;
+    const dy = event.clientY - current.startY;
+    if (Math.abs(dx) + Math.abs(dy) < 4) return;
+    const clamp = (value: number) => Math.round(Math.max(-60, Math.min(60, value)));
+    onMoveElement?.(current.key, { x: clamp(current.x + dx / current.width * 100), y: clamp(current.y + dy / current.height * 100) });
+    event.preventDefault();
+  }
+
+  function stopDrag(event: PointerEvent<HTMLDivElement>) {
+    if (drag.current?.pointerId !== event.pointerId) return;
+    drag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+
   return (
     <div className="grid gap-2">
       {!compact && <PreviewHeading section={section} />}
       <div
-        className={`relative mx-auto w-full overflow-y-auto overflow-x-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl ${compact ? "h-[48vh] min-h-[360px] max-h-[500px] max-w-[245px]" : "h-[570px] max-w-[285px]"}`}
+        data-theme-preview
+        className={`relative mx-auto w-full overflow-y-auto overflow-x-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl ${compact ? "h-[48vh] min-h-[360px] max-h-[500px] max-w-[245px]" : "h-[min(60svh,640px)] min-h-[420px] max-w-[390px]"}`}
         onClickCapture={captureSelection}
+        onPointerDownCapture={startDrag}
+        onPointerMoveCapture={moveDrag}
+        onPointerUpCapture={stopDrag}
+        onPointerCancel={stopDrag}
       >
         <div
-          className="[&_[data-theme-element]]:cursor-pointer [&_[data-theme-element]]:outline-offset-2 hover:[&_[data-theme-element]]:outline hover:[&_[data-theme-element]]:outline-2 hover:[&_[data-theme-element]]:outline-violet-400"
-          style={
-            {
-              "--inv-primary": palette.primary,
-              "--inv-secondary": palette.secondary,
-              "--inv-accent": palette.accent,
-              "--inv-background": palette.background,
-              "--inv-foreground": palette.foreground,
-              "--inv-font-display": fonts.display,
-              "--inv-font-body": fonts.body,
-              "--inv-font-script": fonts.script,
-            } as React.CSSProperties
-          }
+          className="[&_[data-theme-element]]:cursor-pointer [&_[data-theme-element]]:outline-offset-2 [&_[data-theme-element]:hover]:outline [&_[data-theme-element]:hover]:outline-2 [&_[data-theme-element]:hover]:outline-violet-400"
+          style={buildInviteThemeStyle(palette, fonts)}
         >
+          {selectedElement && <style>{`[data-theme-preview] [data-theme-element=${JSON.stringify(selectedElement)}]{outline:2px solid #76508c;outline-offset:3px;}`}</style>}
           <InviteExperience
             invite={invite}
             sectionConfig={sectionConfig}
@@ -230,7 +267,7 @@ export function ThemeRealSectionPreview({
       </div>
       {!compact && (
         <p className="text-muted-foreground text-center text-[10px]">
-          This is the real invitation section. Click its text to edit that exact element.
+          This is the real invitation section. Click text to edit; drag it to position. Customer values are samples.
         </p>
       )}
     </div>

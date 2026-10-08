@@ -1004,7 +1004,7 @@ export function GuestInvitationWizard({
                         customUrl={form.watch("customMusicUrl")}
                         onSelect={(id) => {
                           form.setValue("musicTrackId", id);
-                          form.setValue("customMusicUrl", undefined);
+                          form.setValue("customMusicUrl", id ? undefined : "");
                         }}
                       />
 

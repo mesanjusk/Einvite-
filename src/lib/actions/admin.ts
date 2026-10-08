@@ -144,6 +144,30 @@ export async function upsertThemeAction(input: ThemeFormInput): Promise<ActionRe
   return { success: true, data: undefined };
 }
 
+export async function setThemePublicationAction(
+  themeId: string,
+  isPublished: boolean,
+): Promise<ActionResult> {
+  if (!(await requireAdmin())) return { success: false, error: "Unauthorized" };
+
+  const theme = await db.theme.findUnique({
+    where: { id: themeId },
+    select: { id: true, type: true },
+  });
+  if (!theme) return { success: false, error: "Theme not found" };
+  if (isPublished && theme.type !== "WEBSITE") {
+    return { success: false, error: "Only website themes can be published here" };
+  }
+
+  await db.theme.update({ where: { id: theme.id }, data: { isPublished } });
+  revalidatePath("/admin/library/themes");
+  revalidatePath("/themes");
+  revalidatePath("/dashboard/publish/theme");
+  revalidatePath("/dashboard/invitations/templates");
+  revalidatePath("/");
+  return { success: true, data: undefined };
+}
+
 /**
  * Saves a PDF theme's multi-page layout (background + positioned text
  * placeholders per page) onto its auto-created Template row. Website

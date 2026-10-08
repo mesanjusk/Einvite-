@@ -83,6 +83,8 @@ type InvitationWithRelations = NonNullable<
 
 export function toInviteRenderData(invitation: InvitationWithRelations) {
   const decorAssets = (invitation.theme?.decorAssets ?? {}) as {
+    revealVideoWebmUrl?: string;
+    revealVideoPosterUrl?: string;
     revealAnimation?: InviteData["revealAnimation"];
     sectionImages?: InviteData["sectionImages"];
     elementStyles?: InviteData["elementStyles"];
@@ -122,8 +124,8 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     revealVideoUrl:
       invitation.introVideoMp4Url ??
       (invitation.theme?.revealMode === "VIDEO" ? (invitation.theme?.revealVideoUrl ?? null) : null),
-    revealVideoWebmUrl: invitation.introVideoWebmUrl ?? null,
-    revealVideoPosterUrl: invitation.introVideoPosterUrl ?? null,
+    revealVideoWebmUrl: invitation.introVideoWebmUrl ?? (invitation.introVideoMp4Url ? null : invitation.theme?.revealMode === "VIDEO" ? decorAssets.revealVideoWebmUrl || null : null),
+    revealVideoPosterUrl: invitation.introVideoPosterUrl ?? (invitation.introVideoMp4Url ? null : invitation.theme?.revealMode === "VIDEO" ? decorAssets.revealVideoPosterUrl || invitation.theme.previewImage || null : null),
     revealAnimation: decorAssets.revealAnimation ?? {
       preset: "MAGIC_BLOOM",
       intensity: 1,

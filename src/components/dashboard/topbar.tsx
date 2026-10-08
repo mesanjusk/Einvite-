@@ -63,7 +63,11 @@ export function DashboardTopbar({
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-violet-200/70 bg-white/95 px-4 text-[#4b3659] shadow-[0_8px_28px_rgba(103,75,123,.06)] backdrop-blur-2xl">
-      <SiteLogo size="sm" className="lg:hidden" />
+      {isAdmin ? (
+        <SiteLogo size="sm" />
+      ) : (
+        <SiteLogo size="sm" className="lg:hidden" />
+      )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
@@ -130,13 +134,34 @@ export function DashboardTopbar({
               <span className="hidden text-sm font-medium sm:inline">{user.name}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="max-h-[80vh] w-64 overflow-y-auto">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium">{user.name}</span>
                 <span className="text-muted-foreground text-xs">{user.email}</span>
               </div>
             </DropdownMenuLabel>
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-muted-foreground text-[11px] tracking-wide uppercase">
+                  Admin workspace
+                </DropdownMenuLabel>
+                {adminNav.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={item.href}
+                      onSelect={() => router.push(item.href)}
+                      className="cursor-pointer"
+                    >
+                      <Icon className="size-4" />
+                      {item.title}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
               <Settings />

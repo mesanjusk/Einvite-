@@ -55,14 +55,18 @@ export default async function PublicThemesPage({
   const [baseThemes, demos] = await Promise.all([
     db.theme
       .findMany({
-        where: activeSlug
-          ? {
-              OR: [
-                { eventCategory: activeSlug },
-                { eventCategories: { has: activeSlug } },
-              ],
-            }
-          : {},
+        where: {
+          type: "WEBSITE",
+          isPublished: true,
+          ...(activeSlug
+            ? {
+                OR: [
+                  { eventCategory: activeSlug },
+                  { eventCategories: { has: activeSlug } },
+                ],
+              }
+            : {}),
+        },
         orderBy: { sortOrder: "asc" },
       })
       .catch(() => []),

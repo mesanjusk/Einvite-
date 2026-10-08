@@ -80,18 +80,23 @@ function SectionScope({
           : "",
         config.align ? `text-align:${config.align} !important` : "",
         config.color ? `color:${config.color} !important` : "",
-        config.x || config.y
-          ? `transform:translate(${config.x ?? 0}%, ${config.y ?? 0}%) !important`
-          : "",
+        config.bold !== undefined ? `font-weight:${config.bold ? 700 : 400} !important` : "",
+        config.italic !== undefined ? `font-style:${config.italic ? "italic" : "normal"} !important` : "",
+        config.underline !== undefined ? `text-decoration:${config.underline ? "underline" : "none"} !important` : "",
+        config.letterSpacing !== undefined ? `letter-spacing:${config.letterSpacing}px !important` : "",
+        config.lineHeight !== undefined ? `line-height:${config.lineHeight} !important` : "",
         config.showBackground
           ? "background:color-mix(in srgb,var(--inv-background) 90%,white 10%) !important;padding:.2em .45em !important;border-radius:.55em !important"
           : "",
       ]
         .filter(Boolean)
         .join(";");
-      return declarations
-        ? `[data-theme-element="${key}"]{${declarations}}`
-        : "";
+      const selector = `[data-theme-element=${JSON.stringify(key)}]`;
+      // ThemeText may repeat its parent's key. Move/fade the outer layer once.
+      const outerSelector = `${selector}:not(${selector} ${selector})`;
+      const position = config.x || config.y ? `transform:translate(${config.x ?? 0}%, ${config.y ?? 0}%) !important;` : "";
+      const opacity = config.opacity !== undefined ? `opacity:${config.opacity} !important;` : "";
+      return `${declarations ? `${selector}{${declarations}}` : ""}${position || opacity ? `${outerSelector}{${position}${opacity}}` : ""}`;
     })
     .filter(Boolean)
     .join("\n");
@@ -142,12 +147,17 @@ function SectionScope({
             {customText.map((block) => (
               <div
                 key={block.id}
-                className="absolute left-1/2 top-1/2 w-[88%]"
+                className="pointer-events-auto absolute left-1/2 top-1/2 w-[88%]"
                 data-theme-element={block.id}
                 style={{
                   transform: `translate(calc(-50% + ${block.x ?? 0}%), calc(-50% + ${block.y ?? 0}%))`,
                   fontSize: `${block.fontSize}px`,
-                  lineHeight: 1.25,
+                  lineHeight: block.lineHeight ?? 1.25,
+                  fontWeight: block.bold ? 700 : undefined,
+                  fontStyle: block.italic ? "italic" : undefined,
+                  textDecoration: block.underline ? "underline" : undefined,
+                  letterSpacing: block.letterSpacing !== undefined ? `${block.letterSpacing}px` : undefined,
+                  opacity: block.opacity ?? 1,
                   fontFamily:
                     block.fontRole === "display"
                       ? "var(--inv-font-display)"
@@ -422,6 +432,7 @@ export function InviteExperience({
                       invitationId={invite.id}
                       guestId={guestId}
                       guestName={guestName}
+                      previewMode={previewMode}
                     />
                   </SectionScope>
                 );
@@ -442,7 +453,7 @@ export function InviteExperience({
                       brideName={invite.brideName}
                       groomName={invite.groomName}
                       hashtags={invite.copy?.hashtags}
-                      shareUrl={shareUrl}
+                      shareUrl={previewMode ? undefined : shareUrl}
                       message={invite.copy?.thankYou}
                     />
                   </SectionScope>

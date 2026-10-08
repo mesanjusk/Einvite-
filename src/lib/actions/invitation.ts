@@ -18,6 +18,7 @@ import { pickStockPhotos } from "@/lib/media/stock-photos";
 import { generateToken, hashToken } from "@/lib/otp";
 import { getAppUrl } from "@/lib/app-url";
 import { normalizePhone } from "@/lib/phone";
+import { startingMusicUrl } from "@/lib/theme-music";
 
 export async function createInvitationAction(
   input: InvitationWizardFormValues,
@@ -100,7 +101,7 @@ export async function createInvitationAction(
       colorwayId: colorway?.id ?? null,
       colorPalette: colorway?.colorPalette ?? undefined,
       musicTrackId: data.musicTrackId || null,
-      customMusicUrl: data.customMusicUrl || null,
+      customMusicUrl: startingMusicUrl(data, theme.decorAssets),
       sectionConfig: (
         (template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER
       ).map((type, order) => ({ id: type, type, visible: true, locked: false, order })),

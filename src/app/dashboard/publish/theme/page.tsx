@@ -52,7 +52,10 @@ export default async function ThemeEditorPage({
       orderBy: { updatedAt: "desc" },
       select: { id: true, brideName: true, groomName: true },
     }),
-    db.theme.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
+    db.theme.findMany({
+      where: { type: "WEBSITE", isPublished: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    }),
     db.musicTrack.findMany({ orderBy: { title: "asc" } }),
   ]);
 
