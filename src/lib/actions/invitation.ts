@@ -1,4 +1,6 @@
 "use server";
+import { notifyInstagramOwnerOfPublish } from "@/lib/instagram-publish-notice";
+import { instagramPublishRequirement } from "@/lib/instagram-connect";
 
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
@@ -155,6 +157,8 @@ export async function publishInvitationAction(
     return { success: false, error: "Invitation not found." };
   }
 
+  const instagramError = await instagramPublishRequirement(invitation.id);
+  if (instagramError) return { success: false, error: instagramError };
   // Never block publishing on missing photos — top up to the required
   // count with wedding-mockup stock photos instead. The couple can swap
   // any of these out for their own later from the Media Library; nothing
@@ -188,6 +192,7 @@ export async function publishInvitationAction(
   revalidatePath("/dashboard/invitations");
   revalidatePath("/dashboard/media");
   revalidatePath(`/invite/${invitation.slug}`);
+  await notifyInstagramOwnerOfPublish(invitation.id, invitation.slug);
 
   return { success: true, data: { autoFilledPhotos } };
 }

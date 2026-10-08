@@ -73,9 +73,11 @@ export function EnvelopeSection({
   embedded = false,
   autoPlay = false,
   mode,
+  exitDuration = 0.45,
 }: {
   initials: string;
   mode?: "ANIMATION" | "VIDEO";
+  exitDuration?: number;
   /** Optional short muted clip, used instead of the coded animation. */
   videoUrl?: string | null;
   videoWebmUrl?: string | null;
@@ -165,7 +167,7 @@ export function EnvelopeSection({
 
   if (useVideo) {
     return (
-      <motion.div data-opening-mode="video" exit={{ opacity: 0 }} className={`${embedded ? "absolute inset-0 z-10" : "fixed inset-0 z-50"} overflow-hidden bg-black`}>
+      <motion.div data-opening-mode="video" exit={{ opacity: 0 }} transition={{ duration: exitDuration }} className={`${embedded ? "absolute inset-0 z-10" : "fixed inset-0 z-50"} overflow-hidden bg-black`}>
         <video ref={videoRef} aria-label="Opening reveal video" muted playsInline preload="auto" poster={posterUrl ?? undefined} className="absolute inset-0 size-full object-cover" onError={() => { setVideoFailed(true); timers.current.forEach(clearTimeout); }}>
           {videoWebmUrl && <source src={videoWebmUrl} type="video/webm" />}
           {videoUrl && <source src={videoUrl} type="video/mp4" />}
@@ -182,7 +184,7 @@ export function EnvelopeSection({
       data-opening-mode="animation"
       onClick={handleTap}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: exitDuration }}
       className={`${embedded ? "absolute inset-0 z-10" : "fixed inset-0 z-50"} flex cursor-pointer flex-col items-center justify-center overflow-hidden`}
       style={{
         background:

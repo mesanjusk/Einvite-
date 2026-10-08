@@ -91,6 +91,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
   const decorAssets = (invitation.theme?.decorAssets ?? {}) as {
     revealVideoWebmUrl?: string;
     revealVideoPosterUrl?: string;
+    revealTransition?: InviteData["revealTransition"];
     revealAnimation?: InviteData["revealAnimation"];
     sectionNames?: InviteData["sectionNames"];
     sectionImages?: InviteData["sectionImages"];
@@ -133,6 +134,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
       (invitation.theme?.revealMode === "VIDEO" ? (invitation.theme?.revealVideoUrl ?? null) : null),
     revealVideoWebmUrl: invitation.introVideoWebmUrl ?? (invitation.introVideoMp4Url ? null : invitation.theme?.revealMode === "VIDEO" ? decorAssets.revealVideoWebmUrl || null : null),
     revealVideoPosterUrl: invitation.introVideoPosterUrl ?? (invitation.introVideoMp4Url ? null : invitation.theme?.revealMode === "VIDEO" ? decorAssets.revealVideoPosterUrl || invitation.theme.previewImage || null : null),
+    revealTransition: (invitation.revealTransition as InviteData["revealTransition"]) ?? decorAssets.revealTransition ?? "FADE",
     revealAnimation: decorAssets.revealAnimation ?? {
       preset: "MAGIC_BLOOM",
       intensity: 1,

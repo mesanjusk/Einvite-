@@ -29,6 +29,7 @@ export function buildThemePreviewData(draft: ThemeFormValues): InviteData {
     revealVideoUrl: draft.revealMode === "VIDEO" ? draft.revealVideoUrl || null : null,
     revealVideoWebmUrl: draft.revealMode === "VIDEO" ? decor?.revealVideoWebmUrl || null : null,
     revealVideoPosterUrl: draft.revealMode === "VIDEO" ? decor?.revealVideoPosterUrl || draft.previewImage || null : null,
+    revealTransition: decor?.revealTransition ?? "FADE",
     revealAnimation: {
       preset: decor?.revealAnimation?.preset ?? "MAGIC_BLOOM",
       intensity: Number(decor?.revealAnimation?.intensity ?? 1),

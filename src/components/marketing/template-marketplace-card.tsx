@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight, Play, Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 
-import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { PhoneMockup } from "@/components/marketing/phone-mockup";
 
 export type MarketplaceThemeCard = {
@@ -23,7 +22,7 @@ export type MarketplaceThemeCard = {
 
 export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard }) {
   return (
-    <article className="group min-w-0">
+    <Link href={`/preview/${theme.slug}`} aria-label={`Preview ${theme.name}`} className="block rounded-3xl focus-visible:outline-2 focus-visible:outline-violet-600"><article className="group min-w-0">
       <div className="relative">
         <div className="absolute -inset-2 rounded-[2rem] bg-[linear-gradient(135deg,#dcc8e8,#b995cd,#8a68a0)] opacity-0 blur-lg transition duration-500 group-hover:opacity-30" />
         <div className="wedding-card template-preview-stage relative rounded-[1.8rem] p-2 transition duration-300 group-hover:-translate-y-1.5 sm:p-2.5">
@@ -90,17 +89,6 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#4b3659]/46 to-transparent" />
             <div className="template-shimmer" />
 
-            {theme.demoSlug && (
-              <Link
-                href={`/invite/${theme.demoSlug}`}
-                aria-label={`Preview ${theme.name}`}
-                className="absolute inset-0 z-10 grid place-items-center"
-              >
-                <span className="grid size-12 place-items-center rounded-full border border-violet-200 bg-white/92 text-[#76508c] shadow-[0_12px_28px_rgba(91,67,107,.16)] backdrop-blur transition group-hover:scale-110">
-                  <Play className="ml-0.5 size-4 fill-current" />
-                </span>
-              </Link>
-            )}
 
             <div className="pointer-events-none absolute left-2 top-2 z-20">
               <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/80 bg-white/92 px-2.5 py-1 text-[8px] font-black tracking-[0.1em] text-[#5b4268] uppercase shadow-sm backdrop-blur">
@@ -125,23 +113,8 @@ export function TemplateMarketplaceCard({ theme }: { theme: MarketplaceThemeCard
           <ArrowUpRight className="mt-1 size-4 shrink-0 text-[#76508c] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>
 
-        {theme.demoSlug ? (
-          <Link
-            href={`/invite/${theme.demoSlug}`}
-            className="wedding-cta mt-3 flex w-full items-center justify-center rounded-full px-3 py-2.5 text-[9px] font-extrabold tracking-[0.1em] uppercase transition sm:text-[10px]"
-          >
-            Open invitation
-          </Link>
-        ) : (
-          <StartLiveInvitationButton
-            category={theme.eventCategory}
-            themeSlug={theme.slug}
-            className="wedding-cta mt-3 flex w-full items-center justify-center rounded-full px-3 py-2.5 text-[9px] font-extrabold tracking-[0.1em] uppercase transition sm:text-[10px]"
-          >
-            Make it mine
-          </StartLiveInvitationButton>
-        )}
+
       </div>
-    </article>
+    </article></Link>
   );
 }

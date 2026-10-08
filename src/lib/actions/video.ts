@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getProjectGeminiKey } from "@/lib/project-gemini";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
@@ -113,13 +114,14 @@ export async function generateInvitationVideoAction(
     data: { videoTemplateId: template.id },
   });
 
-  if (!isGeminiVideoConfigured(invitation.geminiApiKey)) {
+  const projectKey = await getProjectGeminiKey();
+  if (!isGeminiVideoConfigured(projectKey)) {
     await db.invitationVideo.update({
       where: { id: video.id },
       data: {
         status: "FAILED",
         error:
-          "No Gemini API key is configured — add your own key above, or ask an admin to set GEMINI_API_KEY.",
+          "Ask the admin to configure the project Gemini API key.",
       },
     });
     revalidateInvitationPaths(invitation.id);
@@ -129,7 +131,7 @@ export async function generateInvitationVideoAction(
   const started = await startGeminiVideoGeneration(prompt, {
     model: template.geminiModel,
     aspectRatio: template.aspectRatio,
-    apiKey: invitation.geminiApiKey,
+    apiKey: projectKey,
   });
 
   await db.invitationVideo.update({
@@ -169,7 +171,7 @@ export async function refreshInvitationVideoAction(videoId: string): Promise<Act
     return { success: true, data: undefined };
   }
 
-  const result = await pollGeminiVideoOperation(video.geminiOperationId, video.invitation.geminiApiKey);
+  const result = await pollGeminiVideoOperation(video.geminiOperationId, await getProjectGeminiKey());
 
   if (result.status === "PROCESSING") {
     return { success: true, data: undefined };
@@ -207,28 +209,13 @@ const updateGeminiKeySchema = z.object({
   geminiApiKey: z.string().trim().min(1).nullable(),
 });
 
-/**
- * Sets or clears the couple's own Gemini API key for this invitation. The
- * key is write-only from the client's perspective — this action never
- * returns the stored value, only success/failure, so it's never rendered
- * back into a page.
- */
+/** Legacy callers must use the admin's project setting. */
 export async function updateInvitationGeminiKeyAction(
   input: z.infer<typeof updateGeminiKeySchema>,
 ): Promise<ActionResult> {
   const parsed = updateGeminiKeySchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-
+  if (!parsed.success) return { success: false, error: "Invalid input." };
   const access = await authorizeInvitationAccess(parsed.data.invitationId);
   if (!access) return { success: false, error: "Invitation not found." };
-
-  await db.invitation.update({
-    where: { id: parsed.data.invitationId },
-    data: { geminiApiKey: parsed.data.geminiApiKey },
-  });
-
-  revalidateInvitationPaths(parsed.data.invitationId);
-  return { success: true, data: undefined };
+  return { success: false, error: "Gemini is configured once for the whole project in Admin → Project settings." };
 }

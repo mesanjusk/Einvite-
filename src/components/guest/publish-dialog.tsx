@@ -210,6 +210,7 @@ export function PublishSuccess({
         )}
       </div>
 
+      <a className="rounded-lg border p-3 text-center text-sm font-semibold" href={`/api/pdf/${new URL(liveUrl).pathname.split("/").pop()}?mode=website`} download>Download invitation PDF</a>
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
         <Button asChild className="flex-1">
           <a href={liveUrl} target="_blank" rel="noreferrer">

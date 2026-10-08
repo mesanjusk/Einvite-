@@ -53,4 +53,5 @@ export const adminNav: NavItem[] = [
   { title: "Reports", href: "/admin/reports", icon: BarChart3, match: "/admin/reports" },
   { title: "Instagram", href: "/admin/instagram", icon: MessageCircleReply },
   { title: "Users", href: "/admin/users", icon: UserCog },
+  { title: "Project settings", href: "/admin/settings", icon: Settings },
 ];

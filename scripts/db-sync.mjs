@@ -36,6 +36,9 @@ const warn = (message) => console.warn(`[db-sync] WARNING: ${message}`);
 // index uncreated. Scanning the lot in one pass turns what would be a deploy
 // per collision into a single report.
 const UNIQUE_CONSTRAINTS = [
+  { collection: "project_settings", keys: ["key"] },
+  { collection: "instagram_connect_requests", keys: ["invitationId"] },
+  { collection: "instagram_connect_requests", keys: ["codeHash"] },
   { collection: "users", keys: ["email"] },
   { collection: "invitations", keys: ["slug"] },
   { collection: "themes", keys: ["slug"] },
@@ -63,7 +66,7 @@ const UNIQUE_CONSTRAINTS = [
 ];
 
 // Identifiers worth keeping out of a build log even though it is not public.
-const SECRET_KEYS = new Set(["phone", "email", "editTokenHash", "inviteToken"]);
+const SECRET_KEYS = new Set(["phone", "email", "editTokenHash", "inviteToken", "codeHash"]);
 
 function maskValue(key, value) {
   if (value === null || value === undefined) return "(missing)";
