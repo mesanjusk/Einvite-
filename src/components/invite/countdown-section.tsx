@@ -9,6 +9,7 @@ import { ConfettiBurst } from "@/components/animation/confetti-burst";
 import { useCountdown } from "@/hooks/use-countdown";
 import { fadeUp } from "@/lib/animation-variants";
 import { useLocale } from "@/lib/i18n/locale-context";
+import type { ScratchShape } from "@/lib/scratch-shapes";
 import { ScratchCard } from "./scratch-card";
 import { useInviteEdit } from "./edit-context";
 import { EditableDate } from "./editable";
@@ -20,9 +21,11 @@ type ScratchPart = (typeof SCRATCH_PARTS)[number];
 export function CountdownSection({
   weddingDate,
   quote,
+  scratchShape = "box",
 }: {
   weddingDate: Date;
   quote?: string;
+  scratchShape?: ScratchShape;
 }) {
   const { t, locale } = useLocale();
   const edit = useInviteEdit();
@@ -39,7 +42,7 @@ export function CountdownSection({
     year: "numeric",
   });
   const parts = {
-    month: weddingDate.toLocaleDateString(locale, { month: "long" }),
+    month: weddingDate.toLocaleDateString(locale, { month: "short" }),
     day: weddingDate.toLocaleDateString(locale, { day: "2-digit" }),
     year: weddingDate.toLocaleDateString(locale, { year: "numeric" }),
   };
@@ -93,41 +96,23 @@ export function CountdownSection({
                 <p data-theme-element="COUNTDOWN.scratchInstruction" className="mb-2 text-xs tracking-[0.15em] opacity-70">
                   <ThemeText elementKey="COUNTDOWN.scratchInstruction">{t.scratchToRevealDate}</ThemeText>
                 </p>
-                <div className="flex justify-center gap-3">
-                  {(["month", "day"] as ScratchPart[]).map((part) => (
-                    <div key={part} className="flex flex-col items-center gap-1">
-                      <span className="text-[10px] tracking-[0.2em] opacity-60">
-                        {part.toUpperCase()}
-                      </span>
+                <div className="grid grid-cols-3 gap-2" data-scratch-date-row>
+                  {SCRATCH_PARTS.map((part) => (
+                    <div key={part} className="flex min-w-0 flex-col items-center gap-1">
+                      <span className="text-[10px] tracking-[0.15em] opacity-60">{part.toUpperCase()}</span>
                       <ScratchCard
-                        label="Scratch"
-                        className="h-24 w-20 overflow-hidden rounded-xl border"
+                        key={`${part}:${scratchShape}`}
+                        shape={scratchShape}
+                        label={part}
+                        className="aspect-square w-full max-w-24 overflow-hidden"
                         onReveal={() => setScratched((s) => ({ ...s, [part]: true }))}
                       >
-                        <span
-                          className="text-lg font-semibold"
-                          style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
-                        >
+                        <span className="text-sm font-semibold" style={{ fontFamily: "var(--inv-font-body)", color: "var(--inv-primary)" }}>
                           {parts[part]}
                         </span>
                       </ScratchCard>
                     </div>
                   ))}
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] tracking-[0.2em] opacity-60">YEAR</span>
-                  <ScratchCard
-                    label="Scratch"
-                    className="mx-auto h-24 w-20 overflow-hidden rounded-xl border"
-                    onReveal={() => setScratched((s) => ({ ...s, year: true }))}
-                  >
-                    <span
-                      className="text-lg font-semibold"
-                      style={{ fontFamily: "var(--inv-font-display)", color: "var(--inv-primary)" }}
-                    >
-                      {parts.year}
-                    </span>
-                  </ScratchCard>
                 </div>
               </motion.div>
             ) : (

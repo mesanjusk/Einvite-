@@ -14,6 +14,7 @@ import { buildInviteThemeStyle } from "@/lib/theme-css-vars";
 type PreviewSection = string;
 
 type PreviewProps = {
+  eventName?: string;
   section: PreviewSection;
   eventCategory?: string;
   palette: {
@@ -52,6 +53,7 @@ type PreviewProps = {
 };
 
 export function ThemeRealSectionPreview({
+  eventName,
   section,
   eventCategory,
   palette,
@@ -161,7 +163,7 @@ export function ThemeRealSectionPreview({
     events: [
       {
         id: "preview-event",
-        name: "Sangeet",
+        name: eventName ?? "Sangeet",
         date: new Date("2026-12-11T19:00:00"),
         time: "7:00 PM",
         venueName: "Celebration Palace",

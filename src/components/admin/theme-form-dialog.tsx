@@ -1,5 +1,6 @@
 "use client";
 
+import { EVENT_SECTION_PRESETS } from "@/lib/event-sections";
 import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -78,6 +79,7 @@ import {
 } from "@/components/ui/dialog";
 
 type DecorAssets = {
+  eventSections?: string[];
   musicUrl?: string;
   musicName?: string;
   revealVideoWebmUrl?: string;
@@ -133,6 +135,7 @@ type DecorAssets = {
     {
       x?: number;
       y?: number;
+      scratchShape?: "box" | "round" | "heart" | "diamond" | "hexagon";
       showBox?: boolean;
       primary?: string;
       accent?: string;
@@ -246,6 +249,7 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       hashtagSuffix: theme?.content?.hashtagSuffix ?? "",
     },
     decorAssets: {
+      eventSections: decor.eventSections ?? ["Sangeet", "Mehendi", "Wedding"],
       musicUrl: decor.musicUrl ?? "",
       musicName: decor.musicName ?? "",
       revealVideoWebmUrl: decor.revealVideoWebmUrl ?? "",
@@ -1156,6 +1160,7 @@ export function ThemeFormDialog({
               </div>);
   const sectionCanvas = (<div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] mx-auto h-full min-h-0 w-full max-w-[520px] p-2 shadow-inner">
                 <ThemeRealSectionPreview
+                  eventName={draft.decorAssets?.eventSections?.[0]}
                   section={previewSection}
                   eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
                   palette={form.watch("colorPalette")}
@@ -1543,6 +1548,30 @@ export function ThemeFormDialog({
 
                 {mobileTool === "advanced" && canEditSectionText && (
                   <div className="grid gap-4 p-3">
+                    {previewSection === "TIMELINE" && (
+                      <div className="grid gap-3 rounded-xl border bg-white p-3">
+                        <p className="text-xs font-semibold">Separate event sections</p>
+                        <p className="text-[11px] text-muted-foreground">These sections are included in new invitations. Customers can change the details of every event or add their own.</p>
+                        {EVENT_SECTION_PRESETS.map((name) => {
+                          const names = draft.decorAssets?.eventSections ?? ["Sangeet", "Mehendi", "Wedding"];
+                          return <label key={name} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={names.includes(name)} onChange={(event) => form.setValue("decorAssets.eventSections", event.target.checked ? [...names, name] : names.filter((item) => item !== name), { shouldDirty: true })} />{name}</label>;
+                        })}
+                        <label className="grid gap-1 text-xs">Event order and custom names (one per line)
+                          <textarea className="rounded-lg border p-2" rows={5} value={(draft.decorAssets?.eventSections ?? ["Sangeet", "Mehendi", "Wedding"]).join("\n")} onChange={(event) => form.setValue("decorAssets.eventSections", event.target.value.split("\n"), { shouldDirty: true })} />
+                        </label>
+                        <p className="text-[11px] text-muted-foreground">Full preview shows each selected event separately.</p>
+                      </div>
+                    )}
+                    {previewSection === "COUNTDOWN" && (
+                      <label className="grid gap-2 rounded-xl border bg-white p-3 text-xs font-semibold">
+                        Scratch-card shape
+                        <select className="rounded-lg border p-2" value={sectionStyles.COUNTDOWN?.scratchShape ?? "box"}
+                          onChange={(event) => updateSectionStyle("COUNTDOWN", { scratchShape: event.target.value as "box" | "round" | "heart" | "diamond" | "hexagon" })}>
+                          {["box", "round", "heart", "diamond", "hexagon"].map((shape) => <option key={shape} value={shape}>{shape}</option>)}
+                        </select>
+                        <span className="font-normal text-muted-foreground">All three date cards use this shape. Scratch the preview to check the reveal.</span>
+                      </label>
+                    )}
                     <div className="grid gap-3 rounded-2xl border bg-white p-3">
                       <p className="text-xs font-bold text-[#4b3659]">Section layout</p>
                       <div className="grid gap-1">

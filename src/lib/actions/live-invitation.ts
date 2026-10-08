@@ -1,5 +1,7 @@
 "use server";
 
+import { themeEventSections } from "@/lib/event-sections";
+
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 
@@ -271,7 +273,11 @@ export type LiveEvent = {
 
 export async function addInviteEventAction(
   invitationId: string,
+  requestedName?: string,
 ): Promise<ActionResult<LiveEvent>> {
+  if (requestedName !== undefined && (typeof requestedName !== "string" || !requestedName.trim() || requestedName.trim().length > 100)) {
+    return { success: false, error: "Use an event name between 1 and 100 characters." };
+  }
   const invitation = await authorizeInvitationAccess(invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
 
@@ -291,7 +297,7 @@ export async function addInviteEventAction(
   const created = await db.event.create({
     data: {
       invitationId,
-      name: suggestion,
+      name: requestedName?.trim() || suggestion,
       date: invitation.weddingDate,
       order: existing.length,
     },
@@ -567,7 +573,7 @@ export async function startLiveInvitationAction(input: {
     : [];
   const eventNames = sourceEventNames.length
     ? sourceEventNames
-    : category.defaultEvents;
+    : themeEventSections(theme?.decorAssets) ?? category.defaultEvents;
 
   if (eventNames.length) {
     await db.event.createMany({

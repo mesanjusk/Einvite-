@@ -115,6 +115,7 @@ export type InviteData = {
     {
       x?: number;
       y?: number;
+      scratchShape?: "box" | "round" | "heart" | "diamond" | "hexagon";
       showBox?: boolean;
       primary?: string;
       accent?: string;

@@ -13,6 +13,12 @@ const draft = themeFormSchema.parse({
 });
 
 describe("theme draft preview", () => {
+  it("previews all separately configured events and the selected scratch shape", () => {
+    const preview = buildThemePreviewData({ ...draft, decorAssets: { ...draft.decorAssets!, eventSections: ["Sangeet", "Mehendi", "Wedding", "Pheras"], sectionStyles: { COUNTDOWN: { x: 0, y: 0, showBox: true, scratchShape: "heart" } } } });
+    expect(preview.events.map((event) => event.name)).toEqual(["Sangeet", "Mehendi", "Wedding", "Pheras"]);
+    expect(new Set(preview.events.map((event) => event.id)).size).toBe(4);
+    expect(preview.sectionStyles?.COUNTDOWN.scratchShape).toBe("heart");
+  });
   it("uses unsaved video, poster, music, artwork and content without mutating the draft", () => {
     const before = JSON.stringify(draft);
     const preview = buildThemePreviewData(draft);

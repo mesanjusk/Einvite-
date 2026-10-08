@@ -1,5 +1,6 @@
 "use client";
 
+import { EventSectionPicker } from "./event-section-picker";
 import { Reveal, RevealGroup } from "@/components/animation/reveal";
 import { PetalField } from "@/components/animation/petal-field";
 import { fadeUp, fadeLeft } from "@/lib/animation-variants";
@@ -145,7 +146,7 @@ export function TimelineSection({
 
           {edit?.active && (
             <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <EditChip onClick={() => edit.addEvent()}>+ Add a function</EditChip>
+              <EventSectionPicker />
               <EditChip onClick={() => edit.removeEvent(event.id)}>Remove this one</EditChip>
             </div>
           )}

@@ -196,7 +196,7 @@ export function LiveEditor({
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [visibleSection, setVisibleSection] = useState<VisibleSection | null>(null);
   const [completedSectionIds, setCompletedSectionIds] = useState<string[]>([]);
-  const [sectionCount, setSectionCount] = useState(0);
+
   const [browserMemoryReady, setBrowserMemoryReady] = useState(false);
   const resumeSectionRef = useRef<string | null>(null);
 
@@ -263,7 +263,6 @@ export function LiveEditor({
         const nodes = Array.from(
           document.querySelectorAll<HTMLElement>("[data-invite-section-id]"),
         );
-        setSectionCount(nodes.length);
         if (nodes.length === 0) {
           setVisibleSection(null);
           return;
@@ -311,7 +310,7 @@ export function LiveEditor({
           version: 1,
           invitationId,
           savedAt: new Date().toISOString(),
-          lastSectionId: activeSectionId ?? visibleSection?.id ?? null,
+          lastSectionId: visibleSection?.id ?? null,
           completedSectionIds,
           published,
           snapshot: {
@@ -502,8 +501,8 @@ export function LiveEditor({
     [invitationId, invite, trackSave],
   );
 
-  const addEvent = useCallback(() => {
-    void trackSave(() => addInviteEventAction(invitationId)).then((data) => {
+  const addEvent = useCallback((name?: string) => {
+    void trackSave(() => addInviteEventAction(invitationId, name)).then((data) => {
       if (!data) return;
       setInvite((current) => ({ ...current, events: [...current.events, data] }));
     });
@@ -529,9 +528,7 @@ export function LiveEditor({
     setPanel(next);
   }, []);
 
-  // Outer edit mode stays available so empty sections still render. Each
-  // section receives a *scoped* provider inside InviteExperience and only the
-  // active section gets true edit affordances.
+  // One global edit session enables all sections; writes still autosave per field.
   const editApi = useMemo(
     () => ({
       active: true,
@@ -699,7 +696,7 @@ export function LiveEditor({
 
   function handlePublish() {
     if (activeSectionId) {
-      toast.message("Finish this slide and return to preview before publishing.");
+      toast.message("Finish editing and return to preview before publishing.");
       return;
     }
     // Sample names are presentation only. An actual name must exist in the
@@ -729,7 +726,7 @@ export function LiveEditor({
   }, [activeSectionId, continuePublish, pending, publishAfterSave]);
 
   function beginSectionEdit(section: VisibleSection) {
-    setActiveSectionId(section.id);
+    setActiveSectionId("all");
     const node = Array.from(
       document.querySelectorAll<HTMLElement>("[data-invite-section-id]"),
     ).find((item) => item.dataset.inviteSectionId === section.id);
@@ -738,22 +735,12 @@ export function LiveEditor({
 
   function finishSectionEdit() {
     if (!activeSectionId) return;
-    const finishedId = activeSectionId;
     setCompletedSectionIds((current) =>
-      current.includes(finishedId) ? current : [...current, finishedId],
+      Array.from(new Set([...current, ...Array.from(document.querySelectorAll<HTMLElement>("[data-invite-section-id]")).map((node) => node.dataset.inviteSectionId!).filter(Boolean)])),
     );
     setActiveSectionId(null);
     toast.success(pending > 0 ? "Preview restored — autosave is finishing." : "Saved. Preview restored.");
   }
-
-  const activeSectionLabel = activeSectionId
-    ? Array.from(
-        typeof document === "undefined"
-          ? []
-          : document.querySelectorAll<HTMLElement>("[data-invite-section-id]"),
-      ).find((item) => item.dataset.inviteSectionId === activeSectionId)?.dataset
-        .inviteSectionLabel ?? "This slide"
-    : null;
 
   // A sheet or dialog is the thing being looked at while it is open, so the
   // editor's own always-on-top furniture gets out from in front of it.
@@ -772,7 +759,7 @@ export function LiveEditor({
           key={`mobile-invite-preview-${revealPreviewVersion}`}
           invite={displayInvite}
           sectionConfig={sections}
-          guidedActiveSectionId={activeSectionId}
+          guidedActiveSectionId={activeSectionId ? undefined : null}
           onEnvelopeComplete={() => setEnvelopeOpenVersion((value) => value + 1)}
         />
       </div>
@@ -782,8 +769,6 @@ export function LiveEditor({
           pending={pending}
           published={published}
           publishQueued={publishAfterSave}
-          completed={completedSectionIds.length}
-          total={sectionCount}
           onOpenDesign={() => openPanel("design")}
           onOpenMusic={() => openPanel("music")}
           onPublish={handlePublish}
@@ -793,7 +778,6 @@ export function LiveEditor({
       {!overlayOpen && (
         <GuidedDock
           activeSectionId={activeSectionId}
-          activeSectionLabel={activeSectionLabel}
           visibleSection={visibleSection}
           completedSectionIds={completedSectionIds}
           pending={pending}
@@ -878,8 +862,6 @@ function EditorTopBar({
   pending,
   published,
   publishQueued,
-  completed,
-  total,
   onOpenDesign,
   onOpenMusic,
   onPublish,
@@ -887,8 +869,6 @@ function EditorTopBar({
   pending: number;
   published: boolean;
   publishQueued: boolean;
-  completed: number;
-  total: number;
   onOpenDesign: () => void;
   onOpenMusic: () => void;
   onPublish: () => void;
@@ -908,7 +888,7 @@ function EditorTopBar({
               ? `Saving ${pending} change${pending === 1 ? "" : "s"}…`
               : publishQueued
                 ? "Saved — preparing publish…"
-                : `Autosaved · ${Math.min(completed, total)}/${total || "–"} slides personalized`}
+                : "Draft autosaved"}
           </p>
         </div>
 
@@ -943,7 +923,6 @@ function EditorTopBar({
 
 function GuidedDock({
   activeSectionId,
-  activeSectionLabel,
   visibleSection,
   completedSectionIds,
   pending,
@@ -951,7 +930,6 @@ function GuidedDock({
   onDone,
 }: {
   activeSectionId: string | null;
-  activeSectionLabel: string | null;
   visibleSection: VisibleSection | null;
   completedSectionIds: string[];
   pending: number;
@@ -967,10 +945,10 @@ function GuidedDock({
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-extrabold tracking-[0.16em] text-[#8a6a92] uppercase">
-              Editing one slide
+              Editing all sections
             </p>
             <p className="truncate text-sm font-bold text-[#49334f]">
-              {activeSectionLabel ?? "This slide"}
+              Scroll to edit any section
             </p>
             <p className="text-[10px] text-[#796b80]">
               {pending > 0 ? "Autosaving your change…" : "Tap highlighted text or controls to edit."}
@@ -997,17 +975,17 @@ function GuidedDock({
         type="button"
         onClick={() => onEdit(visibleSection)}
         className="pointer-events-auto group flex items-center gap-2 rounded-full border border-violet-200 bg-white/95 px-3.5 py-3 text-violet-950 shadow-[0_14px_38px_rgba(82,56,112,0.22)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-violet-50"
-        aria-label={`Edit ${visibleSection.label}`}
+        aria-label="Edit all sections"
       >
         <span className="grid size-8 place-items-center rounded-full bg-violet-700 text-white">
           {completed ? <CheckCircle2 className="size-4" /> : <Pencil className="size-4" />}
         </span>
-        <span className="hidden pr-1 text-left sm:block">
+        <span className="block pr-1 text-left">
           <span className="block text-[9px] font-extrabold tracking-[0.14em] text-violet-500 uppercase">
             {completed ? "Personalized" : "Your preview"}
           </span>
           <span className="block max-w-[150px] truncate text-xs font-bold">
-            Edit yours
+            Edit all sections
           </span>
         </span>
       </button>
