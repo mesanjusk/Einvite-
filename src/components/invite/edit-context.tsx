@@ -47,7 +47,7 @@ export type EditTarget =
 export type EditDateTarget =
   { kind: "invitation" } | { kind: "event"; eventId: string };
 
-export type EditPanel = "design" | "music" | "photos";
+export type EditPanel = "design" | "music" | "photos" | "sections";
 
 export type InviteEditApi = {
   /** Edit affordances are drawn only while this is true (the preview toggle turns it off). */

@@ -16,7 +16,9 @@ export function IntroVideoUploader({
   invitationId,
   value,
   onChange,
+  onAssetUploaded,
 }: {
+  onAssetUploaded?: (file: File) => void;
   invitationId: string;
   value: IntroVideoValue;
   onChange: (value: IntroVideoValue) => void;
@@ -51,6 +53,7 @@ export function IntroVideoUploader({
         webmUrl: data.introVideoWebmUrl ?? null,
         posterUrl: data.introVideoPosterUrl ?? null,
       });
+      onAssetUploaded?.(file);
       toast.success("Intro video optimized for fast loading.");
     } catch {
       toast.error("Intro video upload failed. Please try again.");

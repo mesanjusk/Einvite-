@@ -1,5 +1,7 @@
 "use server";
 
+import { independentSections, isEventSection, eventSectionName } from "@/lib/invitation-sections";
+import { invitationSectionsSchema } from "@/lib/validations/invitation-sections";
 import { themeEventSections } from "@/lib/event-sections";
 
 import { revalidatePath } from "next/cache";
@@ -185,6 +187,14 @@ export async function patchInvitationAction(
     sectionStyles?: InviteData["sectionStyles"];
   };
 
+  for (const section of (saved.sectionConfig as SectionConfigEntry[] | null) ?? []) {
+    savedThemeDecor.elementStyles = { ...savedThemeDecor.elementStyles, ...section.elementStyles };
+    if (section.sectionStyle) savedThemeDecor.sectionStyles = { ...savedThemeDecor.sectionStyles, [section.type]: section.sectionStyle };
+  }
+  for (const [type, blocks] of Object.entries(savedThemeDecor.customText ?? {})) {
+    savedThemeDecor.customText = { ...savedThemeDecor.customText, [type]: blocks.map((block) => ({ ...block, ...savedThemeDecor.elementStyles?.[block.id] })) };
+  }
+
   return {
     success: true,
     data: {
@@ -252,6 +262,8 @@ export async function patchInviteEventAction(
     if (update[key] === "") update[key] = null;
   }
 
+  const boundSections = independentSections((authorized.invitation.sectionConfig as SectionConfigEntry[] | null) ?? [], await db.event.findMany({ where: { invitationId: authorized.invitation.id } }));
+  await db.invitation.update({ where: { id: authorized.invitation.id }, data: { sectionConfig: boundSections as Prisma.InputJsonValue } });
   await db.event.update({ where: { id: eventId }, data: update });
 
   revalidatePath(`/invite/${authorized.invitation.slug}`);
@@ -259,6 +271,7 @@ export async function patchInviteEventAction(
 }
 
 export type LiveEvent = {
+  sectionConfig?: SectionConfigEntry[];
   id: string;
   name: string;
   date: Date;
@@ -303,10 +316,14 @@ export async function addInviteEventAction(
     },
   });
 
+  const currentSections = independentSections((invitation.sectionConfig as SectionConfigEntry[] | null) ?? [], existing);
+  const sectionConfig = [...currentSections, { id: `event:${created.id}`, type: `EVENT_${created.id}`, title: created.name, eventId: created.id, visible: true, locked: false, order: currentSections.length, inheritType: "TIMELINE" }];
+  await db.invitation.update({ where: { id: invitationId }, data: { sectionConfig: sectionConfig as Prisma.InputJsonValue } });
   revalidatePath(`/invite/${invitation.slug}`);
   return {
     success: true,
     data: {
+      sectionConfig: JSON.parse(JSON.stringify(sectionConfig)),
       id: created.id,
       name: created.name,
       date: created.date,
@@ -327,6 +344,8 @@ export async function deleteInviteEventAction(
   const authorized = await authorizeEvent(eventId);
   if (!authorized) return { success: false, error: "Event not found." };
 
+  const currentSections = independentSections((authorized.invitation.sectionConfig as SectionConfigEntry[] | null) ?? [], await db.event.findMany({ where: { invitationId: authorized.invitation.id } }));
+  await db.invitation.update({ where: { id: authorized.invitation.id }, data: { sectionConfig: currentSections.filter((section) => section.eventId !== eventId) as Prisma.InputJsonValue } });
   await db.event.delete({ where: { id: eventId } });
 
   revalidatePath(`/invite/${authorized.invitation.slug}`);
@@ -436,6 +455,31 @@ export async function setFamilyMemberAction(
   };
 }
 
+export async function replaceInvitationSectionsAction(invitationId: string, input: unknown): Promise<ActionResult<{ sectionConfig: SectionConfigEntry[]; events: LiveEvent[] }>> {
+  const invitation = await authorizeInvitationAccess(invitationId);
+  if (!invitation) return { success: false, error: "Invitation not found." };
+  const parsed = invitationSectionsSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid sections" };
+  const events = await db.event.findMany({ where: { invitationId }, orderBy: { order: "asc" } });
+  const old = independentSections((invitation.sectionConfig as SectionConfigEntry[] | null) ?? [], events);
+  for (const locked of old.filter((section) => section.locked)) {
+    if (!parsed.data.some((section) => section.id === locked.id && section.visible && section.type === locked.type)) return { success: false, error: "Keep the required section." };
+  }
+  const next = parsed.data.map((section, order) => ({ ...section, order, locked: old.find((item) => item.id === section.id)?.locked ?? false }));
+  for (const section of next) {
+    if (section.eventId && !events.some((event) => event.id === section.eventId)) return { success: false, error: "Unknown event." };
+    if (isEventSection(section.type) && !section.eventId) {
+      const name = section.title ?? eventSectionName(section.type);
+      let event = events.find((item) => item.name.toLowerCase() === name.toLowerCase());
+      if (!event) { event = await db.event.create({ data: { invitationId, name, date: invitation.weddingDate, order: events.length } }); events.push(event); }
+      section.eventId = event.id;
+    }
+  }
+  await db.invitation.update({ where: { id: invitationId }, data: { sectionConfig: next as Prisma.InputJsonValue } });
+  revalidatePath(`/invite/${invitation.slug}`);
+  return { success: true, data: { sectionConfig: next, events } };
+}
+
 export async function setSectionVisibilityAction(
   invitationId: string,
   sectionId: string,
@@ -444,7 +488,7 @@ export async function setSectionVisibilityAction(
   const invitation = await authorizeInvitationAccess(invitationId);
   if (!invitation) return { success: false, error: "Invitation not found." };
 
-  const sections = (invitation.sectionConfig as SectionConfigEntry[] | null) ?? [];
+  const sections = independentSections((invitation.sectionConfig as SectionConfigEntry[] | null) ?? [], await db.event.findMany({ where: { invitationId }, orderBy: { order: "asc" } }));
   const target = sections.find((section) => section.id === sectionId);
   if (!target) return { success: false, error: "Unknown section." };
   if (target.locked && !visible) {
@@ -532,6 +576,7 @@ export async function startLiveInvitationAction(input: {
     ((template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER).map((type, order) => ({
       id: type,
       type,
+      title: (theme?.decorAssets as { sectionNames?: Record<string, string> } | null)?.sectionNames?.[type],
       visible: true,
       locked: false,
       order,
@@ -573,7 +618,7 @@ export async function startLiveInvitationAction(input: {
     : [];
   const eventNames = sourceEventNames.length
     ? sourceEventNames
-    : themeEventSections(theme?.decorAssets) ?? category.defaultEvents;
+    : sectionConfig.some((section) => isEventSection(section.type)) ? sectionConfig.filter((section) => isEventSection(section.type)).map((section) => (theme?.decorAssets as { sectionNames?: Record<string, string> } | null)?.sectionNames?.[section.type] ?? eventSectionName(section.type)) : themeEventSections(theme?.decorAssets) ?? category.defaultEvents;
 
   if (eventNames.length) {
     await db.event.createMany({
@@ -585,6 +630,8 @@ export async function startLiveInvitationAction(input: {
       })),
     });
   }
+
+  await db.invitation.update({ where: { id: invitation.id }, data: { sectionConfig: independentSections(sectionConfig, await db.event.findMany({ where: { invitationId: invitation.id } })) as Prisma.InputJsonValue } });
 
   await db.media.createMany({
     data: pickStockPhotos(DEFAULT_PHOTO_COUNT).map((url, order) => ({

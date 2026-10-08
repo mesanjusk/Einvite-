@@ -1,5 +1,6 @@
 "use client";
 
+import { isEventSection, eventSectionName } from "@/lib/invitation-sections";
 import { ThemePhoneFrame } from "./theme-phone-frame";
 
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
@@ -163,7 +164,7 @@ export function ThemeRealSectionPreview({
     events: [
       {
         id: "preview-event",
-        name: eventName ?? "Sangeet",
+        name: eventName ?? (isEventSection(section) ? eventSectionName(section) : "Sangeet"),
         date: new Date("2026-12-11T19:00:00"),
         time: "7:00 PM",
         venueName: "Celebration Palace",
@@ -191,7 +192,7 @@ export function ThemeRealSectionPreview({
   const sectionConfig = [
     {
       id: `preview-${section.toLowerCase()}`,
-      type: section,
+      type: section, eventId: isEventSection(section) ? "preview-event" : undefined,
       visible: true,
       order: 0,
     },

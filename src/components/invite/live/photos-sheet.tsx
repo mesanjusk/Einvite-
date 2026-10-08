@@ -38,7 +38,9 @@ export function PhotosSheet({
   onRemove,
   onAdd,
   onCoverChange,
+  onAssetUploaded,
 }: {
+  onAssetUploaded?: (file: File) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invitationId: string;
@@ -94,6 +96,7 @@ export function PhotosSheet({
     try {
       const uploaded = await upload(file, slot);
       if (!uploaded) return;
+      onAssetUploaded?.(file);
 
       if (slot !== "gallery") {
         onCoverChange(uploaded.url);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useContentBounds } from "./use-content-bounds";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -17,7 +18,7 @@ import { VenueSection } from "./venue-section";
 import { RsvpSection } from "./rsvp-section";
 import { ThankYouSection } from "./thank-you-section";
 import { MusicPlayer } from "./music-player";
-import { LanguageToggle } from "./language-toggle";
+import { isEventSection, eventSectionName } from "@/lib/invitation-sections";
 import {
   InviteEditProvider,
   useInviteEdit,
@@ -33,6 +34,8 @@ type SectionConfigEntry = {
   type: string;
   visible: boolean;
   order: number;
+  eventId?: string;
+  inheritType?: string;
 };
 
 const EVENT_SEEDS = [3, 11, 17, 23, 29, 37];
@@ -70,6 +73,8 @@ function SectionScope({
   customText?: NonNullable<InviteData["customText"]>[string];
   children: ReactNode;
 }) {
+  const boundsRef = useContentBounds([elementStyles, sectionStyle, customText, children]);
+  const scope = `[data-invite-section-id=${JSON.stringify(id)}]`;
   const elementCss = Object.entries(elementStyles ?? {})
     .map(([key, config]) => {
       const declarations = [
@@ -94,9 +99,9 @@ function SectionScope({
       const selector = `[data-theme-element=${JSON.stringify(key)}]`;
       // ThemeText may repeat its parent's key. Move/fade the outer layer once.
       const outerSelector = `${selector}:not(${selector} ${selector})`;
-      const position = config.x || config.y ? `transform:translate(${config.x ?? 0}%, ${config.y ?? 0}%) !important;` : "";
+      const position = !key.startsWith("CUSTOM.") ? `transform:translate(calc(${config.x ?? 0}% + var(--inv-safe-x, 0px)), calc(${config.y ?? 0}% + var(--inv-safe-y, 0px))) !important;max-width:100%;overflow-wrap:anywhere;white-space:normal;box-sizing:border-box;${config.width ? `width:${config.width}%;margin-inline:${config.align === "left" ? "0 auto" : config.align === "right" ? "auto 0" : "auto"};` : ""}` : "";
       const opacity = config.opacity !== undefined ? `opacity:${config.opacity} !important;` : "";
-      return `${declarations ? `${selector}{${declarations}}` : ""}${position || opacity ? `${outerSelector}{${position}${opacity}}` : ""}`;
+      return `${declarations ? `${scope} ${selector}{${declarations}}` : ""}${position || opacity ? `${scope} ${outerSelector}{${position}${opacity}}` : ""}`;
     })
     .filter(Boolean)
     .join("\n");
@@ -112,10 +117,11 @@ function SectionScope({
   return (
     <InviteEditProvider value={scopedEdit}>
       <div
+        ref={boundsRef}
         data-invite-section-id={id}
         data-invite-section-label={label}
         className={cn(
-          "relative",
+          "relative inv-section-frame overflow-x-clip",
           sectionImage && "inv-section-artwork bg-cover bg-center bg-no-repeat",
           (sectionStyle?.showBox === false || (sectionImage && sectionStyle?.showBox !== true)) && "inv-section-no-box",
         )}
@@ -131,14 +137,9 @@ function SectionScope({
           ...(sectionStyle?.scriptFont ? { "--inv-font-script": sectionStyle.scriptFont } : {}),
         } as React.CSSProperties}
       >
-        {elementCss && <style>{elementCss}</style>}
+        <style>{`${elementCss}\n${scope} > .relative > section{height:var(--theme-preview-height,100svh);min-height:0;}\n${scope} [data-inv-content-group]{transform:translate(calc(${sectionStyle?.x ?? 0}% + var(--inv-safe-x, 0px)), calc(${sectionStyle?.y ?? 0}% + var(--inv-safe-y, 0px))) scale(var(--inv-safe-scale,1)) !important;transform-origin:center;max-width:100%;}\n${scope} [data-theme-element]{overflow-wrap:anywhere;word-break:normal;}`}</style>
         <ThemeElementProvider value={elementStyles}>
-          <div
-            className="relative"
-            style={{
-              transform: `translate(${sectionStyle?.x ?? 0}%, ${sectionStyle?.y ?? 0}%)`,
-            }}
-          >
+          <div className="relative">
             {children}
           </div>
         </ThemeElementProvider>
@@ -147,10 +148,12 @@ function SectionScope({
             {customText.map((block) => (
               <div
                 key={block.id}
-                className="pointer-events-auto absolute left-1/2 top-1/2 w-[88%]"
+                className="pointer-events-auto absolute left-1/2 top-1/2 max-h-[calc(100%-16px)] overflow-y-auto break-words"
                 data-theme-element={block.id}
                 style={{
-                  transform: `translate(calc(-50% + ${block.x ?? 0}%), calc(-50% + ${block.y ?? 0}%))`,
+                  width: `${block.width ?? 88}%`,
+                  overflowWrap: "anywhere",
+                  transform: `translate(calc(-50% + ${block.x ?? 0}% + var(--inv-safe-x, 0px)), calc(-50% + ${block.y ?? 0}% + var(--inv-safe-y, 0px)))`,
                   fontSize: `${block.fontSize}px`,
                   lineHeight: block.lineHeight ?? 1.25,
                   fontWeight: block.bold ? 700 : undefined,
@@ -247,7 +250,6 @@ export function InviteExperience({
   return (
     <LocaleProvider>
       {!previewMode && <ScrollProgress />}
-      {!previewMode && <LanguageToggle />}
       {!previewMode && (
         <MusicPlayer
           key={invite.musicUrl ?? "no-music"}
@@ -290,7 +292,7 @@ export function InviteExperience({
       {inviteOpen && (
         <main className="relative z-[7]">
           {dedupedSections.map((section) => {
-            switch (section.type) {
+            switch (isEventSection(section.type) ? "SANGEET" : section.type) {
               case "HERO":
                 return (
                   <SectionScope
@@ -299,8 +301,8 @@ export function InviteExperience({
                     label={sectionDisplayName("HERO")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
-                    sectionImage={invite.sectionImages?.[section.type]}
-                    sectionStyle={invite.sectionStyles?.[section.type]}
+                    sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                    sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                     elementStyles={invite.elementStyles}
                     customText={invite.customText?.[section.type]}
                   >
@@ -315,14 +317,15 @@ export function InviteExperience({
                     label={sectionDisplayName("COUNTDOWN")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
-                    sectionImage={invite.sectionImages?.[section.type]}
-                    sectionStyle={invite.sectionStyles?.[section.type]}
+                    sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                    sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                     elementStyles={invite.elementStyles}
                     customText={invite.customText?.[section.type]}
                   >
                     <CountdownSection weddingDate={invite.weddingDate} scratchShape={invite.sectionStyles?.COUNTDOWN?.scratchShape} />
                   </SectionScope>
                 );
+              case "SANGEET": case "MEHENDI": case "HALDI": case "WEDDING": case "PHERAS": case "RECEPTION":
               case "TIMELINE":
                 // With no ceremonies yet there is nothing to tap, so the
                 // editor still shows one slide that can start the list.
@@ -334,8 +337,8 @@ export function InviteExperience({
                       label={sectionDisplayName("TIMELINE")}
                       guidedActiveSectionId={guidedActiveSectionId}
                       edit={edit}
-                      sectionImage={invite.sectionImages?.[section.type]}
-                      sectionStyle={invite.sectionStyles?.[section.type]}
+                      sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                      sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                       elementStyles={invite.elementStyles}
                       customText={invite.customText?.[section.type]}
                     >
@@ -349,22 +352,23 @@ export function InviteExperience({
                     </SectionScope>
                   );
                 }
-                return invite.events.map((event, i) => {
+                return invite.events.filter((event) => section.type === "TIMELINE" || (section.eventId ? section.eventId === event.id : event.name.toLowerCase() === eventSectionName(section.type).toLowerCase())).map((event, i) => {
                   const eventSectionId = `${section.id}:${event.id}`;
                   return (
                     <SectionScope
                       key={event.id}
                       id={eventSectionId}
-                      label={`${sectionDisplayName("TIMELINE")} · ${event.name || `Function ${i + 1}`}`}
+                      label={event.name || sectionDisplayName(section.type)}
                       guidedActiveSectionId={guidedActiveSectionId}
                       edit={edit}
-                      sectionImage={invite.sectionImages?.[section.type]}
-                      sectionStyle={invite.sectionStyles?.[section.type]}
+                      sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                      sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                       elementStyles={invite.elementStyles}
                       customText={invite.customText?.[section.type]}
                     >
                       <TimelineSection
                         event={event}
+                        elementPrefix={section.type}
                         seed={EVENT_SEEDS[i % EVENT_SEEDS.length]}
                         invitationId={invite.id}
                       />
@@ -380,8 +384,8 @@ export function InviteExperience({
                     label={sectionDisplayName(section.type)}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
-                    sectionImage={invite.sectionImages?.[section.type]}
-                    sectionStyle={invite.sectionStyles?.[section.type]}
+                    sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                    sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                     elementStyles={invite.elementStyles}
                     customText={invite.customText?.[section.type]}
                   >
@@ -403,8 +407,8 @@ export function InviteExperience({
                     label={sectionDisplayName("VENUE")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
-                    sectionImage={invite.sectionImages?.[section.type]}
-                    sectionStyle={invite.sectionStyles?.[section.type]}
+                    sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                    sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                     elementStyles={invite.elementStyles}
                     customText={invite.customText?.[section.type]}
                   >
@@ -424,8 +428,8 @@ export function InviteExperience({
                     label={sectionDisplayName("RSVP")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
-                    sectionImage={invite.sectionImages?.[section.type]}
-                    sectionStyle={invite.sectionStyles?.[section.type]}
+                    sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                    sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                     elementStyles={invite.elementStyles}
                     customText={invite.customText?.[section.type]}
                   >
@@ -445,8 +449,8 @@ export function InviteExperience({
                     label={sectionDisplayName("THANK_YOU")}
                     guidedActiveSectionId={guidedActiveSectionId}
                     edit={edit}
-                    sectionImage={invite.sectionImages?.[section.type]}
-                    sectionStyle={invite.sectionStyles?.[section.type]}
+                    sectionImage={invite.sectionImages?.[section.type] ?? invite.sectionImages?.[section.inheritType ?? ""]}
+                    sectionStyle={invite.sectionStyles?.[section.type] ?? invite.sectionStyles?.[section.inheritType ?? ""]}
                     elementStyles={invite.elementStyles}
                     customText={invite.customText?.[section.type]}
                   >

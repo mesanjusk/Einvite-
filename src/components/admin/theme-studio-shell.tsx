@@ -3,8 +3,10 @@
 import { type ReactNode, useId } from "react";
 import { Layers, Type, SlidersHorizontal, Palette, Image, Video, Music, BookOpen, Plus } from "lucide-react";
 
-export type StudioTool = "content" | "library" | "text" | "advanced" | "theme" | "templates" | "video" | "music";
+export type StudioTool = "sections" | "ai" | "content" | "library" | "text" | "advanced" | "theme" | "templates" | "video" | "music";
 const TOOLS = [
+  { id: "sections", title: "Sections", icon: Layers },
+  { id: "ai", title: "AI style", icon: Palette },
   { id: "content", title: "Layers", icon: Layers },
   { id: "text", title: "Text & style", icon: Type },
   { id: "advanced", title: "Section", icon: SlidersHorizontal },
@@ -16,7 +18,7 @@ const ASSETS = [
   { id: "music", title: "Music", icon: Music },
   { id: "library", title: "Content", icon: BookOpen },
 ] as const;
-const TITLES: Record<StudioTool, string> = { content: "Text layers", library: "Content library", text: "Text & style", advanced: "Section layout", theme: "Theme settings", templates: "Artwork templates", video: "Opening video & animation", music: "Theme music" };
+const TITLES: Record<StudioTool, string> = { sections: "Add & organize sections", ai: "Gemini design assistant", content: "Text layers", library: "Content library", text: "Text & style", advanced: "Section layout", theme: "Theme settings", templates: "Artwork templates", video: "Opening video & animation", music: "Theme music" };
 
 /** Tool changes stay within this editor: no route navigation or network fetch. */
 export function ThemeStudioShell({ tool, onToolChange, sections, canvas, panel, onAddText, status, actions, canEditText = true }: {

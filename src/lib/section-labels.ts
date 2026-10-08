@@ -1,3 +1,4 @@
+import { isEventSection, eventSectionName } from "./invitation-sections";
 /**
  * User-facing names for invitation sections.
  *
@@ -19,5 +20,5 @@ export const SECTION_DISPLAY_NAMES: Record<string, string> = {
 };
 
 export function sectionDisplayName(section: string) {
-  return SECTION_DISPLAY_NAMES[section] ?? section;
+  return SECTION_DISPLAY_NAMES[section] ?? (isEventSection(section) ? eventSectionName(section) : section);
 }
