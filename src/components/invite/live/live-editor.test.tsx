@@ -5,13 +5,15 @@ import { buildThemePreviewData } from "@/lib/theme-preview";
 import { themeFormSchema } from "@/lib/validations/admin";
 import { patchInvitationAction } from "@/lib/actions/live-invitation";
 
+vi.mock("@/lib/actions/invitation-design", () => ({ saveInvitationDesignAction: vi.fn() }));
+vi.mock("@/lib/actions/video", () => ({ updateInvitationGeminiKeyAction: vi.fn() }));
 vi.mock("./design-sheet", () => ({ DesignSheet: () => null }));
 vi.mock("./music-sheet", () => ({ MusicSheet: () => null }));
 vi.mock("./photos-sheet", () => ({ PhotosSheet: () => null }));
 vi.mock("@/components/guest/publish-dialog", () => ({ PublishDialog: () => null, PublishSuccess: () => null }));
 vi.mock("@/lib/actions/invitation", () => ({ publishInvitationAction: vi.fn() }));
 vi.mock("@/lib/actions/live-invitation", () => ({
-  addInviteEventAction: vi.fn(), deleteInviteEventAction: vi.fn(), patchInviteEventAction: vi.fn(),
+  replaceInvitationSectionsAction: vi.fn(), addInviteEventAction: vi.fn(), deleteInviteEventAction: vi.fn(), patchInviteEventAction: vi.fn(),
   patchInvitationAction: vi.fn(async () => ({ success: true, data: {} })), setFamilyMemberAction: vi.fn(), setMediaOrderAction: vi.fn(), setSectionVisibilityAction: vi.fn(),
 }));
 vi.mock("../invite-experience", async () => {

@@ -9,17 +9,21 @@ import {
   type CSSProperties,
 } from "react";
 import { toast } from "sonner";
+import { GeminiStylePanel } from "@/components/admin/gemini-style-panel";
+import { designPreview } from "@/lib/media/design-preview";
+import { safeDesignSuggestion, type DesignSuggestion } from "@/lib/design-assist";
+import { elementsForSection } from "@/lib/theme-element-catalog";
+import { saveInvitationDesignAction } from "@/lib/actions/invitation-design";
+import { updateInvitationGeminiKeyAction } from "@/lib/actions/video";
 import {
-  CheckCircle2,
+  Layers,
   Music,
   Palette,
   Pencil,
   Send,
-  Sparkles,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PublishDialog, PublishSuccess } from "@/components/guest/publish-dialog";
 import { publishInvitationAction } from "@/lib/actions/invitation";
@@ -31,6 +35,7 @@ import {
   setFamilyMemberAction,
   setMediaOrderAction,
   setSectionVisibilityAction,
+  replaceInvitationSectionsAction,
 } from "@/lib/actions/live-invitation";
 import type { LiveEventPatch, LivePatch } from "@/lib/validations/live-invitation";
 import type { SectionConfigEntry } from "@/lib/get-invite-data";
@@ -43,6 +48,8 @@ import {
 } from "../edit-context";
 import type { InviteData, InviteFamilyMember, InviteMedia } from "../types";
 import { sectionDisplayName } from "@/lib/section-labels";
+import { independentSections } from "@/lib/invitation-sections";
+import { SectionsSheet } from "./sections-sheet";
 import { DesignSheet } from "./design-sheet";
 import { MusicSheet } from "./music-sheet";
 import { PhotosSheet } from "./photos-sheet";
@@ -183,7 +190,12 @@ export function LiveEditor({
 }) {
   const [invite, setInvite] = useState(initialInvite);
   const [themeStyle, setThemeStyle] = useState(initialThemeStyle);
-  const [sections, setSections] = useState(initialSections);
+  const [sections, setSections] = useState(independentSections(initialSections, initialInvite.events));
+  const [aiKey, setAiKey] = useState("");
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<DesignSuggestion | null>(null);
+  const aiVersion = useRef(0);
   const [themeSlug, setThemeSlug] = useState(initialThemeSlug);
   const [colorwaySlug, setColorwaySlug] = useState(initialColorwaySlug);
   const [musicTrackId, setMusicTrackId] = useState(initialMusicTrackId);
@@ -505,22 +517,25 @@ export function LiveEditor({
     void trackSave(() => addInviteEventAction(invitationId, name)).then((data) => {
       if (!data) return;
       setInvite((current) => ({ ...current, events: [...current.events, data] }));
+      if (data.sectionConfig) setSections(data.sectionConfig);
     });
   }, [invitationId, trackSave]);
 
   const removeEvent = useCallback(
     (eventId: string) => {
       const previousEvents = invite.events;
+      const previousSections = sections;
       setInvite((current) => ({
         ...current,
         events: current.events.filter((event) => event.id !== eventId),
       }));
+      setSections((current) => current.filter((section) => section.eventId !== eventId));
       void trackSave(
         () => deleteInviteEventAction(eventId),
-        () => setInvite((current) => ({ ...current, events: previousEvents })),
+        () => { setInvite((current) => ({ ...current, events: previousEvents })); setSections(previousSections); },
       );
     },
-    [invite.events, trackSave],
+    [invite.events, sections, trackSave],
   );
 
   const openPanel = useCallback((next: EditPanel, mediaId?: string) => {
@@ -569,6 +584,34 @@ export function LiveEditor({
       customText: data.customText,
       sectionStyles: data.sectionStyles,
     }));
+  }
+
+  async function applySmartDesign(suggestion: DesignSuggestion) {
+    const data = await trackSave(() => saveInvitationDesignAction(invitationId, suggestion));
+    if (data) { setThemeStyle(data.themeStyle); setSections(data.sectionConfig); setInvite((current) => ({ ...current, elementStyles: data.inviteData.elementStyles, customText: data.inviteData.customText, sectionStyles: data.inviteData.sectionStyles })); toast.success("Smart styling saved. Review the full invitation preview."); }
+  }
+
+  async function analyzeDesignFile(file: File, automatic = false) {
+    const version = ++aiVersion.current;
+    const elements = sections.flatMap((section) => [
+      ...elementsForSection(section.type).map((element) => ({ key: element.key, text: invite.elementStyles?.[element.key]?.text || element.fallbackText || element.label })),
+      ...(invite.customText?.[section.type] ?? []).map((block) => ({ key: block.id, text: block.text })),
+    ]);
+    if (!elements.length) return;
+    setAiBusy(true);
+    try {
+      const response = await fetch("/api/design/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ invitationId, apiKey: aiKey || undefined, image: await designPreview(file), elements }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Smart styling unavailable.");
+      if (version !== aiVersion.current) return;
+      if (data.skipped) { if (!automatic) toast.info(data.message); return; }
+      const suggestion = safeDesignSuggestion(data.suggestion, elements.map((element) => element.key));
+      setAiSuggestion(suggestion);
+      // A user can disable automatic styling and apply the reviewed suggestion later.
+      if (automatic) await applySmartDesign(suggestion);
+      else toast.success("Suggestion ready. Apply it to preview and save.");
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Smart styling unavailable. Continue editing manually."); }
+    finally { if (version === aiVersion.current) setAiBusy(false); }
   }
 
   function handleThemeChange(slug: string) {
@@ -695,10 +738,7 @@ export function LiveEditor({
   }, [appUrl, invitationId, invite.slug, isGuestFlow, trackSave]);
 
   function handlePublish() {
-    if (activeSectionId) {
-      toast.message("Finish editing and return to preview before publishing.");
-      return;
-    }
+    setActiveSectionId(null);
     // Sample names are presentation only. An actual name must exist in the
     // saved invitation before the draft is allowed to go live.
     if (!invite.brideName.trim()) {
@@ -709,12 +749,8 @@ export function LiveEditor({
       hero?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    if (pending > 0) {
-      setPublishAfterSave(true);
-      toast.message("Finishing autosave before publishing…");
-      return;
-    }
-    continuePublish();
+    setPublishAfterSave(true);
+    if (pending > 0) toast.message("Finishing autosave before publishing…");
   }
 
   // A publish tap during an in-flight field save becomes a queued publish,
@@ -724,14 +760,6 @@ export function LiveEditor({
     setPublishAfterSave(false);
     continuePublish();
   }, [activeSectionId, continuePublish, pending, publishAfterSave]);
-
-  function beginSectionEdit(section: VisibleSection) {
-    setActiveSectionId("all");
-    const node = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-invite-section-id]"),
-    ).find((item) => item.dataset.inviteSectionId === section.id);
-    node?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   function finishSectionEdit() {
     if (!activeSectionId) return;
@@ -750,7 +778,7 @@ export function LiveEditor({
     <InviteEditProvider value={editApi}>
       <div
         className={cn(
-          "relative mx-auto max-w-[430px] overflow-x-hidden pt-14 pb-28",
+          "relative mx-auto max-w-[430px] overflow-x-hidden pt-2 pb-32",
           overlayOpen && "inv-sheet-open",
         )}
         style={{ ...themeStyle, fontFamily: "var(--inv-font-body)" }}
@@ -764,29 +792,16 @@ export function LiveEditor({
         />
       </div>
 
-      {!overlayOpen && (
-        <EditorTopBar
-          pending={pending}
-          published={published}
-          publishQueued={publishAfterSave}
-          onOpenDesign={() => openPanel("design")}
-          onOpenMusic={() => openPanel("music")}
-          onPublish={handlePublish}
-        />
-      )}
-
-      {!overlayOpen && (
-        <GuidedDock
-          activeSectionId={activeSectionId}
-          visibleSection={visibleSection}
-          completedSectionIds={completedSectionIds}
-          pending={pending}
-          onEdit={beginSectionEdit}
-          onDone={finishSectionEdit}
-        />
-      )}
+      {!overlayOpen && <EditorFooter pending={pending} published={published} editing={Boolean(activeSectionId)} onEdit={() => activeSectionId ? finishSectionEdit() : setActiveSectionId("all")} onDesign={() => openPanel("design")} onSections={() => openPanel("sections")} onMusic={() => openPanel("music")} onPublish={handlePublish} />}
+      <SectionsSheet open={panel === "sections"} onOpenChange={(open) => setPanel(open ? "sections" : null)} sections={sections} pending={pending > 0} onChange={(next) => {
+        const previous = sections;
+        setSections(next);
+        void trackSave(() => replaceInvitationSectionsAction(invitationId, next), () => setSections(previous)).then((data) => { if (data) { setSections(data.sectionConfig); setInvite((current) => ({ ...current, events: data.events })); } });
+      }} />
 
       <DesignSheet
+        designAssistant={<GeminiStylePanel apiKey={aiKey} onApiKey={setAiKey} enabled={aiEnabled} onEnabled={setAiEnabled} busy={aiBusy || pending > 0} ready={Boolean(aiSuggestion)} onApply={() => { if (aiSuggestion) void applySmartDesign(aiSuggestion); }} onAnalyze={(file) => void analyzeDesignFile(file)} onSaveKey={(key) => { void trackSave(async () => { const result = await updateInvitationGeminiKeyAction({ invitationId, geminiApiKey: key }); return result.success ? { success: true as const, data: true } : result; }).then((saved) => { if (saved) { setAiKey(""); toast.success(key ? "Gemini key saved for this invitation." : "Saved Gemini key cleared."); } }); }} />}
+        onAssetUploaded={(file) => { if (aiEnabled) void analyzeDesignFile(file, true); }}
         open={panel === "design"}
         onOpenChange={(open) => setPanel(open ? "design" : null)}
         themes={themes}
@@ -821,6 +836,7 @@ export function LiveEditor({
       />
 
       <PhotosSheet
+        onAssetUploaded={(file) => { if (aiEnabled) void analyzeDesignFile(file, true); }}
         open={panel === "photos"}
         onOpenChange={(open) => setPanel(open ? "photos" : null)}
         invitationId={invitationId}
@@ -858,137 +874,17 @@ export function LiveEditor({
   );
 }
 
-function EditorTopBar({
-  pending,
-  published,
-  publishQueued,
-  onOpenDesign,
-  onOpenMusic,
-  onPublish,
-}: {
-  pending: number;
-  published: boolean;
-  publishQueued: boolean;
-  onOpenDesign: () => void;
-  onOpenMusic: () => void;
-  onPublish: () => void;
-}) {
-  return (
-    <div className="no-print fixed inset-x-0 top-0 z-[100000] flex justify-center px-2 pt-2">
-      <div className="flex h-12 w-full max-w-[430px] items-center gap-2 rounded-2xl border border-[#e2d7ea] bg-[#fcf9ff]/96 px-2.5 shadow-[0_8px_28px_rgba(82,33,43,0.14)] backdrop-blur-xl">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="size-3.5 shrink-0 text-[#8a6a92]" />
-            <p className="truncate text-[10px] font-extrabold tracking-[0.14em] text-[#6b4a7d] uppercase">
-              Your live preview
-            </p>
-          </div>
-          <p className="mt-0.5 text-[9px] text-[#796b80]">
-            {pending > 0
-              ? `Saving ${pending} change${pending === 1 ? "" : "s"}…`
-              : publishQueued
-                ? "Saved — preparing publish…"
-                : "Draft autosaved"}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenDesign}
-          aria-label="Change design"
-          className="grid size-8 place-items-center rounded-full border border-[#eadfd3] bg-white text-[#6b4a7d]"
-        >
-          <Palette className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={onOpenMusic}
-          aria-label="Change music"
-          className="grid size-8 place-items-center rounded-full border border-[#eadfd3] bg-white text-[#6b4a7d]"
-        >
-          <Music className="size-3.5" />
-        </button>
-        <Button
-          size="sm"
-          onClick={onPublish}
-          className="h-8 rounded-full bg-[#6b4a7d] px-3 text-[10px] font-bold text-white hover:bg-[#563965]"
-        >
-          <Send className="size-3.5" />
-          {published ? "Share" : "Publish"}
-        </Button>
-      </div>
+function EditorFooter({ pending, published, editing, onEdit, onDesign, onSections, onMusic, onPublish }: { pending: number; published: boolean; editing: boolean; onEdit: () => void; onDesign: () => void; onSections: () => void; onMusic: () => void; onPublish: () => void }) {
+  return <footer className="no-print fixed inset-x-0 bottom-0 z-[100000] flex justify-center border-t border-violet-100 bg-white/95 px-2 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_22px_rgba(82,33,43,0.12)] backdrop-blur-xl">
+    <div className="w-full max-w-[430px]">
+      <p aria-live="polite" className="pb-1 text-center text-[9px] text-violet-700">{pending ? "Autosaving changes…" : "Draft autosaved"}{editing ? " · Edit any section" : ""}</p>
+      <nav aria-label="Invitation editor" className="grid grid-cols-5 items-center gap-1">
+        <button type="button" onClick={onDesign} className="grid justify-items-center gap-1 py-2 text-[10px]"><Palette className="size-5" />Design</button>
+        <button type="button" onClick={onSections} className="grid justify-items-center gap-1 py-2 text-[10px]"><Layers className="size-5" />Sections</button>
+        <button type="button" aria-label={editing ? "Done & preview" : "Edit all sections"} onClick={onEdit} className="grid justify-items-center gap-1 text-[10px] font-semibold text-violet-800"><span className="grid size-12 place-items-center rounded-full bg-violet-700 text-white shadow-md"><Pencil className="size-6" /></span>{editing ? "Preview" : "Edit"}</button>
+        <button type="button" onClick={onMusic} className="grid justify-items-center gap-1 py-2 text-[10px]"><Music className="size-5" />Music</button>
+        <button type="button" onClick={onPublish} className="grid justify-items-center gap-1 py-2 text-[10px]"><Send className="size-5" />{published ? "Share" : "Publish"}</button>
+      </nav>
     </div>
-  );
-}
-
-function GuidedDock({
-  activeSectionId,
-  visibleSection,
-  completedSectionIds,
-  pending,
-  onEdit,
-  onDone,
-}: {
-  activeSectionId: string | null;
-  visibleSection: VisibleSection | null;
-  completedSectionIds: string[];
-  pending: number;
-  onEdit: (section: VisibleSection) => void;
-  onDone: () => void;
-}) {
-  if (activeSectionId) {
-    return (
-      <div className="no-print fixed inset-x-0 bottom-0 z-[100000] flex justify-center px-3 pb-3">
-        <div className="flex w-full max-w-[410px] items-center gap-3 rounded-2xl border border-[#d9c7b6] bg-[#fcf9ff]/97 p-3 shadow-[0_-8px_32px_rgba(82,33,43,0.18)] backdrop-blur-xl">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#6b4a7d] text-white">
-            <Pencil className="size-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-extrabold tracking-[0.16em] text-[#8a6a92] uppercase">
-              Editing all sections
-            </p>
-            <p className="truncate text-sm font-bold text-[#49334f]">
-              Scroll to edit any section
-            </p>
-            <p className="text-[10px] text-[#796b80]">
-              {pending > 0 ? "Autosaving your change…" : "Tap highlighted text or controls to edit."}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onDone}
-            className="shrink-0 rounded-full bg-[#d8b86f] px-3.5 py-2 text-[10px] font-extrabold text-[#49334f] shadow-sm"
-          >
-            Done & preview
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!visibleSection) return null;
-  const completed = completedSectionIds.includes(visibleSection.id);
-
-  return (
-    <div className="no-print pointer-events-none fixed right-3 top-1/2 z-[100000] -translate-y-1/2 sm:right-5">
-      <button
-        type="button"
-        onClick={() => onEdit(visibleSection)}
-        className="pointer-events-auto group flex items-center gap-2 rounded-full border border-violet-200 bg-white/95 px-3.5 py-3 text-violet-950 shadow-[0_14px_38px_rgba(82,56,112,0.22)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-violet-50"
-        aria-label="Edit all sections"
-      >
-        <span className="grid size-8 place-items-center rounded-full bg-violet-700 text-white">
-          {completed ? <CheckCircle2 className="size-4" /> : <Pencil className="size-4" />}
-        </span>
-        <span className="block pr-1 text-left">
-          <span className="block text-[9px] font-extrabold tracking-[0.14em] text-violet-500 uppercase">
-            {completed ? "Personalized" : "Your preview"}
-          </span>
-          <span className="block max-w-[150px] truncate text-xs font-bold">
-            Edit all sections
-          </span>
-        </span>
-      </button>
-    </div>
-  );
+  </footer>;
 }

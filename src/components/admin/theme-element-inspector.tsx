@@ -12,6 +12,7 @@ import type { ContentPreset } from "@/lib/theme-content-library";
 export type ThemeElementStyleValue = {
   text?: string;
   hidden?: boolean;
+  width?: number;
   fontSize?: number;
   fontRole?: "display" | "body" | "script";
   align?: "left" | "center" | "right";
@@ -174,6 +175,7 @@ export function ThemeElementInspector({
       </div>
 
       <div className="grid gap-3">
+        <label className="grid gap-1 text-[10px]">Content width: {style.width ?? (isCustom ? 88 : 100)}%<input type="range" min="20" max="100" value={style.width ?? (isCustom ? 88 : 100)} onChange={(event) => onStyleChange({ width: Number(event.target.value) })} /></label>
         <div className="grid gap-1">
           <div className="flex items-center justify-between text-[10px]">
             <Label className="text-[10px]">Horizontal position</Label>

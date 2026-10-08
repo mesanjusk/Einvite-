@@ -55,6 +55,7 @@ export function RevealGroup({
 }) {
   return (
     <motion.div
+      data-inv-content-group
       initial="hidden"
       whileInView="visible"
       viewport={{ once, margin }}

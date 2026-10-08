@@ -1,3 +1,4 @@
+import { independentSections } from "@/lib/invitation-sections";
 import { db } from "@/lib/db";
 import {
   buildInviteThemeStyle,
@@ -21,6 +22,11 @@ export type SectionConfigEntry = {
   visible: boolean;
   locked: boolean;
   order: number;
+  title?: string;
+  eventId?: string;
+  inheritType?: string;
+  elementStyles?: InviteData["elementStyles"];
+  sectionStyle?: NonNullable<InviteData["sectionStyles"]>[string];
 };
 
 const DEFAULT_PALETTE = {
@@ -86,6 +92,7 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
     revealVideoWebmUrl?: string;
     revealVideoPosterUrl?: string;
     revealAnimation?: InviteData["revealAnimation"];
+    sectionNames?: InviteData["sectionNames"];
     sectionImages?: InviteData["sectionImages"];
     elementStyles?: InviteData["elementStyles"];
     customText?: InviteData["customText"];
@@ -131,13 +138,28 @@ export function toInviteRenderData(invitation: InvitationWithRelations) {
       intensity: 1,
       speed: 1,
     },
+    sectionNames: decorAssets.sectionNames ?? {},
     sectionImages: decorAssets.sectionImages ?? {},
     elementStyles: decorAssets.elementStyles ?? {},
     customText: decorAssets.customText ?? {},
     sectionStyles: decorAssets.sectionStyles ?? {},
   };
 
-  const sectionConfig = (invitation.sectionConfig as SectionConfigEntry[] | null) ?? [];
+  const sectionConfig = independentSections((invitation.sectionConfig as SectionConfigEntry[] | null) ?? [], invitation.events);
+  for (const section of sectionConfig) {
+    if (section.title) inviteData.sectionNames = { ...inviteData.sectionNames, [section.type]: section.title };
+    if (section.sectionStyle) inviteData.sectionStyles = { ...inviteData.sectionStyles, [section.type]: section.sectionStyle };
+    if (section.elementStyles) inviteData.elementStyles = { ...inviteData.elementStyles, ...section.elementStyles };
+    if (section.inheritType) {
+      inviteData.elementStyles ??= {};
+      for (const [key, value] of Object.entries(inviteData.elementStyles ?? {})) {
+        if (key.startsWith(`${section.inheritType}.`)) inviteData.elementStyles[ key.replace(`${section.inheritType}.`, `${section.type}.`) ] ??= value;
+      }
+    }
+  }
 
+  for (const [type, blocks] of Object.entries(inviteData.customText ?? {})) {
+    inviteData.customText = { ...inviteData.customText, [type]: blocks.map((block) => ({ ...block, ...inviteData.elementStyles?.[block.id] })) };
+  }
   return { inviteData, themeStyle, sectionConfig };
 }

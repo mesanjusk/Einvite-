@@ -1,10 +1,14 @@
+import { isEventSection, eventSectionName } from "./invitation-sections";
 import { themeEventSections } from "@/lib/event-sections";
 import type { InviteData } from "@/components/invite/types";
 import type { ThemeFormValues } from "@/lib/validations/admin";
 import { elementsForSection } from "@/lib/theme-element-catalog";
 import { themeMusicUrl } from "@/lib/theme-music";
 
-export const PREVIEW_SECTION_TYPES = new Set([
+class RenderableSections extends Set<string> {
+  has(type: string) { return isEventSection(type) || super.has(type); }
+}
+export const PREVIEW_SECTION_TYPES = new RenderableSections([
   "ENVELOPE", "HERO", "COUNTDOWN", "TIMELINE", "GALLERY", "STORY", "VENUE", "RSVP", "THANK_YOU",
 ]);
 
@@ -17,7 +21,7 @@ export function buildThemePreviewData(draft: ThemeFormValues): InviteData {
     weddingDate: new Date("2026-12-12T18:30:00+05:30"), venueName: "Sample Celebration Palace", venueAddress: "Sample venue address", googleMapsUrl: null,
     customMessage: null, musicUrl: themeMusicUrl(decor), galleryAnimation: "fade",
     copy: draft.content ?? {},
-    events: (themeEventSections(decor) ?? ["Sangeet"]).map((name, index) => ({ id: `preview-event-${index}`, name, date: new Date("2026-12-11T19:00:00+05:30"), time: "7:00 PM", venueName: "Sample Celebration Palace", address: null, googleMapsUrl: null, dressCode: "Festive", accentColor: null, tagline: "Join us for this celebration" })),
+    events: (draft.sectionOrder.some(isEventSection) ? draft.sectionOrder.filter(isEventSection).map((type) => decor?.sectionNames?.[type] ?? eventSectionName(type)) : themeEventSections(decor) ?? ["Sangeet"]).map((name, index) => ({ id: `preview-event-${index}`, name, date: new Date("2026-12-11T19:00:00+05:30"), time: "7:00 PM", venueName: "Sample Celebration Palace", address: null, googleMapsUrl: null, dressCode: "Festive", accentColor: null, tagline: "Join us for this celebration" })),
     familyMembers: [],
     media: [{ id: "preview-photo", url: "/images/theme-preview-photo.svg", caption: "Sample customer photo", type: "IMAGE" }],
     isDemo: true, themeSlug: "preview",
@@ -30,6 +34,7 @@ export function buildThemePreviewData(draft: ThemeFormValues): InviteData {
       intensity: Number(decor?.revealAnimation?.intensity ?? 1),
       speed: Number(decor?.revealAnimation?.speed ?? 1),
     },
+    sectionNames: decor?.sectionNames,
     sectionImages: decor?.sectionImages ?? {},
     sectionStyles: (decor?.sectionStyles ?? {}) as InviteData["sectionStyles"],
     elementStyles: (decor?.elementStyles ?? {}) as InviteData["elementStyles"],

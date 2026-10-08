@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -37,7 +38,11 @@ export function DesignSheet({
   onGalleryAnimationChange,
   onSectionToggle,
   onPreviewOpening,
+  designAssistant,
+  onAssetUploaded,
 }: {
+  designAssistant?: ReactNode;
+  onAssetUploaded?: (file: File) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   themes: EditorTheme[];
@@ -87,6 +92,7 @@ export function DesignSheet({
         </SheetHeader>
 
         <div className="flex flex-col gap-6 px-4 pb-6">
+          {designAssistant}
           <section className="flex flex-col gap-2">
             <Label>Look</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -154,6 +160,7 @@ export function DesignSheet({
               invitationId={invitationId}
               value={introVideo}
               onChange={onIntroVideoChange}
+              onAssetUploaded={onAssetUploaded}
             />
             <Button type="button" variant="outline" onClick={onPreviewOpening}>
               Preview {sectionDisplayName("ENVELOPE")}

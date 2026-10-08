@@ -1,6 +1,10 @@
 "use client";
 
-import { EVENT_SECTION_PRESETS } from "@/lib/event-sections";
+import { independentThemeOrder, eventSectionName, isEventSection } from "@/lib/invitation-sections";
+import { GeminiStylePanel } from "@/components/admin/gemini-style-panel";
+import { designPreview } from "@/lib/media/design-preview";
+import { safeDesignSuggestion, suggestionStyles, type DesignSuggestion } from "@/lib/design-assist";
+import { SectionManager } from "@/components/admin/section-manager";
 import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -79,6 +83,7 @@ import {
 } from "@/components/ui/dialog";
 
 type DecorAssets = {
+  sectionNames?: Record<string, string>;
   eventSections?: string[];
   musicUrl?: string;
   musicName?: string;
@@ -95,6 +100,7 @@ type DecorAssets = {
     Array<{
       id: string;
       text: string;
+      width?: number;
       fontSize: number;
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";
@@ -114,6 +120,7 @@ type DecorAssets = {
     Array<{
       id: string;
       text: string;
+      width?: number;
       fontSize: number;
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";
@@ -211,7 +218,7 @@ const ANIMATION_LABELS: Record<(typeof REVEAL_ANIMATION_PRESETS)[number], string
 
 function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
   const decor = theme?.decorAssets ?? {};
-  return {
+  const result: ThemeFormValues = {
     id: theme?.id,
     type,
     name: theme?.name ?? "",
@@ -249,6 +256,7 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       hashtagSuffix: theme?.content?.hashtagSuffix ?? "",
     },
     decorAssets: {
+      sectionNames: decor.sectionNames ?? {},
       eventSections: decor.eventSections ?? ["Sangeet", "Mehendi", "Wedding"],
       musicUrl: decor.musicUrl ?? "",
       musicName: decor.musicName ?? "",
@@ -267,7 +275,7 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       sectionStyles: decor.sectionStyles ?? {},
     },
     sectionOrder:
-      (theme?.sectionOrder as ThemeFormValues["sectionOrder"]) ?? [
+      independentThemeOrder((theme?.sectionOrder as ThemeFormValues["sectionOrder"]) ?? [
         "ENVELOPE",
         "HERO",
         "COUNTDOWN",
@@ -276,8 +284,16 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
         "VENUE",
         "RSVP",
         "THANK_YOU",
-      ],
+      ], decor.eventSections ?? ["Sangeet", "Mehendi", "Wedding"]),
   };
+  for (const section of result.sectionOrder.filter(isEventSection)) {
+    const assets = result.decorAssets!;
+    assets.sectionImages ??= {}; assets.sectionStyles ??= {}; assets.elementStyles ??= {};
+    if (decor.sectionImages?.TIMELINE && !assets.sectionImages[section]) assets.sectionImages[section] = decor.sectionImages.TIMELINE;
+    if (decor.sectionStyles?.TIMELINE && !assets.sectionStyles[section]) assets.sectionStyles[section] = decor.sectionStyles.TIMELINE as NonNullable<typeof assets.sectionStyles>[string];
+    for (const [key, value] of Object.entries(decor.elementStyles ?? {})) if (key.startsWith("TIMELINE.")) assets.elementStyles[key.replace("TIMELINE.", `${section}.`)] ??= value;
+  }
+  return result;
 }
 
 export function ThemeFormDialog({
@@ -297,11 +313,16 @@ export function ThemeFormDialog({
   standalone?: boolean;
   returnHref?: string;
 }) {
+  const [aiKey, setAiKey] = useState("");
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<DesignSuggestion | null>(null);
+  const aiVersion = useRef(0);
   const [open, setOpen] = useState(standalone);
   const [loading, setLoading] = useState(false);
   const [thumbUploading, setThumbUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
-  const [previewSection, setPreviewSection] = useState<(typeof SECTION_TYPES)[number]>("HERO");
+  const [previewSection, setPreviewSection] = useState<string>("HERO");
   const [selectedElement, setSelectedElement] = useState<string | null>("HERO.invitationLetter");
   const [mobileTool, setMobileTool] = useState<StudioTool>(theme ? "content" : "theme");
   const formId = useId();
@@ -317,6 +338,7 @@ export function ThemeFormDialog({
 
   const sectionOrder = form.watch("sectionOrder");
   const draft = form.watch();
+  function displaySectionName(section: string) { return draft.decorAssets?.sectionNames?.[section] ?? sectionDisplayName(section); }
   const history = useDraftHistory(draft, (next) => {
     form.reset(next);
     if (!next.sectionOrder.includes(previewSection)) {
@@ -335,7 +357,7 @@ export function ThemeFormDialog({
   >;
 
   function updateSectionStyle(
-    sectionType: (typeof SECTION_TYPES)[number],
+    sectionType: string,
     patch: Partial<NonNullable<DecorAssets["sectionStyles"]>[string]>,
   ) {
     const current = (form.getValues("decorAssets.sectionStyles") ?? {}) as NonNullable<
@@ -364,7 +386,7 @@ export function ThemeFormDialog({
   }
 
   function setCustomText(
-    sectionType: (typeof SECTION_TYPES)[number],
+    sectionType: string,
     blocks: NonNullable<DecorAssets["customText"]>[string],
   ) {
     const current = (form.getValues("decorAssets.customText") ?? {}) as NonNullable<
@@ -408,7 +430,7 @@ export function ThemeFormDialog({
   // Legacy PR #79 helpers remain only so old saved data can be opened safely.
   // The corresponding UI is hidden and these blocks are no longer rendered publicly.
   function setSectionTextBlocks(
-    sectionType: (typeof SECTION_TYPES)[number],
+    sectionType: string,
     blocks: NonNullable<DecorAssets["sectionTextBlocks"]>[string],
   ) {
     const current = (form.getValues("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
@@ -417,7 +439,7 @@ export function ThemeFormDialog({
     form.setValue("decorAssets.sectionTextBlocks", { ...current, [sectionType]: blocks });
   }
 
-  function addTextBlock(_sectionType: (typeof SECTION_TYPES)[number], text = "New text") {
+  function addTextBlock(_sectionType: string, text = "New text") {
     addCustomText(text);
   }
 
@@ -478,7 +500,7 @@ export function ThemeFormDialog({
     if (custom) {
       const blocks = [...customTextBySection[custom.section]];
       blocks[custom.index] = { ...custom.block, text: value };
-      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+      setCustomText(custom.section as string, blocks);
       return;
     }
     const definition = definitionForElement(selectedElement);
@@ -496,6 +518,7 @@ export function ThemeFormDialog({
       const blocks = [...customTextBySection[custom.section]];
       blocks[custom.index] = {
         ...custom.block,
+        ...(patch.width !== undefined ? { width: patch.width } : {}),
         ...(patch.fontSize !== undefined ? { fontSize: patch.fontSize } : {}),
         ...(patch.fontRole !== undefined ? { fontRole: patch.fontRole } : {}),
         ...(patch.align !== undefined ? { align: patch.align } : {}),
@@ -509,7 +532,7 @@ export function ThemeFormDialog({
         ...(patch.x !== undefined ? { x: patch.x } : {}),
         ...(patch.y !== undefined ? { y: patch.y } : {}),
       };
-      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+      setCustomText(custom.section as string, blocks);
       return;
     }
     updateElementStyle(selectedElement, patch);
@@ -520,13 +543,13 @@ export function ThemeFormDialog({
     const custom = findCustomText(selectedElement);
     if (!custom) return;
     setCustomText(
-      custom.section as (typeof SECTION_TYPES)[number],
+      custom.section as string,
       customTextBySection[custom.section].filter((_, index) => index !== custom.index),
     );
     setSelectedElement(null);
   }
 
-  function toggleSection(sectionType: (typeof SECTION_TYPES)[number]) {
+  function toggleSection(sectionType: string) {
     const current = form.getValues("sectionOrder");
     if (current.includes(sectionType)) {
       form.setValue(
@@ -544,6 +567,37 @@ export function ThemeFormDialog({
     if (target < 0 || target >= current.length) return;
     [current[index], current[target]] = [current[target], current[index]];
     form.setValue("sectionOrder", current);
+  }
+
+  function designLayers() {
+    const current = form.getValues();
+    return current.sectionOrder.flatMap((section) => [...elementsForSection(section).map((element) => ({ key: element.key, text: current.decorAssets?.elementStyles?.[element.key]?.text ?? element.fallbackText ?? element.label })), ...(current.decorAssets?.customText?.[section] ?? []).map((block) => ({ key: block.id, text: block.text }))]);
+  }
+  function applyDesignSuggestion(suggestion: DesignSuggestion) {
+    const styles = suggestionStyles(suggestion);
+    form.setValue("colorPalette", suggestion.palette, { shouldDirty: true });
+    form.setValue("fontPairing", suggestion.fonts, { shouldDirty: true });
+    const existing = form.getValues("decorAssets.elementStyles") ?? {};
+    form.setValue("decorAssets.elementStyles", { ...existing, ...Object.fromEntries(Object.entries(styles).filter(([key]) => !key.startsWith("CUSTOM.")).map(([key, value]) => [key, { ...existing[key], ...value }])) }, { shouldDirty: true });
+    const custom = form.getValues("decorAssets.customText") ?? {};
+    form.setValue("decorAssets.customText", Object.fromEntries(Object.entries(custom).map(([section, blocks]) => [section, blocks.map((block) => ({ ...block, ...styles[block.id] }))])), { shouldDirty: true });
+    toast.success("Suggested styles applied. Review the preview; all tools and Undo remain available.");
+  }
+  async function analyzeDesignFile(file: File, automatic = false) {
+    if (!aiKey) { if (!automatic) toast.message("Add your Gemini API key in AI style."); return; }
+    const version = ++aiVersion.current;
+    const elements = designLayers(); if (!elements.length) return;
+    const before = JSON.stringify([form.getValues("sectionOrder"), form.getValues("colorPalette"), form.getValues("fontPairing"), form.getValues("decorAssets.elementStyles"), form.getValues("decorAssets.customText")]);
+    setAiBusy(true);
+    try {
+      const response = await fetch("/api/design/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ apiKey: aiKey, image: await designPreview(file), elements }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error);
+      if (data.skipped || version !== aiVersion.current) return;
+      const suggestion = safeDesignSuggestion(data.suggestion, elements.map((element) => element.key)); setAiSuggestion(suggestion);
+      const after = JSON.stringify([form.getValues("sectionOrder"), form.getValues("colorPalette"), form.getValues("fontPairing"), form.getValues("decorAssets.elementStyles"), form.getValues("decorAssets.customText")]);
+      if (automatic && before === after) applyDesignSuggestion(suggestion); else { setMobileTool("ai"); toast.message("Suggestion ready. Apply it when ready."); }
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Design analysis failed; manual editing is available."); }
+    finally { if (version === aiVersion.current) setAiBusy(false); }
   }
 
   async function uploadAsset(file: File | undefined, kind: "image" | "video") {
@@ -597,6 +651,7 @@ export function ThemeFormDialog({
       form.setValue("previewImage", uploaded.posterUrl ?? "");
       form.setValue("decorAssets.revealVideoWebmUrl", uploaded.webmUrl ?? "");
       form.setValue("decorAssets.revealVideoPosterUrl", uploaded.posterUrl ?? "");
+      if (file && aiEnabled) void analyzeDesignFile(file, true);
       const saved = await upsertThemeLibraryAssetAction({
         name: file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") || `${form.getValues("name") || "Theme"} reveal`,
         kind: "REVEAL_VIDEO",
@@ -613,7 +668,7 @@ export function ThemeFormDialog({
   }
 
   async function handleSectionImage(
-    sectionType: (typeof SECTION_TYPES)[number],
+    sectionType: string,
     file?: File,
   ) {
     const uploaded = await uploadAsset(file, "image");
@@ -623,6 +678,7 @@ export function ThemeFormDialog({
       ...current,
       [sectionType]: uploaded.url,
     });
+    if (file && aiEnabled) void analyzeDesignFile(file, true);
     const saved = await upsertThemeLibraryAssetAction({
       name:
         file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") ||
@@ -637,7 +693,7 @@ export function ThemeFormDialog({
     if (!saved.success) {
       toast.error(saved.error);
     } else {
-      toast.success(`${sectionDisplayName(sectionType)} artwork uploaded and saved to Template Library.`);
+      toast.success(`${displaySectionName(sectionType)} artwork uploaded and saved to Template Library.`);
     }
   }
 
@@ -649,6 +705,7 @@ export function ThemeFormDialog({
       current[sectionType] = uploaded.url;
     }
     form.setValue("decorAssets.sectionImages", current);
+    if (file && aiEnabled) void analyzeDesignFile(file, true);
     const saved = await upsertThemeLibraryAssetAction({
       name:
         file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") ||
@@ -659,7 +716,7 @@ export function ThemeFormDialog({
       community: form.getValues("decorAssets.contentCommunity") || "General",
       sortOrder: imageLibrary.length,
     });
-    setPreviewSection((form.getValues("sectionOrder")[0] ?? "HERO") as (typeof SECTION_TYPES)[number]);
+    setPreviewSection((form.getValues("sectionOrder")[0] ?? "HERO") as string);
     if (!saved.success) {
       toast.error(saved.error);
     } else {
@@ -699,6 +756,7 @@ export function ThemeFormDialog({
   const selectedCustom = findCustomText(selectedElement);
   const selectedStyle: ThemeElementStyleValue = selectedCustom
     ? {
+        width: selectedCustom.block.width,
         fontSize: selectedCustom.block.fontSize,
         fontRole: selectedCustom.block.fontRole,
         align: selectedCustom.block.align,
@@ -765,7 +823,7 @@ export function ThemeFormDialog({
     }
   }
 
-  function selectSectionForEditing(section: (typeof SECTION_TYPES)[number]) {
+  function selectSectionForEditing(section: string) {
     setPreviewSection(section);
     setSelectedElement(elementsForSection(section)[0]?.key ?? null);
     setMobileTool("content");
@@ -779,7 +837,7 @@ export function ThemeFormDialog({
     const currentIndex = sectionOrder.indexOf(previewSection);
     const nextSection =
       (sectionOrder[currentIndex + 1] ?? sectionOrder[currentIndex - 1]) as
-        | (typeof SECTION_TYPES)[number]
+        | string
         | undefined;
     toggleSection(previewSection);
     if (nextSection) selectSectionForEditing(nextSection);
@@ -1004,7 +1062,7 @@ export function ThemeFormDialog({
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs font-bold text-[#4b3659]">Section artwork</p>
-                          <p className="text-[9px] text-[#8a7397]">Background for {sectionDisplayName(previewSection)}</p>
+                          <p className="text-[9px] text-[#8a7397]">Background for {displaySectionName(previewSection)}</p>
                         </div>
                         {(form.watch("decorAssets.sectionImages") ?? {})[previewSection] && (
                           <button
@@ -1087,7 +1145,7 @@ export function ThemeFormDialog({
                 <span title={draft.name || "New theme"} className="hidden max-w-32 shrink-0 truncate text-xs font-semibold xl:block">{draft.name || "New theme"}</span>
                 <div className="scrollbar-none flex min-w-0 flex-1 gap-1 overflow-x-auto">
                   {sectionOrder.map((sectionType) => {
-                    const typedSection = sectionType as (typeof SECTION_TYPES)[number];
+                    const typedSection = sectionType as string;
                     return (
                       <button
                         key={sectionType}
@@ -1100,23 +1158,23 @@ export function ThemeFormDialog({
                             : "shrink-0 rounded-full border border-violet-200 bg-white px-3 py-2 text-[11px] font-semibold text-[#5a4168]"
                         }
                       >
-                        {sectionDisplayName(sectionType)}
+                        {displaySectionName(sectionType)}
                       </button>
                     );
                   })}
-                  {SECTION_TYPES.filter((item) => !sectionOrder.includes(item)).map((item) => (
+                  {SECTION_TYPES.filter((item) => item !== "TIMELINE" && !sectionOrder.includes(item)).map((item) => (
                     <button
                       key={item}
                       type="button"
                       disabled={!PREVIEW_SECTION_TYPES.has(item)}
-                      title={PREVIEW_SECTION_TYPES.has(item) ? `Add ${sectionDisplayName(item)}` : "Website section not available yet"}
+                      title={PREVIEW_SECTION_TYPES.has(item) ? `Add ${displaySectionName(item)}` : "Website section not available yet"}
                       onClick={() => {
                         toggleSection(item);
                         selectSectionForEditing(item);
                       }}
                       className="disabled:cursor-not-allowed disabled:opacity-40 shrink-0 rounded-full border border-dashed border-violet-300 bg-violet-50 px-3 py-2 text-[11px] font-semibold text-[#76508c]"
                     >
-                      + {sectionDisplayName(item)}
+                      + {displaySectionName(item)}
                     </button>
                   ))}
                 </div>
@@ -1160,7 +1218,7 @@ export function ThemeFormDialog({
               </div>);
   const sectionCanvas = (<div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] mx-auto h-full min-h-0 w-full max-w-[520px] p-2 shadow-inner">
                 <ThemeRealSectionPreview
-                  eventName={draft.decorAssets?.eventSections?.[0]}
+                  eventName={draft.decorAssets?.sectionNames?.[previewSection] ?? (isEventSection(previewSection) ? eventSectionName(previewSection) : draft.decorAssets?.eventSections?.[0])}
                   section={previewSection}
                   eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
                   palette={form.watch("colorPalette")}
@@ -1185,7 +1243,7 @@ export function ThemeFormDialog({
                     if (custom) {
                       const blocks = [...customTextBySection[custom.section]];
                       blocks[custom.index] = { ...custom.block, ...position };
-                      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+                      setCustomText(custom.section as string, blocks);
                     } else { updateElementStyle(key, position); }
                   }}
                 />
@@ -1369,7 +1427,7 @@ export function ThemeFormDialog({
                                 {contentPlacements(draft, preset.text).length > 0 && <p className="mb-1 flex items-center gap-1 text-[9px] font-bold text-violet-700"><CheckCircle2 className="size-3 shrink-0" />Selected · {contentPlacements(draft, preset.text).map(sectionDisplayName).join(", ")}</p>}
                                 <p className="line-clamp-2 text-[10px] font-bold leading-tight text-[#4b3659]">{preset.label}</p>
                                 <p className="mt-1 truncate text-[8px] font-semibold text-[#9a82a7]">
-                                  {preset.community} · {sectionDisplayName(preset.suggestedSection)}
+                                  {preset.community} · {displaySectionName(preset.suggestedSection)}
                                 </p>
                                 <p className="mt-1 line-clamp-2 text-[8px] leading-relaxed text-[#75617f]">{preset.text}</p>
                               </div>
@@ -1404,6 +1462,7 @@ export function ThemeFormDialog({
                       <>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="grid gap-1">
+                            <label className="mb-3 grid gap-1 text-[10px]">Content width: {selectedStyle.width ?? 100}%<input type="range" min="20" max="100" value={selectedStyle.width ?? 100} onChange={(event) => updateSelectedAppearance({ width: Number(event.target.value) })} /></label>
                             <Label className="text-[10px]">Font size</Label>
                             <div className="flex items-center rounded-xl border bg-white">
                               <button
@@ -1546,22 +1605,10 @@ export function ThemeFormDialog({
                   </div>
                 )}
 
+                {mobileTool === "ai" && <GeminiStylePanel apiKey={aiKey} onApiKey={setAiKey} enabled={aiEnabled} onEnabled={setAiEnabled} busy={aiBusy} ready={Boolean(aiSuggestion)} onApply={() => aiSuggestion && applyDesignSuggestion(aiSuggestion)} onAnalyze={(file) => void analyzeDesignFile(file)} />}
+                {mobileTool === "sections" && <SectionManager names={draft.decorAssets?.sectionNames} onCustomSection={(key, name) => form.setValue("decorAssets.sectionNames", { ...form.getValues("decorAssets.sectionNames"), [key]: name }, { shouldDirty: true })} selected={sectionOrder} onChange={(next) => { form.setValue("sectionOrder", next, { shouldDirty: true }); if (!next.includes(previewSection)) selectSectionForEditing(next[0]); }} onSelect={selectSectionForEditing} />}
                 {mobileTool === "advanced" && canEditSectionText && (
                   <div className="grid gap-4 p-3">
-                    {previewSection === "TIMELINE" && (
-                      <div className="grid gap-3 rounded-xl border bg-white p-3">
-                        <p className="text-xs font-semibold">Separate event sections</p>
-                        <p className="text-[11px] text-muted-foreground">These sections are included in new invitations. Customers can change the details of every event or add their own.</p>
-                        {EVENT_SECTION_PRESETS.map((name) => {
-                          const names = draft.decorAssets?.eventSections ?? ["Sangeet", "Mehendi", "Wedding"];
-                          return <label key={name} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={names.includes(name)} onChange={(event) => form.setValue("decorAssets.eventSections", event.target.checked ? [...names, name] : names.filter((item) => item !== name), { shouldDirty: true })} />{name}</label>;
-                        })}
-                        <label className="grid gap-1 text-xs">Event order and custom names (one per line)
-                          <textarea className="rounded-lg border p-2" rows={5} value={(draft.decorAssets?.eventSections ?? ["Sangeet", "Mehendi", "Wedding"]).join("\n")} onChange={(event) => form.setValue("decorAssets.eventSections", event.target.value.split("\n"), { shouldDirty: true })} />
-                        </label>
-                        <p className="text-[11px] text-muted-foreground">Full preview shows each selected event separately.</p>
-                      </div>
-                    )}
                     {previewSection === "COUNTDOWN" && (
                       <label className="grid gap-2 rounded-xl border bg-white p-3 text-xs font-semibold">
                         Scratch-card shape
@@ -2091,16 +2138,16 @@ export function ThemeFormDialog({
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_310px]">
                 <div className="grid min-w-0 gap-3">
                   <div className="flex flex-wrap gap-2">
-                {SECTION_TYPES.filter((item) => !sectionOrder.includes(item)).map((item) => (
+                {SECTION_TYPES.filter((item) => item !== "TIMELINE" && !sectionOrder.includes(item)).map((item) => (
                   <button key={item} type="button" onClick={() => toggleSection(item)} className="text-muted-foreground rounded-full border px-2.5 py-1 text-xs">
-                    + {sectionDisplayName(item)}
+                    + {displaySectionName(item)}
                   </button>
                 ))}
                   </div>
 
                   <div className="grid gap-2">
                 {sectionOrder.map((sectionType, index) => {
-                  const typedSection = sectionType as (typeof SECTION_TYPES)[number];
+                  const typedSection = sectionType as string;
                   const imageUrl = form.watch(`decorAssets.sectionImages.${typedSection}`);
                   const textBlocks =
                     ((form.watch("decorAssets.sectionTextBlocks") ?? {}) as NonNullable<
@@ -2123,7 +2170,7 @@ export function ThemeFormDialog({
                           className={`flex items-center gap-2 rounded-md px-2 py-1 text-left text-sm font-medium ${previewSection === typedSection ? "bg-primary/10 text-primary" : ""}`}
                         >
                           <Smartphone className="size-3.5" />
-                          {sectionDisplayName(sectionType)}
+                          {displaySectionName(sectionType)}
                         </button>
                         <div className="flex items-center gap-1">
                           <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => moveSection(index, -1)}>

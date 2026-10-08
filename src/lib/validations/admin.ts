@@ -24,6 +24,7 @@ export const SECTION_TYPES = [
   "COUNTDOWN",
   "STORY",
   "TIMELINE",
+  "SANGEET", "MEHENDI", "HALDI", "WEDDING", "PHERAS", "RECEPTION",
   "GALLERY",
   "VENUE",
   "RSVP",
@@ -40,6 +41,7 @@ export const REVEAL_ANIMATION_PRESETS = [
 ] as const;
 
 export const themeDecorAssetsSchema = z.object({
+  sectionNames: z.record(z.string(), z.string().trim().min(1).max(100)).optional(),
   eventSections: z.array(z.string().trim().max(100)).max(20).transform((names) => names.filter(Boolean)).optional(),
   musicUrl: z.string().regex(/^$|^https?:\/\/|^\/(?!\/)/, "Use an uploaded file or an HTTP(S) music URL").optional(),
   musicName: z.string().optional(),
@@ -62,7 +64,8 @@ export const themeDecorAssetsSchema = z.object({
         z.object({
           id: z.string().min(1),
           text: z.string(),
-          fontSize: z.coerce.number().min(8).max(96).default(22),
+          width: z.coerce.number().min(20).max(100).optional(),
+        fontSize: z.coerce.number().min(8).max(96).default(22),
           fontRole: z.enum(["display", "body", "script"]).default("body"),
           align: z.enum(["left", "center", "right"]).default("center"),
           color: z.string().optional(),
@@ -76,6 +79,7 @@ export const themeDecorAssetsSchema = z.object({
       z.object({
         text: z.string().optional(),
         hidden: z.boolean().default(false),
+        width: z.coerce.number().min(20).max(100).optional(),
         fontSize: z.coerce.number().min(8).max(120).optional(),
         fontRole: z.enum(["display", "body", "script"]).optional(),
         align: z.enum(["left", "center", "right"]).optional(),
@@ -100,7 +104,8 @@ export const themeDecorAssetsSchema = z.object({
         z.object({
           id: z.string().min(1),
           text: z.string(),
-          fontSize: z.coerce.number().min(8).max(120).default(22),
+          width: z.coerce.number().min(20).max(100).optional(),
+        fontSize: z.coerce.number().min(8).max(120).default(22),
           fontRole: z.enum(["display", "body", "script"]).default("body"),
           align: z.enum(["left", "center", "right"]).default("center"),
           color: z.string().optional(),
@@ -184,7 +189,8 @@ export const themeFormSchema = z.object({
   content: themeContentSchema.optional(),
   decorAssets: themeDecorAssetsSchema.optional(),
   sectionOrder: z
-    .array(z.enum(SECTION_TYPES))
+    .array(z.union([z.enum(SECTION_TYPES), z.string().regex(/^EVENT_[a-z0-9-]{1,80}$/)]))
+    .max(40)
     .min(1, "At least one section is required"),
 }).superRefine((value, context) => {
   if (value.revealMode === "VIDEO" && !value.revealVideoUrl?.trim()) {

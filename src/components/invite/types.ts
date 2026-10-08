@@ -68,12 +68,14 @@ export type InviteData = {
     intensity: number;
     speed: number;
   };
+  sectionNames?: Record<string, string>;
   sectionImages?: Partial<Record<string, string>>;
   elementStyles?: Record<
     string,
     {
       text?: string;
       hidden?: boolean;
+      width?: number;
       fontSize?: number;
       fontRole?: "display" | "body" | "script";
       align?: "left" | "center" | "right";
@@ -95,6 +97,7 @@ export type InviteData = {
     Array<{
       id: string;
       text: string;
+      width?: number;
       fontSize: number;
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";

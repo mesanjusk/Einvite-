@@ -1,3 +1,4 @@
+import { isEventSection } from "./invitation-sections";
 export type ThemeCoreContentField =
   | "eyebrow"
   | "heroHeadline"
@@ -50,10 +51,11 @@ export const THEME_ELEMENT_DEFINITIONS: ThemeElementDefinition[] = [
 ];
 
 export function elementsForSection(section: string) {
+  if (isEventSection(section)) return THEME_ELEMENT_DEFINITIONS.filter((item) => item.section === "TIMELINE").map((item) => ({ ...item, section, key: item.key.replace("TIMELINE.", `${section}.`) }));
   const normalized = section === "STORY" ? "GALLERY" : section;
   return THEME_ELEMENT_DEFINITIONS.filter((item) => item.section === normalized);
 }
 
 export function definitionForElement(key: string) {
-  return THEME_ELEMENT_DEFINITIONS.find((item) => item.key === key);
+  return elementsForSection(key.split(".")[0]).find((item) => item.key === key);
 }
