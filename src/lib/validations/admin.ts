@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SCRATCH_SHAPES } from "@/lib/scratch-shapes";
 
 import { AUTO_VIDEO_MODEL } from "@/lib/ai/gemini-video";
 import { DEFAULT_EVENT_CATEGORY, EVENT_CATEGORY_SLUGS } from "@/lib/event-categories";
@@ -39,6 +40,7 @@ export const REVEAL_ANIMATION_PRESETS = [
 ] as const;
 
 export const themeDecorAssetsSchema = z.object({
+  eventSections: z.array(z.string().trim().max(100)).max(20).transform((names) => names.filter(Boolean)).optional(),
   musicUrl: z.string().regex(/^$|^https?:\/\/|^\/(?!\/)/, "Use an uploaded file or an HTTP(S) music URL").optional(),
   musicName: z.string().optional(),
   revealVideoWebmUrl: z.string().optional(),
@@ -122,6 +124,7 @@ export const themeDecorAssetsSchema = z.object({
       z.object({
         x: z.coerce.number().min(-40).max(40).default(0),
         y: z.coerce.number().min(-40).max(40).default(0),
+        scratchShape: z.enum(SCRATCH_SHAPES).optional(),
         showBox: z.boolean().default(true),
         primary: z.string().optional(),
         accent: z.string().optional(),

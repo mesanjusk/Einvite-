@@ -55,7 +55,7 @@ export type InviteEditApi = {
   setText: (target: EditTarget, value: string) => void;
   /** `value` is `yyyy-mm-dd`, as produced by an `<input type="date">`. */
   setDate: (target: EditDateTarget, value: string) => void;
-  addEvent: () => void;
+  addEvent: (name?: string) => void;
   removeEvent: (eventId: string) => void;
   /** Opens one of the editor's sheets — optionally scrolled to a photo. */
   openPanel: (panel: EditPanel, focusMediaId?: string) => void;

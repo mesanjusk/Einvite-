@@ -23,7 +23,7 @@ import {
   useInviteEdit,
   type InviteEditApi,
 } from "./edit-context";
-import { EditChip } from "./editable";
+import { EventSectionPicker } from "./event-section-picker";
 import type { InviteData } from "./types";
 import { ThemeElementProvider } from "./theme-text-element";
 import { sectionDisplayName } from "@/lib/section-labels";
@@ -320,7 +320,7 @@ export function InviteExperience({
                     elementStyles={invite.elementStyles}
                     customText={invite.customText?.[section.type]}
                   >
-                    <CountdownSection weddingDate={invite.weddingDate} />
+                    <CountdownSection weddingDate={invite.weddingDate} scratchShape={invite.sectionStyles?.COUNTDOWN?.scratchShape} />
                   </SectionScope>
                 );
               case "TIMELINE":
@@ -344,7 +344,7 @@ export function InviteExperience({
                         style={{ background: "var(--inv-background)" }}
                       >
                         <p className="text-sm opacity-70">No functions on the invitation yet.</p>
-                        <EditChip onClick={() => edit.addEvent()}>+ Add a function</EditChip>
+                        <EventSectionPicker />
                       </section>
                     </SectionScope>
                   );

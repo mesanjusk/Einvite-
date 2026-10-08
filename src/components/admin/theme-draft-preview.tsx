@@ -45,6 +45,8 @@ export function ThemeDraftPreview({ draft }: { draft: ThemeFormValues }) {
             <div className="grid gap-2 rounded-xl border bg-white p-3">
               <p className="text-xs font-semibold">Section order</p>
               {draft.sectionOrder.map((section, index) => <p key={section} className={`flex items-center gap-2 text-xs ${PREVIEW_SECTION_TYPES.has(section) ? "text-[#4b3659]" : "text-amber-700"}`}>{PREVIEW_SECTION_TYPES.has(section) ? <CheckCircle2 className="size-3 shrink-0" /> : <AlertCircle className="size-3 shrink-0" />}{index + 1}. {sectionDisplayName(section)}{!PREVIEW_SECTION_TYPES.has(section) && " — no website renderer yet"}</p>)}
+              {draft.sectionOrder.includes("TIMELINE") && <p className="text-[11px] text-muted-foreground">Separate events: {invite.events.map((event) => event.name).join(" · ") || "none selected"}</p>}
+              {draft.sectionOrder.includes("COUNTDOWN") && <p className="text-[11px] text-muted-foreground">Scratch shape: {invite.sectionStyles?.COUNTDOWN?.scratchShape ?? "box"} · three cards in one row</p>}
               {draft.sectionOrder.includes("STORY") && draft.sectionOrder.includes("GALLERY") && <p className="text-[11px] text-amber-700">Story and Gallery share one photo section in the guest invitation.</p>}
             </div>
             {missingVideo && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">Video reveal selected, but no video chosen. Choose a video before saving; animation will not play in video mode.</p>}

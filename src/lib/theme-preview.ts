@@ -1,3 +1,4 @@
+import { themeEventSections } from "@/lib/event-sections";
 import type { InviteData } from "@/components/invite/types";
 import type { ThemeFormValues } from "@/lib/validations/admin";
 import { elementsForSection } from "@/lib/theme-element-catalog";
@@ -16,7 +17,7 @@ export function buildThemePreviewData(draft: ThemeFormValues): InviteData {
     weddingDate: new Date("2026-12-12T18:30:00+05:30"), venueName: "Sample Celebration Palace", venueAddress: "Sample venue address", googleMapsUrl: null,
     customMessage: null, musicUrl: themeMusicUrl(decor), galleryAnimation: "fade",
     copy: draft.content ?? {},
-    events: [{ id: "preview-event", name: "Sangeet", date: new Date("2026-12-11T19:00:00+05:30"), time: "7:00 PM", venueName: "Sample Celebration Palace", address: null, googleMapsUrl: null, dressCode: "Festive", accentColor: null, tagline: "An evening of music and celebration" }],
+    events: (themeEventSections(decor) ?? ["Sangeet"]).map((name, index) => ({ id: `preview-event-${index}`, name, date: new Date("2026-12-11T19:00:00+05:30"), time: "7:00 PM", venueName: "Sample Celebration Palace", address: null, googleMapsUrl: null, dressCode: "Festive", accentColor: null, tagline: "Join us for this celebration" })),
     familyMembers: [],
     media: [{ id: "preview-photo", url: "/images/theme-preview-photo.svg", caption: "Sample customer photo", type: "IMAGE" }],
     isDemo: true, themeSlug: "preview",

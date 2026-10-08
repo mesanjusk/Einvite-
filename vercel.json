@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "feat/canva-admin-workspace-20261008": false,
-      "fix/theme-preview-artwork-reveal-20261008": false
+      "fix/theme-preview-artwork-reveal-20261008": false,
+      "fix/event-sections-scratch-global-edit-20261008": false
     }
   }
 }
