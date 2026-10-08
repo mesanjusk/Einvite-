@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemePhoneFrame } from "./theme-phone-frame";
+
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 
 import { InviteExperience } from "@/components/invite/invite-experience";
@@ -85,16 +87,16 @@ export function ThemeRealSectionPreview({
 
   if (section === "ENVELOPE") {
     return (
-      <div className="grid gap-2">
+      <div className="flex h-full min-h-0 flex-col gap-1">
         {!compact && <PreviewHeading section={section} />}
-        <div
-          className={`relative mx-auto aspect-[9/16] w-full overflow-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl ${compact ? "max-w-[245px]" : "max-w-[285px]"}`}
+        <ThemePhoneFrame
           style={buildInviteThemeStyle(palette, fonts)}
         >
           <LocaleProvider>
             <EnvelopeSection
               key={`${resolvedRevealMode}-${resolvedRevealAnimation.preset}-${resolvedRevealAnimation.intensity}-${resolvedRevealAnimation.speed}-${revealVideoUrl ?? "coded"}-${envelopeReplay}`}
               initials="M&A"
+              mode={resolvedRevealMode}
               videoUrl={resolvedRevealMode === "VIDEO" ? revealVideoUrl ?? null : null}
               videoWebmUrl={resolvedRevealMode === "VIDEO" ? revealVideoWebmUrl ?? null : null}
               posterUrl={revealVideoPosterUrl}
@@ -119,9 +121,9 @@ export function ThemeRealSectionPreview({
           >
             Replay
           </button>
-        </div>
+        </ThemePhoneFrame>
         {!compact && (
-          <p className="text-muted-foreground text-center text-[10px]">
+          <p className="shrink-0 text-muted-foreground text-center text-[10px]">
             Real mobile opening. It loops automatically; use Replay to run it again.
           </p>
         )}
@@ -240,11 +242,10 @@ export function ThemeRealSectionPreview({
   }
 
   return (
-    <div className="grid gap-2">
+    <div className="flex h-full min-h-0 flex-col gap-1">
       {!compact && <PreviewHeading section={section} />}
-      <div
+      <ThemePhoneFrame
         data-theme-preview
-        className={`relative mx-auto w-full overflow-y-auto overflow-x-hidden rounded-[28px] border-[5px] border-violet-950 bg-white shadow-xl ${compact ? "h-[48vh] min-h-[360px] max-h-[500px] max-w-[245px]" : "h-[min(60svh,640px)] min-h-[420px] max-w-[390px]"}`}
         onClickCapture={captureSelection}
         onPointerDownCapture={startDrag}
         onPointerMoveCapture={moveDrag}
@@ -264,9 +265,9 @@ export function ThemeRealSectionPreview({
             onlySectionType={section}
           />
         </div>
-      </div>
+      </ThemePhoneFrame>
       {!compact && (
-        <p className="text-muted-foreground text-center text-[10px]">
+        <p className="shrink-0 text-muted-foreground text-center text-[10px]">
           This is the real invitation section. Click text to edit; drag it to position. Customer values are samples.
         </p>
       )}
@@ -277,10 +278,7 @@ export function ThemeRealSectionPreview({
 function PreviewHeading({ section }: { section: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <div>
-        <p className="text-sm font-semibold">Actual section preview</p>
-        <p className="text-muted-foreground text-[11px]">Same component used by the guest invitation.</p>
-      </div>
+      <p className="text-xs font-semibold">Mobile preview · Fit to screen</p>
       <span className="rounded-full border px-2 py-1 text-[10px] font-semibold">{sectionDisplayName(section)}</span>
     </div>
   );

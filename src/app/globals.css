@@ -360,6 +360,12 @@
   }
 }
 
+/* Artwork belongs behind the text, above every section's stock background. */
+.inv-section-artwork section {
+  background: transparent !important;
+  background-image: none !important;
+}
+
 /* Theme studio option: remove the opaque content card while keeping readable text. */
 .inv-section-no-box section > div,
 .inv-section-no-box section > div > div,
@@ -1320,3 +1326,6 @@ body {
     radial-gradient(circle at 90% 14%, rgba(191,160,213,.07), transparent 24rem),
     linear-gradient(180deg, #ffffff, #fbf8fd);
 }
+
+/* A scaled admin phone retains a real mobile viewport, independent of desktop height. */
+.theme-phone-viewport section { min-height: var(--theme-preview-height); }

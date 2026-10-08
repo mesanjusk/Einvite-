@@ -116,8 +116,8 @@ function SectionScope({
         data-invite-section-label={label}
         className={cn(
           "relative",
-          sectionImage && "bg-cover bg-center bg-no-repeat [&>section]:!bg-transparent",
-          sectionStyle?.showBox === false && "inv-section-no-box",
+          sectionImage && "inv-section-artwork bg-cover bg-center bg-no-repeat",
+          (sectionStyle?.showBox === false || (sectionImage && sectionStyle?.showBox !== true)) && "inv-section-no-box",
         )}
         style={{
           ...(sectionImage
@@ -272,6 +272,7 @@ export function InviteExperience({
         {!skipEnvelope && !inviteOpen && (
           <EnvelopeSection
             initials={initials}
+            mode={invite.revealMode}
             videoUrl={invite.revealVideoUrl}
             videoWebmUrl={invite.revealVideoWebmUrl}
             posterUrl={invite.revealVideoPosterUrl}
