@@ -14,7 +14,6 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { TemplateMarketplaceCard } from "@/components/marketing/template-marketplace-card";
 import { AnimatedInvitationShowcase } from "@/components/marketing/animated-invitation-showcase";
 import { WeddingAmbientEffects } from "@/components/marketing/wedding-ambient-effects";
-import { FALLBACK_THEMES, fallbackThumbnailFor } from "@/lib/marketing-fallbacks";
 
 const TITLE = `${SITE_NAME} — Royal Digital Wedding Invitations`;
 
@@ -34,6 +33,7 @@ export default async function Home() {
   const [themes, demos] = await Promise.all([
     db.theme
       .findMany({
+        where: { type: "WEBSITE", isPublished: true },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       })
       .catch(() => []),
@@ -47,9 +47,7 @@ export default async function Home() {
   ]);
 
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
-  const themeCards =
-    themes.length > 0
-      ? themes.map((theme) => {
+  const themeCards = themes.map((theme) => {
           const decor = (theme.decorAssets ?? {}) as {
             revealAnimation?: { preset?: string };
           };
@@ -70,12 +68,7 @@ export default async function Home() {
             previewAccent: palette.accent ?? "#a987bd",
             demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
           };
-        })
-      : FALLBACK_THEMES.map((theme) => ({
-          ...theme,
-          eventCategory: "wedding",
-          demoSlug: null as string | null,
-        }));
+        });
 
   const heroThemes = themeCards.slice(0, 5);
 
@@ -113,7 +106,25 @@ export default async function Home() {
             </div>
 
             <div className="relative z-10 md:col-start-2 md:row-span-2 md:row-start-1">
-              <AnimatedInvitationShowcase themes={heroThemes} />
+              {heroThemes.length > 0 ? (
+                <AnimatedInvitationShowcase themes={heroThemes} />
+              ) : (
+                <div className="mx-auto flex min-h-[280px] max-w-md flex-col items-center justify-center rounded-[2rem] border border-violet-200/70 bg-white/55 px-8 py-10 text-center shadow-[0_24px_70px_rgba(91,67,107,.08)] backdrop-blur">
+                  <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-violet-100 text-[#76508c]">
+                    <Sparkles className="size-5" />
+                  </span>
+                  <h2 className="font-display text-2xl text-[#5b4269]">No themes published yet</h2>
+                  <p className="mt-2 max-w-xs text-sm leading-6 text-[#776681]">
+                    New invitation designs will appear here once they are ready to share.
+                  </p>
+                  <Link
+                    href="/themes"
+                    className="mt-5 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white px-4 py-2.5 text-xs font-bold text-[#76508c] transition hover:bg-violet-50"
+                  >
+                    View the design library <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
+              )}
             </div>
 
             <div className="relative z-10 mt-1 md:col-start-1 md:row-start-2 md:mt-0 md:max-w-xl">

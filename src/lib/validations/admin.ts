@@ -39,6 +39,10 @@ export const REVEAL_ANIMATION_PRESETS = [
 ] as const;
 
 export const themeDecorAssetsSchema = z.object({
+  musicUrl: z.string().regex(/^$|^https?:\/\/|^\/(?!\/)/, "Use an uploaded file or an HTTP(S) music URL").optional(),
+  musicName: z.string().optional(),
+  revealVideoWebmUrl: z.string().optional(),
+  revealVideoPosterUrl: z.string().optional(),
   revealAnimation: z
     .object({
       preset: z.enum(REVEAL_ANIMATION_PRESETS).default("MAGIC_BLOOM"),
@@ -74,6 +78,13 @@ export const themeDecorAssetsSchema = z.object({
         fontRole: z.enum(["display", "body", "script"]).optional(),
         align: z.enum(["left", "center", "right"]).optional(),
         color: z.string().optional(),
+        bold: z.boolean().optional(),
+        italic: z.boolean().optional(),
+        underline: z.boolean().optional(),
+        letterSpacing: z.coerce.number().min(-2).max(12).optional(),
+        lineHeight: z.coerce.number().min(0.8).max(3).optional(),
+        opacity: z.coerce.number().min(0).max(1).optional(),
+
         x: z.coerce.number().min(-60).max(60).default(0),
         y: z.coerce.number().min(-60).max(60).default(0),
         showBackground: z.boolean().default(false),
@@ -91,6 +102,13 @@ export const themeDecorAssetsSchema = z.object({
           fontRole: z.enum(["display", "body", "script"]).default("body"),
           align: z.enum(["left", "center", "right"]).default("center"),
           color: z.string().optional(),
+        bold: z.boolean().optional(),
+        italic: z.boolean().optional(),
+        underline: z.boolean().optional(),
+        letterSpacing: z.coerce.number().min(-2).max(12).optional(),
+        lineHeight: z.coerce.number().min(0.8).max(3).optional(),
+        opacity: z.coerce.number().min(0).max(1).optional(),
+
           x: z.coerce.number().min(-60).max(60).default(0),
           y: z.coerce.number().min(-60).max(60).default(0),
         }),
@@ -165,6 +183,10 @@ export const themeFormSchema = z.object({
   sectionOrder: z
     .array(z.enum(SECTION_TYPES))
     .min(1, "At least one section is required"),
+}).superRefine((value, context) => {
+  if (value.revealMode === "VIDEO" && !value.revealVideoUrl?.trim()) {
+    context.addIssue({ code: "custom", path: ["revealVideoUrl"], message: "Choose a reveal video or switch the opening to Animation." });
+  }
 });
 
 export type ThemeFormInput = z.infer<typeof themeFormSchema>;

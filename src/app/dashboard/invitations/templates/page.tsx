@@ -22,6 +22,7 @@ const paletteSchema = (colorPalette: unknown) => {
 
 export default async function TemplatesPage() {
   const themes = await db.theme.findMany({
+    where: { type: "WEBSITE", isPublished: true },
     orderBy: { sortOrder: "asc" },
     include: { templates: true },
   });

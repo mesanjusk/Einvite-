@@ -7,12 +7,14 @@ import { isAdminGroup } from "@/lib/user-groups";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataResetCard } from "@/components/admin/data-reset-card";
+import { adminNav } from "@/config/dashboard-nav";
 
 export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminOverviewPage() {
-  const [userCount, invitationCount, rsvpCount, subscriptions, recentUsers] =
+  const [userCount, invitationCount, rsvpCount, subscriptions, recentUsers, publishedThemeCount] =
     await Promise.all([
       db.user.count(),
       db.invitation.count(),
@@ -30,8 +32,8 @@ export default async function AdminOverviewPage() {
           createdAt: true,
         },
       }),
+      db.theme.count({ where: { type: "WEBSITE", isPublished: true } }),
     ]);
-
   const paidCount = subscriptions
     .filter((s) => s.plan !== "FREE")
     .reduce((sum, s) => sum + s._count._all, 0);
@@ -46,13 +48,77 @@ export default async function AdminOverviewPage() {
     },
     { label: "Total RSVPs", value: rsvpCount, icon: ClipboardCheck },
     { label: "Paid Subscriptions", value: paidCount, icon: CreditCard },
+    {
+      label: "Published Themes",
+      value: publishedThemeCount,
+      icon: LayoutTemplate,
+      href: "/admin/library/themes",
+    },
   ];
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Admin" />
+      <PageHeader title="Admin Studio" meta="Design, manage, and grow your invitation workspace" />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section aria-label="Admin workspace tools" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {adminNav.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group rounded-2xl border border-[#e8e5eb] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#b9a3c7] hover:shadow-md"
+            >
+              <div className="mb-5 flex items-start justify-between">
+                <span className="flex size-11 items-center justify-center rounded-xl bg-[#f2edf5] text-[#705681]">
+                  <Icon className="size-5" />
+                </span>
+                <span className="text-xs font-medium text-[#8b8791] transition group-hover:text-[#705681]">Open →</span>
+              </div>
+              <h2 className="font-semibold text-[#28242d]">{item.title}</h2>
+              <p className="mt-1 text-sm text-[#77727d]">
+                {item.href === "/admin"
+                  ? "Overview and studio activity"
+                  : item.title === "Content Library"
+                    ? "Create, edit, and publish website and PDF themes"
+                    : item.title === "Reports"
+                      ? "Explore orders, performance, and business reports"
+                      : item.title === "Instagram"
+                        ? "Manage connected Instagram tools and content"
+                        : item.title === "Users"
+                          ? "Manage accounts and access"
+                          : "Review and manage invitation orders"}
+              </p>
+            </Link>
+          );
+        })}
+      </section>
+
+      {publishedThemeCount === 0 && (
+        <section className="overflow-hidden rounded-3xl border border-[#e8e5eb] bg-white shadow-sm">
+          <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
+            <div>
+              <p className="text-xs font-semibold tracking-[0.16em] text-[#8a6d9d] uppercase">
+                Theme Studio
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#28242d]">
+                Start with your first invitation design
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77727d]">
+                Build a website theme, preview it, then publish it when it is ready for customers.
+                Private starter designs will not appear in the public gallery.
+              </p>
+            </div>
+            <Button asChild className="rounded-xl">
+              <Link href="/admin/library/themes/new">
+                Create first theme
+              </Link>
+            </Button>
+          </div>
+        </section>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         {stats.map((stat) => (
           <Card
             key={stat.label}

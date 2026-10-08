@@ -77,6 +77,13 @@ export type InviteData = {
       fontRole?: "display" | "body" | "script";
       align?: "left" | "center" | "right";
       color?: string;
+      bold?: boolean;
+      italic?: boolean;
+      underline?: boolean;
+      letterSpacing?: number;
+      lineHeight?: number;
+      opacity?: number;
+
       x?: number;
       y?: number;
       showBackground?: boolean;
@@ -91,6 +98,13 @@ export type InviteData = {
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";
       color?: string;
+      bold?: boolean;
+      italic?: boolean;
+      underline?: boolean;
+      letterSpacing?: number;
+      lineHeight?: number;
+      opacity?: number;
+
       x?: number;
       y?: number;
     }>

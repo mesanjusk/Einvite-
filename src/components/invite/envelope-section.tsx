@@ -97,6 +97,10 @@ export function EnvelopeSection({
   const [opened, setOpened] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const openedRef = useRef(false);
+  const completedRef = useRef(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const endedListener = useRef<(() => void) | null>(null);
   const { t } = useLocale();
   const preset = animation?.preset ?? "MAGIC_BLOOM";
   const intensity = Math.min(2, Math.max(0.5, animation?.intensity ?? 1));
@@ -108,8 +112,26 @@ export function EnvelopeSection({
     videoRef.current?.load();
   }, [videoUrl, videoWebmUrl]);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    const activeTimers = timers.current;
+    return () => {
+      activeTimers.forEach(clearTimeout);
+      if (endedListener.current) video?.removeEventListener("ended", endedListener.current);
+    };
+  }, []);
+
+  function finishOpening() {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    timers.current.forEach(clearTimeout);
+    if (endedListener.current) videoRef.current?.removeEventListener("ended", endedListener.current);
+    onComplete();
+  }
+
   function handleTap() {
-    if (opened) return;
+    if (openedRef.current) return;
+    openedRef.current = true;
     setOpened(true);
 
     const video = videoRef.current;
@@ -120,32 +142,25 @@ export function EnvelopeSection({
     );
 
     if (!videoLikelyReady) {
-      setTimeout(onComplete, OPEN_DURATION_MS);
+      timers.current.push(setTimeout(finishOpening, OPEN_DURATION_MS));
       return;
     }
 
-    setTimeout(() => {
+    timers.current.push(setTimeout(() => {
       if (!video) {
-        onComplete();
+        finishOpening();
         return;
       }
       setShowVideo(true);
       video.currentTime = 0;
+      endedListener.current = finishOpening;
+      video.addEventListener("ended", finishOpening, { once: true });
+      timers.current.push(setTimeout(finishOpening, VIDEO_MAX_MS));
       video.play().catch(() => {
         setShowVideo(false);
-        onComplete();
+        finishOpening();
       });
-
-      let finished = false;
-      function finish() {
-        if (finished) return;
-        finished = true;
-        clearTimeout(safety);
-        onComplete();
-      }
-      const safety = setTimeout(finish, VIDEO_MAX_MS);
-      video.addEventListener("ended", finish, { once: true });
-    }, VIDEO_HANDOFF_DELAY_MS);
+    }, VIDEO_HANDOFF_DELAY_MS));
   }
 
   useEffect(() => {

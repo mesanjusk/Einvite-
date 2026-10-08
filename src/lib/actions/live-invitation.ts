@@ -23,6 +23,7 @@ import {
 } from "@/lib/validations/live-invitation";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { InviteData } from "@/components/invite/types";
+import { themeMusicUrl } from "@/lib/theme-music";
 
 /**
  * The live editor's save path. Where the wizard collects a whole form and
@@ -173,6 +174,8 @@ export async function patchInvitationAction(
   revalidatePath(`/design/${invitationId}`);
 
   const savedThemeDecor = (saved.theme?.decorAssets ?? {}) as {
+    revealVideoWebmUrl?: string;
+    revealVideoPosterUrl?: string;
     revealAnimation?: InviteData["revealAnimation"];
     sectionImages?: InviteData["sectionImages"];
     elementStyles?: InviteData["elementStyles"];
@@ -193,8 +196,8 @@ export async function patchInvitationAction(
       revealVideoUrl:
         saved.introVideoMp4Url ??
         (saved.theme?.revealMode === "VIDEO" ? saved.theme?.revealVideoUrl ?? null : null),
-      revealVideoWebmUrl: saved.introVideoWebmUrl ?? null,
-      revealVideoPosterUrl: saved.introVideoPosterUrl ?? null,
+      revealVideoWebmUrl: saved.introVideoWebmUrl ?? (saved.introVideoMp4Url ? null : saved.theme?.revealMode === "VIDEO" ? savedThemeDecor.revealVideoWebmUrl || null : null),
+      revealVideoPosterUrl: saved.introVideoPosterUrl ?? (saved.introVideoMp4Url ? null : saved.theme?.revealMode === "VIDEO" ? savedThemeDecor.revealVideoPosterUrl || saved.theme.previewImage || null : null),
       revealAnimation: savedThemeDecor.revealAnimation ?? {
         preset: "MAGIC_BLOOM",
         intensity: 1,
@@ -511,16 +514,16 @@ export async function startLiveInvitationAction(input: {
     ? await db.template.findFirst({ where: { themeId: theme.id } })
     : null;
 
-  // Music: only a shared library track travels with the design. An uploaded
-  // clip belongs to the couple who uploaded it.
+  // Copy admin theme audio, never another couple's personal uploaded clip.
+  const themeAudio = themeMusicUrl(theme?.decorAssets);
   const musicTrackId =
-    source?.musicTrackId ??
+    themeAudio ? null : source?.musicTrackId ??
     (await db.musicTrack.findFirst({ where: { isDefault: true } }))?.id ??
     null;
 
   const sectionConfig =
     (source?.sectionConfig as SectionConfigEntry[] | null) ??
-    DEFAULT_SECTION_ORDER.map((type, order) => ({
+    ((template?.sectionOrder as string[] | undefined) ?? DEFAULT_SECTION_ORDER).map((type, order) => ({
       id: type,
       type,
       visible: true,
@@ -544,6 +547,7 @@ export async function startLiveInvitationAction(input: {
       colorwayId: source?.colorwayId ?? null,
       colorPalette: source?.colorPalette ?? undefined,
       musicTrackId,
+      customMusicUrl: themeAudio,
       galleryAnimation: source?.galleryAnimation ?? "fade",
       sectionConfig,
     },

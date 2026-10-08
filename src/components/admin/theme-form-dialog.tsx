@@ -1,22 +1,25 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
+  Undo2,
+  Redo2,
   ArrowDown,
   ArrowLeft,
   ArrowUp,
   BookOpen,
+  CheckCircle2,
+  Music,
   Copy,
   Image as ImageIcon,
   Pencil,
   Plus,
   Search,
-  SlidersHorizontal,
   Smartphone,
   Sparkles,
   Trash2,
@@ -50,14 +53,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { useDraftHistory } from "@/components/admin/use-draft-history";
+import { ThemeStudioShell, type StudioTool } from "@/components/admin/theme-studio-shell";
 import { ThemeRealSectionPreview } from "@/components/admin/theme-real-section-preview";
+import { ThemeDraftPreview } from "@/components/admin/theme-draft-preview";
+import { ThemeAssetReview } from "@/components/admin/theme-asset-review";
+import { contentPlacements, PREVIEW_SECTION_TYPES } from "@/lib/theme-preview";
 import {
   ThemeElementInspector,
   type ThemeElementStyleValue,
@@ -69,6 +70,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -76,6 +78,10 @@ import {
 } from "@/components/ui/dialog";
 
 type DecorAssets = {
+  musicUrl?: string;
+  musicName?: string;
+  revealVideoWebmUrl?: string;
+  revealVideoPosterUrl?: string;
   revealAnimation?: {
     preset?: (typeof REVEAL_ANIMATION_PRESETS)[number];
     intensity?: number;
@@ -91,6 +97,13 @@ type DecorAssets = {
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";
       color?: string;
+      bold?: boolean;
+      italic?: boolean;
+      underline?: boolean;
+      letterSpacing?: number;
+      lineHeight?: number;
+      opacity?: number;
+
     }>
   >;
   elementStyles?: Record<string, ThemeElementStyleValue>;
@@ -103,6 +116,13 @@ type DecorAssets = {
       fontRole: "display" | "body" | "script";
       align: "left" | "center" | "right";
       color?: string;
+      bold?: boolean;
+      italic?: boolean;
+      underline?: boolean;
+      letterSpacing?: number;
+      lineHeight?: number;
+      opacity?: number;
+
       x?: number;
       y?: number;
     }>
@@ -226,6 +246,10 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
       hashtagSuffix: theme?.content?.hashtagSuffix ?? "",
     },
     decorAssets: {
+      musicUrl: decor.musicUrl ?? "",
+      musicName: decor.musicName ?? "",
+      revealVideoWebmUrl: decor.revealVideoWebmUrl ?? "",
+      revealVideoPosterUrl: decor.revealVideoPosterUrl ?? "",
       revealAnimation: {
         preset: decor.revealAnimation?.preset ?? "MAGIC_BLOOM",
         intensity: decor.revealAnimation?.intensity ?? 1,
@@ -275,9 +299,9 @@ export function ThemeFormDialog({
   const [assetUploading, setAssetUploading] = useState<string | null>(null);
   const [previewSection, setPreviewSection] = useState<(typeof SECTION_TYPES)[number]>("HERO");
   const [selectedElement, setSelectedElement] = useState<string | null>("HERO.invitationLetter");
-  const [mobileTool, setMobileTool] = useState<"content" | "library" | "text" | "advanced">("content");
+  const [mobileTool, setMobileTool] = useState<StudioTool>(theme ? "content" : "theme");
+  const formId = useId();
   const [libraryQuery, setLibraryQuery] = useState("");
-  const [appearanceOpen, setAppearanceOpen] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const bulkArtworkInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -288,6 +312,14 @@ export function ThemeFormDialog({
   });
 
   const sectionOrder = form.watch("sectionOrder");
+  const draft = form.watch();
+  const history = useDraftHistory(draft, (next) => {
+    form.reset(next);
+    if (!next.sectionOrder.includes(previewSection)) {
+      setPreviewSection(next.sectionOrder[0]);
+      setSelectedElement(elementsForSection(next.sectionOrder[0])[0]?.key ?? null);
+    }
+  });
   const sectionStyles = (form.watch("decorAssets.sectionStyles") ?? {}) as NonNullable<
     DecorAssets["sectionStyles"]
   >;
@@ -340,7 +372,7 @@ export function ThemeFormDialog({
     });
   }
 
-  function addCustomText(text = "New text") {
+  function addCustomText(text = "New text", appearance: Partial<ThemeElementStyleValue> = {}) {
     const sectionType = previewSection;
     const current =
       ((form.getValues("decorAssets.customText") ?? {}) as NonNullable<
@@ -352,11 +384,18 @@ export function ThemeFormDialog({
       {
         id,
         text,
-        fontSize: 22,
-        fontRole: "body",
-        align: "center",
-        x: 0,
-        y: 0,
+        fontSize: appearance.fontSize ?? 22,
+        fontRole: appearance.fontRole ?? "body",
+        align: appearance.align ?? "center",
+        color: appearance.color,
+        bold: appearance.bold,
+        italic: appearance.italic,
+        underline: appearance.underline,
+        letterSpacing: appearance.letterSpacing,
+        lineHeight: appearance.lineHeight,
+        opacity: appearance.opacity,
+        x: appearance.x ?? 0,
+        y: appearance.y ?? 0,
       },
     ]);
     setSelectedElement(id);
@@ -457,6 +496,12 @@ export function ThemeFormDialog({
         ...(patch.fontRole !== undefined ? { fontRole: patch.fontRole } : {}),
         ...(patch.align !== undefined ? { align: patch.align } : {}),
         ...(patch.color !== undefined ? { color: patch.color } : {}),
+        ...(patch.bold !== undefined ? { bold: patch.bold } : {}),
+        ...(patch.italic !== undefined ? { italic: patch.italic } : {}),
+        ...(patch.underline !== undefined ? { underline: patch.underline } : {}),
+        ...(patch.letterSpacing !== undefined ? { letterSpacing: patch.letterSpacing } : {}),
+        ...(patch.lineHeight !== undefined ? { lineHeight: patch.lineHeight } : {}),
+        ...(patch.opacity !== undefined ? { opacity: patch.opacity } : {}),
         ...(patch.x !== undefined ? { x: patch.x } : {}),
         ...(patch.y !== undefined ? { y: patch.y } : {}),
       };
@@ -514,6 +559,9 @@ export function ThemeFormDialog({
         return null;
       }
       return data as { url: string; webmUrl?: string; posterUrl?: string };
+    } catch {
+      toast.error("Upload failed. Check your connection and try again.");
+      return null;
     } finally {
       setAssetUploading(null);
     }
@@ -543,6 +591,8 @@ export function ThemeFormDialog({
     if (uploaded?.url) {
       form.setValue("revealVideoUrl", uploaded.url);
       form.setValue("previewImage", uploaded.posterUrl ?? "");
+      form.setValue("decorAssets.revealVideoWebmUrl", uploaded.webmUrl ?? "");
+      form.setValue("decorAssets.revealVideoPosterUrl", uploaded.posterUrl ?? "");
       const saved = await upsertThemeLibraryAssetAction({
         name: file?.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ") || `${form.getValues("name") || "Theme"} reveal`,
         kind: "REVEAL_VIDEO",
@@ -649,6 +699,12 @@ export function ThemeFormDialog({
         fontRole: selectedCustom.block.fontRole,
         align: selectedCustom.block.align,
         color: selectedCustom.block.color,
+        bold: selectedCustom.block.bold,
+        italic: selectedCustom.block.italic,
+        underline: selectedCustom.block.underline,
+        letterSpacing: selectedCustom.block.letterSpacing,
+        lineHeight: selectedCustom.block.lineHeight,
+        opacity: selectedCustom.block.opacity,
         x: selectedCustom.block.x,
         y: selectedCustom.block.y,
       }
@@ -672,6 +728,7 @@ export function ThemeFormDialog({
   );
   const selectedSectionDefinitions = elementsForSection(previewSection);
   const selectedSectionCustomText = customTextBySection[previewSection] ?? [];
+  const canEditSectionText = previewSection !== "ENVELOPE" && PREVIEW_SECTION_TYPES.has(previewSection);
   const selectedSectionIndex = sectionOrder.indexOf(previewSection);
   const databaseContent = contentLibrary.map((item) => ({
     id: `db-${item.id}`,
@@ -696,6 +753,14 @@ export function ThemeFormDialog({
     return communityMatch && queryMatch;
   });
 
+  function chooseTool(tool: StudioTool) {
+    setMobileTool(tool);
+    if (tool === "video" && sectionOrder.includes("ENVELOPE")) {
+      setPreviewSection("ENVELOPE");
+      setSelectedElement(null);
+    }
+  }
+
   function selectSectionForEditing(section: (typeof SECTION_TYPES)[number]) {
     setPreviewSection(section);
     setSelectedElement(elementsForSection(section)[0]?.key ?? null);
@@ -718,7 +783,7 @@ export function ThemeFormDialog({
 
   function duplicateSelectedContent() {
     const text = selectedText.trim();
-    addCustomText(text || "New text");
+    addCustomText(text || "New text", selectedStyle);
     setMobileTool("content");
   }
 
@@ -731,102 +796,51 @@ export function ThemeFormDialog({
     setMobileTool("content");
   }
 
-  async function onSubmit(values: ThemeFormInput) {
-    setLoading(true);
-    const result = await upsertThemeAction(values);
-    setLoading(false);
-    if (!result.success) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success(theme ? "Theme updated and published." : "Theme created and published.");
-    if (standalone) {
-      router.push(returnHref);
-      router.refresh();
-    } else {
-      setOpen(false);
-      router.refresh();
-    }
+  async function handleMusicUpload(file?: File) {
+    if (!file) return;
+    setAssetUploading("audio");
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch("/api/admin/music/upload", { method: "POST", body });
+      const result = await response.json();
+      if (!response.ok || !result.url) { toast.error(result.error ?? "Music upload failed."); return; }
+      form.setValue("decorAssets.musicUrl", result.url, { shouldDirty: true });
+      form.setValue("decorAssets.musicName", file.name, { shouldDirty: true });
+      toast.success("Music selected. Press Play to check it before saving.");
+    } catch {
+      toast.error("Music upload failed. Check your connection and try again.");
+    } finally { setAssetUploading(null); }
   }
 
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (standalone && !next) {
-          router.push(returnHref);
-          return;
-        }
-        setOpen(next);
-      }}
-    >
-      {!standalone && (
-        <DialogTrigger asChild>
-          {theme ? (
-            <IconButton label="Edit">
-              <Pencil className="size-4" />
-            </IconButton>
-          ) : (
-            <IconButton label={type === "PDF" ? "New PDF theme" : "New theme"} variant="default">
-              <Plus className="size-4" />
-            </IconButton>
-          )}
-        </DialogTrigger>
-      )}
+  async function onSubmit(values: ThemeFormInput) {
+    setLoading(true);
+    try {
+      const result = await upsertThemeAction(values);
+      if (!result.success) { toast.error(result.error); return; }
+      toast.success(theme ? "Theme updated." : "Theme saved privately. Publish it from Content Library when ready.");
+      if (standalone) router.push(returnHref);
+      else { setOpen(false); router.refresh(); }
+    } catch {
+      toast.error("Could not save the theme. Your draft is still here; check your connection and retry.");
+    } finally { setLoading(false); }
+  }
 
-      <DialogContent
-        showCloseButton={!standalone}
-        className={
-          standalone
-            ? "fixed inset-0 top-0 left-0 h-svh w-screen max-w-none translate-x-0 translate-y-0 overflow-x-hidden overflow-y-auto rounded-none border-0 bg-[#fbf9fd] p-0 shadow-none data-[state=open]:zoom-in-100 sm:max-w-none"
-            : "max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-5xl"
-        }
-      >
-        {standalone ? (
-          <div className="sticky top-0 z-50 flex h-16 items-center justify-between gap-3 border-b border-violet-200/70 bg-white/95 px-3 backdrop-blur-xl sm:px-6">
-            <Link href={returnHref} className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]">
-              <ArrowLeft className="size-4" />
-              <span className="sr-only">Back</span>
-            </Link>
-            <div className="min-w-0 flex-1 text-center">
-              <p className="truncate font-display text-base font-semibold text-[#4b3659]">
-                {theme ? theme.name : "New Theme"}
-              </p>
-              <p className="text-[9px] font-semibold tracking-[0.15em] text-[#9a83a5] uppercase">Theme Editor</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push(returnHref)}
-              className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]"
-              aria-label="Close editor"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        ) : (
-          <DialogHeader>
-            <DialogTitle>
-              {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
-            </DialogTitle>
-          </DialogHeader>
-        )}
-
-        <div className={standalone ? "mx-auto w-full max-w-7xl px-3 py-4 sm:px-6" : ""}>
-
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-6">
-          {type === "WEBSITE" && (
-            <section className="grid gap-4 rounded-3xl border border-violet-200/80 bg-white p-4 shadow-sm sm:p-5">
-              <div className="grid gap-4 lg:grid-cols-[minmax(260px,1fr)_minmax(0,1.5fr)_auto] lg:items-end">
+  const themeSettings = (<div className="grid gap-5">
+<div className="grid gap-4 ">
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-bold text-[#4b3659]">
                     Theme name <span className="text-destructive">*</span>
                   </Label>
                   <Input
+                    aria-label="Theme name"
+                    aria-invalid={Boolean(form.formState.errors.name)}
                     value={form.watch("name")}
                     onChange={(e) => form.setValue("name", e.target.value, { shouldValidate: true })}
                     placeholder="e.g. Lavender Floral Wedding"
                     autoFocus={!theme}
                   />
+                  {form.formState.errors.name && <p role="alert" className="text-xs text-destructive">{form.formState.errors.name.message}</p>}
                 </div>
 
                 <div className="grid gap-1.5">
@@ -862,8 +876,32 @@ export function ThemeFormDialog({
                   />
                 </label>
               </div>
+                <section className="grid gap-3">
+                  <Label className="text-sm font-bold">Colour palette</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(["primary", "secondary", "accent", "background", "foreground"] as const).map((key) => (
+                      <label key={key} className="flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-white p-3">
+                        <span className="text-xs font-semibold capitalize text-[#5a4168]">{key}</span>
+                        <input type="color" value={form.watch(`colorPalette.${key}`)} onChange={(e) => form.setValue(`colorPalette.${key}`, e.target.value)} className="size-9 rounded-lg border bg-white" />
+                      </label>
+                    ))}
+                  </div>
+                </section>
 
-              <div className="grid gap-3 rounded-2xl border border-violet-100 bg-violet-50/35 p-3">
+                <section className="grid gap-3">
+                  <Label className="text-sm font-bold">Fonts</Label>
+                  {(["display", "body", "script"] as const).map((key) => (
+                    <div key={key} className="grid gap-1.5">
+                      <Label className="text-xs capitalize">{key} font</Label>
+                      <select className="border-input h-10 rounded-md border bg-white px-3 text-sm" value={form.watch(`fontPairing.${key}`)} onChange={(e) => form.setValue(`fontPairing.${key}`, e.target.value)}>
+                        {FONT_OPTIONS.map((font) => <option key={font} value={font}>{font}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </section>
+
+</div>);
+  const revealPanel = (<div className="grid gap-3 rounded-2xl border border-violet-100 bg-violet-50/35 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-xs font-bold text-[#4b3659]">Opening reveal</p>
@@ -913,89 +951,134 @@ export function ThemeFormDialog({
                         {assetUploading === "video" ? "Uploading…" : "Upload new reveal"}
                         <input type="file" accept="video/mp4,video/webm,video/*" className="hidden" disabled={assetUploading === "video"} onChange={(e) => handleRevealVideo(e.target.files?.[0])} />
                       </label>
-                      <Link href="/admin/library/video-reveals" className="inline-flex items-center rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-semibold text-[#76508c]">
+                      <Link prefetch={false} href="/admin/library/video-reveals" className="inline-flex items-center rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-semibold text-[#76508c]">
                         Manage gallery
                       </Link>
                     </div>
                     {revealVideoLibrary.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                      <div className="grid grid-cols-2 gap-3">
                         {revealVideoLibrary.map((item) => (
                           <button
                             key={item.url}
                             type="button"
+                            aria-pressed={draft.revealVideoUrl === item.url}
                             onClick={() => {
                               form.setValue("revealVideoUrl", item.url);
                               form.setValue("previewImage", item.thumbnailUrl ?? "");
+                              form.setValue("decorAssets.revealVideoWebmUrl", "");
+                              form.setValue("decorAssets.revealVideoPosterUrl", item.thumbnailUrl ?? "");
                             }}
                             className={form.watch("revealVideoUrl") === item.url ? "overflow-hidden rounded-xl border-2 border-violet-600 bg-violet-50 text-left" : "overflow-hidden rounded-xl border border-violet-200 bg-white text-left"}
                           >
                             {item.thumbnailUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={item.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
+                              <img src={item.thumbnailUrl} alt="" loading="lazy" className="aspect-video w-full object-cover" />
                             ) : (
-                              <video src={item.url} className="aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" />
+                              <span className="grid aspect-video w-full place-items-center bg-violet-50 text-violet-700"><Video className="size-6" /><span className="sr-only">Video thumbnail unavailable</span></span>
                             )}
-                            <span className="block truncate px-2 py-1.5 text-[9px] font-semibold text-[#5f476c]">{item.label}</span>
+                            <span className="block truncate px-2 py-2 text-[11px] font-semibold text-[#5f476c]">{draft.revealVideoUrl === item.url && <span className="mb-1 flex items-center gap-1 text-violet-700"><CheckCircle2 className="size-3" />Selected</span>}{item.label}</span>
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
                 )}
-              </div>
+                <p className="flex items-center gap-1 text-xs font-semibold text-violet-700">
+                  <CheckCircle2 className="size-3.5" />
+                  {draft.revealMode === "VIDEO" ? (draft.revealVideoUrl ? `Selected: ${revealVideoLibrary.find((item) => item.url === draft.revealVideoUrl)?.label || "Uploaded or linked reveal video"}` : "Video mode selected — choose a video") : `Selected: ${ANIMATION_LABELS[draft.decorAssets?.revealAnimation?.preset ?? "MAGIC_BLOOM"]}`}
+                </p>
+                {form.formState.errors.revealVideoUrl && <p role="alert" className="text-xs text-destructive">{form.formState.errors.revealVideoUrl.message}</p>}
+              </div>);
+  const musicPanel = (<section className="grid gap-3 rounded-2xl border border-violet-200 bg-violet-50/35 p-3">
+                <div className="flex items-center justify-between gap-3"><div><p className="flex items-center gap-2 text-xs font-bold text-[#4b3659]"><Music className="size-4" />Theme music (optional)</p><p className="mt-1 text-[10px] text-muted-foreground">Upload your own audio. It becomes the starting music for new invitations using this theme; customers can replace or remove it.</p></div>{draft.decorAssets?.musicUrl && <Button type="button" variant="ghost" size="sm" onClick={() => { form.setValue("decorAssets.musicUrl", ""); form.setValue("decorAssets.musicName", ""); }}>Remove</Button>}</div>
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed bg-white p-3 text-xs font-semibold"><Upload className="size-4" />{assetUploading === "audio" ? "Uploading music…" : "Upload music (up to 15 MB)"}<input type="file" accept="audio/*" className="hidden" disabled={Boolean(assetUploading)} onChange={(event) => handleMusicUpload(event.target.files?.[0])} /></label>
+                <details><summary className="cursor-pointer text-xs text-muted-foreground">Use an existing audio URL</summary><Input className="mt-2" aria-label="Theme music URL" placeholder="https://…/your-audio.mp3" value={draft.decorAssets?.musicUrl ?? ""} onChange={(event) => { form.setValue("decorAssets.musicUrl", event.target.value, { shouldValidate: true }); form.setValue("decorAssets.musicName", "Linked theme music"); }} /></details>
+                {form.formState.errors.decorAssets?.musicUrl && <p role="alert" className="text-xs text-destructive">{form.formState.errors.decorAssets.musicUrl.message}</p>}
+                {draft.decorAssets?.musicUrl ? <ThemeAssetReview kind="audio" url={draft.decorAssets.musicUrl} label={draft.decorAssets.musicName || "Theme music"} /> : <p className="text-xs text-muted-foreground">No music selected</p>}
+              </section>);
+  const artworkPanel = (<div><div className="grid gap-3 rounded-2xl border border-violet-200/70 bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-[#4b3659]">Section artwork</p>
+                          <p className="text-[9px] text-[#8a7397]">Background for {sectionDisplayName(previewSection)}</p>
+                        </div>
+                        {(form.watch("decorAssets.sectionImages") ?? {})[previewSection] && (
+                          <button
+                            type="button"
+                            className="text-[10px] font-semibold text-destructive"
+                            onClick={() => {
+                              const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                              delete current[previewSection];
+                              form.setValue("decorAssets.sectionImages", current);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      {imageLibrary.length > 0 && (
+                        <div className="grid gap-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[10px]">Choose from Template Library</Label>
+                            <Link prefetch={false} href="/admin/library/templates" className="text-[9px] font-semibold text-[#76508c]">Manage library</Link>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {imageLibrary.map((asset) => (
+                              <button
+                                key={asset.id}
+                                type="button"
+                                onClick={() => {
+                                  const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
+                                  form.setValue("decorAssets.sectionImages", { ...current, [previewSection]: asset.url });
+                                }}
+                                className={
+                                  (form.watch("decorAssets.sectionImages") ?? {})[previewSection] === asset.url
+                                    ? "overflow-hidden rounded-xl border-2 border-[#76508c] bg-violet-50"
+                                    : "overflow-hidden rounded-xl border border-violet-200 bg-white"
+                                }
+                                aria-pressed={draft.decorAssets?.sectionImages?.[previewSection] === asset.url}
+                                title={asset.name}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={asset.thumbnailUrl || asset.url} alt={asset.name} loading="lazy" className="aspect-[3/4] w-full object-cover" />
+                                <span className="block truncate px-2 py-2 text-[11px] font-semibold text-[#5f476c]">{draft.decorAssets?.sectionImages?.[previewSection] === asset.url && <span className="block font-bold text-violet-700">✓ Selected</span>}{asset.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-              <div className="grid gap-3 rounded-2xl border border-violet-200/80 bg-white p-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
-                <div>
-                  <p className="text-xs font-bold text-[#4b3659]">Live mobile opening preview</p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-[#8a7397]">
-                    This is the real Shubh Aarambh used on the invitation. Coded animations auto-play here exactly like a reveal video and can be replayed.
-                  </p>
-                </div>
-                <ThemeRealSectionPreview
-                  section="ENVELOPE"
-                  eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
-                  palette={form.watch("colorPalette")}
-                  fonts={form.watch("fontPairing")}
-                  content={form.watch("content")}
-                  revealMode={form.watch("revealMode")}
-                  revealVideoUrl={form.watch("revealVideoUrl")}
-                  revealAnimation={form.watch("decorAssets.revealAnimation")}
-                  sectionImages={form.watch("decorAssets.sectionImages")}
-                  sectionStyles={form.watch("decorAssets.sectionStyles")}
-                  elementStyles={form.watch("decorAssets.elementStyles")}
-                  customText={form.watch("decorAssets.customText")}
-                  onSelectElement={() => undefined}
-                  compact
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" onClick={() => setAppearanceOpen(true)}>
-                  <SlidersHorizontal className="size-4" />
-                  Colours & fonts
-                </Button>
-                <Button type="button" variant="outline" onClick={() => bulkArtworkInputRef.current?.click()} disabled={assetUploading === "image"}>
-                  <Upload className="size-4" />
-                  {assetUploading === "image" ? "Uploading…" : "Bulk artwork"}
-                </Button>
-                <input ref={bulkArtworkInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleBulkArtwork(e.target.files?.[0])} />
-                {imageLibrary.length > 0 && (
-                  <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {imageLibrary.slice(0, 10).map((asset) => (
-                      <button key={asset.id} type="button" title={`Apply ${asset.name} to all sections`} onClick={() => applyLibraryImageToAll(asset.url)} className="w-12 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-white">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={asset.thumbnailUrl || asset.url} alt={asset.name} className="aspect-[3/4] w-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {type === "WEBSITE" && (
-            <section className="-mx-3 grid gap-3 lg:mx-0 lg:grid-cols-[minmax(360px,0.9fr)_minmax(420px,1.1fr)] lg:items-start">
-              <div className="sticky top-0 z-20 grid gap-2 border-y border-violet-200/70 bg-[#faf6fd]/95 px-3 py-2 backdrop-blur-xl lg:col-span-2 lg:top-16 lg:rounded-2xl lg:border">
+                      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-violet-50/50 px-3 py-3 text-xs font-semibold text-[#6c4a7d]">
+                        <ImageIcon className="size-4" />
+                        {assetUploading === "image" ? "Uploading…" : "Upload new image"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={assetUploading === "image"}
+                          onChange={(e) => handleSectionImage(previewSection, e.target.files?.[0])}
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={assetUploading === "image"}
+                        onClick={() => bulkArtworkInputRef.current?.click()}
+                      >
+                        <Upload className="size-3.5" />
+                        Upload artwork for all sections
+                      </Button>
+                      <input
+                        ref={bulkArtworkInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleBulkArtwork(e.target.files?.[0])}
+                      />
+                    </div>
+<div className="mt-3 grid gap-2 rounded-xl border p-3"><p className="text-xs text-muted-foreground">Apply the selected section artwork to every active section.</p><Button type="button" variant="outline" disabled={!draft.decorAssets?.sectionImages?.[previewSection]} onClick={() => applyLibraryImageToAll(draft.decorAssets?.sectionImages?.[previewSection] || "")}>Apply selected artwork to all sections</Button></div></div>);
+  const sectionNavigation = (<div className="grid gap-2">
                 <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
                   {sectionOrder.map((sectionType) => {
                     const typedSection = sectionType as (typeof SECTION_TYPES)[number];
@@ -1004,6 +1087,7 @@ export function ThemeFormDialog({
                         key={sectionType}
                         type="button"
                         onClick={() => selectSectionForEditing(typedSection)}
+                        aria-pressed={previewSection === typedSection}
                         className={
                           previewSection === typedSection
                             ? "shrink-0 rounded-full bg-[#76508c] px-3 py-2 text-[11px] font-bold text-white shadow-sm"
@@ -1018,11 +1102,13 @@ export function ThemeFormDialog({
                     <button
                       key={item}
                       type="button"
+                      disabled={!PREVIEW_SECTION_TYPES.has(item)}
+                      title={PREVIEW_SECTION_TYPES.has(item) ? `Add ${sectionDisplayName(item)}` : "Website section not available yet"}
                       onClick={() => {
                         toggleSection(item);
                         selectSectionForEditing(item);
                       }}
-                      className="shrink-0 rounded-full border border-dashed border-violet-300 bg-violet-50 px-3 py-2 text-[11px] font-semibold text-[#76508c]"
+                      className="disabled:cursor-not-allowed disabled:opacity-40 shrink-0 rounded-full border border-dashed border-violet-300 bg-violet-50 px-3 py-2 text-[11px] font-semibold text-[#76508c]"
                     >
                       + {sectionDisplayName(item)}
                     </button>
@@ -1069,9 +1155,8 @@ export function ThemeFormDialog({
                     Remove
                   </Button>
                 </div>
-              </div>
-
-              <div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] px-3 py-4 shadow-inner lg:sticky lg:top-40">
+              </div>);
+  const sectionCanvas = (<div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] mx-auto w-full max-w-[520px] px-3 py-4 shadow-inner">
                 <ThemeRealSectionPreview
                   section={previewSection}
                   eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
@@ -1080,6 +1165,9 @@ export function ThemeFormDialog({
                   content={form.watch("content")}
                   revealMode={form.watch("revealMode")}
                   revealVideoUrl={form.watch("revealVideoUrl")}
+                  revealVideoWebmUrl={draft.decorAssets?.revealVideoWebmUrl}
+                  revealVideoPosterUrl={draft.decorAssets?.revealVideoPosterUrl || draft.previewImage}
+                  selectedElement={selectedElement}
                   revealAnimation={form.watch("decorAssets.revealAnimation")}
                   sectionImages={form.watch("decorAssets.sectionImages")}
                   sectionStyles={form.watch("decorAssets.sectionStyles")}
@@ -1087,52 +1175,21 @@ export function ThemeFormDialog({
                   customText={form.watch("decorAssets.customText")}
                   onSelectElement={(key) => {
                     setSelectedElement(key);
-                    setMobileTool("content");
+                    setMobileTool((current) => current === "text" ? "text" : "content");
                   }}
-                  compact
+                  onMoveElement={(key, position) => {
+                    const custom = findCustomText(key);
+                    if (custom) {
+                      const blocks = [...customTextBySection[custom.section]];
+                      blocks[custom.index] = { ...custom.block, ...position };
+                      setCustomText(custom.section as (typeof SECTION_TYPES)[number], blocks);
+                    } else { updateElementStyle(key, position); }
+                  }}
                 />
-              </div>
-
-              <div className="overflow-hidden rounded-t-[1.75rem] rounded-b-2xl border border-violet-200/80 bg-[#fffaff] shadow-[0_-12px_36px_rgba(99,71,118,.12)]">
-                <div className="flex items-center justify-between gap-3 border-b border-violet-100 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-display text-lg font-semibold text-[#442852]">
-                      {sectionDisplayName(previewSection)}
-                    </p>
-                    <p className="text-[10px] text-[#8a7397]">
-                      Edit content and load text from library
-                    </p>
-                  </div>
-                  <Button type="button" variant="outline" size="sm" onClick={() => addCustomText()}>
-                    <Plus className="size-3.5" />
-                    Add text
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-4 border-b border-violet-100 bg-violet-50/60 p-1">
-                  {[
-                    ["content", "Content", Smartphone],
-                    ["library", "Library", BookOpen],
-                    ["text", "Text", Type],
-                    ["advanced", "Advanced", SlidersHorizontal],
-                  ].map(([value, label, Icon]) => (
-                    <button
-                      key={String(value)}
-                      type="button"
-                      onClick={() => setMobileTool(value as "content" | "library" | "text" | "advanced")}
-                      className={
-                        mobileTool === value
-                          ? "flex min-w-0 items-center justify-center gap-1 rounded-xl bg-[#76508c] px-2 py-2 text-[10px] font-bold text-white shadow-sm"
-                          : "flex min-w-0 items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold text-[#6d547a]"
-                      }
-                    >
-                      <Icon className="size-3.5 shrink-0" />
-                      <span className="truncate">{String(label)}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {mobileTool === "content" && (
+              </div>);
+  const toolPanel = (<div className="grid gap-3">
+                {!canEditSectionText && ["content", "library", "text", "advanced"].includes(mobileTool) && <p className="rounded-xl border bg-violet-50 p-4 text-xs leading-relaxed text-violet-900">{previewSection === "ENVELOPE" ? "The opening uses a reveal video or coded animation. Use Video or Templates below to edit it. Choose a body section above to add or style text." : "This section does not have a website renderer yet. Choose an available invitation section above."}</p>}
+                {mobileTool === "content" && canEditSectionText && (
                   <div className="grid gap-3 p-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-xs font-bold text-[#4b3659]">Text layers</Label>
@@ -1171,7 +1228,7 @@ export function ThemeFormDialog({
                                 {definition.label}
                               </span>
                               <span className="block truncate text-[9px] text-[#8a7397]">
-                                {layerText || "Empty"}
+                                {elementStyles[definition.key]?.hidden ? "Hidden · select to restore" : layerText || "Empty"}
                               </span>
                             </span>
                           </button>
@@ -1207,7 +1264,7 @@ export function ThemeFormDialog({
                           <p className="text-xs font-bold text-[#4b3659]">
                             {selectedDefinition?.label ?? (selectedCustom ? "Added text" : "Select content")}
                           </p>
-                          <p className="text-[9px] text-[#8a7397]">Edit the selected layer only</p>
+                          <p className="text-[9px] text-[#8a7397]">Edit the selected layer only · library text remains reusable</p>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => setMobileTool("library")}>
                           <BookOpen className="size-3.5" />
@@ -1224,7 +1281,7 @@ export function ThemeFormDialog({
                         />
                       ) : selectedElement ? (
                         <div className="rounded-xl border border-dashed bg-violet-50/40 p-3 text-[10px] leading-relaxed text-[#75617f]">
-                          This layer uses invitation data such as names, date or venue. You can style it from the Text tab, but its value comes from the invitation.
+                          Customer placeholder: names, date, functions or venue. Style or position it here; the customer enters its value on mobile.
                         </div>
                       ) : (
                         <div className="rounded-xl border border-dashed p-3 text-center text-[10px] text-[#8a7397]">
@@ -1251,12 +1308,12 @@ export function ThemeFormDialog({
                               if (selectedCustom) {
                                 removeSelectedCustomText();
                               } else {
-                                updateElementStyle(selectedElement, { hidden: true });
+                                updateElementStyle(selectedElement, { hidden: !selectedStyle.hidden });
                               }
                             }}
                           >
                             <Trash2 className="size-3.5" />
-                            {selectedCustom ? "Delete" : "Hide"}
+                            {selectedCustom ? "Delete" : selectedStyle.hidden ? "Show" : "Hide"}
                           </Button>
                         )}
                       </div>
@@ -1264,7 +1321,7 @@ export function ThemeFormDialog({
                   </div>
                 )}
 
-                {mobileTool === "library" && (
+                {mobileTool === "library" && canEditSectionText && (
                   <div className="grid gap-3 p-3">
                     <div className="grid gap-2">
                       <div className="relative">
@@ -1287,7 +1344,7 @@ export function ThemeFormDialog({
                       </select>
                     </div>
 
-                    <div className="grid max-h-[48vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2">
                       {libraryPresets.map((preset) => {
                         const cardImage =
                           preset.previewImage ||
@@ -1295,7 +1352,7 @@ export function ThemeFormDialog({
                           theme?.previewImage ||
                           null;
                         return (
-                          <div key={preset.id} className="grid min-w-0 content-between overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm">
+                          <div key={preset.id} className={`grid min-w-0 content-between overflow-hidden rounded-2xl border bg-white shadow-sm ${contentPlacements(draft, preset.text).length ? "border-2 border-violet-600" : "border-violet-200/70"}`}>
                             <div>
                               {cardImage ? (
                                 // eslint-disable-next-line @next/next/no-img-element
@@ -1306,9 +1363,10 @@ export function ThemeFormDialog({
                                 </div>
                               )}
                               <div className="p-2">
+                                {contentPlacements(draft, preset.text).length > 0 && <p className="mb-1 flex items-center gap-1 text-[9px] font-bold text-violet-700"><CheckCircle2 className="size-3 shrink-0" />Selected · {contentPlacements(draft, preset.text).map(sectionDisplayName).join(", ")}</p>}
                                 <p className="line-clamp-2 text-[10px] font-bold leading-tight text-[#4b3659]">{preset.label}</p>
                                 <p className="mt-1 truncate text-[8px] font-semibold text-[#9a82a7]">
-                                  {preset.community} · {preset.suggestedSection}
+                                  {preset.community} · {sectionDisplayName(preset.suggestedSection)}
                                 </p>
                                 <p className="mt-1 line-clamp-2 text-[8px] leading-relaxed text-[#75617f]">{preset.text}</p>
                               </div>
@@ -1318,6 +1376,7 @@ export function ThemeFormDialog({
                                 <Plus className="size-3" />
                                 Apply
                               </Button>
+                              <button type="button" className="mt-2 w-full text-[9px] font-semibold text-violet-700" onClick={() => { addCustomText(preset.text); setMobileTool("content"); }}>Add as new text</button>
                             </div>
                           </div>
                         );
@@ -1332,7 +1391,7 @@ export function ThemeFormDialog({
                   </div>
                 )}
 
-                {mobileTool === "text" && (
+                {mobileTool === "text" && canEditSectionText && (
                   <div className="grid gap-4 p-3">
                     {!selectedElement ? (
                       <div className="rounded-xl border border-dashed p-5 text-center text-xs text-muted-foreground">
@@ -1355,13 +1414,14 @@ export function ThemeFormDialog({
                               </button>
                               <Input
                                 type="number"
+                                aria-label="Text size"
                                 min={8}
                                 max={120}
                                 value={selectedStyle.fontSize ?? ""}
                                 placeholder="Auto"
                                 onChange={(e) =>
                                   updateSelectedAppearance({
-                                    fontSize: e.target.value ? Number(e.target.value) : undefined,
+                                    fontSize: e.target.value ? Math.max(8, Math.min(120, Number(e.target.value))) : undefined,
                                   })
                                 }
                                 className="h-10 border-0 text-center shadow-none"
@@ -1428,6 +1488,12 @@ export function ThemeFormDialog({
                         </div>
 
                         <div className="grid gap-3 rounded-2xl border bg-white p-3">
+                          <div className="flex gap-2">{([['bold', 'Bold'], ['italic', 'Italic'], ['underline', 'Underline']] as const).map(([key, label]) => <Button key={key} type="button" size="sm" variant={selectedStyle[key] ? "default" : "outline"} aria-pressed={Boolean(selectedStyle[key])} onClick={() => updateSelectedAppearance({ [key]: !selectedStyle[key] })}>{label}</Button>)}</div>
+                          <label className="grid gap-1 text-xs">Letter spacing<Input type="number" aria-label="Letter spacing" min={-2} max={12} step={0.5} value={selectedStyle.letterSpacing ?? 0} onChange={(event) => updateSelectedAppearance({ letterSpacing: Math.max(-2, Math.min(12, Number(event.target.value))) })} /></label>
+                          <label className="grid gap-1 text-xs">Line height<Input type="number" aria-label="Line height" min={0.8} max={3} step={0.1} value={selectedStyle.lineHeight ?? 1.25} onChange={(event) => updateSelectedAppearance({ lineHeight: Math.max(0.8, Math.min(3, Number(event.target.value))) })} /></label>
+                          <label className="grid gap-1 text-xs">Opacity · {Math.round((selectedStyle.opacity ?? 1) * 100)}%<input type="range" aria-label="Text opacity" min={0} max={1} step={0.05} value={selectedStyle.opacity ?? 1} onChange={(event) => updateSelectedAppearance({ opacity: Number(event.target.value) })} /></label>
+                        </div>
+                        <div className="grid gap-3 rounded-2xl border bg-white p-3">
                           <div className="grid gap-1">
                             <div className="flex justify-between text-[10px]">
                               <Label className="text-[10px]">Horizontal position</Label>
@@ -1477,89 +1543,8 @@ export function ThemeFormDialog({
                   </div>
                 )}
 
-                {mobileTool === "advanced" && (
-                  <div className="grid max-h-[58vh] gap-4 overflow-y-auto p-3">
-                    <div className="grid gap-3 rounded-2xl border border-violet-200/70 bg-white p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-bold text-[#4b3659]">Section artwork</p>
-                          <p className="text-[9px] text-[#8a7397]">Background for {sectionDisplayName(previewSection)}</p>
-                        </div>
-                        {(form.watch("decorAssets.sectionImages") ?? {})[previewSection] && (
-                          <button
-                            type="button"
-                            className="text-[10px] font-semibold text-destructive"
-                            onClick={() => {
-                              const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
-                              delete current[previewSection];
-                              form.setValue("decorAssets.sectionImages", current);
-                            }}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                      {imageLibrary.length > 0 && (
-                        <div className="grid gap-2">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-[10px]">Choose from Template Library</Label>
-                            <Link href="/admin/library/templates" className="text-[9px] font-semibold text-[#76508c]">Manage library</Link>
-                          </div>
-                          <div className="grid max-h-48 grid-cols-4 gap-2 overflow-y-auto">
-                            {imageLibrary.map((asset) => (
-                              <button
-                                key={asset.id}
-                                type="button"
-                                onClick={() => {
-                                  const current = { ...(form.getValues("decorAssets.sectionImages") ?? {}) };
-                                  form.setValue("decorAssets.sectionImages", { ...current, [previewSection]: asset.url });
-                                }}
-                                className={
-                                  (form.watch("decorAssets.sectionImages") ?? {})[previewSection] === asset.url
-                                    ? "overflow-hidden rounded-xl border-2 border-[#76508c] bg-violet-50"
-                                    : "overflow-hidden rounded-xl border border-violet-200 bg-white"
-                                }
-                                title={asset.name}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={asset.thumbnailUrl || asset.url} alt={asset.name} className="aspect-[3/4] w-full object-cover" />
-                                <span className="block truncate px-1 py-1 text-[8px] font-semibold text-[#5f476c]">{asset.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 bg-violet-50/50 px-3 py-3 text-xs font-semibold text-[#6c4a7d]">
-                        <ImageIcon className="size-4" />
-                        {assetUploading === "image" ? "Uploading…" : "Upload new image"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={assetUploading === "image"}
-                          onChange={(e) => handleSectionImage(previewSection, e.target.files?.[0])}
-                        />
-                      </label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={assetUploading === "image"}
-                        onClick={() => bulkArtworkInputRef.current?.click()}
-                      >
-                        <Upload className="size-3.5" />
-                        Apply one image to all sections
-                      </Button>
-                      <input
-                        ref={bulkArtworkInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleBulkArtwork(e.target.files?.[0])}
-                      />
-                    </div>
-
+                {mobileTool === "advanced" && canEditSectionText && (
+                  <div className="grid gap-4 p-3">
                     <div className="grid gap-3 rounded-2xl border bg-white p-3">
                       <p className="text-xs font-bold text-[#4b3659]">Section layout</p>
                       <div className="grid gap-1">
@@ -1637,49 +1622,97 @@ export function ThemeFormDialog({
                     </div>
                   </div>
                 )}
-              </div>
-            </section>
+                {mobileTool === "theme" && <div className="grid gap-5 p-3">{themeSettings}</div>}
+                {mobileTool === "templates" && <div className="p-3">{artworkPanel}</div>}
+                {mobileTool === "video" && <div className="grid gap-3 p-3">{revealPanel}{draft.revealMode === "VIDEO" && draft.revealVideoUrl && <ThemeAssetReview kind="video" url={draft.revealVideoUrl} poster={draft.decorAssets?.revealVideoPosterUrl || draft.previewImage} label="Selected opening video" />}</div>}
+                {mobileTool === "music" && <div className="p-3">{musicPanel}</div>}
+              </div>);
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (standalone && !next) {
+          router.push(returnHref);
+          return;
+        }
+        setOpen(next);
+      }}
+    >
+      {!standalone && (
+        <DialogTrigger asChild>
+          {theme ? (
+            <IconButton label="Edit">
+              <Pencil className="size-4" />
+            </IconButton>
+          ) : (
+            <IconButton label={type === "PDF" ? "New PDF theme" : "New theme"} variant="default">
+              <Plus className="size-4" />
+            </IconButton>
           )}
+        </DialogTrigger>
+      )}
 
-          <Sheet open={appearanceOpen} onOpenChange={setAppearanceOpen}>
-            <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-              <SheetHeader>
-                <SheetTitle>Colours & fonts</SheetTitle>
-                <SheetDescription>
-                  Global theme appearance. Section-specific overrides stay inside Advanced.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-6 px-4 pb-6">
-                <section className="grid gap-3">
-                  <Label className="text-sm font-bold">Colour palette</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(["primary", "secondary", "accent", "background", "foreground"] as const).map((key) => (
-                      <label key={key} className="flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-white p-3">
-                        <span className="text-xs font-semibold capitalize text-[#5a4168]">{key}</span>
-                        <input type="color" value={form.watch(`colorPalette.${key}`)} onChange={(e) => form.setValue(`colorPalette.${key}`, e.target.value)} className="size-9 rounded-lg border bg-white" />
-                      </label>
-                    ))}
-                  </div>
-                </section>
+      <DialogContent
+        showCloseButton={!standalone}
+        className={
+          standalone
+            ? "fixed inset-0 top-0 left-0 h-svh w-screen max-w-none translate-x-0 translate-y-0 flex flex-col gap-0 overflow-hidden rounded-none border-0 bg-[#fbf9fd] p-0 shadow-none data-[state=open]:zoom-in-100 sm:max-w-none"
+            : "flex h-[92svh] max-h-[92svh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96vw]"
+        }
+      >
+        {standalone && <DialogHeader className="sr-only"><DialogTitle>Theme studio</DialogTitle><DialogDescription>Edit theme content, artwork, opening video and music in the desktop admin studio.</DialogDescription></DialogHeader>}
+        {standalone ? (
+          <div className="z-50 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-violet-200/70 bg-white/95 px-3 backdrop-blur-xl sm:px-6">
+            <Link prefetch={false} href={returnHref} className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]">
+              <ArrowLeft className="size-4" />
+              <span className="sr-only">Back</span>
+            </Link>
+            <div className="min-w-0 flex-1 text-center">
+              <p className="truncate font-display text-base font-semibold text-[#4b3659]">
+                {draft.name || "New Theme"}
+              </p>
+              <p className="text-[9px] font-semibold tracking-[0.15em] text-[#9a83a5] uppercase">Theme Editor</p>
+            </div>
+            {type === "WEBSITE" && <><Button type="button" variant="ghost" size="icon" aria-label="Undo theme change" disabled={!history.canUndo} onClick={history.undo}><Undo2 className="size-4" /></Button><Button type="button" variant="ghost" size="icon" aria-label="Redo theme change" disabled={!history.canRedo} onClick={history.redo}><Redo2 className="size-4" /></Button><ThemeDraftPreview draft={draft} /><Button type="submit" form={formId} disabled={loading || Boolean(assetUploading)}>{loading ? "Saving…" : "Save theme"}</Button></>}
+            <button
+              type="button"
+              onClick={() => router.push(returnHref)}
+              className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]"
+              aria-label="Close editor"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        ) : (
+          <DialogHeader>
+            <DialogTitle>
+              {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
+            </DialogTitle>
+          </DialogHeader>
+        )}
 
-                <section className="grid gap-3">
-                  <Label className="text-sm font-bold">Fonts</Label>
-                  {(["display", "body", "script"] as const).map((key) => (
-                    <div key={key} className="grid gap-1.5">
-                      <Label className="text-xs capitalize">{key} font</Label>
-                      <select className="border-input h-10 rounded-md border bg-white px-3 text-sm" value={form.watch(`fontPairing.${key}`)} onChange={(e) => form.setValue(`fontPairing.${key}`, e.target.value)}>
-                        {FONT_OPTIONS.map((font) => <option key={font} value={font}>{font}</option>)}
-                      </select>
-                    </div>
-                  ))}
-                </section>
+        <div className={type === "WEBSITE" ? "flex min-h-0 flex-1 flex-col overflow-hidden" : standalone ? "mx-auto w-full max-w-7xl px-3 py-4 sm:px-6" : ""}>
 
-                <Button type="button" onClick={() => setAppearanceOpen(false)}>Done</Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          if (errors.name || errors.eventCategories) chooseTool("theme");
+          else if (errors.revealVideoUrl) chooseTool("video");
+          else if (errors.decorAssets?.musicUrl) chooseTool("music");
+          toast.error(errors.name?.message ?? errors.revealVideoUrl?.message ?? "Check the highlighted theme settings before saving.");
+        })} id={formId} className={type === "WEBSITE" ? "flex min-h-0 flex-1 flex-col" : "grid min-w-0 gap-6"}>
+          {type === "WEBSITE" && <ThemeStudioShell
+            canEditText={canEditSectionText}
+            tool={mobileTool}
+            onToolChange={chooseTool}
+            sections={sectionNavigation}
+            canvas={sectionCanvas}
+            panel={toolPanel}
+            onAddText={() => { addCustomText(); setMobileTool("content"); }}
+            status="Draft preview · save theme to apply changes"
+            actions={<><ThemeDraftPreview draft={draft} /><Button type="submit" disabled={loading || Boolean(assetUploading)}>{loading ? "Saving…" : theme ? "Save changes" : "Create theme"}</Button></>}
+          />}
 
-          <div className="hidden">
+          {Boolean(type === "PDF") && <div className="hidden">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid min-w-0 gap-1.5">
               <Label>Name</Label>
@@ -1809,7 +1842,7 @@ export function ThemeFormDialog({
                     <div className="grid gap-2">
                       <div className="flex items-center justify-between">
                         <Label>Reveal Video Gallery</Label>
-                        <Link href="/admin/library/video-reveals" className="text-xs font-semibold text-violet-700">
+                        <Link prefetch={false} href="/admin/library/video-reveals" className="text-xs font-semibold text-violet-700">
                           Manage gallery
                         </Link>
                       </div>
@@ -1818,6 +1851,7 @@ export function ThemeFormDialog({
                           <button
                             key={item.url}
                             type="button"
+                            aria-pressed={draft.revealVideoUrl === item.url}
                             onClick={() => form.setValue("revealVideoUrl", item.url)}
                             className={
                               form.watch("revealVideoUrl") === item.url
@@ -2127,6 +2161,7 @@ export function ThemeFormDialog({
                                     ? "overflow-hidden rounded-lg border-2 border-violet-600 bg-violet-50"
                                     : "overflow-hidden rounded-lg border border-violet-200 bg-white"
                                 }
+                                aria-pressed={draft.decorAssets?.sectionImages?.[previewSection] === asset.url}
                                 title={asset.name}
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2385,6 +2420,9 @@ export function ThemeFormDialog({
                     content={form.watch("content")}
                     revealMode={form.watch("revealMode")}
                     revealVideoUrl={form.watch("revealVideoUrl")}
+                  revealVideoWebmUrl={draft.decorAssets?.revealVideoWebmUrl}
+                  revealVideoPosterUrl={draft.decorAssets?.revealVideoPosterUrl || draft.previewImage}
+                  selectedElement={selectedElement}
                     revealAnimation={form.watch("decorAssets.revealAnimation")}
                     sectionImages={form.watch("decorAssets.sectionImages")}
                     sectionStyles={form.watch("decorAssets.sectionStyles")}
@@ -2427,13 +2465,14 @@ export function ThemeFormDialog({
             </section>
           )}
 
-          </div>
+          </div>}
 
-          <DialogFooter className="sticky bottom-0 z-30 -mx-1 border-t border-violet-200/70 bg-[#fffaff]/95 px-1 pt-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
+          {Boolean(type === "PDF") && <DialogFooter className="sticky bottom-0 z-30 -mx-1 border-t border-violet-200/70 bg-[#fffaff]/95 px-1 pt-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
+            {type === "WEBSITE" && <ThemeDraftPreview draft={draft} />}
             <Button type="submit" disabled={loading || Boolean(assetUploading)}>
               {loading ? "Saving…" : theme ? "Save changes" : type === "PDF" ? "Create PDF theme" : "Create theme"}
             </Button>
-          </DialogFooter>
+          </DialogFooter>}
         </form>
         </div>
       </DialogContent>

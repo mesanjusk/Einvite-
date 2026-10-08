@@ -33,10 +33,12 @@ export function RsvpSection({
   invitationId,
   guestId,
   guestName,
+  previewMode = false,
 }: {
   invitationId: string;
   guestId?: string | null;
   guestName?: string | null;
+  previewMode?: boolean;
 }) {
   const { t } = useLocale();
   const edit = useInviteEdit();
@@ -60,7 +62,7 @@ export function RsvpSection({
   async function onSubmit(values: RsvpSubmissionInput) {
     // The couple editing their own invitation would otherwise reply to it,
     // and their guest list would open with a reply from themselves.
-    if (edit?.active) {
+    if (previewMode || edit?.active) {
       toast.message("This is how your guests will reply — their answers reach you.");
       return;
     }
@@ -166,11 +168,11 @@ export function RsvpSection({
               </div>
               <button
                 type="submit"
-                disabled={form.formState.isSubmitting}
+                disabled={previewMode || form.formState.isSubmitting}
                 className="pill-button mt-2"
                 style={{ background: "var(--inv-primary)", color: "var(--inv-background)" }}
               >
-                {form.formState.isSubmitting ? t.sending : t.sendRsvp}
+                {previewMode ? "RSVP disabled in preview" : form.formState.isSubmitting ? t.sending : t.sendRsvp}
               </button>
             </motion.form>
           )}
