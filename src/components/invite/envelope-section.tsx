@@ -6,10 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/lib/i18n/locale-context";
 
 const OPEN_DURATION_MS = 2800;
-// How long after tap the coded burst gets to play on its own before we
-// consider swapping in the preloaded video, so the flap-open + first
-// flash always shows instantly regardless of network speed.
-const VIDEO_HANDOFF_DELAY_MS = 600;
 // Safety net: if the video's "ended" event never fires (stalled
 // connection, codec hiccup), don't leave the guest stuck on it.
 const VIDEO_MAX_MS = 8000;
@@ -76,9 +72,11 @@ export function EnvelopeSection({
   onComplete,
   embedded = false,
   autoPlay = false,
+  mode,
 }: {
   initials: string;
-  /** Optional short muted clip layered over the coded burst once preloaded. */
+  mode?: "ANIMATION" | "VIDEO";
+  /** Optional short muted clip, used instead of the coded animation. */
   videoUrl?: string | null;
   videoWebmUrl?: string | null;
   posterUrl?: string | null;
@@ -102,6 +100,8 @@ export function EnvelopeSection({
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const endedListener = useRef<(() => void) | null>(null);
   const { t } = useLocale();
+  const useVideo = mode === "VIDEO" || (mode !== "ANIMATION" && Boolean(videoUrl || videoWebmUrl));
+  const [videoFailed, setVideoFailed] = useState(false);
   const preset = animation?.preset ?? "MAGIC_BLOOM";
   const intensity = Math.min(2, Math.max(0.5, animation?.intensity ?? 1));
   const speed = Math.min(2, Math.max(0.5, animation?.speed ?? 1));
@@ -134,33 +134,24 @@ export function EnvelopeSection({
     openedRef.current = true;
     setOpened(true);
 
-    const video = videoRef.current;
-    const videoLikelyReady = Boolean(
-      (videoUrl || videoWebmUrl) &&
-        video &&
-        (embedded || video.readyState >= 3),
-    );
-
-    if (!videoLikelyReady) {
+    if (!useVideo) {
       timers.current.push(setTimeout(finishOpening, OPEN_DURATION_MS));
       return;
     }
-
-    timers.current.push(setTimeout(() => {
-      if (!video) {
-        finishOpening();
-        return;
-      }
-      setShowVideo(true);
-      video.currentTime = 0;
-      endedListener.current = finishOpening;
-      video.addEventListener("ended", finishOpening, { once: true });
-      timers.current.push(setTimeout(finishOpening, VIDEO_MAX_MS));
-      video.play().catch(() => {
-        setShowVideo(false);
-        finishOpening();
-      });
-    }, VIDEO_HANDOFF_DELAY_MS));
+    const video = videoRef.current;
+    if (!video || !(videoUrl || videoWebmUrl)) {
+      setVideoFailed(true);
+      return;
+    }
+    setShowVideo(true);
+    video.currentTime = 0;
+    endedListener.current = finishOpening;
+    video.addEventListener("ended", finishOpening, { once: true });
+    timers.current.push(setTimeout(finishOpening, VIDEO_MAX_MS));
+    video.play().catch(() => {
+      setVideoFailed(true);
+      timers.current.forEach(clearTimeout);
+    });
   }
 
   useEffect(() => {
@@ -172,8 +163,23 @@ export function EnvelopeSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlay, embedded]);
 
+  if (useVideo) {
+    return (
+      <motion.div data-opening-mode="video" exit={{ opacity: 0 }} className={`${embedded ? "absolute inset-0 z-10" : "fixed inset-0 z-50"} overflow-hidden bg-black`}>
+        <video ref={videoRef} aria-label="Opening reveal video" muted playsInline preload="auto" poster={posterUrl ?? undefined} className="absolute inset-0 size-full object-cover" onError={() => { setVideoFailed(true); timers.current.forEach(clearTimeout); }}>
+          {videoWebmUrl && <source src={videoWebmUrl} type="video/webm" />}
+          {videoUrl && <source src={videoUrl} type="video/mp4" />}
+        </video>
+        {!opened && !videoFailed && <button type="button" onClick={handleTap} className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 to-transparent pb-12 text-xl text-white">{t.tapToReveal}</button>}
+        {opened && !showVideo && !videoFailed && <p role="status" className="absolute inset-x-0 bottom-10 text-center text-white">Loading video…</p>}
+        {videoFailed && <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/75 p-6 text-center text-white"><p role="alert">Opening video is unavailable.</p><button type="button" onClick={finishOpening} className="rounded-full border border-white px-5 py-2">Continue to invitation</button></div>}
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
+      data-opening-mode="animation"
       onClick={handleTap}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
@@ -429,23 +435,7 @@ export function EnvelopeSection({
         ✦
       </motion.p>
 
-      {(videoUrl || videoWebmUrl) && (
-        <motion.video
-          ref={videoRef}
-          muted
-          playsInline
-          preload="auto"
-          poster={posterUrl ?? undefined}
-          className="absolute inset-0 size-full object-cover"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: showVideo ? 1 : 0 }}
-          transition={{ duration: 0.4 }}
-          style={{ pointerEvents: "none" }}
-        >
-          {videoWebmUrl && <source src={videoWebmUrl} type="video/webm" />}
-          {videoUrl && <source src={videoUrl} type="video/mp4" />}
-        </motion.video>
-      )}
+
     </motion.div>
   );
 }

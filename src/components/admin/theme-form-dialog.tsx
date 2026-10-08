@@ -1078,8 +1078,10 @@ export function ThemeFormDialog({
                       />
                     </div>
 <div className="mt-3 grid gap-2 rounded-xl border p-3"><p className="text-xs text-muted-foreground">Apply the selected section artwork to every active section.</p><Button type="button" variant="outline" disabled={!draft.decorAssets?.sectionImages?.[previewSection]} onClick={() => applyLibraryImageToAll(draft.decorAssets?.sectionImages?.[previewSection] || "")}>Apply selected artwork to all sections</Button></div></div>);
-  const sectionNavigation = (<div className="grid gap-2">
-                <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+  const sectionNavigation = (<div className="flex min-w-0 items-center gap-2">
+                {standalone && <Link prefetch={false} href={returnHref} aria-label="Back to themes" className="grid size-8 shrink-0 place-items-center rounded-full border"><ArrowLeft className="size-4" /></Link>}
+                <span title={draft.name || "New theme"} className="hidden max-w-32 shrink-0 truncate text-xs font-semibold xl:block">{draft.name || "New theme"}</span>
+                <div className="scrollbar-none flex min-w-0 flex-1 gap-1 overflow-x-auto">
                   {sectionOrder.map((sectionType) => {
                     const typedSection = sectionType as (typeof SECTION_TYPES)[number];
                     return (
@@ -1115,7 +1117,7 @@ export function ThemeFormDialog({
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between gap-2 rounded-2xl border border-violet-200/70 bg-white/85 px-2 py-1.5">
+                <div className="flex shrink-0 items-center gap-1 border-l border-violet-200 pl-2"><Button type="button" variant="ghost" size="icon" aria-label="Undo theme change" disabled={!history.canUndo} onClick={history.undo}><Undo2 className="size-4" /></Button><Button type="button" variant="ghost" size="icon" aria-label="Redo theme change" disabled={!history.canRedo} onClick={history.redo}><Redo2 className="size-4" /></Button>
                   <div className="flex items-center gap-1">
                     <Button
                       type="button"
@@ -1140,10 +1142,6 @@ export function ThemeFormDialog({
                       <ArrowDown className="size-4" />
                     </Button>
                   </div>
-                  <div className="min-w-0 text-center">
-                    <p className="truncate text-xs font-bold text-[#4b3659]">{sectionDisplayName(previewSection)}</p>
-                    <p className="text-[9px] text-[#8a7397]">Selected section</p>
-                  </div>
                   <Button
                     type="button"
                     variant="ghost"
@@ -1156,7 +1154,7 @@ export function ThemeFormDialog({
                   </Button>
                 </div>
               </div>);
-  const sectionCanvas = (<div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] mx-auto w-full max-w-[520px] px-3 py-4 shadow-inner">
+  const sectionCanvas = (<div className="rounded-[1.75rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#fbf5ff_0%,#f2e9f8_48%,#ede2f5_100%)] mx-auto h-full min-h-0 w-full max-w-[520px] p-2 shadow-inner">
                 <ThemeRealSectionPreview
                   section={previewSection}
                   eventCategory={(form.watch("eventCategories")?.[0] ?? form.watch("eventCategory") ?? "wedding") as ThemeFormInput["eventCategory"]}
@@ -1576,7 +1574,7 @@ export function ThemeFormDialog({
                       <label className="flex items-center justify-between rounded-xl border p-3">
                         <span className="text-xs font-semibold">Show content background box</span>
                         <Switch
-                          checked={sectionStyles[previewSection]?.showBox ?? true}
+                          checked={sectionStyles[previewSection]?.showBox ?? !draft.decorAssets?.sectionImages?.[previewSection]}
                           onCheckedChange={(value) => updateSectionStyle(previewSection, { showBox: value })}
                         />
                       </label>
@@ -1662,8 +1660,8 @@ export function ThemeFormDialog({
         }
       >
         {standalone && <DialogHeader className="sr-only"><DialogTitle>Theme studio</DialogTitle><DialogDescription>Edit theme content, artwork, opening video and music in the desktop admin studio.</DialogDescription></DialogHeader>}
-        {standalone ? (
-          <div className="z-50 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-violet-200/70 bg-white/95 px-3 backdrop-blur-xl sm:px-6">
+        {standalone && type !== "WEBSITE" ? (
+          <div className="z-50 flex h-11 shrink-0 items-center justify-between gap-3 border-b border-violet-200/70 bg-white/95 px-3 backdrop-blur-xl sm:px-6">
             <Link prefetch={false} href={returnHref} className="inline-flex size-10 items-center justify-center rounded-full border border-violet-200 bg-white text-[#5b4268]">
               <ArrowLeft className="size-4" />
               <span className="sr-only">Back</span>
@@ -1672,9 +1670,9 @@ export function ThemeFormDialog({
               <p className="truncate font-display text-base font-semibold text-[#4b3659]">
                 {draft.name || "New Theme"}
               </p>
-              <p className="text-[9px] font-semibold tracking-[0.15em] text-[#9a83a5] uppercase">Theme Editor</p>
+              <p className="sr-only">Theme Editor</p>
             </div>
-            {type === "WEBSITE" && <><Button type="button" variant="ghost" size="icon" aria-label="Undo theme change" disabled={!history.canUndo} onClick={history.undo}><Undo2 className="size-4" /></Button><Button type="button" variant="ghost" size="icon" aria-label="Redo theme change" disabled={!history.canRedo} onClick={history.redo}><Redo2 className="size-4" /></Button><ThemeDraftPreview draft={draft} /><Button type="submit" form={formId} disabled={loading || Boolean(assetUploading)}>{loading ? "Saving…" : "Save theme"}</Button></>}
+
             <button
               type="button"
               onClick={() => router.push(returnHref)}
@@ -1684,13 +1682,13 @@ export function ThemeFormDialog({
               <X className="size-4" />
             </button>
           </div>
-        ) : (
+        ) : !standalone ? (
           <DialogHeader>
             <DialogTitle>
               {theme ? `Edit ${theme.name}` : type === "PDF" ? "New PDF theme" : "New theme"}
             </DialogTitle>
           </DialogHeader>
-        )}
+        ) : null}
 
         <div className={type === "WEBSITE" ? "flex min-h-0 flex-1 flex-col overflow-hidden" : standalone ? "mx-auto w-full max-w-7xl px-3 py-4 sm:px-6" : ""}>
 
@@ -2347,7 +2345,7 @@ export function ThemeFormDialog({
                         <label className="flex items-center justify-between rounded-lg border bg-background p-2 sm:col-span-2">
                           <span className="text-xs font-medium">Show content background box</span>
                           <Switch
-                            checked={sectionStyles[typedSection]?.showBox ?? true}
+                            checked={sectionStyles[typedSection]?.showBox ?? !draft.decorAssets?.sectionImages?.[typedSection]}
                             onCheckedChange={(value) =>
                               updateSectionStyle(typedSection, { showBox: value })
                             }

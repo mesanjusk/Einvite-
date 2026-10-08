@@ -20,6 +20,7 @@ export function buildThemePreviewData(draft: ThemeFormValues): InviteData {
     familyMembers: [],
     media: [{ id: "preview-photo", url: "/images/theme-preview-photo.svg", caption: "Sample customer photo", type: "IMAGE" }],
     isDemo: true, themeSlug: "preview",
+    revealMode: draft.revealMode,
     revealVideoUrl: draft.revealMode === "VIDEO" ? draft.revealVideoUrl || null : null,
     revealVideoWebmUrl: draft.revealMode === "VIDEO" ? decor?.revealVideoWebmUrl || null : null,
     revealVideoPosterUrl: draft.revealMode === "VIDEO" ? decor?.revealVideoPosterUrl || draft.previewImage || null : null,
