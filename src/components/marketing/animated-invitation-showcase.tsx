@@ -6,7 +6,7 @@ import type { MarketplaceThemeCard } from "@/components/marketing/template-marke
 
 type PreviewTheme = Pick<
   MarketplaceThemeCard,
-  "id" | "name" | "previewImage" | "demoSlug"
+  "id" | "name" | "slug" | "previewImage" | "demoSlug"
 >;
 
 function PreviewArtwork({ theme }: { theme: PreviewTheme }) {
@@ -33,11 +33,10 @@ function PreviewArtwork({ theme }: { theme: PreviewTheme }) {
 }
 
 function TapOverlay({ theme }: { theme: PreviewTheme }) {
-  if (!theme.demoSlug) return null;
 
   return (
     <Link
-      href={`/invite/${theme.demoSlug}`}
+      href={`/preview/${theme.slug}`}
       aria-label={`Preview ${theme.name}`}
       className="absolute inset-0 z-20 grid place-items-center"
     >

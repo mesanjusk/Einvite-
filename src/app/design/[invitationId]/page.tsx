@@ -20,8 +20,10 @@ export const metadata: Metadata = {
 
 export default async function DesignInvitationPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ invitationId: string }>;
+  searchParams: Promise<{ edit?: string }>;
 }) {
   const { invitationId } = await params;
 
@@ -90,6 +92,7 @@ export default async function DesignInvitationPage({
     <div className={`${INDIC_FONT_VARIABLE_CLASSES} guided-editor-shell`}>
       <EditorPolishStyles />
       <LiveEditor
+        initialEditing={(await searchParams).edit === "1"}
         invitationId={invitation.id}
         initialInvite={inviteData}
         initialThemeStyle={themeStyle}

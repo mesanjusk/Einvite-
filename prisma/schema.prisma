@@ -430,6 +430,7 @@ model Invitation {
   introVideoMp4Url    String?
   introVideoWebmUrl   String?
   introVideoPosterUrl String?
+  revealTransition String?
   galleryAnimation String  @default("fade") // "fade" | "slide" | "zoom" | "flip" | "blur" — gallery photo reveal style
   sectionConfig    Json // [{ id, type, visible, locked, order }] — drives the drag-drop builder
 
@@ -1285,4 +1286,21 @@ model UserGroup {
   name String @map("User_group")
 
   @@map("usergroups")
+}
+
+model ProjectSettings {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  key String @unique
+  geminiKeyCipher String?
+  updatedAt DateTime @updatedAt
+  @@map("project_settings")
+}
+
+model InstagramConnectRequest {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  invitationId String @unique @db.ObjectId
+  codeHash String @unique
+  expiresAt DateTime
+  completedAt DateTime?
+  @@map("instagram_connect_requests")
 }

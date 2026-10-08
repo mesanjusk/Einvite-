@@ -1,3 +1,4 @@
+import { getProjectGeminiKey } from "@/lib/project-gemini";
 import Link from "next/link";
 import type { Metadata } from "next";
 import QRCode from "qrcode";
@@ -230,7 +231,7 @@ export default async function ManageGuestInvitationPage({
         <CardContent className="flex flex-col gap-6">
           <GeminiKeyForm
             invitationId={invitation.id}
-            hasKey={Boolean(invitation.geminiApiKey)}
+            hasKey={Boolean(await getProjectGeminiKey())}
           />
           <VideoGeneratorPanel
             invitationId={invitation.id}

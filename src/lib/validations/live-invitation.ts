@@ -39,6 +39,7 @@ export const livePatchSchema = z
     copy: liveCopyPatchSchema,
     musicTrackId: z.string().nullable(),
     customMusicUrl: text(600).nullable(),
+    revealTransition: z.enum(["NONE", "FADE", "SLIDE", "ZOOM"]),
     galleryAnimation: z.enum(GALLERY_ANIMATIONS),
     themeSlug: z.string().min(1),
     colorwaySlug: z.string().nullable(),

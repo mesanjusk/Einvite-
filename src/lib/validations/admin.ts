@@ -41,6 +41,7 @@ export const REVEAL_ANIMATION_PRESETS = [
 ] as const;
 
 export const themeDecorAssetsSchema = z.object({
+  revealTransition: z.enum(["NONE", "FADE", "SLIDE", "ZOOM"]).optional(),
   sectionNames: z.record(z.string(), z.string().trim().min(1).max(100)).optional(),
   eventSections: z.array(z.string().trim().max(100)).max(20).transform((names) => names.filter(Boolean)).optional(),
   musicUrl: z.string().regex(/^$|^https?:\/\/|^\/(?!\/)/, "Use an uploaded file or an HTTP(S) music URL").optional(),

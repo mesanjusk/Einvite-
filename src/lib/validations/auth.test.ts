@@ -6,6 +6,7 @@ describe("signUpSchema", () => {
   it("accepts a valid signup", () => {
     const result = signUpSchema.safeParse({
       name: "Priya Sharma",
+      phone: "+919876543210",
       email: "priya@example.com",
       password: "SuperSecret123",
     });
@@ -15,6 +16,7 @@ describe("signUpSchema", () => {
   it("rejects a password missing an uppercase letter", () => {
     const result = signUpSchema.safeParse({
       name: "Priya Sharma",
+      phone: "+919876543210",
       email: "priya@example.com",
       password: "supersecret123",
     });
@@ -24,6 +26,7 @@ describe("signUpSchema", () => {
   it("rejects a password missing a number", () => {
     const result = signUpSchema.safeParse({
       name: "Priya Sharma",
+      phone: "+919876543210",
       email: "priya@example.com",
       password: "SuperSecretPass",
     });
@@ -33,6 +36,7 @@ describe("signUpSchema", () => {
   it("rejects a password shorter than 8 characters", () => {
     const result = signUpSchema.safeParse({
       name: "Priya Sharma",
+      phone: "+919876543210",
       email: "priya@example.com",
       password: "Sup3rS",
     });
@@ -42,6 +46,7 @@ describe("signUpSchema", () => {
   it("rejects an invalid email", () => {
     const result = signUpSchema.safeParse({
       name: "Priya Sharma",
+      phone: "+919876543210",
       email: "not-an-email",
       password: "SuperSecret123",
     });
@@ -51,6 +56,7 @@ describe("signUpSchema", () => {
   it("rejects a one-character name", () => {
     const result = signUpSchema.safeParse({
       name: "P",
+      phone: "+919876543210",
       email: "priya@example.com",
       password: "SuperSecret123",
     });

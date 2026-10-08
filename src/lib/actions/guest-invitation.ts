@@ -1,4 +1,5 @@
 "use server";
+import { instagramPublishRequirement } from "@/lib/instagram-connect";
 
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
@@ -274,6 +275,8 @@ export async function publishGuestInvitationAction(input: {
   if (!invitation.brideName || !invitation.groomName) {
     return { success: false, error: "Finish the couple details step first." };
   }
+  const instagramError = await instagramPublishRequirement(invitation.id);
+  if (instagramError) return { success: false, error: instagramError };
   // The number is optional: publishing without one still works, it just
   // means no durable cross-device edit link yet — this browser's cookie
   // carries access, and the manage page asks for a number afterwards.

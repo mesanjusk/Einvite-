@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isGeminiVideoConfigured } from "@/lib/ai/gemini-video";
+import { getProjectGeminiKey } from "@/lib/project-gemini";
 import { InvitationPicker } from "@/components/dashboard/invitation-picker";
 import { VideoGeneratorPanel } from "@/components/dashboard/video-generator-panel";
 import { GeminiKeyForm } from "@/components/dashboard/gemini-key-form";
@@ -53,6 +53,7 @@ export default async function PublishVideoPage({
     },
   });
   if (!invitation) return null;
+  const projectHasKey = Boolean(await getProjectGeminiKey());
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,11 +61,10 @@ export default async function PublishVideoPage({
         <InvitationPicker invitations={invitations} selectedId={selectedId} />
       </div>
 
-      {!isGeminiVideoConfigured(invitation.geminiApiKey) && (
+      {!projectHasKey && (
         <Card className="border-dashed">
           <CardContent className="text-muted-foreground py-4 text-sm">
-            No Gemini key is available yet — add your own below, or ask an admin to set{" "}
-            <code className="font-mono">GEMINI_API_KEY</code> for the whole platform.
+            Ask an admin to configure Gemini in Project settings to enable video generation.
           </CardContent>
         </Card>
       )}
@@ -74,7 +74,7 @@ export default async function PublishVideoPage({
           <CardTitle>Gemini API key</CardTitle>
         </CardHeader>
         <CardContent>
-          <GeminiKeyForm invitationId={invitation.id} hasKey={Boolean(invitation.geminiApiKey)} />
+          <GeminiKeyForm invitationId={invitation.id} hasKey={projectHasKey} />
         </CardContent>
       </Card>
 

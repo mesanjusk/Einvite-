@@ -94,6 +94,7 @@ export async function patchInvitationAction(
   if (data.googleMapsUrl !== undefined)
     update.googleMapsUrl = data.googleMapsUrl || null;
   if (data.weddingDate !== undefined) update.weddingDate = toDate(data.weddingDate);
+  if (data.revealTransition !== undefined) update.revealTransition = data.revealTransition;
   if (data.galleryAnimation !== undefined)
     update.galleryAnimation = data.galleryAnimation;
 
@@ -189,6 +190,12 @@ export async function patchInvitationAction(
 
   for (const section of (saved.sectionConfig as SectionConfigEntry[] | null) ?? []) {
     savedThemeDecor.elementStyles = { ...savedThemeDecor.elementStyles, ...section.elementStyles };
+    if (section.inheritType) {
+      savedThemeDecor.elementStyles ??= {};
+      for (const [key, value] of Object.entries(savedThemeDecor.elementStyles)) {
+        if (key.startsWith(`${section.inheritType}.`)) savedThemeDecor.elementStyles[key.replace(`${section.inheritType}.`, `${section.type}.`)] ??= value;
+      }
+    }
     if (section.sectionStyle) savedThemeDecor.sectionStyles = { ...savedThemeDecor.sectionStyles, [section.type]: section.sectionStyle };
   }
   for (const [type, blocks] of Object.entries(savedThemeDecor.customText ?? {})) {

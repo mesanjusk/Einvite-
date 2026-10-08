@@ -1,3 +1,4 @@
+import { connectionCodeFromMessage, connectInstagramFromMessage } from "@/lib/instagram-connect";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { after } from "next/server";
 
@@ -682,6 +683,14 @@ async function handleMessagingEvent(event: MessagingEvent) {
         select: { id: true },
       });
       if (alreadyHandled) return;
+    }
+
+    const connectionCode = connectionCodeFromMessage(text);
+    if (connectionCode) {
+      const result = await connectInstagramFromMessage(connectionCode, senderId);
+      const delivery = await sendInstagramMessage({ id: senderId }, result.text);
+      await db.instagramMessageLog.create({ data: { messageId, igUserId: senderId, messageText: "LINK [redacted]", outcome: delivery.delivered ? "REPLY_SENT" : "SEND_FAILED", replyText: result.connected ? "Website connected; private link sent." : result.text } });
+      return;
     }
 
     const username = await knownUsernameFor(senderId);

@@ -110,6 +110,7 @@ export default async function PublicThemesPage({
 
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
   const mobilePreviewThemes = themes.slice(0, 5).map((theme) => ({
+    slug: theme.slug,
     id: theme.id,
     name: theme.name,
     previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),

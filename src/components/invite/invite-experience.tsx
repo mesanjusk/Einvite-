@@ -219,6 +219,7 @@ export function InviteExperience({
 }) {
   const edit = useInviteEdit();
   const [inviteOpen, setInviteOpen] = useState(skipEnvelope);
+  useEffect(() => { if (skipEnvelope) setInviteOpen(true); }, [skipEnvelope]);
   const [guestName] = useState<string | null>(initialGuestName);
   const [shareUrl, setShareUrl] = useState(`/invite/${invite.slug}`);
 
@@ -275,6 +276,7 @@ export function InviteExperience({
           <EnvelopeSection
             initials={initials}
             mode={invite.revealMode}
+            exitDuration={invite.revealTransition === "NONE" ? 0 : 0.45}
             videoUrl={invite.revealVideoUrl}
             videoWebmUrl={invite.revealVideoWebmUrl}
             posterUrl={invite.revealVideoPosterUrl}
@@ -290,7 +292,7 @@ export function InviteExperience({
       </AnimatePresence>
 
       {inviteOpen && (
-        <main className="relative z-[7]">
+        <motion.main className="relative z-[7]" initial={invite.revealTransition === "NONE" ? false : { opacity: 0, y: invite.revealTransition === "SLIDE" ? 36 : 0, scale: invite.revealTransition === "ZOOM" ? 0.94 : 1 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: invite.revealTransition === "NONE" ? 0 : 0.45 }}>
           {dedupedSections.map((section) => {
             switch (isEventSection(section.type) ? "SANGEET" : section.type) {
               case "HERO":
@@ -467,7 +469,7 @@ export function InviteExperience({
                 return null;
             }
           })}
-        </main>
+        </motion.main>
       )}
 
       {inviteOpen && showRemixCta && !previewMode && (

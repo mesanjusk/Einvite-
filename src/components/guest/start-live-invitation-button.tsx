@@ -21,7 +21,9 @@ export function StartLiveInvitationButton({
   className,
   style,
   loadingVideoUrl,
+  ariaLabel,
 }: {
+  ariaLabel?: string;
   fromSlug?: string;
   category?: string;
   themeSlug?: string;
@@ -42,7 +44,7 @@ export function StartLiveInvitationButton({
         toast.error(result.error);
         return;
       }
-      router.push(`/design/${result.data.invitationId}`);
+      router.push(`/design/${result.data.invitationId}?edit=1`);
     });
   }
 
@@ -50,6 +52,7 @@ export function StartLiveInvitationButton({
     <>
       <button
         type="button"
+        aria-label={ariaLabel}
         onClick={start}
         disabled={isPending}
         aria-busy={isPending}
@@ -60,7 +63,7 @@ export function StartLiveInvitationButton({
       </button>
       {isPending && (
         <WeddingLoadingScreen
-          message="Opening your selected wedding design"
+          message="Preparing your invitation editor"
           videoUrl={loadingVideoUrl}
         />
       )}

@@ -63,6 +63,7 @@ export type InviteData = {
   revealVideoUrl: string | null;
   revealVideoWebmUrl?: string | null;
   revealVideoPosterUrl?: string | null;
+  revealTransition?: "NONE" | "FADE" | "SLIDE" | "ZOOM";
   revealAnimation?: {
     preset: "MAGIC_BLOOM" | "SPARKLES" | "CONFETTI" | "PETALS";
     intensity: number;

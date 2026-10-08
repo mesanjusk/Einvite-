@@ -8,13 +8,14 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { checkInstagramConnectionAction } from "@/lib/actions/instagram-connect";
+import { InstagramConnectDialog } from "./instagram-connect-dialog";
 import { toast } from "sonner";
 import { GeminiStylePanel } from "@/components/admin/gemini-style-panel";
 import { designPreview } from "@/lib/media/design-preview";
 import { safeDesignSuggestion, type DesignSuggestion } from "@/lib/design-assist";
 import { elementsForSection } from "@/lib/theme-element-catalog";
 import { saveInvitationDesignAction } from "@/lib/actions/invitation-design";
-import { updateInvitationGeminiKeyAction } from "@/lib/actions/video";
 import {
   Layers,
   Music,
@@ -49,6 +50,7 @@ import {
 import type { InviteData, InviteFamilyMember, InviteMedia } from "../types";
 import { sectionDisplayName } from "@/lib/section-labels";
 import { independentSections } from "@/lib/invitation-sections";
+import { EventDetailsForm } from "./event-details-form";
 import { SectionsSheet } from "./sections-sheet";
 import { DesignSheet } from "./design-sheet";
 import { MusicSheet } from "./music-sheet";
@@ -172,7 +174,9 @@ export function LiveEditor({
   isPublished,
   isGuestFlow,
   appUrl,
+  initialEditing = false,
 }: {
+  initialEditing?: boolean;
   invitationId: string;
   initialInvite: InviteData;
   initialThemeStyle: CSSProperties;
@@ -191,7 +195,6 @@ export function LiveEditor({
   const [invite, setInvite] = useState(initialInvite);
   const [themeStyle, setThemeStyle] = useState(initialThemeStyle);
   const [sections, setSections] = useState(independentSections(initialSections, initialInvite.events));
-  const [aiKey, setAiKey] = useState("");
   const [aiEnabled, setAiEnabled] = useState(true);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<DesignSuggestion | null>(null);
@@ -200,12 +203,13 @@ export function LiveEditor({
   const [colorwaySlug, setColorwaySlug] = useState(initialColorwaySlug);
   const [musicTrackId, setMusicTrackId] = useState(initialMusicTrackId);
   const [customMusicUrl, setCustomMusicUrl] = useState(initialCustomMusicUrl);
+  const [connectOpen, setConnectOpen] = useState(false);
   const [published, setPublished] = useState(isPublished);
   const [revealPreviewVersion, setRevealPreviewVersion] = useState(0);
   const [envelopeOpenVersion, setEnvelopeOpenVersion] = useState(0);
 
   // Null is deliberate: the first screen is always a clean sample preview.
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(initialEditing ? "all" : null);
   const [visibleSection, setVisibleSection] = useState<VisibleSection | null>(null);
   const [completedSectionIds, setCompletedSectionIds] = useState<string[]>([]);
 
@@ -546,7 +550,7 @@ export function LiveEditor({
   // One global edit session enables all sections; writes still autosave per field.
   const editApi = useMemo(
     () => ({
-      active: true,
+      active: Boolean(activeSectionId),
       setText,
       setDate,
       addEvent,
@@ -554,7 +558,7 @@ export function LiveEditor({
       openPanel,
       pending,
     }),
-    [setText, setDate, addEvent, removeEvent, openPanel, pending],
+    [activeSectionId, setText, setDate, addEvent, removeEvent, openPanel, pending],
   );
 
   function applyPatchResult(data: {
@@ -600,7 +604,7 @@ export function LiveEditor({
     if (!elements.length) return;
     setAiBusy(true);
     try {
-      const response = await fetch("/api/design/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ invitationId, apiKey: aiKey || undefined, image: await designPreview(file), elements }) });
+      const response = await fetch("/api/design/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ invitationId, image: await designPreview(file), elements }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Smart styling unavailable.");
       if (version !== aiVersion.current) return;
@@ -725,7 +729,12 @@ export function LiveEditor({
 
   const shareUrl = `${appUrl}/invite/${invite.slug}`;
 
-  const continuePublish = useCallback(() => {
+  const continuePublish = useCallback(async () => {
+    let connection;
+    try { connection = await checkInstagramConnectionAction(invitationId); }
+    catch { toast.error("Could not verify Instagram. Your draft is saved; try again."); return; }
+    if (!connection.success) { toast.error(connection.error); return; }
+    if (!connection.data.ready) { setConnectOpen(true); return; }
     if (isGuestFlow) {
       setPublishOpen(true);
       return;
@@ -772,19 +781,20 @@ export function LiveEditor({
 
   // A sheet or dialog is the thing being looked at while it is open, so the
   // editor's own always-on-top furniture gets out from in front of it.
-  const overlayOpen = panel !== null || publishOpen || Boolean(ownerPublishResult);
+  const overlayOpen = panel !== null || publishOpen || connectOpen || Boolean(ownerPublishResult);
 
   return (
     <InviteEditProvider value={editApi}>
       <div
         className={cn(
-          "relative mx-auto max-w-[430px] overflow-x-hidden pt-2 pb-32",
+          "relative mx-auto max-w-[430px] overflow-x-hidden pb-20",
           overlayOpen && "inv-sheet-open",
         )}
         style={{ ...themeStyle, fontFamily: "var(--inv-font-body)" }}
       >
         <InviteExperience
           key={`mobile-invite-preview-${revealPreviewVersion}`}
+          skipEnvelope={Boolean(activeSectionId)}
           invite={displayInvite}
           sectionConfig={sections}
           guidedActiveSectionId={activeSectionId ? undefined : null}
@@ -793,14 +803,16 @@ export function LiveEditor({
       </div>
 
       {!overlayOpen && <EditorFooter pending={pending} published={published} editing={Boolean(activeSectionId)} onEdit={() => activeSectionId ? finishSectionEdit() : setActiveSectionId("all")} onDesign={() => openPanel("design")} onSections={() => openPanel("sections")} onMusic={() => openPanel("music")} onPublish={handlePublish} />}
-      <SectionsSheet open={panel === "sections"} onOpenChange={(open) => setPanel(open ? "sections" : null)} sections={sections} pending={pending > 0} onChange={(next) => {
+      <SectionsSheet eventDetails={<EventDetailsForm invite={invite} onText={setText} onDate={setDate} />} open={panel === "sections"} onOpenChange={(open) => setPanel(open ? "sections" : null)} sections={sections} pending={pending > 0} onChange={(next) => {
         const previous = sections;
         setSections(next);
         void trackSave(() => replaceInvitationSectionsAction(invitationId, next), () => setSections(previous)).then((data) => { if (data) { setSections(data.sectionConfig); setInvite((current) => ({ ...current, events: data.events })); } });
       }} />
 
       <DesignSheet
-        designAssistant={<GeminiStylePanel apiKey={aiKey} onApiKey={setAiKey} enabled={aiEnabled} onEnabled={setAiEnabled} busy={aiBusy || pending > 0} ready={Boolean(aiSuggestion)} onApply={() => { if (aiSuggestion) void applySmartDesign(aiSuggestion); }} onAnalyze={(file) => void analyzeDesignFile(file)} onSaveKey={(key) => { void trackSave(async () => { const result = await updateInvitationGeminiKeyAction({ invitationId, geminiApiKey: key }); return result.success ? { success: true as const, data: true } : result; }).then((saved) => { if (saved) { setAiKey(""); toast.success(key ? "Gemini key saved for this invitation." : "Saved Gemini key cleared."); } }); }} />}
+        revealTransition={invite.revealTransition}
+        onRevealTransition={(value) => { const previous = invite.revealTransition; setInvite((current) => ({ ...current, revealTransition: value })); void trackSave(() => patchInvitationAction(invitationId, { revealTransition: value }), () => setInvite((current) => ({ ...current, revealTransition: previous }))); }}
+        designAssistant={<GeminiStylePanel enabled={aiEnabled} onEnabled={setAiEnabled} busy={aiBusy || pending > 0} ready={Boolean(aiSuggestion)} onApply={() => { if (aiSuggestion) void applySmartDesign(aiSuggestion); }} onAnalyze={(file) => void analyzeDesignFile(file)} />}
         onAssetUploaded={(file) => { if (aiEnabled) void analyzeDesignFile(file, true); }}
         open={panel === "design"}
         onOpenChange={(open) => setPanel(open ? "design" : null)}
@@ -855,6 +867,7 @@ export function LiveEditor({
         }
       />
 
+      <InstagramConnectDialog invitationId={invitationId} open={connectOpen} onOpenChange={setConnectOpen} onReady={() => void continuePublish()} />
       <PublishDialog
         open={publishOpen}
         onOpenChange={setPublishOpen}
@@ -875,16 +888,16 @@ export function LiveEditor({
 }
 
 function EditorFooter({ pending, published, editing, onEdit, onDesign, onSections, onMusic, onPublish }: { pending: number; published: boolean; editing: boolean; onEdit: () => void; onDesign: () => void; onSections: () => void; onMusic: () => void; onPublish: () => void }) {
-  return <footer className="no-print fixed inset-x-0 bottom-0 z-[100000] flex justify-center border-t border-violet-100 bg-white/95 px-2 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_22px_rgba(82,33,43,0.12)] backdrop-blur-xl">
-    <div className="w-full max-w-[430px]">
-      <p aria-live="polite" className="pb-1 text-center text-[9px] text-violet-700">{pending ? "Autosaving changes…" : "Draft autosaved"}{editing ? " · Edit any section" : ""}</p>
-      <nav aria-label="Invitation editor" className="grid grid-cols-5 items-center gap-1">
-        <button type="button" onClick={onDesign} className="grid justify-items-center gap-1 py-2 text-[10px]"><Palette className="size-5" />Design</button>
-        <button type="button" onClick={onSections} className="grid justify-items-center gap-1 py-2 text-[10px]"><Layers className="size-5" />Sections</button>
-        <button type="button" aria-label={editing ? "Done & preview" : "Edit all sections"} onClick={onEdit} className="grid justify-items-center gap-1 text-[10px] font-semibold text-violet-800"><span className="grid size-12 place-items-center rounded-full bg-violet-700 text-white shadow-md"><Pencil className="size-6" /></span>{editing ? "Preview" : "Edit"}</button>
-        <button type="button" onClick={onMusic} className="grid justify-items-center gap-1 py-2 text-[10px]"><Music className="size-5" />Music</button>
-        <button type="button" onClick={onPublish} className="grid justify-items-center gap-1 py-2 text-[10px]"><Send className="size-5" />{published ? "Share" : "Publish"}</button>
-      </nav>
-    </div>
+  const pencil = <button type="button" aria-label={editing ? "Done & preview" : "Edit all sections"} onClick={onEdit} className="grid size-11 place-items-center rounded-full bg-violet-700 text-white shadow-lg"><Pencil className="size-5" /></button>;
+  if (!editing) return <div className="no-print fixed inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[70] flex justify-center pointer-events-none"><div className="pointer-events-auto">{pencil}</div></div>;
+  return <footer className="no-print fixed inset-x-0 bottom-0 z-[70] flex justify-center border-t border-violet-100 bg-white/95 px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-xl">
+    <nav aria-label="Invitation editor" className="grid w-full max-w-[430px] grid-cols-5 items-center justify-items-center gap-1">
+      <button type="button" onClick={onDesign} className="grid justify-items-center text-[9px]"><Palette className="size-4" />Design</button>
+      <button type="button" onClick={onSections} className="grid justify-items-center text-[9px]"><Layers className="size-4" />Sections</button>
+      {pencil}
+      <button type="button" onClick={onMusic} className="grid justify-items-center text-[9px]"><Music className="size-4" />Music</button>
+      <button type="button" onClick={onPublish} className="grid justify-items-center text-[9px]"><Send className="size-4" />{published ? "Share" : "Publish"}</button>
+      {pending > 0 && <span role="status" className="absolute -top-6 rounded-full bg-white px-3 text-[10px] text-violet-700">Saving…</span>}
+    </nav>
   </footer>;
 }

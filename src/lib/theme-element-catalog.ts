@@ -33,6 +33,8 @@ export const THEME_ELEMENT_DEFINITIONS: ThemeElementDefinition[] = [
 
   { key: "TIMELINE.date", section: "TIMELINE", label: "Function date", dynamic: true },
   { key: "TIMELINE.name", section: "TIMELINE", label: "Function name", dynamic: true },
+  { key: "TIMELINE.time", section: "TIMELINE", label: "Event time", dynamic: true },
+  { key: "TIMELINE.venueName", section: "TIMELINE", label: "Event venue", dynamic: true },
   { key: "TIMELINE.tagline", section: "TIMELINE", label: "Function tagline", dynamic: true },
 
   { key: "GALLERY.eyebrow", section: "GALLERY", label: "Gallery eyebrow", fallbackText: "Our Story" },

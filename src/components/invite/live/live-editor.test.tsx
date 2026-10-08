@@ -5,6 +5,7 @@ import { buildThemePreviewData } from "@/lib/theme-preview";
 import { themeFormSchema } from "@/lib/validations/admin";
 import { patchInvitationAction } from "@/lib/actions/live-invitation";
 
+vi.mock("@/lib/actions/instagram-connect", () => ({ checkInstagramConnectionAction: vi.fn(), prepareInstagramConnectionAction: vi.fn() }));
 vi.mock("@/lib/actions/invitation-design", () => ({ saveInvitationDesignAction: vi.fn() }));
 vi.mock("@/lib/actions/video", () => ({ updateInvitationGeminiKeyAction: vi.fn() }));
 vi.mock("./design-sheet", () => ({ DesignSheet: () => null }));
@@ -36,7 +37,9 @@ describe("global invitation editing", () => {
     HTMLElement.prototype.scrollIntoView = vi.fn();
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, top: 100, bottom: 500, left: 0, right: 390, width: 390, height: 400, toJSON() {} });
     render(<LiveEditor invitationId="test-global-draft" initialInvite={invite} initialThemeStyle={{}} initialSections={[{ id: "HERO", type: "HERO", visible: true, locked: false, order: 0 }]} initialThemeSlug={null} initialColorwaySlug={null} initialMusicTrackId={null} initialCustomMusicUrl={null} themes={[]} musicTracks={[]} isPublished={false} isGuestFlow appUrl="https://example.com" />);
+    expect(screen.queryByRole("button", { name: "Sections" })).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Edit all sections" }));
+    expect(screen.getByRole("button", { name: "Sections" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Edit: Meera" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Edit: Arjun" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Edit: Meera" }));

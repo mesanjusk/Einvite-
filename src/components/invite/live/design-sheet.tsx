@@ -39,8 +39,12 @@ export function DesignSheet({
   onSectionToggle,
   onPreviewOpening,
   designAssistant,
+  revealTransition = "FADE",
+  onRevealTransition,
   onAssetUploaded,
 }: {
+  revealTransition?: string;
+  onRevealTransition?: (value: "NONE" | "FADE" | "SLIDE" | "ZOOM") => void;
   designAssistant?: ReactNode;
   onAssetUploaded?: (file: File) => void;
   open: boolean;
@@ -156,6 +160,7 @@ export function DesignSheet({
 
           <section className="flex flex-col gap-2">
             <Label>Opening</Label>
+            <label className="grid gap-1 text-xs">Transition after opening<select className="rounded-lg border p-2" value={revealTransition} onChange={(e) => onRevealTransition?.(e.target.value as "NONE" | "FADE" | "SLIDE" | "ZOOM")}><option value="NONE">No transition</option><option value="FADE">Soft fade</option><option value="SLIDE">Slide up</option><option value="ZOOM">Gentle zoom</option></select></label>
             <IntroVideoUploader
               invitationId={invitationId}
               value={introVideo}

@@ -1,6 +1,7 @@
 "use client";
 
 import { independentThemeOrder, eventSectionName, isEventSection } from "@/lib/invitation-sections";
+import { ProjectGeminiKeyForm } from "./project-gemini-key-form";
 import { GeminiStylePanel } from "@/components/admin/gemini-style-panel";
 import { designPreview } from "@/lib/media/design-preview";
 import { safeDesignSuggestion, suggestionStyles, type DesignSuggestion } from "@/lib/design-assist";
@@ -83,6 +84,7 @@ import {
 } from "@/components/ui/dialog";
 
 type DecorAssets = {
+  revealTransition?: "NONE" | "FADE" | "SLIDE" | "ZOOM";
   sectionNames?: Record<string, string>;
   eventSections?: string[];
   musicUrl?: string;
@@ -267,6 +269,7 @@ function defaultValues(type: ThemeType, theme?: ThemeRecord): ThemeFormValues {
         intensity: decor.revealAnimation?.intensity ?? 1,
         speed: decor.revealAnimation?.speed ?? 1,
       },
+      revealTransition: decor.revealTransition ?? "FADE",
       sectionImages: decor.sectionImages ?? {},
       sectionTextBlocks: decor.sectionTextBlocks ?? {},
       elementStyles: decor.elementStyles ?? {},
@@ -313,7 +316,6 @@ export function ThemeFormDialog({
   standalone?: boolean;
   returnHref?: string;
 }) {
-  const [aiKey, setAiKey] = useState("");
   const [aiEnabled, setAiEnabled] = useState(true);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<DesignSuggestion | null>(null);
@@ -584,13 +586,12 @@ export function ThemeFormDialog({
     toast.success("Suggested styles applied. Review the preview; all tools and Undo remain available.");
   }
   async function analyzeDesignFile(file: File, automatic = false) {
-    if (!aiKey) { if (!automatic) toast.message("Add your Gemini API key in AI style."); return; }
     const version = ++aiVersion.current;
     const elements = designLayers(); if (!elements.length) return;
     const before = JSON.stringify([form.getValues("sectionOrder"), form.getValues("colorPalette"), form.getValues("fontPairing"), form.getValues("decorAssets.elementStyles"), form.getValues("decorAssets.customText")]);
     setAiBusy(true);
     try {
-      const response = await fetch("/api/design/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ apiKey: aiKey, image: await designPreview(file), elements }) });
+      const response = await fetch("/api/design/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: await designPreview(file), elements }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error);
       if (data.skipped || version !== aiVersion.current) return;
       const suggestion = safeDesignSuggestion(data.suggestion, elements.map((element) => element.key)); setAiSuggestion(suggestion);
@@ -1605,7 +1606,8 @@ export function ThemeFormDialog({
                   </div>
                 )}
 
-                {mobileTool === "ai" && <GeminiStylePanel apiKey={aiKey} onApiKey={setAiKey} enabled={aiEnabled} onEnabled={setAiEnabled} busy={aiBusy} ready={Boolean(aiSuggestion)} onApply={() => aiSuggestion && applyDesignSuggestion(aiSuggestion)} onAnalyze={(file) => void analyzeDesignFile(file)} />}
+                {mobileTool === "video" && <label className="mb-4 grid gap-2 text-xs">Transition from opening to invitation<select className="rounded-lg border p-2" value={form.watch("decorAssets.revealTransition") ?? "FADE"} onChange={(e) => form.setValue("decorAssets.revealTransition", e.target.value as "NONE" | "FADE" | "SLIDE" | "ZOOM", { shouldDirty: true })}><option value="NONE">No transition</option><option value="FADE">Soft fade</option><option value="SLIDE">Slide up</option><option value="ZOOM">Gentle zoom</option></select></label>}
+                {mobileTool === "ai" && <GeminiStylePanel projectSettings={<ProjectGeminiKeyForm />} enabled={aiEnabled} onEnabled={setAiEnabled} busy={aiBusy} ready={Boolean(aiSuggestion)} onApply={() => aiSuggestion && applyDesignSuggestion(aiSuggestion)} onAnalyze={(file) => void analyzeDesignFile(file)} />}
                 {mobileTool === "sections" && <SectionManager names={draft.decorAssets?.sectionNames} onCustomSection={(key, name) => form.setValue("decorAssets.sectionNames", { ...form.getValues("decorAssets.sectionNames"), [key]: name }, { shouldDirty: true })} selected={sectionOrder} onChange={(next) => { form.setValue("sectionOrder", next, { shouldDirty: true }); if (!next.includes(previewSection)) selectSectionForEditing(next[0]); }} onSelect={selectSectionForEditing} />}
                 {mobileTool === "advanced" && canEditSectionText && (
                   <div className="grid gap-4 p-3">

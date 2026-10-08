@@ -38,6 +38,7 @@ export function TimelineSection({
       <PetalField count={10} seed={seed} />
 
       <RevealGroup className="relative z-[2] w-full max-w-md">
+        {edit?.active && <EditChip onClick={() => edit.openPanel("sections")}>Edit time & venue</EditChip>}
         <div
           className="rounded-[20px] border px-6 py-9 text-center"
           style={{
@@ -95,6 +96,7 @@ export function TimelineSection({
             >
               {(event.time || edit?.active) && (
                 <Row
+                  elementKey={`${elementPrefix}.time`}
                   label={t.timeLabel}
                   value={event.time ?? ""}
                   target={{ kind: "event", eventId: event.id, field: "time" }}
@@ -103,6 +105,7 @@ export function TimelineSection({
               )}
               {(event.venueName || edit?.active) && (
                 <Row
+                  elementKey={`${elementPrefix}.venueName`}
                   label={t.venueLabel}
                   value={event.venueName ?? ""}
                   target={{ kind: "event", eventId: event.id, field: "venueName" }}
@@ -174,11 +177,13 @@ export function TimelineSection({
 }
 
 function Row({
+  elementKey,
   label,
   value,
   target,
   placeholder,
 }: {
+  elementKey?: string;
   label: string;
   value: string;
   target: Extract<EditTarget, { kind: "event" }>;
@@ -187,7 +192,7 @@ function Row({
   return (
     <div className="flex justify-between gap-3">
       <span style={{ opacity: 0.65 }}>{label}</span>
-      <span className="font-medium">
+      <span data-theme-element={elementKey} className="min-w-0 max-w-[70%] break-words font-medium">
         <EditableText target={target} value={value} placeholder={placeholder} />
       </span>
     </div>
