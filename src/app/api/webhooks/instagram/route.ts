@@ -12,6 +12,7 @@ import {
   sendInstagramMessage,
 } from "@/lib/instagram";
 import { checkFollowStatusLive } from "@/lib/instagram-follow-status";
+import { instagramValidationEnabled } from "@/lib/instagram-validation";
 import {
   DEFAULT_FLOW_SETTINGS,
   buildFollowStep,
@@ -78,11 +79,9 @@ function editLinkFor(rawToken: string) {
 /**
  * The Instagram account's invitation and its pre-logged link.
  *
- * One Instagram account owns exactly one invitation, so a commenter who
- * already has one is handed that same invitation again rather than a second
- * one — this is where "one website, one PDF, one video per Instagram user"
- * is actually enforced. The edit token is rotated on every issue so an old
- * DM stops working once a newer link has been sent.
+ * An Instagram account can create multiple invitations. Unfinished drafts
+ * are reused; previously published invitations retain their own edit link.
+ * Rotating a draft token invalidates its previous DM link.
  *
  * Returns the raw token (only ever known here and in the DM) plus whether
  * this was an existing claim, so the caller can pick the right reply.
@@ -94,7 +93,15 @@ async function issueInvitationLink(
   const rawToken = generateToken();
   const editTokenHash = hashToken(rawToken);
 
-  const existing = await db.instagramLink.findUnique({ where: { igUserId } });
+  // Multiple ceremonies may belong to the same Instagram account.
+  // Reuse only an unfinished draft; a previously published wedding is
+  // never overwritten merely because the account asks for another link.
+  const links = await db.instagramLink.findMany({
+    where: { igUserId },
+    include: { invitation: { select: { status: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  const existing = links.find((item) => item.invitation.status !== "PUBLISHED");
   if (existing) {
     await db.instagramLink.update({
       where: { id: existing.id },
@@ -341,8 +348,8 @@ async function handleCommentChange(
     //
     // The account-wide rule decides; this reel's own switch can only tighten
     // it. A reel left unticked no longer means "links for everyone".
-    const accountFollowersOnly = await accountRequiresFollow();
-    const reelRequiresFollow = automation.requireFollow ?? false;
+    const accountFollowersOnly = instagramValidationEnabled() && await accountRequiresFollow();
+    const reelRequiresFollow = instagramValidationEnabled() && (automation.requireFollow ?? false);
     if ((accountFollowersOnly || reelRequiresFollow) && igUserId) {
       const isFollower = await checkFollowStatusLive(igUserId, username);
       const decision = decideLinkGate({
@@ -406,8 +413,8 @@ async function handleCommentChange(
     });
     const alreadyClaimed = claimedThisReel !== null;
 
-    // One invitation per Instagram account: a returning commenter is handed
-    // their existing invitation again, on any reel, rather than a second one.
+    // Return to the current draft, or create another invitation if their
+    // earlier one was already published.
     const { link } = await issueInvitationLink(igUserId, username);
     const replyText = renderInstagramTemplate(
       alreadyClaimed ? automation.duplicateMessage : automation.replyMessage,
@@ -459,7 +466,7 @@ async function knownUsernameFor(igUserId: string): Promise<string | undefined> {
       where: { igUserId },
       select: { username: true },
     }),
-    db.instagramLink.findUnique({ where: { igUserId }, select: { username: true } }),
+    db.instagramLink.findFirst({ where: { igUserId }, select: { username: true }, orderBy: { createdAt: "desc" } }),
   ]);
   return profile?.username ?? link?.username ?? undefined;
 }
@@ -506,11 +513,11 @@ async function handleFlowTap({
     return;
   }
 
-  const isFollower = settings.requireFollow
+  const isFollower = instagramValidationEnabled() && settings.requireFollow
     ? await checkFollowStatusLive(senderId, username)
     : true;
   const decision = decideLinkGate({
-    accountFollowersOnly: settings.requireFollow,
+    accountFollowersOnly: instagramValidationEnabled() && settings.requireFollow,
     isFollower,
   });
 
@@ -816,15 +823,15 @@ async function handleMessagingEvent(event: MessagingEvent) {
     // no matter how carefully the reels were gated: DM the keyword, get a
     // link. Nothing is issued until the check comes back positive.
     if (rule.issueLink) {
-      const accountFollowersOnly = await accountRequiresFollow();
+      const accountFollowersOnly = instagramValidationEnabled() && await accountRequiresFollow();
       const decision = decideLinkGate({
         accountFollowersOnly,
         // Missing on a rule written before the field existed, and missing
         // has to mean gated — those are exactly the rules that were handing
         // links to anyone who asked.
-        ruleRequiresFollow: rule.requireFollow ?? true,
+        ruleRequiresFollow: instagramValidationEnabled() && (rule.requireFollow ?? true),
         isFollower:
-          accountFollowersOnly || (rule.requireFollow ?? true)
+          instagramValidationEnabled() && (accountFollowersOnly || (rule.requireFollow ?? true))
             ? await checkFollowStatusLive(senderId, username)
             : true,
       });

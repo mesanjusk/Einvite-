@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { TemplateMarketplaceCard, type MarketplaceThemeCard } from "@/components/marketing/template-marketplace-card";
 import { AnimatedInvitationShowcase } from "@/components/marketing/animated-invitation-showcase";
 import { WeddingAmbientEffects } from "@/components/marketing/wedding-ambient-effects";
-export function RoyalLandingPage({ themeCards }: { themeCards: MarketplaceThemeCard[] }) {
+export function RoyalLandingPage({ themeCards, catalogUnavailable = false }: { themeCards: MarketplaceThemeCard[]; catalogUnavailable?: boolean }) {
   return (
     <div className="lavender-wedding-surface min-h-svh text-[#4b3659]">
       <PublicMarketplaceHeader />
@@ -16,16 +16,17 @@ export function RoyalLandingPage({ themeCards }: { themeCards: MarketplaceThemeC
           <div className="royal-corner royal-corner-tl" />
           <div className="royal-corner royal-corner-br" />
           <div className="relative z-10">
-            <p className="text-[9px] font-semibold uppercase tracking-[.25em] text-[#927a9c]">Made for your celebration</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[.25em] text-[#927a9c]">Made for your celebration</p>
             <h1 className="font-display mx-auto mt-2 max-w-[300px] text-[34px] leading-[1.08]">An invitation<br /><span className="font-script text-[46px] text-[#76508c]">to remember</span></h1>
-            <p className="mt-2 text-xs text-[#806b8c]">Choose. Make it yours. Share the joy.</p>
+            <p className="mt-2 text-sm text-[#806b8c]">Choose. Make it yours. Share the joy.</p>
             {themeCards.length > 0 ? <AnimatedInvitationShowcase themes={themeCards.slice(0, 3)} /> : (
               <div className="my-8 rounded-[2rem] border border-violet-200 bg-white/70 px-6 py-12">
                 <Sparkles className="mx-auto size-8 text-[#a987bd]" />
-                <h2 className="font-display mt-4 text-xl">New designs are on their way</h2>
+                <h2 role={catalogUnavailable ? "alert" : undefined} className="font-display mt-4 text-xl">{catalogUnavailable ? "Designs are temporarily unavailable" : "New designs are on their way"}</h2>
+                {catalogUnavailable && <p className="mt-2 text-sm">Please refresh the page or try again shortly. Your invitation drafts are safe.</p>}
               </div>
             )}
-            <Link href="/themes" className="royal-gold-button inline-flex min-h-11 items-center gap-2 rounded-full px-7 py-3 text-xs font-bold">Explore designs <ArrowRight className="size-4" /></Link>
+            <Link href="/themes" className="royal-gold-button inline-flex min-h-12 items-center gap-2 rounded-full px-7 py-3 text-sm font-bold">Explore designs <ArrowRight className="size-4" /></Link>
           </div>
         </section>
         <section className="px-4 py-4" aria-label="Celebrations"><EventCategoryChips /></section>

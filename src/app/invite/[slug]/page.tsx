@@ -99,15 +99,21 @@ export default async function InvitePage({
       ? "tablet"
       : "desktop";
 
-  await db.analyticsEvent.create({
-    data: {
-      invitationId: invitation.id,
-      type: "VIEW",
-      device,
-      referrer: headerList.get("referer"),
-      path: `/invite/${slug}`,
-    },
-  });
+  // Analytics is best-effort; a temporary write failure must not block a
+  // guest from opening an important wedding invitation.
+  try {
+    await db.analyticsEvent.create({
+      data: {
+        invitationId: invitation.id,
+        type: "VIEW",
+        device,
+        referrer: headerList.get("referer"),
+        path: `/invite/${slug}`,
+      },
+    });
+  } catch (error) {
+    console.error("[invite] View analytics write failed", error);
+  }
 
   const { inviteData, themeStyle, sectionConfig } = toInviteRenderData(invitation);
   const showDemoChrome = invitation.isDemo && !isOwner;

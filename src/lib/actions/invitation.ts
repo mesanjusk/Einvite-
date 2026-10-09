@@ -260,7 +260,7 @@ export async function ownerCreateEditLinkAction(
       ) {
         return {
           success: false,
-          error: "That mobile number is already linked to another invitation.",
+          error: "An edit link already exists for this invitation. Please retry.",
         };
       }
       throw error;

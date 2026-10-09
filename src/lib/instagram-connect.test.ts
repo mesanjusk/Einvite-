@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock("@/lib/instagram-validation", () => ({ instagramValidationEnabled: () => true }));
 vi.mock("@/lib/db", () => ({ db: { invitation: { findUnique: vi.fn() }, instagramFlowSettings: { findUnique: vi.fn() }, instagramLink: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() }, instagramConnectRequest: { findUnique: vi.fn(), updateMany: vi.fn() } } }));
 vi.mock("@/lib/instagram-follow-status", () => ({ checkFollowStatusLive: vi.fn(), readFollowStatus: vi.fn() }));
 vi.mock("@/lib/app-url", () => ({ getAppUrl: () => "https://invite.example.com" }));

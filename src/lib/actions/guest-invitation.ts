@@ -245,8 +245,8 @@ export async function autoFillPhotosAction(
 
 /**
  * Publishes a guest-flow invitation immediately — no WhatsApp OTP code to
- * wait on or get stuck at. Still collects a phone number (one number per
- * invitation, same as before) so the invitation gets a durable `PhoneLink`
+ * wait on or get stuck at. A phone may manage multiple invitations;
+ * every invitation still gets its own durable `PhoneLink`
  * and a private edit link usable from any device, and still attempts to
  * send that edit link over WhatsApp as a courtesy — but delivery is
  * best-effort and never blocks publishing, since it's shown on-screen too.
@@ -308,14 +308,6 @@ export async function publishGuestInvitationAction(input: {
     };
   }
 
-  const conflictingLink = await db.phoneLink.findUnique({ where: { phone } });
-  if (conflictingLink && conflictingLink.invitationId !== invitation.id) {
-    return {
-      success: false,
-      error:
-        "This mobile number is already linked to another invitation. One number can own only one invitation — use the edit link sent to that number, or use a different number.",
-    };
-  }
   if (invitation.phoneLink && invitation.phoneLink.phone !== phone) {
     return {
       success: false,
@@ -337,15 +329,18 @@ export async function publishGuestInvitationAction(input: {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        const existing = await db.phoneLink.findUnique({ where: { phone } });
-        if (!existing || existing.invitationId !== invitation.id) {
-          return {
-            success: false,
-            error:
-              "This mobile number was just linked to another invitation. Use a different number.",
-          };
+        // A second tab may have attached a phone to this SAME invitation.
+        // Reuse its row and rotate only this invitation's private edit token.
+        const existing = await db.phoneLink.findUnique({
+          where: { invitationId: invitation.id },
+        });
+        if (!existing) {
+          return { success: false, error: "Couldn't prepare your edit link. Please try again." };
         }
-        phoneLink = existing;
+        phoneLink = await db.phoneLink.update({
+          where: { id: existing.id },
+          data: { editTokenHash },
+        });
       } else {
         throw error;
       }
@@ -401,14 +396,6 @@ export async function attachPhoneToInvitationAction(input: {
   const phone = normalizePhone(input.phone);
   if (!phone || phone.length < 6) {
     return { success: false, error: "Enter a valid mobile number." };
-  }
-
-  const existingForPhone = await db.phoneLink.findUnique({ where: { phone } });
-  if (existingForPhone && existingForPhone.invitationId !== invitation.id) {
-    return {
-      success: false,
-      error: "That number already belongs to another invitation. Use a different one.",
-    };
   }
 
   const rawEditToken = generateToken();

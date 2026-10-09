@@ -23,13 +23,17 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [themes, demos] = await Promise.all([
+  const [catalog, demos] = await Promise.all([
     db.theme
       .findMany({
         where: { type: "WEBSITE", isPublished: true },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       })
-      .catch(() => []),
+      .then((themes) => ({ themes, unavailable: false }))
+      .catch((error) => {
+        console.error("[home] Published design catalogue unavailable", error);
+        return { themes: [], unavailable: true };
+      }),
     db.invitation
       .findMany({
         where: { isDemo: true, status: "PUBLISHED" },
@@ -39,6 +43,7 @@ export default async function Home() {
       .catch(() => []),
   ]);
 
+  const themes = catalog.themes;
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
   const themeCards = themes.map((theme) => {
           const decor = (theme.decorAssets ?? {}) as {
@@ -65,5 +70,5 @@ export default async function Home() {
           };
         });
 
-  return <RoyalLandingPage themeCards={themeCards} />;
+  return <RoyalLandingPage themeCards={themeCards} catalogUnavailable={catalog.unavailable} />;
 }

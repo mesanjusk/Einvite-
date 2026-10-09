@@ -475,21 +475,19 @@ model Invitation {
 // Guest publish flow
 // ---------------------------------------------------------------------------
 
-// Established directly at publish time (no OTP round-trip) from a phone
-// number the couple provides. Both `phone` and `invitationId` are unique,
-// so this is the enforcement point for "one mobile number, one invitation":
-// a phone can appear in at most one row, an invitation can be linked to at
-// most one phone. `editTokenHash` backs the pre-logged WhatsApp link sent
-// to the owner for future edits.
+// Established directly at publish time from a phone number the couple
+// provides. A family can own multiple invitations under one number; each
+// invitation has its own unique link and independent private edit token.
 model PhoneLink {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  phone         String   @unique
+  phone         String
   invitationId  String   @unique @db.ObjectId
   editTokenHash String   @unique
   verifiedAt    DateTime @default(now())
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
 
+  @@index([phone])
   @@map("phone_links")
 }
 
@@ -754,15 +752,11 @@ model InstagramAutomation {
 // Tracks which Instagram accounts have already received their access link
 // for a given reel, enforcing one link per account per automation. Written
 // only after the send actually succeeds.
-// The Instagram equivalent of PhoneLink, and the identity spine of the
-// comment-to-DM flow: it binds one Instagram account to exactly one
-// invitation and backs the pre-logged /e/<token> link sent by DM. Both
-// `igUserId` and `invitationId` are unique, so an Instagram account owns at
-// most one invitation — which is what makes "one website, one PDF, one video
-// per Instagram user" enforceable at all.
+// Instagram account connections can own multiple distinct invitations.
+// Each invitation keeps one linked account and one private DM edit token.
 model InstagramLink {
   id                  String    @id @default(auto()) @map("_id") @db.ObjectId
-  igUserId            String    @unique
+  igUserId            String
   username            String?
   invitationId        String    @unique @db.ObjectId
   editTokenHash       String    @unique
@@ -774,6 +768,7 @@ model InstagramLink {
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
 
+  @@index([igUserId])
   @@map("instagram_links")
 }
 

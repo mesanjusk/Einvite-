@@ -144,6 +144,7 @@ export function PublishDialog({
               </DialogTitle>
             </DialogHeader>
             <div className="grid gap-1.5">
+              <p className="text-sm text-muted-foreground">Your invitation is ready. A mobile number is optional; adding one creates a private edit link you can use on another phone.</p>
               <Label htmlFor="publish-phone">Mobile number (optional)</Label>
               <Input
                 id="publish-phone"
@@ -195,7 +196,7 @@ export function PublishSuccess({
           Your invitation is live!
         </DialogTitle>
         <DialogDescription>
-          Bookmark your edit link — it&apos;s how you get back in.
+          {editUrl ? "Save your private edit link to make changes later." : "Your guest link is ready to share. Keep your private edit link if you have one."}
         </DialogDescription>
       </DialogHeader>
 
