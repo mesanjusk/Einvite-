@@ -70,13 +70,16 @@ async function findUserByRecoveryPhone(phone: string) {
   if (direct) return direct;
 
   // Existing invitation owners already have a durable verified PhoneLink.
-  const phoneLink = await db.phoneLink.findUnique({
+  // Several invitations may share a phone. Find a link that is attached to a
+  // signed-in account rather than selecting one arbitrary guest invitation.
+  const phoneLinks = await db.phoneLink.findMany({
     where: { phone },
     select: { invitation: { select: { userId: true } } },
   });
-  if (phoneLink?.invitation.userId) {
+  for (const link of phoneLinks) {
+    if (!link.invitation.userId) continue;
     const linkedUser = await db.user.findUnique({
-      where: { id: phoneLink.invitation.userId },
+      where: { id: link.invitation.userId },
     });
     if (linkedUser) return linkedUser;
   }
