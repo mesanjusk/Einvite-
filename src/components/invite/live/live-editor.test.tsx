@@ -39,7 +39,7 @@ describe("global invitation editing", () => {
     render(<LiveEditor invitationId="test-global-draft" initialInvite={invite} initialThemeStyle={{}} initialSections={[{ id: "HERO", type: "HERO", visible: true, locked: false, order: 0 }]} initialThemeSlug={null} initialColorwaySlug={null} initialMusicTrackId={null} initialCustomMusicUrl={null} themes={[]} musicTracks={[]} isPublished={false} isGuestFlow appUrl="https://example.com" />);
     expect(screen.queryByRole("button", { name: "Details" })).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Edit all sections" }));
-    expect(screen.getByRole("button", { name: "Sections" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Details" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Edit: Meera" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Edit: Arjun" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Edit: Meera" }));
