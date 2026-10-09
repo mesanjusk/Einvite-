@@ -7,6 +7,7 @@
  */
 
 import { db } from "@/lib/db";
+import { instagramValidationEnabled } from "@/lib/instagram-validation";
 import { readFollowStatus } from "@/lib/instagram-follow-status";
 import {
   DEFAULT_PAUSED_MESSAGE,
@@ -43,7 +44,11 @@ const LIVE_UNGATED: InvitationVisibility = {
 export async function resolveInvitationVisibility(
   invitationId: string,
   options: { force?: boolean } = {},
-): Promise<InvitationVisibility> {
+ ): Promise<InvitationVisibility> {
+  // Temporary launch pause: guests must never see an unavailable invitation
+  // due to Instagram follower status while the validation policy is disabled.
+  if (!instagramValidationEnabled()) return LIVE_UNGATED;
+
   const [link, settings] = await Promise.all([
     db.instagramLink.findUnique({
       where: { invitationId },
