@@ -78,11 +78,9 @@ function editLinkFor(rawToken: string) {
 /**
  * The Instagram account's invitation and its pre-logged link.
  *
- * One Instagram account owns exactly one invitation, so a commenter who
- * already has one is handed that same invitation again rather than a second
- * one — this is where "one website, one PDF, one video per Instagram user"
- * is actually enforced. The edit token is rotated on every issue so an old
- * DM stops working once a newer link has been sent.
+ * An Instagram account can create multiple invitations. Unfinished drafts
+ * are reused; previously published invitations retain their own edit link.
+ * Rotating a draft token invalidates its previous DM link.
  *
  * Returns the raw token (only ever known here and in the DM) plus whether
  * this was an existing claim, so the caller can pick the right reply.
@@ -94,7 +92,15 @@ async function issueInvitationLink(
   const rawToken = generateToken();
   const editTokenHash = hashToken(rawToken);
 
-  const existing = await db.instagramLink.findUnique({ where: { igUserId } });
+  // Multiple ceremonies may belong to the same Instagram account.
+  // Reuse only an unfinished draft; a previously published wedding is
+  // never overwritten merely because the account asks for another link.
+  const links = await db.instagramLink.findMany({
+    where: { igUserId },
+    include: { invitation: { select: { status: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  const existing = links.find((item) => item.invitation.status !== "PUBLISHED");
   if (existing) {
     await db.instagramLink.update({
       where: { id: existing.id },
@@ -406,8 +412,8 @@ async function handleCommentChange(
     });
     const alreadyClaimed = claimedThisReel !== null;
 
-    // One invitation per Instagram account: a returning commenter is handed
-    // their existing invitation again, on any reel, rather than a second one.
+    // Return to the current draft, or create another invitation if their
+    // earlier one was already published.
     const { link } = await issueInvitationLink(igUserId, username);
     const replyText = renderInstagramTemplate(
       alreadyClaimed ? automation.duplicateMessage : automation.replyMessage,
@@ -459,7 +465,7 @@ async function knownUsernameFor(igUserId: string): Promise<string | undefined> {
       where: { igUserId },
       select: { username: true },
     }),
-    db.instagramLink.findUnique({ where: { igUserId }, select: { username: true } }),
+    db.instagramLink.findFirst({ where: { igUserId }, select: { username: true }, orderBy: { createdAt: "desc" } }),
   ]);
   return profile?.username ?? link?.username ?? undefined;
 }
