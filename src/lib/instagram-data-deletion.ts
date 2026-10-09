@@ -28,7 +28,7 @@ export async function deleteInstagramUserData(
   // The invitation goes first and takes its InstagramLink with it: every
   // child of Invitation cascades, so this is also what clears the events,
   // photos, guests, and RSVPs that belong to the invitation being erased.
-  const link = await db.instagramLink.findUnique({
+  const links = await db.instagramLink.findMany({
     where: { igUserId },
     select: { invitationId: true },
   });
@@ -36,10 +36,12 @@ export async function deleteInstagramUserData(
   let invitationsDeleted = 0;
   let linksDeleted = 0;
 
-  if (link) {
+  // A user may have multiple event websites. Meta deletion must cover all
+  // of them; deleting each parent preserves Prisma's cascade behavior.
+  for (const link of links) {
     await db.invitation.delete({ where: { id: link.invitationId } });
-    invitationsDeleted = 1;
-    linksDeleted = 1;
+    invitationsDeleted += 1;
+    linksDeleted += 1;
   }
 
   // Deleting the invitation cascades the link away, but a link can also be
