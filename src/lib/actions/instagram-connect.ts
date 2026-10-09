@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { authorizeInvitationAccess } from "@/lib/invitation-access";
 import { hashToken } from "@/lib/otp";
 import { instagramPublishRequirement } from "@/lib/instagram-connect";
+import { instagramValidationEnabled } from "@/lib/instagram-validation";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "./auth";
 export async function prepareInstagramConnectionAction(invitationId:string): Promise<ActionResult<{message:string;profileUrl:string;dmUrl:string}>> {
@@ -17,6 +18,9 @@ export async function prepareInstagramConnectionAction(invitationId:string): Pro
 }
 export async function checkInstagramConnectionAction(invitationId:string): Promise<ActionResult<{ready:boolean;message:string;username:string|null}>> {
  const invitation=await authorizeInvitationAccess(invitationId);if(!invitation)return {success:false,error:"Invitation not found."};
+ if (!instagramValidationEnabled()) {
+  return {success:true,data:{ready:true,message:"Instagram validation is temporarily optional. You can publish and share now.",username:null}};
+ }
  const link=await db.instagramLink.findUnique({where:{invitationId}});
  const message=await instagramPublishRequirement(invitationId, true);
  revalidatePath(`/invite/${invitation.slug}`);
