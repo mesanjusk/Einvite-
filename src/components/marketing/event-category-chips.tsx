@@ -27,13 +27,13 @@ export function EventCategoryChips({ activeSlug }: { activeSlug?: string }) {
             key={category.slug}
             href={`/themes?category=${category.slug}`}
             className={[
-              "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-[10px] font-bold tracking-wide uppercase shadow-sm transition duration-300 hover:-translate-y-0.5 sm:text-xs",
+              "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-[10px] font-bold tracking-wide uppercase shadow-sm transition duration-300 hover:-translate-y-0.5",
               isActive
                 ? `border-[#ead193]/25 bg-gradient-to-r ${tone} shadow-[0_10px_24px_rgba(0,0,0,.18)]`
-                : "border-[#d2b16d]/28 bg-white/[0.055] text-[#dfd0b2] backdrop-blur hover:border-[#d2b16d]/48 hover:bg-[#d2b16d]/10 hover:text-[#f3dfb2]",
+                : "border-violet-200 bg-white/80 text-[#6b5179] hover:border-violet-300 hover:bg-violet-50",
             ].join(" ")}
           >
-            <span className={isActive ? "" : "text-[#d1ad66]"}>
+            <span className={isActive ? "" : "text-[#a7844f]"}>
               <Icon className="size-3.5" strokeWidth={1.9} />
             </span>
             {category.label}

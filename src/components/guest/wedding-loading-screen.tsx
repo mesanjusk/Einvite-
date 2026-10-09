@@ -1,9 +1,7 @@
 export function WeddingLoadingScreen({
   message = "Preparing your invitation",
-  videoUrl,
 }: {
   message?: string;
-  videoUrl?: string | null;
 }) {
   const petals = [
     { left: "10%", delay: "0s", duration: "4.2s", size: 12 },
@@ -15,8 +13,9 @@ export function WeddingLoadingScreen({
   ];
 
   return (
-    <div className="fixed inset-0 z-[1000000] grid place-items-center overflow-hidden bg-[#fffaf4] text-[#5d2032]">
+    <div role="status" aria-live="polite" className="fixed inset-0 z-[1000000] grid place-items-center overflow-hidden bg-[#fffaf4] text-[#5d2032]">
       <style>{`
+        @media (prefers-reduced-motion: reduce) { [role="status"] * { animation: none !important; } }
         @keyframes wedding-loader-petal {
           0% { transform: translate3d(0,-14vh,0) rotate(0deg); opacity: 0; }
           12% { opacity: .8; }
@@ -35,35 +34,8 @@ export function WeddingLoadingScreen({
         }
       `}</style>
 
-      {videoUrl ? (
-        <>
-          <video
-            src={videoUrl}
-            className="absolute inset-0 size-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(32,18,45,.28),rgba(32,18,45,.5))]" />
-        </>
-      ) : (
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,rgba(180,151,212,.22),transparent_32%),radial-gradient(circle_at_20%_80%,rgba(104,67,130,.11),transparent_30%)]" />
-      )}
-
-      {!videoUrl && petals.map((petal, index) => (
-        <span
-          key={index}
-          aria-hidden
-          className="absolute -top-8 rounded-[70%_30%_70%_30%] bg-[#d9b36a]/45"
-          style={{
-            left: petal.left,
-            width: petal.size,
-            height: petal.size * 1.7,
-            animation: `wedding-loader-petal ${petal.duration} linear ${petal.delay} infinite`,
-          }}
-        />
-      ))}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,rgba(180,151,212,.22),transparent_32%)]" />
+      {petals.map((petal, index) => <span key={index} aria-hidden className="absolute -top-8 rounded-[70%_30%_70%_30%] bg-[#d9b36a]/45" style={{ left: petal.left, width: petal.size, height: petal.size * 1.7, animation: `wedding-loader-petal ${petal.duration} linear ${petal.delay} infinite` }} />)}
 
       <div className="relative z-10 flex flex-col items-center px-8 text-center">
         <div className="relative grid size-32 place-items-center">

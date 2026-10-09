@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Gem, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 import { SiteLogo } from "@/components/brand/site-logo";
 import { SITE_NAME } from "@/config/site";
@@ -7,42 +7,16 @@ import { SITE_NAME } from "@/config/site";
 export function PublicMarketplaceHeader() {
   return (
     <header className="royal-nav sticky top-0 z-50 border-b border-violet-200/70 bg-white/95 text-[#4b3659] shadow-[0_8px_28px_rgba(103,75,123,.06)] backdrop-blur-2xl">
-      <div className="mx-auto flex h-[4.35rem] max-w-7xl items-center justify-between px-4 sm:px-8 lg:px-10">
+      <div className="mx-auto flex h-14 items-center justify-between px-4">
         <Link
           href="/"
           aria-label={`${SITE_NAME} home`}
           className="relative z-10 transition duration-300 hover:scale-[1.025]"
         >
-          <SiteLogo size="md" showName />
+          <SiteLogo size="sm" showName />
         </Link>
 
-        <nav className="hidden items-center gap-1 rounded-full border border-violet-200/80 bg-violet-50/60 p-1.5 shadow-sm md:flex">
-          {[
-            ["Home", "/"],
-            ["Designs", "/themes"],
-            ["My invites", "/dashboard"],
-          ].map(([label, href]) => (
-            <Link
-              key={href}
-              href={href}
-              className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-[#6b5578] transition duration-300 hover:bg-violet-100 hover:text-[#4b3659]"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="hidden md:block">
-          <Link
-            href="/themes"
-            className="royal-gold-button inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-extrabold tracking-[0.08em] uppercase"
-          >
-            <Gem className="size-4" />
-            Explore designs
-          </Link>
-        </div>
-
-        <details className="group relative md:hidden">
+        <details className="group relative">
           <summary className="grid size-10 cursor-pointer list-none place-items-center rounded-full border border-violet-200 bg-white text-[#5b4268] shadow-sm transition hover:bg-violet-50 [&::-webkit-details-marker]:hidden">
             <span className="flex w-4 flex-col gap-[3px]" aria-hidden="true">
               <span className="h-px w-full bg-current" />
