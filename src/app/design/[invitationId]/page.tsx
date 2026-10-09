@@ -8,6 +8,7 @@ import { getInvitationById, toInviteRenderData } from "@/lib/get-invite-data";
 import { eventCategoryFor } from "@/lib/event-categories";
 import { INDIC_FONT_VARIABLE_CLASSES } from "@/lib/i18n/fonts";
 import { LiveEditor } from "@/components/invite/live/live-editor";
+import { instagramValidationEnabled } from "@/lib/instagram-validation";
 import { EditorPolishStyles } from "@/components/invite/live/editor-polish-styles";
 import { Button } from "@/components/ui/button";
 
@@ -116,6 +117,7 @@ export default async function DesignInvitationPage({
         }))}
         isPublished={invitation.status === "PUBLISHED"}
         isGuestFlow={!invitation.userId}
+        instagramValidationRequired={instagramValidationEnabled()}
         appUrl={getAppUrl()}
       />
     </div>
