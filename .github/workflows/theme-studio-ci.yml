@@ -27,3 +27,9 @@ jobs:
 
       - name: Type check
         run: npx tsc --noEmit
+
+      - name: Unit and UI regression tests
+        run: npx vitest run --exclude src/lib/actions/invitation.integration.test.ts
+
+      - name: Lint
+        run: npm run lint -- --quiet
