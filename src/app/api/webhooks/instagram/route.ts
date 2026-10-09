@@ -12,6 +12,7 @@ import {
   sendInstagramMessage,
 } from "@/lib/instagram";
 import { checkFollowStatusLive } from "@/lib/instagram-follow-status";
+import { instagramValidationEnabled } from "@/lib/instagram-validation";
 import {
   DEFAULT_FLOW_SETTINGS,
   buildFollowStep,
@@ -347,8 +348,8 @@ async function handleCommentChange(
     //
     // The account-wide rule decides; this reel's own switch can only tighten
     // it. A reel left unticked no longer means "links for everyone".
-    const accountFollowersOnly = await accountRequiresFollow();
-    const reelRequiresFollow = automation.requireFollow ?? false;
+    const accountFollowersOnly = instagramValidationEnabled() && await accountRequiresFollow();
+    const reelRequiresFollow = instagramValidationEnabled() && (automation.requireFollow ?? false);
     if ((accountFollowersOnly || reelRequiresFollow) && igUserId) {
       const isFollower = await checkFollowStatusLive(igUserId, username);
       const decision = decideLinkGate({
@@ -512,11 +513,11 @@ async function handleFlowTap({
     return;
   }
 
-  const isFollower = settings.requireFollow
+  const isFollower = instagramValidationEnabled() && settings.requireFollow
     ? await checkFollowStatusLive(senderId, username)
     : true;
   const decision = decideLinkGate({
-    accountFollowersOnly: settings.requireFollow,
+    accountFollowersOnly: instagramValidationEnabled() && settings.requireFollow,
     isFollower,
   });
 
@@ -822,15 +823,15 @@ async function handleMessagingEvent(event: MessagingEvent) {
     // no matter how carefully the reels were gated: DM the keyword, get a
     // link. Nothing is issued until the check comes back positive.
     if (rule.issueLink) {
-      const accountFollowersOnly = await accountRequiresFollow();
+      const accountFollowersOnly = instagramValidationEnabled() && await accountRequiresFollow();
       const decision = decideLinkGate({
         accountFollowersOnly,
         // Missing on a rule written before the field existed, and missing
         // has to mean gated — those are exactly the rules that were handing
         // links to anyone who asked.
-        ruleRequiresFollow: rule.requireFollow ?? true,
+        ruleRequiresFollow: instagramValidationEnabled() && (rule.requireFollow ?? true),
         isFollower:
-          accountFollowersOnly || (rule.requireFollow ?? true)
+          instagramValidationEnabled() && (accountFollowersOnly || (rule.requireFollow ?? true))
             ? await checkFollowStatusLive(senderId, username)
             : true,
       });
