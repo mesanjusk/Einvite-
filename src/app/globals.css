@@ -1329,3 +1329,112 @@ body {
 
 /* A scaled admin phone retains a real mobile viewport, independent of desktop height. */
 .theme-phone-viewport section { min-height: var(--theme-preview-height); }
+
+/* Customer pages always use a phone canvas; admin routes retain their workspace. */
+body:has(.customer-surface) {
+  background: radial-gradient(ellipse at 50% 0%, #e8dcef, #f4edf7 65%);
+}
+.customer-surface {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  min-height: 100svh;
+  margin-inline: auto;
+  background: #fffaf7;
+  box-shadow: 0 0 70px #76508c18;
+  overflow-x: clip;
+  container-type: inline-size;
+}
+.customer-surface .fixed.inset-0,
+.customer-surface .fixed.inset-x-0,
+body:has(.customer-surface) [data-slot="sheet-overlay"],
+body:has(.customer-surface) [data-slot="dialog-overlay"],
+body:has(.customer-surface) [data-slot="sheet-content"].inset-x-0 {
+  left: max(0px, calc((100% - 430px) / 2)) !important;
+  right: max(0px, calc((100% - 430px) / 2)) !important;
+}
+.customer-surface .fixed.inset-x-3 {
+  left: max(12px, calc((100% - 430px) / 2 + 12px)) !important;
+  right: max(12px, calc((100% - 430px) / 2 + 12px)) !important;
+}
+.customer-surface .inv-float.fixed {
+  right: max(16px, calc((100% - 430px) / 2 + 16px)) !important;
+}
+.customer-surface .inv-scroll-progress {
+  right: max(0px, calc((100% - 430px) / 2)) !important;
+}
+body:has(.customer-surface) [data-slot="sheet-content"].right-0 {
+  right: max(0px, calc((100% - 430px) / 2)) !important;
+  max-width: min(100%, 430px) !important;
+}
+body:has(.customer-surface) [data-slot="sheet-content"].left-0 {
+  left: max(0px, calc((100% - 430px) / 2)) !important;
+  max-width: min(100%, 430px) !important;
+}
+body:has(.customer-surface) [data-slot="dialog-content"] {
+  max-width: min(calc(100% - 24px), 406px) !important;
+  max-height: calc(100svh - 24px);
+  overflow-y: auto;
+}
+body:has(.customer-surface) [data-slot="sheet-content"] {
+  max-height: 92svh;
+  overflow-y: auto;
+}
+/* Viewport breakpoints must not turn a 430px customer canvas into desktop grids. */
+.customer-surface :is([class*="sm:grid-cols-"], [class*="md:grid-cols-"], [class*="lg:grid-cols-"]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.customer-surface [class~="grid-cols-2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.customer-surface [class~="grid-cols-3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.customer-surface [class~="sm:flex-row"] { flex-direction: column; }
+.royal-landing-hero {
+  background: radial-gradient(ellipse at 50% 60%, #e6d5ee 0%, transparent 65%), linear-gradient(#fffaf7, #f3eaf8);
+}
+.royal-hero-halo {
+  position: absolute; width: 280px; height: 280px; left: 50%; top: 15px;
+  transform: translateX(-50%); border: 1px solid #b9986540; border-radius: 50%;
+  box-shadow: 0 0 0 14px #fffaf430, 0 0 0 15px #b9986520;
+}
+.royal-hero-side {
+  position: absolute; top: 40px; width: 145px; height: 232px;
+  border: 4px solid #fffaf4; border-radius: 80px 80px 18px 18px;
+  overflow: hidden; box-shadow: 0 12px 25px #76508c20;
+}
+.royal-hero-side-left { left: 0; transform: rotate(-12deg); }
+.royal-hero-side-right { right: 0; transform: rotate(12deg); }
+.royal-hero-primary { animation: royal-landing-float 6s ease-in-out infinite; }
+.royal-artwork-arch {
+  position: absolute; inset: 8% 9%; border: 1px solid #b9986590;
+  border-radius: 50% 50% 8px 8px;
+  box-shadow: inset 0 0 0 6px #fffaf420;
+}
+@keyframes royal-landing-float {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .royal-hero-primary { animation: none; }
+  .royal-coded-artwork * { animation: none !important; }
+}
+/* Radix reserves the removed scrollbar on body; align portals with that canvas. */
+body[data-scroll-locked]:has(.customer-surface) :is([data-slot="sheet-overlay"], [data-slot="dialog-overlay"], [data-slot="sheet-content"].inset-x-0) {
+  left: max(0px, calc((100% - 430px - var(--removed-body-scroll-bar-size, 0px)) / 2)) !important;
+  right: max(var(--removed-body-scroll-bar-size, 0px), calc((100% - 430px + var(--removed-body-scroll-bar-size, 0px)) / 2)) !important;
+}
+body[data-scroll-locked]:has(.customer-surface) [data-slot="sheet-content"].right-0 {
+  right: max(var(--removed-body-scroll-bar-size, 0px), calc((100% - 430px + var(--removed-body-scroll-bar-size, 0px)) / 2)) !important;
+}
+body[data-scroll-locked]:has(.customer-surface) [data-slot="sheet-content"].left-0 {
+  left: max(0px, calc((100% - 430px - var(--removed-body-scroll-bar-size, 0px)) / 2)) !important;
+}
+body[data-scroll-locked]:has(.customer-surface) [data-slot="dialog-content"] {
+  left: calc(50% - var(--removed-body-scroll-bar-size, 0px) / 2) !important;
+}
+body:has(.customer-surface) [data-sonner-toaster] {
+  width: min(calc(100% - 32px), 398px) !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%);
+}

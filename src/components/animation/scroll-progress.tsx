@@ -8,7 +8,7 @@ export function ScrollProgress() {
 
   return (
     <motion.div
-      className="no-print"
+      className="no-print inv-scroll-progress"
       style={{
         position: "fixed",
         right: 0,

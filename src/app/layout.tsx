@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display, Great_Vibes, Cormorant_Garamond, EB_Garamond } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_LOGO_PATH, SITE_NAME, SITE_URL } from "@/config/site";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { CustomerSurface } from "@/components/customer-surface";
 import "./globals.css";
 
 const inter = Inter({
@@ -56,8 +57,9 @@ export const metadata: Metadata = {
     shortcut: SITE_LOGO_PATH,
     apple: SITE_LOGO_PATH,
   },
-  themeColor: "#ffffff",
 };
+
+export const viewport: Viewport = { themeColor: "#f3eaf8", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({
   children,
@@ -77,7 +79,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
-            {children}
+            <CustomerSurface>{children}</CustomerSurface>
             <Toaster richColors closeButton />
           </SessionProvider>
         </ThemeProvider>

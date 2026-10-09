@@ -20,7 +20,6 @@ export function StartLiveInvitationButton({
   children,
   className,
   style,
-  loadingVideoUrl,
   ariaLabel,
 }: {
   ariaLabel?: string;
@@ -64,7 +63,6 @@ export function StartLiveInvitationButton({
       {isPending && (
         <WeddingLoadingScreen
           message="Preparing your invitation editor"
-          videoUrl={loadingVideoUrl}
         />
       )}
     </>

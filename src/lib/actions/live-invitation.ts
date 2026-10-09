@@ -124,7 +124,7 @@ export async function patchInvitationAction(
 
   if (data.themeSlug !== undefined && data.themeSlug !== theme?.slug) {
     const next = await db.theme.findUnique({ where: { slug: data.themeSlug } });
-    if (!next || next.type !== "WEBSITE") {
+    if (!next || next.type !== "WEBSITE" || !next.isPublished) {
       return { success: false, error: "Unknown design selected." };
     }
     const template = await db.template.findFirst({ where: { themeId: next.id } });
@@ -378,12 +378,12 @@ export async function setMediaOrderAction(
   const ownedIds = new Set(owned.map((media) => media.id));
   const ordered = mediaIds.filter((id) => ownedIds.has(id));
 
-  await Promise.all(
-    ordered.map((id, order) => db.media.update({ where: { id }, data: { order } })),
+  const results = await Promise.all(
+    [...new Set(ordered)].map((id, order) => db.media.updateMany({ where: { id, invitationId }, data: { order } })),
   );
 
   revalidatePath(`/invite/${invitation.slug}`);
-  return { success: true, data: { ordered: ordered.length } };
+  return { success: true, data: { ordered: results.reduce((count, result) => count + result.count, 0) } };
 }
 
 export type LiveFamilyMember = {
@@ -549,11 +549,13 @@ export async function startLiveInvitationAction(input: {
   if (!theme && input.themeSlug) {
     theme = await db.theme.findUnique({ where: { slug: input.themeSlug } });
   }
+  if (theme && (!theme.isPublished || theme.type !== "WEBSITE")) return { success: false, error: "This design is no longer available." };
   if (!theme || theme.type !== "WEBSITE") {
     theme =
       (await db.theme.findFirst({
         where: {
           type: "WEBSITE",
+          isPublished: true,
           OR: [
             { eventCategory: category.slug },
             { eventCategories: { has: category.slug } },
@@ -562,7 +564,7 @@ export async function startLiveInvitationAction(input: {
         orderBy: { sortOrder: "asc" },
       })) ??
       (await db.theme.findFirst({
-        where: { type: "WEBSITE" },
+        where: { type: "WEBSITE", isPublished: true },
         orderBy: { sortOrder: "asc" },
       }));
   }

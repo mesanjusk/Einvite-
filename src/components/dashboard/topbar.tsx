@@ -44,9 +44,11 @@ type TopbarUser = {
 export function DashboardTopbar({
   user,
   isAdmin,
+  mobileOnly = false,
 }: {
   user: TopbarUser;
   isAdmin: boolean;
+  mobileOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -66,12 +68,12 @@ export function DashboardTopbar({
       {isAdmin ? (
         <SiteLogo size="sm" />
       ) : (
-        <SiteLogo size="sm" className="lg:hidden" />
+        <SiteLogo size="sm" className={mobileOnly ? undefined : "lg:hidden"} />
       )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden" aria-label="More">
+          <Button variant="ghost" size="icon" className={mobileOnly ? undefined : "lg:hidden"} aria-label="More">
             <MoreVertical className="size-5" />
           </Button>
         </SheetTrigger>
@@ -119,9 +121,9 @@ export function DashboardTopbar({
         </SheetContent>
       </Sheet>
 
-      <div className="hidden lg:block" />
+      <div className={mobileOnly ? "hidden" : "hidden lg:block"} />
 
-      <div className="hidden items-center gap-2 lg:flex">
+      <div className={mobileOnly ? "hidden" : "hidden items-center gap-2 lg:flex"}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-9 gap-2 px-2">

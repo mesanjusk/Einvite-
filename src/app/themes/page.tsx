@@ -14,11 +14,10 @@ import {
   eventCategoryFor,
   isEventCategorySlug,
 } from "@/lib/event-categories";
-import { fallbackThumbnailFor } from "@/lib/marketing-fallbacks";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: `Royal Invitation Designs · ${SITE_NAME}`,
+  title: `Invitation Designs · ${SITE_NAME}`,
   description:
     "Explore premium animated wedding invitation designs by SK Digital, preview them live, and personalize your chosen experience.",
 };
@@ -109,13 +108,10 @@ export default async function PublicThemesPage({
   });
 
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
-  const mobilePreviewThemes = themes.slice(0, 5).map((theme) => ({
-    slug: theme.slug,
-    id: theme.id,
-    name: theme.name,
-    previewImage: theme.previewImage ?? fallbackThumbnailFor(theme.slug),
-    demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
-  }));
+  const mobilePreviewThemes = themes.slice(0, 5).map((theme) => {
+    const decor = (theme.decorAssets ?? {}) as { revealVideoPosterUrl?: string; sectionImages?: Record<string, string> };
+    return { ...theme, previewImage: theme.previewImage ?? null, revealVideoPosterUrl: decor.revealVideoPosterUrl, sectionArtwork: decor.sectionImages?.HERO, demoSlug: demoSlugByThemeId.get(theme.id) ?? null };
+  });
   const headingCategory = activeSlug ? eventCategoryFor(activeSlug).label : null;
 
   const hrefFor = (changes: Record<string, string | null | undefined>) => {
@@ -148,11 +144,11 @@ export default async function PublicThemesPage({
           <div className="royal-corner royal-corner-tl" />
           <div className="royal-corner royal-corner-br" />
 
-          <div className="relative mx-auto max-w-4xl px-4 pb-6 pt-8 text-center sm:px-8 sm:pb-9 sm:pt-11">
+          <div className="relative mx-auto max-w-4xl px-4 pb-6 pt-8 text-center">
             <p className="royal-kicker text-[9px] font-bold">
               SK Digital signature collection
             </p>
-            <h1 className="font-display royal-title-light mx-auto mt-2 text-[2.45rem] leading-[0.95] sm:text-5xl">
+            <h1 className="font-display royal-title-light mx-auto mt-2 text-[2.45rem] leading-[0.95]">
               Explore {headingCategory ? `${headingCategory} ` : ""}
               <span className="italic">invitation designs</span>
             </h1>
@@ -168,7 +164,7 @@ export default async function PublicThemesPage({
               <Link
                 href={hrefFor({ tier: null })}
                 className={cn(
-                  "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
+                  "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition",
                   tier === "all"
                     ? "royal-gold-button text-[#4b3659]"
                     : "text-[#765f81] hover:text-[#4b3659]",
@@ -179,7 +175,7 @@ export default async function PublicThemesPage({
               <Link
                 href={hrefFor({ tier: "premium" })}
                 className={cn(
-                  "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
+                  "rounded-full px-4 py-2.5 text-[9px] font-extrabold tracking-wide uppercase transition",
                   tier === "premium"
                     ? "royal-gold-button text-[#4b3659]"
                     : "text-[#765f81] hover:text-[#4b3659]",
@@ -224,12 +220,12 @@ export default async function PublicThemesPage({
                 type="search"
                 name="q"
                 defaultValue={rawQuery ?? ""}
-                placeholder="Search templates by style or name..."
-                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-[#4b3659] outline-none placeholder:text-[#a28dab] sm:text-sm"
+                placeholder="Search designs"
+                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-[#4b3659] outline-none placeholder:text-[#a28dab]"
               />
               <button
                 type="submit"
-                className="royal-gold-button rounded-full px-4 py-2 text-[9px] font-extrabold tracking-[0.12em] uppercase sm:text-[10px]"
+                className="royal-gold-button rounded-full px-4 py-2 text-[9px] font-extrabold tracking-[0.12em] uppercase"
               >
                 Search
               </button>
@@ -251,14 +247,14 @@ export default async function PublicThemesPage({
           </div>
         </section>
 
-        <section className="royal-section relative mx-auto max-w-none px-4 py-8 sm:px-8 sm:py-10 lg:px-10">
+        <section className="royal-section relative mx-auto max-w-none px-4 py-8">
           <div className="relative mx-auto mb-5 flex max-w-7xl items-center justify-between gap-3">
-            <span className="rounded-full border border-violet-200/80 bg-white px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#6a5377] uppercase shadow-sm sm:text-[10px]">
+            <span className="rounded-full border border-violet-200/80 bg-white px-3 py-1.5 text-[9px] font-extrabold tracking-wide text-[#6a5377] uppercase shadow-sm">
               {themes.length} {themes.length === 1 ? "template" : "templates"}
             </span>
 
             <details className="group relative">
-              <summary className="cursor-pointer list-none rounded-full border border-violet-200/80 bg-white px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#6a5377] uppercase shadow-sm [&::-webkit-details-marker]:hidden sm:text-[10px]">
+              <summary className="cursor-pointer list-none rounded-full border border-violet-200/80 bg-white px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#6a5377] uppercase shadow-sm [&::-webkit-details-marker]:hidden">
                 Sort: {sortLabel(sort)} ▾
               </summary>
               <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-2xl border border-violet-200 bg-white p-1.5 text-left shadow-[0_18px_45px_rgba(50,40,27,0.15)]">
@@ -285,7 +281,7 @@ export default async function PublicThemesPage({
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-6 sm:gap-y-9 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-7">
               {themes.map((theme) => (
                 <TemplateMarketplaceCard
                   key={theme.id}
@@ -300,6 +296,8 @@ export default async function PublicThemesPage({
                     previewImage: theme.previewImage ?? null,
                     revealMode: theme.revealMode,
                     revealVideoUrl: theme.revealVideoUrl,
+                    revealVideoPosterUrl: ((theme.decorAssets ?? {}) as { revealVideoPosterUrl?: string }).revealVideoPosterUrl,
+                    sectionArtwork: ((theme.decorAssets ?? {}) as { sectionImages?: Record<string, string> }).sectionImages?.HERO,
                     revealAnimationPreset:
                       ((theme.decorAssets ?? {}) as { revealAnimation?: { preset?: string } })
                         .revealAnimation?.preset ?? "MAGIC_BLOOM",
@@ -344,7 +342,7 @@ function FilterChip({
     <Link
       href={href}
       className={cn(
-        "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[9px] font-extrabold tracking-wide uppercase transition sm:text-[10px]",
+        "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[9px] font-extrabold tracking-wide uppercase transition",
         active
           ? "border-violet-300 bg-violet-100 text-[#5a3d6d] shadow-sm"
           : "border-violet-200 bg-white text-[#765f81] hover:border-violet-300 hover:bg-violet-50 hover:text-[#4b3659]",
@@ -361,7 +359,7 @@ function StyleChip({ href, label, active }: { href: string; label: string; activ
     <Link
       href={href}
       className={cn(
-        "shrink-0 rounded-full px-3.5 py-2 text-[9px] font-extrabold tracking-wide capitalize transition sm:text-[10px]",
+        "shrink-0 rounded-full px-3.5 py-2 text-[9px] font-extrabold tracking-wide capitalize transition",
         active
           ? "bg-violet-100 text-[#5a3d6d] shadow-sm"
           : "bg-white text-[#765f81] hover:bg-violet-50 hover:text-[#4b3659]",
