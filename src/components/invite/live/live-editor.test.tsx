@@ -37,7 +37,7 @@ describe("global invitation editing", () => {
     HTMLElement.prototype.scrollIntoView = vi.fn();
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, top: 100, bottom: 500, left: 0, right: 390, width: 390, height: 400, toJSON() {} });
     render(<LiveEditor invitationId="test-global-draft" initialInvite={invite} initialThemeStyle={{}} initialSections={[{ id: "HERO", type: "HERO", visible: true, locked: false, order: 0 }]} initialThemeSlug={null} initialColorwaySlug={null} initialMusicTrackId={null} initialCustomMusicUrl={null} themes={[]} musicTracks={[]} isPublished={false} isGuestFlow appUrl="https://example.com" />);
-    expect(screen.queryByRole("button", { name: "Sections" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Details" })).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Edit all sections" }));
     expect(screen.getByRole("button", { name: "Sections" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Edit: Meera" })).toBeVisible();
