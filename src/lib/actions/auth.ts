@@ -76,11 +76,12 @@ async function findUserByRecoveryPhone(phone: string) {
     where: { phone },
     select: { invitation: { select: { userId: true } } },
   });
-  for (const link of phoneLinks) {
-    if (!link.invitation.userId) continue;
-    const linkedUser = await db.user.findUnique({
-      where: { id: link.invitation.userId },
-    });
+  const accountIds = [...new Set(phoneLinks.map((link) => link.invitation.userId).filter((id): id is string => Boolean(id)))];
+  // A shared phone must never silently select one of several user accounts
+  // during password recovery. Require a unique account association.
+  if (accountIds.length > 1) return null;
+  if (accountIds.length === 1) {
+    const linkedUser = await db.user.findUnique({ where: { id: accountIds[0] } });
     if (linkedUser) return linkedUser;
   }
 
