@@ -174,6 +174,7 @@ export function LiveEditor({
   isPublished,
   isGuestFlow,
   appUrl,
+  instagramValidationRequired = false,
   initialEditing = false,
 }: {
   initialEditing?: boolean;
@@ -190,6 +191,8 @@ export function LiveEditor({
   isPublished: boolean;
   /** True when nobody is signed in — publishing then goes through the phone/WhatsApp flow. */
   isGuestFlow: boolean;
+  /** Controlled on the server. Instagram follow checks are optional during launch. */
+  instagramValidationRequired?: boolean;
   appUrl: string;
 }) {
   const [invite, setInvite] = useState(initialInvite);
@@ -730,11 +733,13 @@ export function LiveEditor({
   const shareUrl = `${appUrl}/invite/${invite.slug}`;
 
   const continuePublish = useCallback(async () => {
-    let connection;
-    try { connection = await checkInstagramConnectionAction(invitationId); }
-    catch { toast.error("Could not verify Instagram. Your draft is saved; try again."); return; }
-    if (!connection.success) { toast.error(connection.error); return; }
-    if (!connection.data.ready) { setConnectOpen(true); return; }
+    if (instagramValidationRequired) {
+      let connection;
+      try { connection = await checkInstagramConnectionAction(invitationId); }
+      catch { toast.error("Could not verify Instagram. Your draft is saved; try again."); return; }
+      if (!connection.success) { toast.error(connection.error); return; }
+      if (!connection.data.ready) { setConnectOpen(true); return; }
+    }
     if (isGuestFlow) {
       setPublishOpen(true);
       return;
@@ -744,13 +749,18 @@ export function LiveEditor({
       setPublished(true);
       setOwnerPublishResult(`${appUrl}/invite/${invite.slug}`);
     });
-  }, [appUrl, invitationId, invite.slug, isGuestFlow, trackSave]);
+  }, [appUrl, invitationId, invite.slug, isGuestFlow, instagramValidationRequired, trackSave]);
 
   function handlePublish() {
     setActiveSectionId(null);
+    // Sharing a live invitation should never issue a new owner edit token.
+    if (published) {
+      setOwnerPublishResult(shareUrl);
+      return;
+    }
     // Sample names are presentation only. An actual name must exist in the
     // saved invitation before the draft is allowed to go live.
-    if (!invite.brideName.trim()) {
+    if (!invite.brideName.trim() || !invite.groomName.trim()) {
       toast.error(`Personalize the ${sectionDisplayName("HERO")} slide before publishing.`);
       const hero = document.querySelector<HTMLElement>(
         `[data-invite-section-label="${sectionDisplayName("HERO")}"]`,
@@ -888,15 +898,15 @@ export function LiveEditor({
 }
 
 function EditorFooter({ pending, published, editing, onEdit, onDesign, onSections, onMusic, onPublish }: { pending: number; published: boolean; editing: boolean; onEdit: () => void; onDesign: () => void; onSections: () => void; onMusic: () => void; onPublish: () => void }) {
-  const pencil = <button type="button" aria-label={editing ? "Done & preview" : "Edit all sections"} onClick={onEdit} className="grid size-11 place-items-center rounded-full bg-violet-700 text-white shadow-lg"><Pencil className="size-5" /></button>;
+  const pencil = <button type="button" title={editing ? "Finish editing and preview" : "Edit names, dates and details"} aria-label={editing ? "Done & preview" : "Edit all sections"} onClick={onEdit} className="grid size-12 place-items-center rounded-full bg-violet-700 text-white shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"><Pencil className="size-5" /></button>;
   if (!editing) return <div className="no-print fixed inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[70] flex justify-center pointer-events-none"><div className="pointer-events-auto">{pencil}</div></div>;
   return <footer className="no-print fixed inset-x-0 bottom-0 z-[70] flex justify-center border-t border-violet-100 bg-white/95 px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-xl">
     <nav aria-label="Invitation editor" className="grid w-full max-w-[430px] grid-cols-5 items-center justify-items-center gap-1">
-      <button type="button" onClick={onDesign} className="grid justify-items-center text-[9px]"><Palette className="size-4" />Design</button>
-      <button type="button" onClick={onSections} className="grid justify-items-center text-[9px]"><Layers className="size-4" />Sections</button>
+      <button type="button" onClick={onDesign} className="grid min-h-11 justify-items-center gap-1 text-[11px] font-medium"><Palette className="size-5" />Design</button>
+      <button type="button" onClick={onSections} className="grid min-h-11 justify-items-center gap-1 text-[11px] font-medium"><Layers className="size-5" />Details</button>
       {pencil}
-      <button type="button" onClick={onMusic} className="grid justify-items-center text-[9px]"><Music className="size-4" />Music</button>
-      <button type="button" onClick={onPublish} className="grid justify-items-center text-[9px]"><Send className="size-4" />{published ? "Share" : "Publish"}</button>
+      <button type="button" onClick={onMusic} className="grid min-h-11 justify-items-center gap-1 text-[11px] font-medium"><Music className="size-5" />Music</button>
+      <button type="button" onClick={onPublish} className="grid min-h-11 justify-items-center gap-1 text-[11px] font-medium"><Send className="size-5" />{published ? "Share" : "Publish"}</button>
       {pending > 0 && <span role="status" className="absolute -top-6 rounded-full bg-white px-3 text-[10px] text-violet-700">Saving…</span>}
     </nav>
   </footer>;
