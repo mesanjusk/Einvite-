@@ -51,7 +51,7 @@ export default async function PublicThemesPage({
       : "popular";
   const tier = rawTier === "premium" ? "premium" : "all";
 
-  const [baseThemes, demos] = await Promise.all([
+  const [catalog, demos] = await Promise.all([
     db.theme
       .findMany({
         where: {
@@ -68,7 +68,11 @@ export default async function PublicThemesPage({
         },
         orderBy: { sortOrder: "asc" },
       })
-      .catch(() => []),
+      .then((data) => ({ data, unavailable: false }))
+      .catch((error) => {
+        console.error("[themes] Published design catalogue unavailable", error);
+        return { data: [], unavailable: true };
+      }),
     db.invitation
       .findMany({
         where: { isDemo: true, status: "PUBLISHED" },
@@ -77,6 +81,7 @@ export default async function PublicThemesPage({
       .catch(() => []),
   ]);
 
+  const baseThemes = catalog.data;
   const styleOptions = [...new Set(baseThemes.map((theme) => theme.category).filter(Boolean))];
   const activeStyle = rawStyle && styleOptions.includes(rawStyle) ? rawStyle : null;
 
@@ -269,9 +274,9 @@ export default async function PublicThemesPage({
           <div className="relative mx-auto max-w-7xl">
           {themes.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/30 px-6 py-16 text-center">
-              <p className="font-display text-2xl text-[#4b3659]">No matching designs yet</p>
+              <p className="font-display text-2xl text-[#4b3659]">{catalog.unavailable ? "Designs temporarily unavailable" : "No matching designs yet"}</p>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#806b8c]">
-                Try another celebration, style or search term.
+                {catalog.unavailable ? "Please refresh the page or try again shortly. Your invitation drafts are safe." : "Try another celebration, style or search term."}
               </p>
               <Link
                 href="/themes"
