@@ -3,8 +3,8 @@
 // MongoDB has no migrations — `prisma db push` exists only to reconcile
 // indexes, since collections and fields are created lazily on first write.
 // Running it here means the unique constraints that enforce our business
-// rules (one phone number owns one invitation; one Instagram account owns
-// one invitation; a colourway slug is unique within its theme) exist without
+// rules (a private edit token is unique per invitation; colourway slugs are
+// unique within a theme) exist without
 // anyone having to run a command from a laptop.
 //
 // It only runs on production builds. A preview branch may carry an older
@@ -45,10 +45,8 @@ const UNIQUE_CONSTRAINTS = [
   { collection: "templates", keys: ["slug"] },
   { collection: "video_templates", keys: ["slug"] },
   { collection: "theme_colorways", keys: ["themeId", "slug"] },
-  { collection: "phone_links", keys: ["phone"] },
   { collection: "phone_links", keys: ["invitationId"] },
   { collection: "phone_links", keys: ["editTokenHash"] },
-  { collection: "instagram_links", keys: ["igUserId"] },
   { collection: "instagram_links", keys: ["invitationId"] },
   { collection: "instagram_links", keys: ["editTokenHash"] },
   { collection: "instagram_automations", keys: ["mediaId"] },
@@ -78,6 +76,42 @@ function maskValue(key, value) {
 
 function describeGroup(keys, groupId) {
   return keys.map((key) => `${key}=${maskValue(key, groupId?.[key])}`).join(", ");
+}
+
+/**
+ * One-time, non-data-destructive transition from "one person, one wedding"
+ * to "one account, many invitations". Drop ONLY the old single-field UNIQUE
+ * indexes; Prisma immediately recreates normal lookup indexes with db push.
+ * The invitationId and editTokenHash unique indexes remain untouched.
+ */
+async function releaseLegacyOwnerIndexes(prisma) {
+  for (const { collection, key } of [
+    { collection: "phone_links", key: "phone" },
+    { collection: "instagram_links", key: "igUserId" },
+  ]) {
+    let indexes;
+    try {
+      const response = await prisma.$runCommandRaw({ listIndexes: collection, cursor: {} });
+      indexes = response?.cursor?.firstBatch ?? [];
+    } catch (error) {
+      warn(`cannot inspect indexes for ${collection}: ${error?.message ?? error}`);
+      continue;
+    }
+    const legacy = indexes.find(
+      (index) =>
+        index.unique === true &&
+        Object.keys(index.key ?? {}).length === 1 &&
+        index.key?.[key] === 1,
+    );
+    if (!legacy) continue;
+    // Guard against changing the access-token or invitation ownership indexes.
+    if (legacy.name === "_id_" || !legacy.name) {
+      warn(`unexpected legacy index on ${collection}; will not drop it`);
+      continue;
+    }
+    await prisma.$runCommandRaw({ dropIndexes: collection, index: legacy.name });
+    log(`removed old one-invitation constraint ${collection}.${key}; records preserved`);
+  }
 }
 
 function runPush() {
@@ -199,6 +233,21 @@ async function main() {
   if (!process.env.DATABASE_URL) {
     warn("DATABASE_URL is not set in the build environment — indexes are NOT synced");
     return;
+  }
+
+  // Remove only the known legacy uniqueness rules before Prisma reconciles
+  // the new non-unique lookup indexes. Failure is reported and does not
+  // silently delete any data or weaken other ownership constraints.
+  try {
+    const { PrismaClient } = await import("@prisma/client");
+    const indexClient = new PrismaClient();
+    try {
+      await releaseLegacyOwnerIndexes(indexClient);
+    } finally {
+      await indexClient.$disconnect();
+    }
+  } catch (error) {
+    warn(`legacy owner index transition unavailable: ${error?.message ?? error}`);
   }
 
   log("syncing indexes with prisma db push…");
