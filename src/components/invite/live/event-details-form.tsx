@@ -27,14 +27,14 @@ export function EventDetailsForm({ invite, onText, onDate }: Props) {
       />
     </label>
   );
-  const date = (label: string, value: Date, target: EditDateTarget) => (
+  const date = (label: string, value: Date | undefined, target: EditDateTarget) => (
     <label className="grid gap-1.5 text-sm font-medium text-[#4b3659]">
       {label}
       <input
         type="date"
         aria-label={label}
         className="min-h-11 rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-base"
-        defaultValue={value.toISOString().slice(0, 10)}
+        defaultValue={value instanceof Date && !Number.isNaN(value.getTime()) ? value.toISOString().slice(0, 10) : ""}
         onChange={(event) => {
           if (event.target.value) onDate(target, event.target.value);
         }}
