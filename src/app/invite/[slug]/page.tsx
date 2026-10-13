@@ -26,22 +26,27 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const invitation = await getInvitationBySlug(slug);
-  if (!invitation) return {};
+  if (!invitation) return { robots: { index: false, follow: false } };
 
-  const title =
-    invitation.seoTitle ??
-    `${invitation.brideName} & ${invitation.groomName} — Wedding`;
-  const description =
-    invitation.seoDescription ??
-    `Join us as we celebrate our wedding.${
-      invitation.venueName ? ` ${invitation.venueName}.` : ""
-    }`;
+  // A second participant's name is optional; never display a dangling "&".
+  const names = [invitation.brideName, invitation.groomName]
+    .map((name) => (name ?? "").trim())
+    .filter(Boolean);
+  const title = invitation.seoTitle?.trim() || (names.length ? `${names.join(" & ")} — Wedding` : "Digital Invitation");
+  const description = invitation.seoDescription?.trim() ||
+    `Join us as we celebrate our wedding.${invitation.venueName ? ` ${invitation.venueName}.` : ""}`;
+  const isPublicDemo = invitation.isDemo && invitation.status === "PUBLISHED";
   const appUrl = getAppUrl();
   const ogImage = invitation.ogImageUrl ?? `${appUrl}/invite/${slug}/opengraph-image`;
 
   return {
     title,
     description,
+    // Private invitations keep their sharing preview but are not indexed.
+    robots: isPublicDemo
+      ? { index: true, follow: true }
+      : { index: false, follow: false, noarchive: true, nosnippet: true },
+    ...(isPublicDemo ? { alternates: { canonical: `${appUrl}/invite/${slug}` } } : {}),
     openGraph: {
       title,
       description,

@@ -6,9 +6,10 @@ import { getAppUrl } from "@/lib/app-url";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const appUrl = getAppUrl();
 
+  // Published customer invitations stay shareable, but never enter search sitemaps.
   const invitations = await db.invitation
     .findMany({
-      where: { status: "PUBLISHED" },
+      where: { status: "PUBLISHED", isDemo: true },
       select: { slug: true, updatedAt: true },
     })
     .catch(() => []);
