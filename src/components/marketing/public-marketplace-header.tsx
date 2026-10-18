@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 import { SiteLogo } from "@/components/brand/site-logo";
 import { SITE_NAME } from "@/config/site";
@@ -7,7 +7,7 @@ import { SITE_NAME } from "@/config/site";
 export function PublicMarketplaceHeader() {
   return (
     <header className="royal-nav sticky top-0 z-50 border-b border-violet-200/70 bg-white/95 text-[#4b3659] shadow-[0_8px_28px_rgba(103,75,123,.06)] backdrop-blur-2xl">
-      <div className="mx-auto flex h-14 items-center justify-between px-4">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-10">
         <Link
           href="/"
           aria-label={`${SITE_NAME} home`}
@@ -16,7 +16,26 @@ export function PublicMarketplaceHeader() {
           <SiteLogo size="sm" showName />
         </Link>
 
-        <details className="group relative">
+        <nav
+          className="hidden items-center gap-8 text-sm font-semibold text-[#6b5179] md:flex"
+          aria-label="Main navigation"
+        >
+          <Link href="/themes" className="transition hover:text-[#76508c]">
+            Designs
+          </Link>
+          <Link href="/contact" className="transition hover:text-[#76508c]">
+            Contact
+          </Link>
+        </nav>
+
+        <Link
+          href="/create"
+          className="royal-gold-button hidden min-h-11 items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold md:inline-flex"
+        >
+          Create invitation <ArrowRight className="size-4" />
+        </Link>
+
+        <details className="group relative md:hidden">
           <summary className="grid size-10 cursor-pointer list-none place-items-center rounded-full border border-violet-200 bg-white text-[#5b4268] shadow-sm transition hover:bg-violet-50 [&::-webkit-details-marker]:hidden">
             <span className="flex w-4 flex-col gap-[3px]" aria-hidden="true">
               <span className="h-px w-full bg-current" />
@@ -26,16 +45,36 @@ export function PublicMarketplaceHeader() {
             <span className="sr-only">Open menu</span>
           </summary>
 
-          <div className="royal-menu absolute right-0 top-12 w-[min(86vw,320px)] overflow-hidden rounded-[1.8rem] border border-violet-200 bg-white/98 p-4 shadow-[0_26px_80px_rgba(84,59,101,.18)] backdrop-blur-2xl">
+          <div className="royal-menu absolute top-12 right-0 w-[min(86vw,320px)] overflow-hidden rounded-[1.8rem] border border-violet-200 bg-white/98 p-4 shadow-[0_26px_80px_rgba(84,59,101,.18)] backdrop-blur-2xl">
             <div className="mb-3 flex items-center justify-center gap-2 text-[#76508c]">
               <Sparkles className="size-4" />
               <span className="font-display text-lg tracking-wide">SK Digital</span>
             </div>
-            <nav className="grid gap-1 text-center font-display text-lg text-[#4b3659]">
-              <Link href="/" className="rounded-2xl px-4 py-3 transition hover:bg-violet-50">Home</Link>
-              <Link href="/themes" className="rounded-2xl px-4 py-3 transition hover:bg-violet-50">Designs</Link>
-              <Link href="/dashboard" className="rounded-2xl px-4 py-3 transition hover:bg-violet-50">My invitations</Link>
-              <Link href="/contact" className="rounded-2xl px-4 py-3 transition hover:bg-violet-50">Contact</Link>
+            <nav className="font-display grid gap-1 text-center text-lg text-[#4b3659]">
+              <Link
+                href="/"
+                className="rounded-2xl px-4 py-3 transition hover:bg-violet-50"
+              >
+                Home
+              </Link>
+              <Link
+                href="/themes"
+                className="rounded-2xl px-4 py-3 transition hover:bg-violet-50"
+              >
+                Designs
+              </Link>
+              <Link
+                href="/dashboard"
+                className="rounded-2xl px-4 py-3 transition hover:bg-violet-50"
+              >
+                My invitations
+              </Link>
+              <Link
+                href="/contact"
+                className="rounded-2xl px-4 py-3 transition hover:bg-violet-50"
+              >
+                Contact
+              </Link>
             </nav>
             <Link
               href="/themes"

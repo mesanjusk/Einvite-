@@ -14,10 +14,21 @@ const palette = [
   "from-[#483d53] to-[#776487] text-[#fff0d5]",
 ];
 
-export function EventCategoryChips({ activeSlug }: { activeSlug?: string }) {
+export function EventCategoryChips({
+  activeSlug,
+  availableSlugs,
+}: {
+  activeSlug?: string;
+  availableSlugs?: string[];
+}) {
+  const categories = availableSlugs
+    ? EVENT_CATEGORIES.filter((category) => availableSlugs.includes(category.slug))
+    : EVENT_CATEGORIES;
+
   return (
-    <div className="flex gap-2.5 overflow-x-auto px-1 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {EVENT_CATEGORIES.map((category, index) => {
+    <div className="flex [scrollbar-width:none] gap-2.5 overflow-x-auto px-1 py-1.5 [&::-webkit-scrollbar]:hidden">
+      {categories.map((category) => {
+        const index = EVENT_CATEGORIES.findIndex((item) => item.slug === category.slug);
         const Icon = categoryIcon(category.icon);
         const isActive = category.slug === activeSlug;
         const tone = palette[index % palette.length];

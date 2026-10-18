@@ -1,6 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display, Great_Vibes, Cormorant_Garamond, EB_Garamond } from "next/font/google";
-import { SITE_DESCRIPTION, SITE_LOGO_PATH, SITE_NAME, SITE_URL } from "@/config/site";
+import {
+  Inter,
+  Playfair_Display,
+  Great_Vibes,
+  Cormorant_Garamond,
+  EB_Garamond,
+} from "next/font/google";
+import {
+  SITE_DESCRIPTION,
+  SITE_LOGO_PATH,
+  SITE_NAME,
+  SITE_OG_IMAGE_PATH,
+  SITE_URL,
+} from "@/config/site";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -49,8 +61,21 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
-    images: [SITE_LOGO_PATH],
+    images: [
+      {
+        url: SITE_OG_IMAGE_PATH,
+        width: 1200,
+        height: 630,
+        alt: "Personalized digital invitations by SK Digital",
+      },
+    ],
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [SITE_OG_IMAGE_PATH],
   },
   icons: {
     icon: SITE_LOGO_PATH,
@@ -59,7 +84,11 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = { themeColor: "#f3eaf8", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  themeColor: "#f3eaf8",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({
   children,
