@@ -1,24 +1,34 @@
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
-import {
-  SITE_DESCRIPTION,
-  SITE_LOGO_PATH,
-  SITE_NAME,
-} from "@/config/site";
+import { SITE_DESCRIPTION, SITE_OG_IMAGE_PATH, SITE_NAME } from "@/config/site";
 import { RoyalLandingPage } from "@/components/marketing/royal-landing-page";
 
-const TITLE = `${SITE_NAME} — Royal Digital Wedding Invitations`;
+const TITLE = `Digital Invitations for Every Celebration | ${SITE_NAME}`;
 
 export const metadata: Metadata = {
   title: TITLE,
   description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
   openGraph: {
     title: TITLE,
     description: SITE_DESCRIPTION,
     url: "/",
-    images: [SITE_LOGO_PATH],
+    images: [
+      {
+        url: SITE_OG_IMAGE_PATH,
+        width: 1200,
+        height: 630,
+        alt: "Personalized digital invitations by SK Digital",
+      },
+    ],
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: SITE_DESCRIPTION,
+    images: [SITE_OG_IMAGE_PATH],
   },
 };
 
@@ -46,29 +56,39 @@ export default async function Home() {
   const themes = catalog.themes;
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
   const themeCards = themes.map((theme) => {
-          const decor = (theme.decorAssets ?? {}) as {
-            revealAnimation?: { preset?: string }; revealVideoPosterUrl?: string; sectionImages?: Record<string, string>;
-          };
-          const palette = theme.colorPalette as { primary?: string; accent?: string };
-          return {
-            id: theme.id,
-            name: theme.name,
-            slug: theme.slug,
-            category: theme.category,
-            eventCategory: theme.eventCategory,
-            eventCategories: theme.eventCategories,
-            isPremium: theme.isPremium,
-            previewImage: theme.previewImage ?? null,
-            revealMode: theme.revealMode,
-            revealVideoUrl: theme.revealVideoUrl,
-            revealVideoPosterUrl: decor.revealVideoPosterUrl,
-            sectionArtwork: decor.sectionImages?.HERO || Object.values(decor.sectionImages ?? {}).find(Boolean) || null,
-            revealAnimationPreset: decor.revealAnimation?.preset ?? "MAGIC_BLOOM",
-            previewPrimary: palette.primary ?? "#76508c",
-            previewAccent: palette.accent ?? "#a987bd",
-            demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
-          };
-        });
+    const decor = (theme.decorAssets ?? {}) as {
+      revealAnimation?: { preset?: string };
+      revealVideoPosterUrl?: string;
+      sectionImages?: Record<string, string>;
+    };
+    const palette = theme.colorPalette as { primary?: string; accent?: string };
+    return {
+      id: theme.id,
+      name: theme.name,
+      slug: theme.slug,
+      category: theme.category,
+      eventCategory: theme.eventCategory,
+      eventCategories: theme.eventCategories,
+      isPremium: theme.isPremium,
+      previewImage: theme.previewImage ?? null,
+      revealMode: theme.revealMode,
+      revealVideoUrl: theme.revealVideoUrl,
+      revealVideoPosterUrl: decor.revealVideoPosterUrl,
+      sectionArtwork:
+        decor.sectionImages?.HERO ||
+        Object.values(decor.sectionImages ?? {}).find(Boolean) ||
+        null,
+      revealAnimationPreset: decor.revealAnimation?.preset ?? "MAGIC_BLOOM",
+      previewPrimary: palette.primary ?? "#76508c",
+      previewAccent: palette.accent ?? "#a987bd",
+      demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+    };
+  });
 
-  return <RoyalLandingPage themeCards={themeCards} catalogUnavailable={catalog.unavailable} />;
+  return (
+    <RoyalLandingPage
+      themeCards={themeCards}
+      catalogUnavailable={catalog.unavailable}
+    />
+  );
 }

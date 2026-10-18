@@ -15,12 +15,41 @@ import {
   isEventCategorySlug,
 } from "@/lib/event-categories";
 import { cn } from "@/lib/utils";
+import {
+  availableEventCategorySlugs,
+  displayThemeName,
+  displayThemeStyle,
+} from "@/lib/theme-display";
 
-export const metadata: Metadata = {
-  title: `Invitation Designs · ${SITE_NAME}`,
-  description:
-    "Explore premium animated wedding invitation designs by SK Digital, preview them live, and personalize your chosen experience.",
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}): Promise<Metadata> {
+  const { category } = await searchParams;
+  const activeSlug = isEventCategorySlug(category) ? category : null;
+  const label = activeSlug ? eventCategoryFor(activeSlug).label : null;
+  const title = label
+    ? `${label} Invitation Designs · ${SITE_NAME}`
+    : `Invitation Designs · ${SITE_NAME}`;
+  const description = label
+    ? `Explore ${label.toLowerCase()} invitation designs by SK Digital, preview a style, and personalize your invitation.`
+    : "Browse digital invitation designs for weddings and celebrations. Preview a style, personalize your details, and share your invitation link.";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: activeSlug ? `/themes?category=${activeSlug}` : "/themes",
+    },
+    openGraph: {
+      title,
+      description,
+      url: activeSlug ? `/themes?category=${activeSlug}` : "/themes",
+    },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 type SortMode = "popular" | "newest" | "premium" | "name";
 
@@ -82,7 +111,10 @@ export default async function PublicThemesPage({
   ]);
 
   const baseThemes = catalog.data;
-  const styleOptions = [...new Set(baseThemes.map((theme) => theme.category).filter(Boolean))];
+  const availableCategories = new Set(availableEventCategorySlugs(baseThemes));
+  const styleOptions = [
+    ...new Set(baseThemes.map((theme) => theme.category).filter(Boolean)),
+  ];
   const activeStyle = rawStyle && styleOptions.includes(rawStyle) ? rawStyle : null;
 
   let themes = baseThemes.filter((theme) => {
@@ -91,6 +123,7 @@ export default async function PublicThemesPage({
     if (!query) return true;
     return [
       theme.name,
+      displayThemeName(theme.name, theme.slug),
       theme.slug,
       theme.description ?? "",
       theme.category,
@@ -114,8 +147,18 @@ export default async function PublicThemesPage({
 
   const demoSlugByThemeId = new Map(demos.map((demo) => [demo.themeId, demo.slug]));
   const mobilePreviewThemes = themes.slice(0, 5).map((theme) => {
-    const decor = (theme.decorAssets ?? {}) as { revealVideoPosterUrl?: string; sectionImages?: Record<string, string> };
-    return { ...theme, previewImage: theme.previewImage ?? null, revealVideoPosterUrl: decor.revealVideoPosterUrl, sectionArtwork: decor.sectionImages?.HERO, demoSlug: demoSlugByThemeId.get(theme.id) ?? null };
+    const decor = (theme.decorAssets ?? {}) as {
+      revealVideoPosterUrl?: string;
+      sectionImages?: Record<string, string>;
+    };
+    return {
+      ...theme,
+      name: displayThemeName(theme.name, theme.slug),
+      previewImage: theme.previewImage ?? null,
+      revealVideoPosterUrl: decor.revealVideoPosterUrl,
+      sectionArtwork: decor.sectionImages?.HERO,
+      demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+    };
   });
   const headingCategory = activeSlug ? eventCategoryFor(activeSlug).label : null;
 
@@ -149,7 +192,7 @@ export default async function PublicThemesPage({
           <div className="royal-corner royal-corner-tl" />
           <div className="royal-corner royal-corner-br" />
 
-          <div className="relative mx-auto max-w-4xl px-4 pb-6 pt-8 text-center">
+          <div className="relative mx-auto max-w-4xl px-4 pt-8 pb-6 text-center">
             <p className="royal-kicker text-[9px] font-bold">
               SK Digital signature collection
             </p>
@@ -193,9 +236,15 @@ export default async function PublicThemesPage({
             <p className="mt-5 text-[9px] font-extrabold tracking-[0.18em] text-[#806b8c] uppercase">
               Celebration
             </p>
-            <nav className="mx-auto mt-2 flex max-w-3xl gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <FilterChip href={hrefFor({ category: null, style: null })} label="All" active={activeSlug === null} />
-              {EVENT_CATEGORIES.map((category) => {
+            <nav className="mx-auto mt-2 flex max-w-3xl [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+              <FilterChip
+                href={hrefFor({ category: null, style: null })}
+                label="All"
+                active={activeSlug === null}
+              />
+              {EVENT_CATEGORIES.filter((category) =>
+                availableCategories.has(category.slug),
+              ).map((category) => {
                 const Icon = categoryIcon(category.icon);
                 return (
                   <FilterChip
@@ -237,13 +286,17 @@ export default async function PublicThemesPage({
             </form>
 
             {styleOptions.length > 0 && (
-              <nav className="mx-auto mt-4 flex max-w-3xl gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <StyleChip href={hrefFor({ style: null })} label="All styles" active={!activeStyle} />
+              <nav className="mx-auto mt-4 flex max-w-3xl [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+                <StyleChip
+                  href={hrefFor({ style: null })}
+                  label="All styles"
+                  active={!activeStyle}
+                />
                 {styleOptions.map((style) => (
                   <StyleChip
                     key={style}
                     href={hrefFor({ style })}
-                    label={style}
+                    label={displayThemeStyle(style)}
                     active={activeStyle === style}
                   />
                 ))}
@@ -262,60 +315,94 @@ export default async function PublicThemesPage({
               <summary className="cursor-pointer list-none rounded-full border border-violet-200/80 bg-white px-3.5 py-1.5 text-[9px] font-extrabold tracking-wide text-[#6a5377] uppercase shadow-sm [&::-webkit-details-marker]:hidden">
                 Sort: {sortLabel(sort)} ▾
               </summary>
-              <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-2xl border border-violet-200 bg-white p-1.5 text-left shadow-[0_18px_45px_rgba(50,40,27,0.15)]">
-                <SortLink href={hrefFor({ sort: null })} label="Popular" active={sort === "popular"} />
-                <SortLink href={hrefFor({ sort: "newest" })} label="Newest" active={sort === "newest"} />
-                <SortLink href={hrefFor({ sort: "premium" })} label="Premium first" active={sort === "premium"} />
-                <SortLink href={hrefFor({ sort: "name" })} label="Name A–Z" active={sort === "name"} />
+              <div className="absolute top-9 right-0 z-30 w-44 overflow-hidden rounded-2xl border border-violet-200 bg-white p-1.5 text-left shadow-[0_18px_45px_rgba(50,40,27,0.15)]">
+                <SortLink
+                  href={hrefFor({ sort: null })}
+                  label="Popular"
+                  active={sort === "popular"}
+                />
+                <SortLink
+                  href={hrefFor({ sort: "newest" })}
+                  label="Newest"
+                  active={sort === "newest"}
+                />
+                <SortLink
+                  href={hrefFor({ sort: "premium" })}
+                  label="Premium first"
+                  active={sort === "premium"}
+                />
+                <SortLink
+                  href={hrefFor({ sort: "name" })}
+                  label="Name A–Z"
+                  active={sort === "name"}
+                />
               </div>
             </details>
           </div>
 
           <div className="relative mx-auto max-w-7xl">
-          {themes.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/30 px-6 py-16 text-center">
-              <p className="font-display text-2xl text-[#4b3659]">{catalog.unavailable ? "Designs temporarily unavailable" : "No matching designs yet"}</p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#806b8c]">
-                {catalog.unavailable ? "Please refresh the page or try again shortly. Your invitation drafts are safe." : "Try another celebration, style or search term."}
-              </p>
-              <Link
-                href="/themes"
-                className="mt-5 inline-flex rounded-full royal-gold-button px-5 py-2.5 text-[10px] font-extrabold tracking-wide uppercase"
-              >
-                Show all templates
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-x-3 gap-y-7">
-              {themes.map((theme) => (
-                <TemplateMarketplaceCard
-                  key={theme.id}
-                  theme={{
-                    id: theme.id,
-                    name: theme.name,
-                    slug: theme.slug,
-                    category: theme.category,
-                    eventCategory: activeSlug ?? theme.eventCategory,
-                    eventCategories: theme.eventCategories,
-                    isPremium: theme.isPremium,
-                    previewImage: theme.previewImage ?? null,
-                    revealMode: theme.revealMode,
-                    revealVideoUrl: theme.revealVideoUrl,
-                    revealVideoPosterUrl: ((theme.decorAssets ?? {}) as { revealVideoPosterUrl?: string }).revealVideoPosterUrl,
-                    sectionArtwork: ((theme.decorAssets ?? {}) as { sectionImages?: Record<string, string> }).sectionImages?.HERO,
-                    revealAnimationPreset:
-                      ((theme.decorAssets ?? {}) as { revealAnimation?: { preset?: string } })
-                        .revealAnimation?.preset ?? "MAGIC_BLOOM",
-                    previewPrimary:
-                      (theme.colorPalette as { primary?: string }).primary ?? "#76508c",
-                    previewAccent:
-                      (theme.colorPalette as { accent?: string }).accent ?? "#a987bd",
-                    demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
-                  }}
-                />
-              ))}
-            </div>
-          )}
+            {themes.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/30 px-6 py-16 text-center">
+                <p className="font-display text-2xl text-[#4b3659]">
+                  {catalog.unavailable
+                    ? "Designs temporarily unavailable"
+                    : activeSlug
+                      ? `No ${headingCategory?.toLowerCase()} designs published yet`
+                      : "No matching designs yet"}
+                </p>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#806b8c]">
+                  {catalog.unavailable
+                    ? "Please refresh the page or try again shortly. Your invitation drafts are safe."
+                    : "Try another celebration, style or search term."}
+                </p>
+                <Link
+                  href="/themes"
+                  className="royal-gold-button mt-5 inline-flex rounded-full px-5 py-2.5 text-[10px] font-extrabold tracking-wide uppercase"
+                >
+                  Show all templates
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+                {themes.map((theme) => (
+                  <TemplateMarketplaceCard
+                    key={theme.id}
+                    theme={{
+                      id: theme.id,
+                      name: displayThemeName(theme.name, theme.slug),
+                      slug: theme.slug,
+                      category: theme.category,
+                      eventCategory: activeSlug ?? theme.eventCategory,
+                      eventCategories: theme.eventCategories,
+                      isPremium: theme.isPremium,
+                      previewImage: theme.previewImage ?? null,
+                      revealMode: theme.revealMode,
+                      revealVideoUrl: theme.revealVideoUrl,
+                      revealVideoPosterUrl: (
+                        (theme.decorAssets ?? {}) as { revealVideoPosterUrl?: string }
+                      ).revealVideoPosterUrl,
+                      sectionArtwork: (
+                        (theme.decorAssets ?? {}) as {
+                          sectionImages?: Record<string, string>;
+                        }
+                      ).sectionImages?.HERO,
+                      revealAnimationPreset:
+                        (
+                          (theme.decorAssets ?? {}) as {
+                            revealAnimation?: { preset?: string };
+                          }
+                        ).revealAnimation?.preset ?? "MAGIC_BLOOM",
+                      previewPrimary:
+                        (theme.colorPalette as { primary?: string }).primary ??
+                        "#76508c",
+                      previewAccent:
+                        (theme.colorPalette as { accent?: string }).accent ?? "#a987bd",
+                      demoSlug: demoSlugByThemeId.get(theme.id) ?? null,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>
@@ -359,7 +446,15 @@ function FilterChip({
   );
 }
 
-function StyleChip({ href, label, active }: { href: string; label: string; active: boolean }) {
+function StyleChip({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
   return (
     <Link
       href={href}
@@ -375,15 +470,21 @@ function StyleChip({ href, label, active }: { href: string; label: string; activ
   );
 }
 
-function SortLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+function SortLink({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
   return (
     <Link
       href={href}
       className={cn(
         "block rounded-xl px-3 py-2 text-[10px] font-bold transition",
-        active
-          ? "bg-violet-100 text-[#5a3d6d]"
-          : "text-[#765f81] hover:bg-violet-50",
+        active ? "bg-violet-100 text-[#5a3d6d]" : "text-[#765f81] hover:bg-violet-50",
       )}
     >
       {label}
