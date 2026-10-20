@@ -374,6 +374,9 @@ model Invitation {
   // OTP, a PhoneLink takes over as the durable, cross-device "login".
   draftSecretHash String?
   isDemo          Boolean @default(false)
+  // Non-personal attribution labels; guest identities and edit tokens are never recorded here.
+  acquisitionSource         String?
+  referredFromInvitationId String? @db.ObjectId
 
   // The two name slots. For a wedding they're the couple; for a birthday
   // they're the birthday star and whoever is hosting; for a housewarming
@@ -609,6 +612,10 @@ model Media {
 // ---------------------------------------------------------------------------
 
 enum AnalyticsEventType {
+  REFERRAL_CLICK
+  REFERRAL_CREATED
+  STORY_SHARE
+  PRINT_ENQUIRY
   VIEW
   SHARE
   RSVP_SUBMIT
