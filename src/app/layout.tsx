@@ -17,6 +17,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { CustomerSurface } from "@/components/customer-surface";
+import { GrowthAttribution } from "@/components/guest/growth-attribution";
 import "./globals.css";
 
 const inter = Inter({
@@ -108,6 +109,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
+            <GrowthAttribution />
             <CustomerSurface>{children}</CustomerSurface>
             <Toaster richColors closeButton />
           </SessionProvider>
