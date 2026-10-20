@@ -7,7 +7,7 @@ const types = ["REFERRAL_CLICK", "REFERRAL_CREATED", "CLICK_INSTAGRAM", "PRINT_E
 
 export default async function GrowthReportsPage() {
   // /admin/layout.tsx enforces group-based administrator authorization.
-  const [events, attributedInvitations, sources] = await Promise.all([
+  const [events, attributedInvitations, sources, publishedReferrals] = await Promise.all([
     db.analyticsEvent.groupBy({
       by: ["type"],
       where: { type: { in: [...types] } },
@@ -21,7 +21,20 @@ export default async function GrowthReportsPage() {
       where: { acquisitionSource: { in: ["guest_invite", "story", "instagram"] } },
       _count: { _all: true },
     }),
+    db.invitation.groupBy({
+      by: ["referredFromInvitationId"],
+      where: { referredFromInvitationId: { not: null }, status: "PUBLISHED" },
+      _count: { _all: true },
+    }),
   ]);
+  const eligible = publishedReferrals.filter((row) => row.referredFromInvitationId && row._count._all >= 3);
+  const eligibleSources = eligible.length
+    ? await db.invitation.findMany({
+        where: { id: { in: eligible.map((row) => row.referredFromInvitationId!).filter(Boolean) } },
+        select: { id: true, slug: true },
+      })
+    : [];
+  const sourceSlugs = new Map(eligibleSources.map((invitation) => [invitation.id, invitation.slug]));
   const metrics = new Map(events.map((event) => [event.type, event._count._all]));
   const names: Record<string, string> = {
     REFERRAL_CLICK: "Create yours clicks",
@@ -66,6 +79,25 @@ export default async function GrowthReportsPage() {
           Referral attribution stores only a source channel and source invitation ID, not guest contact details.
           Verify completed orders before offering any referral reward or discount.
         </p>
+      </div>
+      <div className="rounded-xl border bg-white p-5">
+        <h2 className="text-lg font-semibold">Referral reward review</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Published invitations referred by the same original invitation.
+          Three or more published referrals flag a source for manual review; a reward or discount is never issued automatically.
+        </p>
+        {eligible.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-500">No invitations have reached the review milestone yet.</p>
+        ) : (
+          <ul className="mt-3 space-y-2 text-sm">
+            {eligible.map((row) => (
+              <li key={row.referredFromInvitationId} className="flex justify-between gap-3 border-b pb-2">
+                <span className="truncate">{sourceSlugs.get(row.referredFromInvitationId!) ?? "Original invitation"}</span>
+                <strong>{row._count._all} published referrals</strong>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );
