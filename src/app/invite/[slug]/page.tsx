@@ -14,6 +14,7 @@ import {
 } from "@/lib/get-invite-data";
 import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { InviteExperience } from "@/components/invite/invite-experience";
+import { InvitationGrowthFooter } from "@/components/guest/invitation-growth-footer";
 import { InvitationPaused } from "@/components/invite/invitation-paused";
 import { resolveInvitationVisibility } from "@/lib/instagram-invitation-visibility";
 
@@ -68,10 +69,10 @@ export default async function InvitePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ to?: string }>;
+  searchParams: Promise<{ to?: string; via?: string }>;
 }) {
   const { slug } = await params;
-  const { to } = await searchParams;
+  const { to, via } = await searchParams;
   const invitation = await getInvitationBySlug(slug);
   if (!invitation) notFound();
 
@@ -112,7 +113,7 @@ export default async function InvitePage({
         invitationId: invitation.id,
         type: "VIEW",
         device,
-        referrer: headerList.get("referer"),
+        referrer: via === "story" ? "growth:story" : headerList.get("referer"),
         path: `/invite/${slug}`,
       },
     });
@@ -162,8 +163,14 @@ export default async function InvitePage({
           sectionConfig={sectionConfig}
           initialGuestName={guest?.name ?? null}
           guestId={guest?.id ?? null}
-          showRemixCta={!isOwner && !invitation.isDemo}
+          showRemixCta={false}
         />
+        {!isOwner && !invitation.isDemo && (
+          <InvitationGrowthFooter
+            slug={invitation.slug}
+            title={[invitation.brideName, invitation.groomName].filter(Boolean).join(" & ") || "You are invited"}
+          />
+        )}
       </div>
     </div>
   );
