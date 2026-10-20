@@ -21,6 +21,7 @@ export function SiteFooter() {
           <Link href="/privacy" className="transition hover:text-[#76508c]">Privacy</Link>
           <Link href="/terms" className="transition hover:text-[#76508c]">Terms</Link>
           <Link href="/contact" className="transition hover:text-[#76508c]">Contact</Link>
+          <a href="https://www.instagram.com/sanju.sk.digital/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[#76508c]">Instagram</a>
         </nav>
 
         <div className="royal-divider mx-auto mt-4 max-w-sm" />
