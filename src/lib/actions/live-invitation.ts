@@ -28,6 +28,7 @@ import {
 import type { ActionResult } from "@/lib/actions/auth";
 import type { InviteData } from "@/components/invite/types";
 import { themeMusicUrl } from "@/lib/theme-music";
+import { normalizeAcquisitionSource } from "@/lib/invitation-growth";
 
 /**
  * The live editor's save path. Where the wizard collects a whole form and
@@ -531,6 +532,7 @@ export async function startLiveInvitationAction(input: {
   fromSlug?: string;
   category?: string;
   themeSlug?: string;
+  acquisitionSource?: string;
 }): Promise<ActionResult<{ invitationId: string }>> {
   const session = await auth();
 
@@ -540,6 +542,10 @@ export async function startLiveInvitationAction(input: {
         include: { theme: true },
       })
     : null;
+  // Never expose unpublished invitations to the public "use this design" flow.
+  if (input.fromSlug && (!source || source.status !== "PUBLISHED")) {
+    return { success: false, error: "This invitation is not publicly available." };
+  }
 
   const category = eventCategoryFor(
     source?.eventCategory ?? input.category ?? DEFAULT_EVENT_CATEGORY,
@@ -599,6 +605,8 @@ export async function startLiveInvitationAction(input: {
       userId: session?.user?.id,
       slug,
       eventCategory: category.slug,
+      acquisitionSource: normalizeAcquisitionSource(input.acquisitionSource),
+      referredFromInvitationId: source && !source.isDemo ? source.id : null,
       brideName: "",
       groomName: "",
       weddingDate,
@@ -658,6 +666,21 @@ export async function startLiveInvitationAction(input: {
       where: { id: invitation.id },
       data: { draftSecretHash },
     });
+  }
+
+  if (source && !source.isDemo) {
+    // Count successful draft creation; analytics must never block the creator.
+    try {
+      await db.analyticsEvent.create({
+        data: {
+          invitationId: source.id,
+          type: "REFERRAL_CREATED",
+          path: `/invite/${source.slug}`,
+        },
+      });
+    } catch (error) {
+      console.error("[growth] Referral creation analytics failed", error);
+    }
   }
 
   return { success: true, data: { invitationId: invitation.id } };

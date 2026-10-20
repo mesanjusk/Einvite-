@@ -52,6 +52,7 @@ export const adminNav: NavItem[] = [
   // reading the business — so they are one entry with tabs inside it.
   { title: "Reports", href: "/admin/reports", icon: BarChart3, match: "/admin/reports" },
   { title: "Instagram", href: "/admin/instagram", icon: MessageCircleReply },
+  { title: "Growth", href: "/admin/growth", icon: BarChart3 },
   { title: "Users", href: "/admin/users", icon: UserCog },
   { title: "Project settings", href: "/admin/settings", icon: Settings },
 ];

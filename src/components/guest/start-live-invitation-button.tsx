@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { startLiveInvitationAction } from "@/lib/actions/live-invitation";
 import { cn } from "@/lib/utils";
 import { WeddingLoadingScreen } from "@/components/guest/wedding-loading-screen";
+import { trackInvitationGrowth } from "@/lib/track-invitation-growth";
 
 /**
  * Starts a private draft from the design the visitor chose. The loading
@@ -37,8 +38,21 @@ export function StartLiveInvitationButton({
   function start() {
     if (isPending) return;
 
+    // Use only the acquisition channel; never forward guest edit/RSVP tokens.
+    let storedSource: "instagram" | "story" | null = null;
+    try {
+      const value = sessionStorage.getItem("sk_invite_acquisition");
+      if (value === "instagram" || value === "story") storedSource = value;
+    } catch {
+      // Private browsing may disable session storage.
+    }
+    const acquisitionSource = fromSlug
+      ? (storedSource === "story" ? "story" : "guest_invite")
+      : (storedSource ?? "direct");
+    if (fromSlug) trackInvitationGrowth(fromSlug, "REFERRAL_CLICK");
+
     startTransition(async () => {
-      const result = await startLiveInvitationAction({ fromSlug, category, themeSlug });
+      const result = await startLiveInvitationAction({ fromSlug, category, themeSlug, acquisitionSource });
       if (!result.success) {
         toast.error(result.error);
         return;
