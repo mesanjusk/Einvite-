@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Check, CheckCircle2, Copy, ShieldCheck } from "lucide-react";
 
 import { publishGuestInvitationAction } from "@/lib/actions/guest-invitation";
+import { StoryShareButton } from "@/components/guest/story-share-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -211,6 +212,7 @@ export function PublishSuccess({
         )}
       </div>
 
+      <StoryShareButton url={liveUrl} invitationSlug={new URL(liveUrl).pathname.split("/").pop()} title="Our celebration" />
       <a className="rounded-lg border p-3 text-center text-sm font-semibold" href={`/api/pdf/${new URL(liveUrl).pathname.split("/").pop()}?mode=website`} download>Download invitation PDF</a>
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
         <Button asChild className="flex-1">
