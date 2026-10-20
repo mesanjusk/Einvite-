@@ -1,6 +1,6 @@
 "use client";
 
-import { Instagram, Printer, Sparkles } from "lucide-react";
+import { Camera, Printer, Sparkles } from "lucide-react";
 import { StartLiveInvitationButton } from "@/components/guest/start-live-invitation-button";
 import { StoryShareButton } from "@/components/guest/story-share-button";
 import { INSTAGRAM_PROFILE, PRINT_ENQUIRY_URL } from "@/lib/invitation-growth";
@@ -36,7 +36,7 @@ export function InvitationGrowthFooter({
           onClick={() => trackInvitationGrowth(slug, "CLICK_INSTAGRAM")}
           className="inline-flex min-h-11 items-center gap-2 rounded-full border border-violet-200 bg-white px-4 text-sm font-semibold"
         >
-          <Instagram className="size-4" /> Follow SK Digital
+          <Camera className="size-4" /> Follow SK Digital
         </a>
         <a
           href={PRINT_ENQUIRY_URL}
