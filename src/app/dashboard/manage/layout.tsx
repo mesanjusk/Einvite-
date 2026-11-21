@@ -6,6 +6,7 @@ import { TabNav } from "@/components/dashboard/tab-nav";
 
 const TABS = [
   { href: "/dashboard/manage/guests", label: "Guests" },
+  { href: "/dashboard/manage/wedding", label: "Wedding Ops" },
   { href: "/dashboard/manage/rsvp", label: "RSVP" },
   { href: "/dashboard/manage/analytics", label: "Analytics" },
 ];
