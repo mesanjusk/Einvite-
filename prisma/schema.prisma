@@ -543,6 +543,17 @@ model Guest {
   group        String? // e.g. "Bride's side", "Groom's college friends"
   inviteToken  String    @unique @default(cuid())
   viewedAt     DateTime? // set the first time this guest opens their personalized link
+  // Wedding operations: existing guests stay unopted-in until consent is verified.
+  whatsappOptIn     Boolean?  @default(false)
+  expectedPartySize Int?      @default(1)
+  eventNames        String?   // comma-separated permitted ceremonies
+  travelMode        String?   // train, flight, road, other
+  travelDetails     String?   // arrival, PNR reference (no ticket credentials)
+  hotelDetails      String?
+  operationsNotes   String?
+  invitationSentAt  DateTime?
+  reminderSentAt    DateTime?
+
 
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   rsvp       Rsvp?
