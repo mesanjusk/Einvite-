@@ -333,7 +333,7 @@ export function WeddingOperations({
         <p className="mt-1 text-xs text-slate-600">
           {submitted} invitations submitted to Meta. Only consented guests receive approved
           template messages. Sending requires a published invitation and approved Meta templates.
-          "Submitted" is not a delivery or read confirmation.
+          Meta submission does not confirm delivery or reading.
         </p>
         {!published && <p className="mt-2 text-sm text-amber-700">Publish this invitation to enable sending.</p>}
         {!messagingReady && <p className="mt-2 text-sm text-amber-700">Wedding WhatsApp template configuration is incomplete. Imports and guest management work without it.</p>}
