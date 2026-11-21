@@ -77,7 +77,7 @@ function GuestOperationRow({
   function save() {
     startTransition(async () => {
       const result = await updateWeddingGuestAction({ id: guest.id, ...form });
-      if (!result.success) return toast.error(result.error);
+      if (!result.success) { toast.error(result.error); return; }
       toast.success("Guest details saved");
       setEditing(false);
       router.refresh();
@@ -87,7 +87,7 @@ function GuestOperationRow({
   function send(kind: WeddingMessageKind) {
     startTransition(async () => {
       const result = await sendWeddingTemplateAction(guest.id, kind);
-      if (!result.success) return toast.error(result.error);
+      if (!result.success) { toast.error(result.error); return; }
       toast.success(kind === "INVITATION" ? "Invitation accepted by Meta" : "Reminder accepted by Meta");
       router.refresh();
     });
@@ -242,7 +242,7 @@ export function WeddingOperations({
   function handleImport() {
     startTransition(async () => {
       const result = await importWeddingGuestsAction({ invitationId, csv, verifiedConsent });
-      if (!result.success) return toast.error(result.error);
+      if (!result.success) { toast.error(result.error); return; }
       toast.success("Imported " + result.data.imported + " guests; skipped " + result.data.skipped + " duplicates");
       setCsv("");
       setFileName("");
